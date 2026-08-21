@@ -2,30 +2,30 @@
   "arms": {
     "naive": {
       "correct": 48,
-      "wrong": 75,
+      "wrong": 93,
       "value_ok": 48,
-      "value_wrong": 75,
+      "value_wrong": 93,
       "abstain_right": 6,
       "abstain_wrong": 6,
-      "n": 135
+      "n": 153
     },
     "plain": {
-      "correct": 105,
-      "wrong": 30,
-      "value_ok": 111,
-      "value_wrong": 24,
+      "correct": 111,
+      "wrong": 42,
+      "value_ok": 117,
+      "value_wrong": 36,
       "abstain_right": 0,
       "abstain_wrong": 0,
-      "n": 135
+      "n": 153
     },
     "gated": {
-      "correct": 87,
+      "correct": 93,
       "wrong": 6,
-      "value_ok": 93,
+      "value_ok": 99,
       "value_wrong": 0,
       "abstain_right": 18,
-      "abstain_wrong": 24,
-      "n": 135
+      "abstain_wrong": 36,
+      "n": 153
     }
   },
   "byMutation": {
@@ -158,6 +158,28 @@
         "value_wrong": 0,
         "abstain_right": 0,
         "abstain_wrong": 18,
+        "n": 18
+      }
+    },
+    "duplicate_longtail": {
+      "label": "decoy identical for 200 chars, divergent after",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": 6,
+        "wrong": 12,
+        "value_ok": 6,
+        "value_wrong": 12,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 18
+      },
+      "gated": {
+        "correct": 6,
+        "wrong": 0,
+        "value_ok": 6,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 12,
         "n": 18
       }
     },
@@ -340,6 +362,24 @@
     {
       "site": "mattel",
       "capture": "20240103",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": false,
+        "score": 0.5575,
+        "margin": 0.0137
+      },
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false,
+        "score": 0.5575,
+        "margin": 0.0137
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20240103",
       "mutation": "combo_redesign",
       "expect": "target",
       "plain": {
@@ -466,6 +506,24 @@
     {
       "site": "mattel",
       "capture": "20240617",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": false,
+        "score": 0.5575,
+        "margin": 0.0137
+      },
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false,
+        "score": 0.5575,
+        "margin": 0.0137
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20240617",
       "mutation": "combo_redesign",
       "expect": "target",
       "plain": {
@@ -592,6 +650,24 @@
     {
       "site": "mattel",
       "capture": "20241110",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": false,
+        "score": 0.5575,
+        "margin": 0.0137
+      },
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false,
+        "score": 0.5575,
+        "margin": 0.0137
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20241110",
       "mutation": "combo_redesign",
       "expect": "target",
       "plain": {
@@ -718,6 +794,24 @@
     {
       "site": "mattel",
       "capture": "20250404",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": false,
+        "score": 0.5575,
+        "margin": 0.0137
+      },
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false,
+        "score": 0.5575,
+        "margin": 0.0137
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20250404",
       "mutation": "combo_redesign",
       "expect": "target",
       "plain": {
@@ -844,6 +938,24 @@
     {
       "site": "mattel",
       "capture": "20250904",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": false,
+        "score": 0.5575,
+        "margin": 0.0137
+      },
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false,
+        "score": 0.5575,
+        "margin": 0.0137
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20250904",
       "mutation": "combo_redesign",
       "expect": "target",
       "plain": {
@@ -965,6 +1077,24 @@
         "correct": false,
         "score": 0.7361,
         "margin": 0.1257
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20260201",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": false,
+        "score": 0.5575,
+        "margin": 0.0137
+      },
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false,
+        "score": 0.5575,
+        "margin": 0.0137
       }
     },
     {
@@ -1114,6 +1244,24 @@
     {
       "site": "ikea",
       "capture": "20240114",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": true,
+        "score": 0.748,
+        "margin": 0.1874
+      },
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true,
+        "score": 0.748,
+        "margin": 0.1874
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20240114",
       "mutation": "combo_redesign",
       "expect": "target",
       "plain": {
@@ -1253,6 +1401,24 @@
         "correct": false,
         "score": 0.933,
         "margin": 0.1207
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20240613",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": true,
+        "score": 0.748,
+        "margin": 0.1874
+      },
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true,
+        "score": 0.748,
+        "margin": 0.1874
       }
     },
     {
@@ -1402,6 +1568,24 @@
     {
       "site": "ikea",
       "capture": "20241106",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": true,
+        "score": 0.748,
+        "margin": 0.1873
+      },
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true,
+        "score": 0.748,
+        "margin": 0.1873
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20241106",
       "mutation": "combo_redesign",
       "expect": "target",
       "plain": {
@@ -1546,6 +1730,24 @@
     {
       "site": "ikea",
       "capture": "20250426",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": true,
+        "score": 0.748,
+        "margin": 0.1873
+      },
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true,
+        "score": 0.748,
+        "margin": 0.1873
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20250426",
       "mutation": "combo_redesign",
       "expect": "target",
       "plain": {
@@ -1690,6 +1892,24 @@
     {
       "site": "ikea",
       "capture": "20251005",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": true,
+        "score": 0.748,
+        "margin": 0.1873
+      },
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true,
+        "score": 0.748,
+        "margin": 0.1873
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20251005",
       "mutation": "combo_redesign",
       "expect": "target",
       "plain": {
@@ -1834,6 +2054,24 @@
     {
       "site": "ikea",
       "capture": "20260306",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": true,
+        "score": 0.748,
+        "margin": 0.1873
+      },
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true,
+        "score": 0.748,
+        "margin": 0.1873
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20260306",
       "mutation": "combo_redesign",
       "expect": "target",
       "plain": {
@@ -1960,6 +2198,24 @@
     {
       "site": "chicco",
       "capture": "20240214",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": false,
+        "score": 0.5861,
+        "margin": 0.0078
+      },
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false,
+        "score": 0.5861,
+        "margin": 0.0078
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20240214",
       "mutation": "combo_redesign",
       "expect": "target",
       "plain": {
@@ -2086,6 +2342,24 @@
     {
       "site": "chicco",
       "capture": "20240408",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": false,
+        "score": 0.5861,
+        "margin": 0.0078
+      },
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false,
+        "score": 0.5861,
+        "margin": 0.0078
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20240408",
       "mutation": "combo_redesign",
       "expect": "target",
       "plain": {
@@ -2207,6 +2481,24 @@
         "correct": false,
         "score": 0.7816,
         "margin": 0.0859
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20241214",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": false,
+        "score": 0.5861,
+        "margin": 0.0078
+      },
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false,
+        "score": 0.5861,
+        "margin": 0.0078
       }
     },
     {
@@ -2356,6 +2648,24 @@
     {
       "site": "chicco",
       "capture": "20250617",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": false,
+        "score": 0.7284,
+        "margin": 0.0005
+      },
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false,
+        "score": 0.7284,
+        "margin": 0.0005
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20250617",
       "mutation": "combo_redesign",
       "expect": "target",
       "plain": {
@@ -2500,6 +2810,24 @@
     {
       "site": "chicco",
       "capture": "20250906",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": false,
+        "score": 0.7284,
+        "margin": 0.0005
+      },
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false,
+        "score": 0.7284,
+        "margin": 0.0005
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20250906",
       "mutation": "combo_redesign",
       "expect": "target",
       "plain": {
@@ -2639,6 +2967,24 @@
         "correct": false,
         "score": 1,
         "margin": 0.0953
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20251214",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": false,
+        "score": 0.7284,
+        "margin": 0.0005
+      },
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false,
+        "score": 0.7284,
+        "margin": 0.0005
       }
     },
     {

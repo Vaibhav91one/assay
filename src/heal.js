@@ -174,7 +174,12 @@ export function healGated($, target, { tau = 0.6, delta = 0.16, ...opts } = {}) 
   if (margin <= delta) {
     // a tie whose candidates agree on the VALUE is not a real ambiguity
     const tied = ranked.filter((r) => best.score - r.score <= delta);
-    const values = new Set(tied.map((r) => (r.fp.text || '').trim()));
+    // Compare FULL text read off the elements, not fp.text -- the fingerprint
+    // truncates at 200 chars, and two candidates identical to char 200 can carry
+    // different values after it. Publishing on a prefix match is a wrong-publish
+    // path inside the safety mechanism (docs/CRITIQUE.md; pinned by the
+    // duplicate_longtail mutation).
+    const values = new Set(tied.map((r) => $(r.el).text().replace(/\s+/g, ' ').trim()));
     if (values.size === 1) {
       return { ...base, decision: 'heal', reason: 'benign_tie' };
     }

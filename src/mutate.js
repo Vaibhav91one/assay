@@ -142,6 +142,29 @@ export const MUTATIONS = [
     },
   },
   {
+    id: 'duplicate_longtail',
+    label: 'decoy identical for 200 chars, divergent after',
+    expect: 'ambiguous', // <-- pins the benign-tie prefix bug (docs/CRITIQUE.md)
+    apply: ($, el) => {
+      const $el = $(el);
+      const base = $el.text().replace(/\s+/g, ' ').trim();
+      if (!base) return false;
+      // both texts share their first 200+ chars exactly; only the tail differs.
+      // fingerprint() truncates text at 200, so the scorer cannot tell them apart.
+      const pad = ' following reports received by the manufacturer and reviewed with the safety commission this year regarding affected production batches sold nationwide through major retailers and online channels';
+      const common = (base + pad).replace(/\s+/g, ' ').slice(0, 220);
+      // equal-length tails so text distance cannot separate them either
+      $el.text(common + ' customers may keep using this product safely');
+      const $twin = $el.clone();
+      $twin.removeAttr(TRUTH_ATTR);
+      $twin.text(common + ' customers must stop using this product today');
+      // twin takes the target's original position, inheriting its xpath and
+      // neighbours -- the decoy is the BETTER structural match, deliberately
+      $el.before($twin);
+      return true;
+    },
+  },
+  {
     id: 'combo_redesign',
     label: 'combo: wrapper + class rename + tag swap',
     expect: 'target',
