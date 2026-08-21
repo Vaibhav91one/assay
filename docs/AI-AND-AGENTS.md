@@ -71,8 +71,15 @@ candidates and their scores. It now also shows where each candidate came from.
 **When the scorer and the model choose different elements, Assay abstains,
 regardless of how confident either one is.**
 
-This is the new decision rule and it is the part with no prior art we could
-find. Existing systems treat a second method as a tie-breaker — consult it when
+This is the new decision rule. It has no prior art in web scraping, where a
+survey of ten vendors found nothing that abstains at all (`docs/PRIOR-ART.md`).
+The idea of routing on two independent confidences is not itself new — Amazon
+Textract requires both key-value and word confidence to be low before it calls a
+human. Ours differs in comparing two methods that can point at *different
+elements*, rather than two confidences about the same one. Claim the specific
+rule, not the family.
+
+Existing systems treat a second method as a tie-breaker — consult it when
 the first is unsure. That is backwards. A method you only consult when you are
 already uncertain cannot tell you that you were wrong to be certain.
 
