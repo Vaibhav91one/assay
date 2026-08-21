@@ -1,0 +1,165 @@
+// Deterministic page mutations with perfect ground truth (PLAN.md 12, arm 1).
+//
+// Wayback pairs are real but their ground truth is circular: the obvious label
+// ("the element whose text matches") is the same signal the scorer weights most
+// heavily at 2.7. Mutations avoid that entirely -- we mutate a page ourselves, so
+// we know exactly which element SHOULD be found, independent of any property the
+// scorer reads.
+//
+// The target is marked with data-assay-truth BEFORE mutation. That attribute is
+// deliberately not one fingerprint() reads (it reads data-testid/data-test-id/
+// data-qa), so marking cannot leak into the score.
+
+export const TRUTH_ATTR = 'data-assay-truth';
+
+const SWEDISH = {
+  recall: 'aterkallelse', recalls: 'aterkallelser', chair: 'stol', table: 'bord',
+  mirror: 'spegel', drawer: 'lada', game: 'spel', charger: 'laddare',
+  hazard: 'risk', fire: 'brand', injury: 'skada', child: 'barn', due: 'grund',
+  the: 'den', and: 'och', of: 'av', to: 'till', for: 'for', with: 'med',
+};
+
+const rewriteWords = (s) =>
+  (s || '').replace(/[A-Za-z]+/g, (w) => {
+    const hit = SWEDISH[w.toLowerCase()];
+    if (!hit) return w;
+    return w[0] === w[0].toUpperCase() ? hit[0].toUpperCase() + hit.slice(1) : hit;
+  });
+
+/**
+ * Each mutation returns { label, expect } where expect is:
+ *   'target'  -> the marked element is the single correct answer
+ *   'none'    -> nothing is correct; the honest answer is to abstain
+ *   'ambiguous' -> a decoy exists that a naive healer may prefer
+ */
+export const MUTATIONS = [
+  {
+    id: 'rename_class',
+    label: 'rename class',
+    expect: 'target',
+    apply: ($, el) => {
+      const $el = $(el);
+      const cls = ($el.attr('class') || '').split(/\s+/).filter(Boolean);
+      if (!cls.length) return false;
+      $el.attr('class', cls.map((c) => `redesign-${c}`).join(' '));
+      return true;
+    },
+  },
+  {
+    id: 'wrapper_div',
+    label: 'insert wrapper div',
+    expect: 'target',
+    apply: ($, el) => {
+      $(el).wrap('<div class="layout-shell"><div class="layout-inner"></div></div>');
+      return true;
+    },
+  },
+  {
+    id: 'swap_tag',
+    label: 'swap tag (h2 -> div, a -> span)',
+    expect: 'target',
+    apply: ($, el) => {
+      const $el = $(el);
+      const to = el.name === 'a' ? 'span' : el.name.match(/^h\d$/) ? 'div' : 'section';
+      const attrs = { ...el.attribs };
+      const inner = $el.html();
+      const $new = $(`<${to}></${to}>`).html(inner);
+      Object.entries(attrs).forEach(([k, v]) => $new.attr(k, v));
+      $el.replaceWith($new);
+      return true;
+    },
+  },
+  {
+    id: 'reorder_siblings',
+    label: 'reorder siblings',
+    expect: 'target',
+    apply: ($, el) => {
+      const $parent = $(el).parent();
+      const kids = $parent.children().toArray();
+      if (kids.length < 3) return false;
+      $parent.empty();
+      [...kids].reverse().forEach((k) => $parent.append(k));
+      return true;
+    },
+  },
+  {
+    id: 'strip_id',
+    label: 'strip id and data attributes',
+    expect: 'target',
+    apply: ($, el) => {
+      const $el = $(el);
+      $el.removeAttr('id');
+      Object.keys(el.attribs || {})
+        .filter((k) => k.startsWith('data-') && k !== TRUTH_ATTR)
+        .forEach((k) => $el.removeAttr(k));
+      // also strip ids on the ancestor chain, which is what kills id_xpath
+      $el.parents().each((i, p) => {
+        if (i < 4) $(p).removeAttr('id');
+      });
+      return true;
+    },
+  },
+  {
+    id: 'translate_text',
+    label: 'translate visible text',
+    expect: 'target',
+    apply: ($, el) => {
+      // rewrite the WHOLE page, not just the target -- a translated site is a
+      // uniform change, and only rewriting the target would make it trivially
+      // identifiable as "the odd one out"
+      $('body')
+        .find('*')
+        .addBack()
+        .contents()
+        .each((i, n) => {
+          if (n.type === 'text' && n.data.trim()) n.data = rewriteWords(n.data);
+        });
+      return true;
+    },
+  },
+  {
+    id: 'remove_field',
+    label: 'remove the field entirely',
+    expect: 'none', // <-- tests tau. The only correct answer is "I do not know".
+    apply: ($, el) => {
+      $(el).remove();
+      return true;
+    },
+  },
+  {
+    id: 'duplicate_similar',
+    label: 'duplicate a near-identical decoy',
+    expect: 'ambiguous', // <-- tests delta. A twin sits next to the real thing.
+    apply: ($, el) => {
+      const $el = $(el);
+      const $twin = $el.clone();
+      $twin.removeAttr(TRUTH_ATTR);
+      // a decoy that is close but not identical: same shape, adjacent wording
+      const t = $twin.text();
+      $twin.text(t.replace(/\b(\d{4})\b/, (m) => String(Number(m) + 1)) + ' (archived)');
+      $el.after($twin);
+      return true;
+    },
+  },
+  {
+    id: 'combo_redesign',
+    label: 'combo: wrapper + class rename + tag swap',
+    expect: 'target',
+    apply: ($, el) => {
+      const $el = $(el);
+      const cls = ($el.attr('class') || '').split(/\s+/).filter(Boolean);
+      if (cls.length) $el.attr('class', cls.map((c) => `v2-${c}`).join(' '));
+      $el.wrap('<div class="v2-shell"></div>');
+      return true;
+    },
+  },
+];
+
+/** Mark the ground-truth element so we can recognise it after mutation. */
+export function markTarget($, el) {
+  $(el).attr(TRUTH_ATTR, '1');
+}
+
+export function isTarget(el) {
+  return !!(el && el.attribs && el.attribs[TRUTH_ATTR]);
+}
