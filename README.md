@@ -153,6 +153,90 @@ a project whose entire claim is a measurement would be worse than the 14 MB.
 `npm run corpus` refetches them from scratch; `corpus/manifest.json` records each
 capture's URL, Wayback timestamp and content digest.
 
+## Self-hosting
+
+Three services: `web` serves and writes decisions, `worker` owns
+fetch → detect → heal → gate → publish, and Postgres holds the store. Page
+captures live on a mounted volume, content-addressed, so an unchanged page is
+the same file and pruning is `rm`.
+
+Copy `.env.example` to `.env` first. Pick whichever runtime you already have —
+the image is the same OCI build in all three cases.
+
+### Docker Compose — works everywhere
+
+```bash
+docker compose up -d
+docker compose run --rm web npm run db:migrate
+```
+
+The canonical path, and the one a Linux VPS should run.
+
+### Podman — rootless, no daemon
+
+```bash
+podman compose up -d
+podman compose run --rm web npm run db:migrate
+```
+
+Compose files are portable, so this is the same file.
+
+### Apple Container — Apple Silicon Macs
+
+Apple's `container` (1.0.0) runs Linux containers in lightweight VMs with no
+daemon. Apple [declined to make Compose a core
+feature](https://github.com/apple/container/pull/239), and the community shims
+are immature, so Assay ships plain `container` CLI scripts instead of depending
+on one:
+
+```bash
+./scripts/container-up.sh          # build, start postgres, migrate, start web
+./scripts/container-down.sh        # stop; volumes survive
+./scripts/container-down.sh --volumes   # stop and delete data
+```
+
+Ports are overridable if 5432 or 3000 are already taken:
+
+```bash
+ASSAY_PGPORT=55432 ASSAY_WEBPORT=53000 ./scripts/container-up.sh
+```
+
+**This is macOS on Apple Silicon only** — a fine local-development and
+Mac-self-host path, not a substitute for a Linux host in production.
+
+### Two things that differ under Apple Container
+
+Both are handled by the scripts; they are documented because they will bite
+anyone adapting them.
+
+**No container-name DNS.** Compose gives you `postgres` as a hostname for free.
+Apple Container does not resolve container names, and the only name-based
+alternative (`container system dns create`) requires administrator rights —
+which a self-host script has no business demanding. `container-up.sh` reads the
+address off the running container with `container inspect` and builds
+`DATABASE_URL` from it.
+
+**Volumes are real filesystems.** They carry a `lost+found`, so `initdb`
+refuses to use the mount point directly as its data directory. Both the compose
+file and the script set `PGDATA` to a subdirectory, which is the Postgres
+image's own recommendation and is harmless everywhere.
+
+### Verified, and not
+
+`container-up.sh` was exercised end to end on Apple Container 1.0.0 / macOS
+arm64: image builds, Postgres becomes ready, migrations apply, all seven tables
+land, `GET /` returns 200 and `/api/health` reports the store reachable.
+Re-running is idempotent, and teardown keeps volumes unless asked otherwise.
+
+**The Docker and Podman paths are unexercised** — neither runtime is installed
+on the machine this was written on. The compose file is the D1 shape plus the
+`PGDATA` fix; treat it as reviewed, not tested.
+
+The `worker` service is commented out in `docker-compose.yml` and absent from
+the scripts: `tools/worker.js` does not exist yet (it arrives with scheduling).
+Shipping an `up` that crashes on a missing entrypoint would be worse than
+shipping one that starts what exists.
+
 ## Design
 
 The full product design lives in Figma — 44 wireframes organized as 18 user flows

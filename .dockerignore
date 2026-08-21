@@ -1,0 +1,15 @@
+# Build context hygiene. node_modules is reinstalled in the image; the rest is
+# either regenerable, huge, or irrelevant to a running container.
+node_modules
+**/node_modules
+web/.next
+.git
+.env
+.env.*
+!.env.example
+captures/
+design/
+docs/
+app/vendor/
+*.log
+.DS_Store
