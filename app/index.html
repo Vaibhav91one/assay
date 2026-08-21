@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Assay — self-healing scraper observatory</title>
+<style>
+  :root{
+    --bg:#0c0d10; --panel:#131519; --line:#22252c; --line2:#2e323b;
+    --fg:#e8eaee; --dim:#8b919d; --dimmer:#5d636e;
+    --ok:#3fb27f; --heal:#4a9eff; --warn:#e8a33d; --stop:#e05c5c;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  a{color:var(--heal)}
+  .wrap{max-width:1180px;margin:0 auto;padding:32px 24px 80px}
+
+  header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
+    padding-bottom:18px;border-bottom:1px solid var(--line);margin-bottom:28px}
+  h1{font-size:20px;margin:0;letter-spacing:-.01em}
+  .tag{font:11px/1 var(--mono);color:var(--dim);border:1px solid var(--line2);
+    padding:5px 8px;border-radius:5px}
+  .spacer{flex:1}
+
+  h2{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);
+    margin:38px 0 14px;font-weight:600}
+  h2:first-of-type{margin-top:0}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px}
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+
+  .stat{font:26px/1.1 var(--mono);letter-spacing:-.02em}
+  .stat small{font-size:12px;color:var(--dim);letter-spacing:0}
+  .lbl{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px}
+
+  /* run strip */
+  .strip{display:flex;gap:2px;flex-wrap:wrap;margin-top:6px}
+  .run{width:15px;height:26px;border-radius:2px;border:0;padding:0;cursor:pointer;
+    background:var(--line2);transition:transform .08s}
+  .run:hover{transform:translateY(-2px)}
+  .run.ok{background:#1e3f33}
+  .run.heal{background:var(--heal)}
+  .run.abstain{background:var(--warn)}
+  .run.sel{outline:2px solid var(--fg);outline-offset:1px}
+
+  /* the margin bar - this is the design */
+  .cand{margin:11px 0}
+  .cand .top{display:flex;gap:10px;align-items:baseline;font-size:13px}
+  .cand .val{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cand .sc{font:12px/1 var(--mono);color:var(--dim)}
+  .bar{height:9px;border-radius:5px;background:#1b1e24;margin-top:5px;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:5px;background:var(--line2)}
+  .cand.win .bar i{background:var(--heal)}
+  .cand.win .sc{color:var(--fg)}
+
+  .marginband{margin:14px 0 4px;padding:11px 13px;border-radius:8px;
+    border:1px dashed var(--line2);display:flex;align-items:center;gap:12px}
+  .marginband .n{font:19px/1 var(--mono)}
+  .marginband .t{font-size:12px;color:var(--dim)}
+  .verdict{display:inline-flex;align-items:center;gap:7px;font:12px/1 var(--mono);
+    padding:6px 10px;border-radius:6px;text-transform:uppercase;letter-spacing:.06em}
+  .v-heal{background:rgba(74,158,255,.13);color:var(--heal);border:1px solid rgba(74,158,255,.3)}
+  .v-abstain{background:rgba(232,163,61,.13);color:var(--warn);border:1px solid rgba(232,163,61,.3)}
+  .v-ok{background:rgba(63,178,127,.12);color:var(--ok);border:1px solid rgba(63,178,127,.28)}
+
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.07em;
+    color:var(--dim);font-weight:600;padding:0 10px 9px 0;border-bottom:1px solid var(--line)}
+  td{padding:9px 10px 9px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+  tr:last-child td{border-bottom:0}
+  .num{font-family:var(--mono);text-align:right}
+  .bad{color:var(--stop)} .good{color:var(--ok)} .mid{color:var(--warn)}
+  .mono{font-family:var(--mono);font-size:12px}
+  .muted{color:var(--dim)}
+  .note{color:var(--dim);font-size:12.5px;margin-top:12px;line-height:1.6}
+  .kv{display:flex;justify-content:space-between;gap:12px;padding:6px 0;
+    border-bottom:1px solid var(--line);font-size:13px}
+  .kv:last-child{border-bottom:0}
+  .kv span:last-child{font-family:var(--mono);font-size:12px}
+
+  .tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+  .tab{background:#0f1115;border:1px solid var(--line2);color:var(--dim);
+    font:12px/1 var(--mono);padding:8px 13px;border-radius:6px;cursor:pointer}
+  .tab:hover{color:var(--fg)}
+  .tab.on{background:rgba(74,158,255,.12);border-color:rgba(74,158,255,.42);color:var(--heal)}
+  .mer{overflow-x:auto;padding:8px 0;min-height:200px}
+  .mer svg{max-width:100%;max-height:460px;height:auto;display:block;margin:0 auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Assay</h1>
+  <span class="muted">self-healing scraper observatory</span>
+  <span class="spacer"></span>
+  <span class="tag" id="collector"></span>
+  <span class="tag" id="thr"></span>
+</header>
+
+<!-- 1. the headline claim -->
+<h2>The number nobody publishes</h2>
+<div class="panel">
+  <table id="arms">
+    <thead><tr>
+      <th>arm</th><th class="num">n</th><th class="num">exact</th>
+      <th class="num">value correct</th><th class="num">value WRONG</th><th class="num">abstained</th>
+    </tr></thead>
+    <tbody></tbody>
+  </table>
+  <p class="note">
+    Ground truth is exact: every case is a page we mutated ourselves, so the correct
+    answer is known. <b>Value wrong</b> means a confidently incorrect value was returned
+    and stored — silently, into your database.
+  </p>
+  <p class="note">
+    The gate eliminates every wrong answer. It is not free: correct answers fall from
+    82.2% to 68.9%, and the difference becomes an explicit refusal rather than a guess.
+    That trade is the product. If you would rather keep the coverage, δ 0.12 removes
+    three quarters of the wrong answers for 4.4 points — the whole curve is below.
+  </p>
+</div>
+
+<!-- 1b. how it works -->
+<h2>The flow</h2>
+<div class="panel">
+  <div class="tabs" id="flowtabs">
+    <button class="tab on" data-d="pipe">Pipeline</button>
+    <button class="tab" data-d="det">Detector</button>
+    <button class="tab" data-d="gate">Gate</button>
+  </div>
+  <div class="mer" id="flowbox"></div>
+  <p class="note" id="flownote"></p>
+</div>
+
+<!-- 2. operational history -->
+<h2>Runs <span class="muted" id="runsum"></span></h2>
+<div class="panel">
+  <div class="strip" id="strip"></div>
+  <p class="note">
+    One cell per scheduled run across three real recall sites, Jan 2024 → Aug 2026.
+    Click any run to see the decision. Dark green = nothing to do. Blue = healed.
+    Amber = abstained.
+  </p>
+</div>
+
+<!-- 3. THE decision view -->
+<h2>Decision</h2>
+<div class="panel" id="decision"></div>
+
+<!-- 4. calibration -->
+<h2>Where the thresholds came from</h2>
+<div class="panel">
+  <div class="grid3" id="ops"></div>
+  <p class="note">
+    Swept 110 threshold pairs against the mutation set and picked the operating point
+    on the Erratum principle — <i>a no-match is always preferable to a mismatch</i>.
+    Similo proposed this mechanism and explicitly declined to specify a value; no vendor
+    publishes one. These are derived from measurement, and the whole grid ships in
+    <span class="mono">results/sweep.json</span>.
+  </p>
+</div>
+
+<!-- 5. live bright data -->
+<h2>Live Bright Data snapshot</h2>
+<div class="panel">
+  <div id="verdictline" style="margin-bottom:14px"></div>
+  <table id="audit">
+    <thead><tr>
+      <th>field promised by the approved schema</th>
+      <th class="num">present</th><th class="num">non-null</th><th class="num">null rate</th><th>verdict</th>
+    </tr></thead>
+    <tbody></tbody>
+  </table>
+  <p class="note" id="auditnote"></p>
+</div>
+
+</div>
+
+<script src="vendor/mermaid.min.js"></script>
+<script src="data.js"></script>
+<script>
+const M = window.ASSAY;
+const pct = (x) => (x * 100).toFixed(1) + '%';
+const el = (t, c, h) => { const e = document.createElement(t); if (c) e.className = c;
+  if (h !== undefined) e.innerHTML = h; return e; };
+
+document.getElementById('collector').textContent = 'collector ' + M.collector;
+document.getElementById('thr').textContent = 'τ ' + M.thresholds.tau + '  δ ' + M.thresholds.delta;
+
+
+/* ---- flow diagrams ---- */
+const DIAG = {
+  pipe: {
+    note: 'Healing is never triggered by the healer. A separate detector runs on every scrape, and only a detector signal with a cause attributed to the selector reaches the ranker. Everything ends in a proof record, including the refusals.',
+    src: `flowchart LR
+  A([scheduled run]) --> B[[Bright Data<br/>Scraper Studio]]
+  B --> C{{DETECT<br/>4 signals}}
+  C -->|healthy| P[/publish row/]
+  C -->|broken| E[ATTRIBUTE cause]
+  E -->|block · soft-404 · A/B| R[retry<br/>do NOT heal]
+  E -->|selector_break<br/>wrong_value| G[RANK<br/>score every element]
+  G --> H{{GATE}}
+  H -->|score &gt; τ AND margin &gt; δ| I[heal]
+  H -->|thin margin| Z((ABSTAIN))
+  H -->|nothing good enough| Z
+  I --> K[/proof record/]
+  Z --> K
+  classDef bd fill:#12304f,stroke:#4a9eff,color:#e8eaee
+  classDef gate fill:#3d3115,stroke:#e8a33d,color:#e8eaee
+  classDef stop fill:#3f1c1c,stroke:#e05c5c,color:#e8eaee
+  classDef out fill:#12301f,stroke:#3fb27f,color:#e8eaee
+  class B bd
+  class C,H gate
+  class Z,R stop
+  class P,K out`
+  },
+  det: {
+    note: 'shape_mismatch is the one that matters: the selector resolved, returned one element, threw nothing — and the value is wrong. It fired on 13 of 24 breaks here, 54%. Every competitor heals only on an exception or a zero-result match, so all of them store that value silently. Counts exceed 24 because breaks fire more than one signal: 8 fired two, 3 fired three. A skeleton-hash change corroborates any of these but never fires alone — a site can rebuild its whole template and still return the right value, and that is a success, not an incident.',
+    src: `flowchart LR
+  V([value from<br/>stored selector]) --> S1{returned<br/>anything?}
+  S1 -->|no| X1[value_missing<br/>11 breaks]
+  S1 -->|yes| S2{matches the shape<br/>captured at run 1?}
+  S2 -->|no| X2[shape_mismatch<br/>13 breaks · 54%]
+  S2 -->|yes| S3{2nd anchor alive<br/>and agreeing?}
+  S3 -->|no| X3[anchors_died<br/>11 breaks]
+  S3 -->|yes| S4{null-rate<br/>robust-z spike?}
+  S4 -->|yes| X5[null_rate_spike<br/>3 breaks]
+  S4 -->|no| OK[/healthy<br/>50 of 74 runs/]
+  classDef sig fill:#3d3115,stroke:#e8a33d,color:#e8eaee
+  classDef big fill:#3f1c1c,stroke:#e05c5c,color:#e8eaee
+  classDef out fill:#12301f,stroke:#3fb27f,color:#e8eaee
+  class X1,X3,X5 sig
+  class X2 big
+  class OK out`
+  },
+  gate: {
+    note: 'Two guards. τ asks "is anything on this page good enough" — it catches the field being deleted. δ asks "is the winner clearly better than the runner-up" — it catches two things looking equally right. Neither exists in Scrapling (floor only), Healenium (cap only) or COLOR (suggests a fix for every break). A tie whose candidates carry the same value is not a real ambiguity, so it is allowed through.',
+    src: `flowchart TD
+  R[ranked candidates] --> T{best score<br/>&gt; τ 0.6?}
+  T -->|no| A1((ABSTAIN<br/>below_tau))
+  T -->|yes| D{margin<br/>&gt; δ 0.16?}
+  D -->|yes| H1[HEAL<br/>clear_margin]
+  D -->|no| B{tied candidates<br/>same value?}
+  B -->|yes| H2[HEAL<br/>benign_tie]
+  B -->|no| A2((ABSTAIN<br/>thin_margin))
+  classDef gate fill:#3d3115,stroke:#e8a33d,color:#e8eaee
+  classDef heal fill:#12304f,stroke:#4a9eff,color:#e8eaee
+  classDef stop fill:#3f1c1c,stroke:#e05c5c,color:#e8eaee
+  class T,D,B gate
+  class H1,H2 heal
+  class A1,A2 stop`
+  }
+};
+
+if (window.mermaid) {
+  mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'strict',
+    flowchart: { nodeSpacing: 26, rankSpacing: 42, curve: 'basis', padding: 8,
+      useMaxWidth: true, htmlLabels: true },
+    themeVariables: { background: '#131519', primaryColor: '#1b1e24',
+      primaryTextColor: '#e8eaee', lineColor: '#5d636e', fontSize: '12px',
+      fontFamily: 'ui-monospace,SFMono-Regular,Menlo,monospace' } });
+}
+
+let diagN = 0;
+async function drawDiagram(key) {
+  const box = document.getElementById('flowbox');
+  const d = DIAG[key];
+  document.getElementById('flownote').textContent = d.note;
+  if (!window.mermaid) { box.textContent = 'mermaid failed to load'; return; }
+  try {
+    const { svg } = await mermaid.render('mmd' + (diagN++), d.src);
+    box.innerHTML = svg;            // mermaid output, securityLevel strict
+  } catch (err) {
+    box.textContent = 'diagram error: ' + err.message;
+  }
+}
+document.querySelectorAll('#flowtabs .tab').forEach((t) => {
+  t.onclick = () => {
+    document.querySelectorAll('#flowtabs .tab').forEach((x) => x.classList.remove('on'));
+    t.classList.add('on');
+    drawDiagram(t.dataset.d);
+  };
+});
+drawDiagram('pipe');
+
+/* ---- arms table ---- */
+const LABEL = { naive: 'naive — first tag match', plain: 'similarity, no gate',
+  gated: 'margin gate (τ 0.6 / δ 0.16)' };
+const tb = document.querySelector('#arms tbody');
+for (const [k, a] of Object.entries(M.bench.arms)) {
+  if (!a || !a.n) continue;
+  const wrongPct = a.value_wrong / a.n;
+  const cls = wrongPct === 0 ? 'good' : wrongPct > .3 ? 'bad' : 'mid';
+  const tr = el('tr', k === 'gated' ? 'win' : '');
+  tr.innerHTML =
+    `<td>${esc(LABEL[k] || k)}${k === 'gated' ? ' &nbsp;<span class="verdict v-heal">ours</span>' : ''}</td>` +
+    `<td class="num muted">${a.n}</td>` +
+    `<td class="num">${pct(a.correct / a.n)}</td>` +
+    `<td class="num">${pct(a.value_ok / a.n)}</td>` +
+    `<td class="num ${cls}"><b>${pct(wrongPct)}</b></td>` +
+    `<td class="num muted">${pct((a.abstain_right + a.abstain_wrong) / a.n)}</td>`;
+  tb.appendChild(tr);
+}
+
+/* ---- run strip ---- */
+const strip = document.getElementById('strip');
+const counts = { ok: 0, heal: 0, abstain: 0 };
+M.events.forEach((e, i) => {
+  counts[e.event] = (counts[e.event] || 0) + 1;
+  const b = el('button', 'run ' + e.event);
+  b.title = `run ${e.run} · ${e.site} · ${e.capture} · ${e.event}`; // .title is a property assignment, not HTML
+  b.onclick = () => show(i);
+  strip.appendChild(b);
+});
+document.getElementById('runsum').textContent =
+  `— ${M.events.length} runs · ${counts.ok} clean · ${counts.heal} healed · ${counts.abstain} abstained`;
+
+/* ---- decision view: the margin bar is the design ---- */
+function show(i) {
+  [...strip.children].forEach((c, j) => c.classList.toggle('sel', i === j));
+  const e = M.events[i];
+  const d = document.getElementById('decision');
+  d.innerHTML = '';
+
+  const head = el('div');
+  head.style.cssText = 'display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:4px';
+  const vcls = e.event === 'heal' ? 'v-heal' : e.event === 'abstain' ? 'v-abstain' : 'v-ok';
+  const vtxt = e.event === 'heal' ? 'healed' : e.event === 'abstain' ? 'abstained' : 'no action';
+  head.appendChild(el('span', 'verdict ' + vcls, vtxt));
+  head.appendChild(el('span', 'muted', `run ${esc(e.run)} · ${esc(e.site)} · capture ${esc(e.capture)}`));
+  d.appendChild(head);
+
+  d.appendChild(el('p', 'note', `<b>Diagnosis.</b> ${esc(e.diagnosis)}`));
+
+  if (e.event === 'ok') {
+    d.appendChild(el('p', 'note',
+      e.skeleton.changed
+        ? 'The page template changed but the field still returns the right value. That is a success, not an incident — a detector that alarms on every redesign earns being ignored.'
+        : 'Nothing changed.'));
+    return;
+  }
+
+  (e.candidates || []).forEach((c, idx) => {
+    const w = el('div', 'cand' + (idx === 0 ? ' win' : ''));
+    w.innerHTML =
+      `<div class="top"><span class="val">${idx === 0 ? '→ ' : ''}${esc(c.value || '(empty)')}</span>` +
+      `<span class="sc">${c.score.toFixed(4)}</span></div>` +
+      `<div class="bar"><i style="width:${(c.score * 100).toFixed(1)}%"></i></div>` +
+      `<div class="mono muted" style="margin-top:3px;font-size:11px">${esc(c.selector)}</div>`;
+    d.appendChild(w);
+  });
+
+  if (e.margin != null) {
+    const passes = e.margin > M.thresholds.delta;
+    const band = el('div', 'marginband');
+    band.style.borderColor = passes ? 'rgba(74,158,255,.4)' : 'rgba(232,163,61,.4)';
+    band.innerHTML =
+      `<span class="n">${e.margin.toFixed(4)}</span>` +
+      `<span class="t">margin between #1 and #2 &nbsp;·&nbsp; δ = ${M.thresholds.delta} &nbsp;·&nbsp; ` +
+      `${passes ? 'clear enough to act' : 'too close to call'}</span>`;
+    d.appendChild(band);
+  }
+
+  const kv = el('div');
+  kv.style.marginTop = '10px';
+  const rows = [
+    ['attributed cause', e.attributed_cause],
+    ['decision', e.decision + ' (' + e.reason + ')'],
+    ['skeleton', e.skeleton.changed ? e.skeleton.before + ' → ' + e.skeleton.after : 'unchanged'],
+    ['baseline value', e.baseline_value],
+    ['healed to', e.healed_to ? e.healed_to.value : '— nothing written'],
+    ['golden sha256', e.golden_sha256],
+  ];
+  rows.forEach(([k, v]) => kv.appendChild(
+    el('div', 'kv', `<span class="muted">${k}</span><span>${esc(v)}</span>`)));
+  d.appendChild(kv);
+}
+// Everything rendered here is scrape-derived, i.e. third-party text we do not
+// control. Escapes quotes as well as angle brackets so it is safe in attribute
+// context too, not just as element content.
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+/* ---- calibration ---- */
+const ops = document.getElementById('ops');
+const pick = (t, dl) => M.sweep.grid.find((g) => g.tau === t && g.delta === dl);
+[['no gate at all', pick(0.3, 0)], ['the knee', pick(0.6, 0.12)],
+ ['shipped default', pick(0.6, 0.16)]].forEach(([name, g], i) => {
+  if (!g) return;
+  const p = el('div', 'panel');
+  p.style.background = i === 2 ? 'rgba(74,158,255,.07)' : '#0f1115';
+  p.innerHTML = `<div class="lbl">${esc(name)} &nbsp; <span class="mono">τ${esc(g.tau)} δ${esc(g.delta)}</span></div>` +
+    `<div class="stat ${g.wrongPct === 0 ? 'good' : 'bad'}">${pct(g.wrongPct)} <small>wrong</small></div>` +
+    `<div class="muted" style="margin-top:8px;font-size:12.5px">` +
+    `${pct(g.correctPct)} correct · ${pct(g.abstainPct)} abstained</div>`;
+  ops.appendChild(p);
+});
+
+/* ---- live audit ---- */
+const ab = document.querySelector('#audit tbody');
+let unhealthy = 0, absent = 0;
+M.audit.forEach((f) => {
+  let verdict, cls;
+  if (f.present === 0) { verdict = 'ABSENT — promised, never emitted'; cls = 'bad'; absent++; unhealthy++; }
+  else if (f.nonNull === 0) { verdict = 'all null'; cls = 'bad'; unhealthy++; }
+  else if (f.nullRate > 0.5) { verdict = 'sparse'; cls = 'mid'; unhealthy++; }
+  else { verdict = 'ok'; cls = 'good'; }
+  const tr = el('tr');
+  tr.innerHTML = `<td class="mono">${esc(f.field)}</td>` +
+    `<td class="num muted">${esc(f.present)}/${esc(f.total)}</td>` +
+    `<td class="num">${esc(f.nonNull)}</td>` +
+    `<td class="num ${cls}">${pct(f.nullRate)}</td>` +
+    `<td class="${cls}">${esc(verdict)}</td>`;
+  ab.appendChild(tr);
+});
+document.getElementById('verdictline').innerHTML =
+  `<span class="verdict v-ok">Bright Data: 100% success · 0 failed crawls</span> ` +
+  `<span class="muted" style="margin-left:10px">snapshot ${esc(M.snapshot)} · ${esc(M.liveCount)} records</span>`;
+document.getElementById('auditnote').innerHTML =
+  `<b>${unhealthy} of ${M.audit.length}</b> promised fields are not healthy, and <b>${absent}</b> never ` +
+  `arrived at all — while the platform reported the run as fully successful. Nothing here is a crawl ` +
+  `failure: every page fetched fine. The gap is between what the schema promised and what the ` +
+  `collector delivered, and nothing checks it.`;
+
+// findIndex returns -1 when there is no heal, and -1 || 0 is -1, not 0
+show(Math.max(0, M.events.findIndex((e) => e.event === 'heal')));
+</script>
+</body>
+</html>
