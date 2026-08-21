@@ -102,8 +102,9 @@ const run = async () => {
         skeleton: { before: baselineSkeleton, after: skel },
         anchors: readAnchors($n),
         anchorsBefore: baselineAnchors,
+        pageBytes: $n.html().length,
       });
-      nullHistory.push({ nullRate: value == null ? 1 : 0 });
+      nullHistory.push({ nullRate: value == null ? 1 : 0, pageBytes: $n.html().length });
 
       const base = {
         run: runNo,

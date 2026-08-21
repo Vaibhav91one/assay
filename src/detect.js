@@ -51,6 +51,10 @@ export function detect({
   // "anchor is null" cannot be told apart from "anchor was never there" -- and
   // a detector that fires on every page lacking an h1 is noise, not signal.
   anchorsBefore = null,
+  // serialized page length this run. Same median+MAD machinery as the null
+  // rate; only SHRINKAGE fires (a page that grows is content, a page that
+  // loses a third of itself is a template failure or a block page).
+  pageBytes = null,
 }) {
   const signals = [];
 
@@ -86,6 +90,22 @@ export function detect({
           ? `null_rate_spike:zero_variance_baseline (was ${rz.med}, now ${now})`
           : `null_rate_spike:z=${rz.z.toFixed(1)}`
       );
+    }
+  }
+
+  if (pageBytes != null && history.length >= 3) {
+    const sizes = history.map((h) => h.pageBytes).filter((v) => v != null);
+    if (sizes.length >= 3) {
+      const rz = robustZ(sizes, pageBytes);
+      // 5% materiality floor. Without it the zero-variance branch fires on a
+      // single byte and reports "0% shorter" -- a hair trigger wearing the
+      // costume of a detector. Real template losses are double digits.
+      const material = pageBytes < rz.med * 0.95;
+      const shrunk = material && (rz.mad === 0 || rz.z < -3.5);
+      if (shrunk) {
+        const pct = Math.round((1 - pageBytes / rz.med) * 100);
+        signals.push(`page_shrunk:${pct}% shorter than the last ${sizes.length} runs`);
+      }
     }
   }
 

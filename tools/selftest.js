@@ -16,6 +16,7 @@ import { ned, jaccard, sharedWords, score } from '../src/heal.js';
 import { healGated } from '../src/heal.js';
 import { MUTATIONS, markTarget } from '../src/mutate.js';
 import { publishRow, STATUSES } from '../src/envelope.js';
+import { detect } from '../src/detect.js';
 
 const capturesOf = async (site) =>
   (await readdir(`corpus/${site}`)).filter((f) => f.endsWith('.html')).sort();
@@ -291,6 +292,27 @@ const run = async () => {
       assert.throws(() => publishRow({
         values: {}, statuses: { x: { status: 'confident' } }, run: 'r', proof: 'p',
       }));
+    });
+  }
+
+  {
+    console.log('\npage-size signal');
+    const steady = [{ pageBytes: 100000 }, { pageBytes: 101000 }, { pageBytes: 99500 }];
+    check('a page 38% shorter than its history fires page_shrunk', () => {
+      const d = detect({ field: 'f', value: 'ok', history: steady, pageBytes: 62000 });
+      assert.ok(d.signals.some((x) => x.startsWith('page_shrunk:')), d.diagnosis);
+    });
+    check('a page its usual size stays quiet', () => {
+      const d = detect({ field: 'f', value: 'ok', history: steady, pageBytes: 100200 });
+      assert.ok(!d.signals.some((x) => x.startsWith('page_shrunk:')), d.diagnosis);
+    });
+    check('a page that GREW stays quiet -- only shrinkage fires', () => {
+      const d = detect({ field: 'f', value: 'ok', history: steady, pageBytes: 200000 });
+      assert.ok(!d.signals.some((x) => x.startsWith('page_shrunk:')), d.diagnosis);
+    });
+    check('short history says nothing', () => {
+      const d = detect({ field: 'f', value: 'ok', history: steady.slice(0, 2), pageBytes: 10 });
+      assert.ok(!d.signals.some((x) => x.startsWith('page_shrunk:')), d.diagnosis);
     });
   }
 
