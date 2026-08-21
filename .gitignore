@@ -52,3 +52,7 @@ app/vendor/
 # Content-addressed page captures. Regenerable with `npm run replay`, so they
 # are evidence you can rebuild rather than evidence you must keep.
 captures/
+
+# Next build output and its turbopack cache.
+web/.next/
+web/out/

@@ -1,0 +1,55 @@
+# Self-host shape: three services, one volume. The hosted instance runs this
+# same artifact, so there is one path to maintain and test.
+#
+#   docker compose up -d
+#
+# `web` serves and writes decisions; `worker` owns fetch -> detect -> heal ->
+# gate -> publish. Next never runs a scrape: a run would hold a request open and
+# compete with page loads, and no request timeout makes that a good idea.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: assay
+      POSTGRES_PASSWORD: assay
+      POSTGRES_DB: assay
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U assay"]
+      interval: 5s
+      retries: 10
+    ports:
+      - "5432:5432"
+
+  web:
+    build: .
+    command: npm --workspace web run start
+    environment:
+      DATABASE_URL: postgres://assay:assay@postgres:5432/assay
+      ASSAY_CAPTURES: /data/captures
+      AUTH_MODE: ${AUTH_MODE:-none}
+    volumes:
+      - captures:/data/captures
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+
+  worker:
+    build: .
+    command: node tools/worker.js
+    environment:
+      DATABASE_URL: postgres://assay:assay@postgres:5432/assay
+      ASSAY_CAPTURES: /data/captures
+    volumes:
+      - captures:/data/captures
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  captures:

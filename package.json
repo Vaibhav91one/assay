@@ -16,14 +16,29 @@
     "docs": "node tools/build-docs.js",
     "headtohead": "node tools/headtohead.js",
     "bd:heal": "node tools/bd-heal.js",
-    "demo": "node tools/demo.js"
+    "demo": "node tools/demo.js",
+    "ingest": "node tools/ingest.js",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
     "cheerio": "^1.2.0",
+    "drizzle-orm": "^0.45.2",
     "fastest-levenshtein": "^1.0.16",
-    "mermaid": "^11.17.0"
+    "mermaid": "^11.17.0",
+    "pg": "^8.23.0"
   },
   "devDependencies": {
+    "dotenv": "^17.4.2",
+    "drizzle-kit": "^0.31.10",
     "marked": "^18.0.10"
+  },
+  "workspaces": [
+    "web"
+  ],
+  "exports": {
+    "./engine/*": "./src/*",
+    "./store": "./src/store/index.js",
+    "./store/captures": "./src/store/captures.js"
   }
 }
