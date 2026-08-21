@@ -62,7 +62,7 @@ across an 11 x 10 grid; 0.60 / 0.16 is what came out.
 
 ## The numbers
 
-135 cases: nine deterministic mutations applied to real archived pages from three
+153 cases: ten deterministic mutations applied to real archived pages from three
 sites. Ground truth is marked before mutation using an attribute the scorer never
 reads, so labelling cannot leak into the score.
 
@@ -70,9 +70,9 @@ Three arms, same cases:
 
 | arm | correct | wrong values published | abstained |
 |---|---|---|---|
-| naive (first element with the same tag) | 48 | **75** | 6 |
-| plain (weighted similarity, no gate) | 111 | **24** | 0 |
-| **gated (similarity + margin gate)** | 93 | **0** | 42 |
+| naive (first element with the same tag) | 48 | **93** | 12 |
+| plain (weighted similarity, no gate) | 117 | **36** | 0 |
+| **gated (similarity + margin gate)** | 99 | **0** | 54 |
 
 `npm run bench` reproduces this. Numbers are read from `results/bench.json`.
 
@@ -87,13 +87,13 @@ The gated one abstains 18 out of 18. That is the gate working exactly as intende
 
 On `duplicate_similar`, where a near-identical decoy sits beside the real value,
 the ungated healer gets 12 right and 6 wrong. The gated one abstains on **all 18**,
-including the 12 it would have got right. It is over-cautious there, and 24 of the
-42 abstentions across the whole benchmark are cases a human now has to look at
+including the 12 it would have got right. It is over-cautious there, and 36 of the
+54 abstentions across the whole benchmark are cases a human now has to look at
 that could in principle have been automated.
 
-That is the deal Assay offers: about 18% of breaks land in a review queue instead
+That is the deal Assay offers: about 24% of breaks land in a review queue instead
 of being resolved automatically, and in exchange the wrong-value count goes from
-24 to 0. For product-recall monitoring, where publishing the wrong hazard for a
+36 to 0. For product-recall monitoring, where publishing the wrong hazard for a
 child's car seat is worse than publishing nothing, we think that is the right way
 round. For a price tracker it might not be. The thresholds are arguments to every
 tool, so the trade is yours to set.
@@ -105,7 +105,7 @@ Two different notions, reported separately, because the literature conflates the
 - **Exact node** asks whether the healer found the same DOM element.
 - **Value equivalence** asks whether it produced the same string.
 
-The gated arm scores 87 on exact node but 93 on value: six times it picked a
+The gated arm scores 93 on exact node but 99 on value: six times it picked a
 different element that happened to contain the identical text. For scraping,
 value is what matters. For test automation, node identity does. Reporting only
 the flattering one would be cheating, so both are in `results/bench.json`.
@@ -138,8 +138,8 @@ about, arriving unprompted from production.
 ```bash
 npm install
 npm run demo      # 30 seconds: one break heals, one publishes a labelled hole
-npm test          # 30 assertions against the real corpus
-npm run bench     # the 135-case benchmark
+npm test          # 34 assertions against the real corpus
+npm run bench     # the 153-case benchmark
 npm run sweep     # the threshold calibration
 npm run replay    # 74 runs over the full corpus, writes results/events.jsonl
 npm run audit     # the Bright Data output gap
@@ -171,12 +171,12 @@ implementation path, and the engine), `docs/PLATFORM-GAPS.md`, and `docs/STATES.
 src/fingerprint.js   describe an element well enough to find it again (zero imports)
 src/heal.js          weighted similarity, ranking, and the margin gate
 src/detect.js        notice the break before anyone reads the data
-src/mutate.js        nine deterministic mutations with exact ground truth
+src/mutate.js        ten deterministic mutations with exact ground truth
 src/sites.js         the three locked targets
 
 tools/bench.js       the benchmark          tools/sweep.js     threshold calibration
 tools/replay.js      74 runs over the corpus tools/audit.js    the Bright Data gap
-tools/selftest.js    26 assertions          tools/fetch-corpus.js  Wayback fetcher
+tools/selftest.js    34 assertions          tools/fetch-corpus.js  Wayback fetcher
 
 results/             every number this README claims, as data
 corpus/              77 archived captures

@@ -99,3 +99,11 @@ Items 1, 4, 9, 10, 11 deleted across the board; item 2 became `decisions · froz
 editing` (flow 1.2). Items 6, 7, 8, 12, 13, 14, 15 remain defined-but-undrawn: their
 consequences are specified above and use existing components (Popover, Input, Toast) —
 draw them only if a flow review stumbles on one.
+
+Chrome definitions (2026-08-21 walk):
+- `+` beside SCRAPERS — routes to the Home goal box. No new frame.
+- `Show all 14` — expands the scraper list in place. No new frame.
+- sidebar-collapse icon — collapses to an icon rail; drawn only if the rail is ever built.
+- runs table depth — `earlier runs ›` appended to the runs table (drawn on 79:2).
+- user block chevron — opens `UserMenu` (Docs · GitHub · Sign out); drawn in `sidebar · user menu`.
+- sign-in `Continue` — resolved by `sign-in · link sent` and `sign-in · unknown email` in flow 1.1.

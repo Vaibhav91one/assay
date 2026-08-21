@@ -536,6 +536,11 @@ half — is the part every other entry already has.
 
 ---
 
+- **Deliberate v2 omissions, recorded so they read as decisions:** dark mode (the
+  token approach — same tokens, 4–6% surface steps — is specced in
+  `design/variants.html`); responsive/mobile; a cmd-K command palette (the best v2
+  candidate for a keyboard-first product); timezone display on run timestamps.
+
 ## 11. Figma — what to build next
 
 **Board organization (2026-08-21):** `03 · Wireframes` is flow-organized — top-level
