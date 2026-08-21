@@ -12,11 +12,17 @@
     "replay": "node tools/replay.js",
     "audit": "node tools/audit.js",
     "app": "node tools/build-app.js",
-    "vendor": "mkdir -p app/vendor && cp node_modules/mermaid/dist/mermaid.min.js app/vendor/"
+    "vendor": "mkdir -p app/vendor && cp node_modules/mermaid/dist/mermaid.min.js app/vendor/",
+    "docs": "node tools/build-docs.js",
+    "headtohead": "node tools/headtohead.js",
+    "bd:heal": "node tools/bd-heal.js"
   },
   "dependencies": {
     "cheerio": "^1.2.0",
     "fastest-levenshtein": "^1.0.16",
     "mermaid": "^11.17.0"
+  },
+  "devDependencies": {
+    "marked": "^18.0.10"
   }
 }
