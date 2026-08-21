@@ -367,9 +367,9 @@ Things a reasonable, competent person would build, that we should refuse.
 | **Any silent fallback that keeps the row shape** | Type defaults, "closest match", coercion, quietly reading the second-best candidate. This is the exact failure we exist to name: a required integer becoming `0` is indistinguishable downstream from a genuine zero. There is no configuration flag for this. Not a setting — an absence |
 | **A "loosen this threshold" button inside the alert** | Thresholds change by editing the field contract, in a PR, with a reviewer. Letting an annoyed person widen a tolerance at 2am from inside the notification that annoyed them is how every alerting system dies. Same reason you don't clear a smoke alarm by removing its battery from the app |
 | **Auto-approve-everything mode** | Autonomy is granted per field, in bands, in the contract. A global "just fix things" switch is the feature that makes us identical to the incumbents, and it is the switch every incumbent defaults to on |
-| **A fleet dashboard: uptime tiles, health gauges, SLA rings** | This is the measurement trap wearing a UI. It is also, as a product, somebody else's. Nobody's bad day is improved by a gauge; it is improved by knowing which 4,113 rows to retract |
+| **A fleet dashboard: uptime tiles, health gauges, SLA rings** | This is the measurement trap wearing a UI. It is also, as a product, somebody else's. Nobody's bad day is improved by a gauge; it is improved by knowing which 4,113 rows to retract. **Partially overturned 2026-08-21** — the gauges refusal stands, the need does not: an unattended run needs a morning read. Ships as the Night Report, a log with no gauge, ring or percentage on it. See `docs/APP-DESIGN.md` §1 |
 | **RBAC, approval workflows, comment threads on queue items** | One owner, one decision, undo. Add the second person when a real team actually shares a queue and complains — not before |
-| **Scheduling and orchestration** | Bright Data runs the collectors. Becoming a job runner adds an on-call rotation and a class of failure that has nothing to do with our thesis |
+| **Scheduling and orchestration** | Bright Data runs the collectors. Becoming a job runner adds an on-call rotation and a class of failure that has nothing to do with our thesis. **Overturned 2026-08-21** — a product you walk away from must state its own cadence. Assay owns the schedule as declared state; it still does not execute the job. See `docs/APP-DESIGN.md` §1 |
 | **A user-facing probe transcript** | The sandboxed probe is a fine internal tie-breaker for thin margins, but "here is the experiment the robot ran on the page" is not something a user *operates* — it is something they read once and never again. Feed its outcome into the queue card as one line of justification. Do not build a screen for it |
 
 Also cut, from earlier thinking: heal-history timeline visualisations, per-site scoreboards,
@@ -389,7 +389,7 @@ are unreadable as text.
 | # | Feature | Primary surface | Also | Notes |
 |---|---|---|---|---|
 | F1 | Fragility Report | CLI (`assay fragility`) | Markdown export | Read once per quarter. A screen would be a screen nobody opens |
-| F2 | Field Contracts | Config file in repo | — | Never a settings UI. A settings UI has no diff, no review, no revert |
+| F2 | Field Contracts | Config file in repo | Read-only viewer in the app | Never a settings *editor*. A settings UI has no diff, no review, no revert. Credentials get pixels, policy gets a PR — `docs/APP-DESIGN.md` §1 |
 | F3 | Drift Watch | Webhook / chat message | CLI status | Amber only. Never pages |
 | F4 | **Quarantine** | Output envelope + storage | CLI (`assay held`), count badge in queue | The feature is mostly invisible, which is correct — its visible half is F13 |
 | F5 | Diagnosis Alert | Webhook (Slack/PagerDuty by contract) | — | Body is the diagnosis string. One per episode |

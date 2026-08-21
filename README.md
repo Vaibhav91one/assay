@@ -152,6 +152,18 @@ a project whose entire claim is a measurement would be worse than the 14 MB.
 `npm run corpus` refetches them from scratch; `corpus/manifest.json` records each
 capture's URL, Wayback timestamp and content digest.
 
+## Design
+
+The full product design lives in Figma — 44 wireframes organized as 18 user flows
+(every screen with its loading, error, warning and empty states; no placeholder
+affordances), plus a component library: 
+https://www.figma.com/design/FYnhhLeMulixqTTyjP7gJd/Assay
+
+The design documents are in this repo: `docs/APP-DESIGN.md` (the application design and
+its density rules), `docs/CRITIQUE.md` (a three-axis audit of the wireframes, the
+implementation path, and the engine), `docs/PLATFORM-GAPS.md`, and `docs/STATES.md`.
+`design/references.html` and `design/variants.html` are local reference boards.
+
 ## Layout
 
 ```
