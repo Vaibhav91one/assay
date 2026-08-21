@@ -66,7 +66,11 @@ function emit({ vars, styles, effects }) {
   L.push(` * ${colors.length} colours, ${numbers.length} numbers, ${styles.length} text styles.`);
   L.push(' */');
   L.push('');
-  L.push('@theme {');
+  // `static` matters: a plain @theme is tree-shaken, so a token nothing
+  // references yet is silently dropped from the build. These are a design
+  // system, not a utility set -- every one has to survive to the stylesheet
+  // whether a component uses it today or not.
+  L.push('@theme static {');
 
   L.push('  /* colour */');
   for (const c of colors) L.push(`  ${cssName(c.name)}: ${c.value};`);

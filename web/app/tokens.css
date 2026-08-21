@@ -5,7 +5,7 @@
  * 20 colours, 3 numbers, 20 text styles.
  */
 
-@theme {
+@theme static {
   /* colour */
   --accent-brand: #ff4d00;
   --accent-on-primary: #ffffff;

@@ -1,0 +1,9 @@
+@import 'tailwindcss';
+@import './tokens.css';
+
+/* The page ground. Everything else is a token away. */
+body {
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+}
