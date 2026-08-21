@@ -19,19 +19,23 @@
     "demo": "node tools/demo.js",
     "ingest": "node tools/ingest.js",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "apikey": "node tools/apikey.js"
   },
   "dependencies": {
     "cheerio": "^1.2.0",
     "drizzle-orm": "^0.45.2",
+    "drizzle-zod": "^0.8.3",
     "fastest-levenshtein": "^1.0.16",
     "mermaid": "^11.17.0",
-    "pg": "^8.23.0"
+    "pg": "^8.23.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
-    "marked": "^18.0.10"
+    "marked": "^18.0.10",
+    "vitest": "^4.1.11"
   },
   "workspaces": [
     "web"
@@ -39,6 +43,7 @@
   "exports": {
     "./engine/*": "./src/*",
     "./store": "./src/store/index.js",
-    "./store/captures": "./src/store/captures.js"
+    "./store/captures": "./src/store/captures.js",
+    "./api/*": "./src/api/*.js"
   }
 }

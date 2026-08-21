@@ -79,6 +79,25 @@ export const fieldRuns = pgTable('field_runs', {
   group: index('field_runs_group_idx').on(t.groupKey),
 }));
 
+/**
+ * Consumer API keys for the read-only REST surface.
+ *
+ * Only the hash is stored: a leaked database does not become a set of working
+ * credentials. The plaintext is shown once at creation and never again --
+ * `keyPrefix` exists so a human can tell two keys apart without the secret.
+ */
+export const apiKeys = pgTable('api_keys', {
+  keyId: serial('key_id').primaryKey(),
+  name: text('name').notNull(),
+  keyPrefix: text('key_prefix').notNull(),      // first 8 chars, for display only
+  hash: text('hash').notNull().unique(),        // sha256 of the full key
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+  revokedAt: timestamp('revoked_at', { withTimezone: true }),
+}, (t) => ({
+  lookup: index('api_keys_hash_idx').on(t.hash),
+}));
+
 /** A break, from first detection to recovery. One episode, one alert. */
 export const episodes = pgTable('episodes', {
   episodeId: serial('episode_id').primaryKey(),

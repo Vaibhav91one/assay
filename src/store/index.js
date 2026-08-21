@@ -144,6 +144,54 @@ export async function rowByProof(proofId) {
   };
 }
 
+/** Run history for a target, newest first. */
+export async function runsFor(targetId, limit = 50) {
+  const d = getDb();
+  const q = d.select().from(schema.runs);
+  const rows = await (targetId ? q.where(eq(schema.runs.targetId, targetId)) : q);
+  return rows.sort((a, b) => b.runId - a.runId).slice(0, limit);
+}
+
+/** Open queue items -- the decisions the gate refused to make. */
+export async function openQueue(limit = 50) {
+  const d = getDb();
+  const rows = await d.select().from(schema.queueItems)
+    .where(isNull(schema.queueItems.resolvedBy));
+  return rows.sort((a, b) => b.itemId - a.itemId).slice(0, limit);
+}
+
+/**
+ * Full provenance for one cell: where the value came from and what was
+ * considered. This is F12 -- the answer to "where did this number come from?"
+ * months later, from a proof id carried on the published row.
+ */
+export async function explain(proofId) {
+  const d = getDb();
+  const [fr] = await d.select().from(schema.fieldRuns)
+    .where(eq(schema.fieldRuns.proofId, proofId)).limit(1);
+  if (!fr) return null;
+  const [run] = await d.select().from(schema.runs)
+    .where(eq(schema.runs.runId, fr.runId)).limit(1);
+  return {
+    proof: fr.proofId,
+    run: fr.runId,
+    field: fr.field,
+    value: fr.value,
+    status: fr.status,
+    reason: fr.reason ?? null,
+    held_since_run: fr.heldSinceRun ?? null,
+    golden_sha256: fr.goldenSha ?? null,
+    capture_sha256: fr.captureSha ?? null,
+    // The list the gate actually ranked. Kept, not recomputed: a nomination has
+    // to be scored against this page, not whatever the site shows today.
+    ranked: fr.ranked ?? null,
+    group_key: fr.groupKey ?? null,
+    target: run?.targetId ?? null,
+    started_at: run?.startedAt ?? null,
+    skeleton_hash: run?.skeletonHash ?? null,
+  };
+}
+
 /** Every held cell. The one query F4 exists to answer. */
 export async function heldCells() {
   const d = getDb();
