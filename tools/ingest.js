@@ -20,7 +20,7 @@ import { establishBaseline, runTarget } from '../src/runner.js';
 import { pickTarget, RECALL_TITLE } from '../src/target.js';
 import { MUTATIONS, markTarget } from '../src/mutate.js';
 import { putCapture } from '../src/store/captures.js';
-import { getDb, closeDb, recordRun, rowByProof, heldCells, targets } from '../src/store/index.js';
+import { getDb, closeDb, reserveRunId, recordRun, resetTarget, rowByProof, heldCells, targets } from '../src/store/index.js';
 
 const [, , SITE = 'ikea', ...rest] = process.argv;
 const mIdx = rest.indexOf('--mutate');
@@ -49,6 +49,9 @@ const main = async () => {
     contract: { field: 'recall_title', resolver: RECALL_TITLE, expected: EXPECTED,
                 thresholds: { tau: TAU, delta: DELTA } },
   }).onConflictDoNothing();
+
+  const cleared = await resetTarget(SITE);
+  if (cleared) console.log(`reset     ${cleared} prior run(s) for ${SITE}`);
 
   const $0 = await parse(files[0]);
   const el0 = pickTarget($0);
@@ -79,10 +82,14 @@ const main = async () => {
     };
 
     const proofId = `pr_${sha16(`${SITE}${file}${baseline.field}${MUTATE || ''}`)}`;
+    // The store's id is canonical -- reserved before evaluating, so the value
+    // the runner stamps into held_since_run is the same number REST and MCP
+    // will later publish as `_assay.run`.
+    const runId = await reserveRunId();
     const r = await runTarget({
       fetchPage, baseline, history,
       thresholds: { tau: TAU, delta: DELTA },
-      meta: { run: i, site: SITE, capture: file.slice(0, 8) },
+      meta: { run: runId, site: SITE, capture: file.slice(0, 8) },
       proofId,
     });
     history.push(r.sample);
@@ -92,7 +99,8 @@ const main = async () => {
       ? null
       : { ...(await putCapture((await fetchPage()).$.html())), url: `corpus://${SITE}/${file}` };
 
-    const runId = await recordRun({
+    await recordRun({
+      runId,
       targetId: SITE,
       capture,
       result: r,

@@ -28,12 +28,30 @@ export async function closeDb() {
 }
 
 /**
+ * Reserve the run id BEFORE the run is evaluated.
+ *
+ * The store's id is the canonical one: it is what REST and MCP publish, so the
+ * envelope, the proof record and the queue item all have to agree on it. The
+ * runner needs that number while it evaluates (`held_since_run`), which is
+ * earlier than the insert -- so take it from the sequence rather than inserting
+ * a half-built row and updating it later. A gap in the sequence when a run
+ * throws is normal; an orphan run row with no cell would not be.
+ */
+export async function reserveRunId() {
+  const d = getDb();
+  const { rows } = await d.execute(
+    "SELECT nextval(pg_get_serial_sequence('runs','run_id'))::int AS id",
+  );
+  return rows[0].id;
+}
+
+/**
  * Persist one evaluated run: the capture it read, the run, and the cell.
  *
  * Takes the runner's result as-is rather than a bespoke shape, so the worker
- * and the webhook path write identically.
+ * and the webhook path write identically. `runId` comes from reserveRunId().
  */
-export async function recordRun({ targetId, capture, result, proofId, groupKey, stakesRows = 0 }) {
+export async function recordRun({ runId, targetId, capture, result, proofId, groupKey, stakesRows = 0 }) {
   const d = getDb();
   return d.transaction(async (tx) => {
     if (capture) {
@@ -43,6 +61,7 @@ export async function recordRun({ targetId, capture, result, proofId, groupKey, 
     }
 
     const [run] = await tx.insert(schema.runs).values({
+      runId,
       targetId,
       captureSha: capture?.sha ?? null,
       skeletonHash: result.event.skeleton?.after ?? null,
@@ -75,6 +94,31 @@ export async function recordRun({ targetId, capture, result, proofId, groupKey, 
     }
 
     return run.runId;
+  });
+}
+
+/**
+ * Drop one target's prior runs so an ingest over a fixed corpus is re-runnable.
+ *
+ * proof_id is derived from (site, capture, field), so re-ingesting the same
+ * corpus collides on the unique constraint. Re-ingesting IS a replacement, so
+ * clear first. Scoped to one target: never touches anything else in the store.
+ */
+export async function resetTarget(targetId) {
+  const d = getDb();
+  return d.transaction(async (tx) => {
+    // FK order: queue_items -> field_runs -> runs.
+    await tx.execute(
+      `DELETE FROM queue_items WHERE proof_id IN (
+         SELECT fr.proof_id FROM field_runs fr
+         JOIN runs r ON r.run_id = fr.run_id WHERE r.target_id = '${targetId}')`,
+    );
+    await tx.execute(
+      `DELETE FROM field_runs WHERE run_id IN (
+         SELECT run_id FROM runs WHERE target_id = '${targetId}')`,
+    );
+    const res = await tx.execute(`DELETE FROM runs WHERE target_id = '${targetId}'`);
+    return res.rowCount ?? 0;
   });
 }
 
