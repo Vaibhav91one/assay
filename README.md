@@ -160,6 +160,19 @@ fetch → detect → heal → gate → publish, and Postgres holds the store. Pa
 captures live on a mounted volume, content-addressed, so an unchanged page is
 the same file and pruning is `rm`.
 
+### Accounts
+
+Self-hosting is single-operator. `AUTH_MODE` defaults to `none`, so a clone
+boots with no account, no signup and no keys — you are already behind whatever
+access control fronts the box.
+
+The hosted instance sets `AUTH_MODE=clerk` and installs `@clerk/nextjs`, which
+is deliberately **not** a dependency here: a self-hoster should not download an
+auth SDK they will never load. One seam (`web/lib/auth.js`) knows which mode is
+active; nothing else imports Clerk, and a test enforces that.
+
+The sign-in screens in the design belong to the hosted path only.
+
 Copy `.env.example` to `.env` first. Pick whichever runtime you already have —
 the image is the same OCI build in all three cases.
 
