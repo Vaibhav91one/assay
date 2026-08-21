@@ -38,8 +38,9 @@ app/vendor/
 # Excluding them would make the numbers unverifiable and the submission
 # non-qualifying.
 #
-# Raw API dumps are the one exception - they are re-fetchable and add nothing.
-results/*.ndjson
+# The raw .ndjson is Bright Data's unmodified API response. It is the most
+# authentic example output in the repo and tools/audit.js reads it by default,
+# so it is committed too.
 
 # --- os / editor -------------------------------------------------------------
 .DS_Store
