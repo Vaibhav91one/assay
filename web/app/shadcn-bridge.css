@@ -1,0 +1,36 @@
+/* shadcn components are written against a fixed set of semantic names
+   (--background, --primary, --border...). Rather than let shadcn init
+   generate its own palette -- which would sit alongside the Figma tokens and
+   quietly diverge from them -- we map its names onto ours.
+   
+   One consequence worth knowing: `shadcn add button` produces a button that
+   is already on-brand, because --primary IS accent/brand. */
+
+@theme static {
+  --color-background: var(--bg-page);
+  --color-foreground: var(--text-primary);
+
+  --color-card: var(--surface-card);
+  --color-card-foreground: var(--text-primary);
+  --color-popover: var(--surface-card);
+  --color-popover-foreground: var(--text-primary);
+
+  --color-primary: var(--accent-brand);
+  --color-primary-foreground: var(--accent-on-primary);
+
+  --color-secondary: var(--surface-subtle);
+  --color-secondary-foreground: var(--text-primary);
+  --color-muted: var(--surface-subtle);
+  --color-muted-foreground: var(--text-secondary);
+  --color-accent: var(--surface-subtle);
+  --color-accent-foreground: var(--text-primary);
+
+  --color-destructive: var(--semantic-danger);
+  --color-destructive-foreground: var(--accent-on-primary);
+
+  --color-border: var(--border-default);
+  --color-input: var(--border-default);
+  --color-ring: var(--semantic-link);
+
+  --radius: var(--radius-card);
+}
