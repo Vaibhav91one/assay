@@ -15,7 +15,8 @@
     "vendor": "mkdir -p app/vendor && cp node_modules/mermaid/dist/mermaid.min.js app/vendor/",
     "docs": "node tools/build-docs.js",
     "headtohead": "node tools/headtohead.js",
-    "bd:heal": "node tools/bd-heal.js"
+    "bd:heal": "node tools/bd-heal.js",
+    "demo": "node tools/demo.js"
   },
   "dependencies": {
     "cheerio": "^1.2.0",

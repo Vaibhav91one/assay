@@ -137,7 +137,8 @@ about, arriving unprompted from production.
 
 ```bash
 npm install
-npm test          # 26 assertions against the real corpus
+npm run demo      # 30 seconds: one break heals, one publishes a labelled hole
+npm test          # 30 assertions against the real corpus
 npm run bench     # the 135-case benchmark
 npm run sweep     # the threshold calibration
 npm run replay    # 74 runs over the full corpus, writes results/events.jsonl

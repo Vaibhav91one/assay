@@ -16,6 +16,7 @@ import { createHash } from 'node:crypto';
 import { fingerprint, skeletonHash } from '../src/fingerprint.js';
 import { healGated } from '../src/heal.js';
 import { detect } from '../src/detect.js';
+import { publishRow } from '../src/envelope.js';
 
 const [, , SITE = 'ikea', FROM = '202401', TO = '202608'] = process.argv;
 const TAU = 0.6;
@@ -110,7 +111,15 @@ const run = async () => {
   diag.signals.forEach((s) => say('', `- ${s}`));
 
   if (!diag.broken) {
-    console.log('\n  nothing to do.\n');
+    const row = publishRow({
+      values: { recall_title: value2 },
+      statuses: { recall_title: { status: 'live' } },
+      run: f2.slice(0, 8),
+      proof: `pr_${sha(`${f1}${f2}${value2 || ''}`)}`,
+    });
+    console.log();
+    say('PUBLISH', 'row emitted with trust envelope');
+    console.log('\n' + JSON.stringify(row, null, 2) + '\n');
     return;
   }
 
@@ -129,7 +138,9 @@ const run = async () => {
   say('', `DECISION  ${g.decision.toUpperCase()}  (${g.reason})`);
 
   // ---------------- PROVE ----------------
+  const proofId = `pr_${sha(`${f1}${f2}${g.decision}${g.reason}`)}`;
   const proof = {
+    id: proofId,
     event: g.decision === 'heal' ? 'heal' : 'abstain',
     ts: null, // stamped by the caller; kept null so runs are byte-reproducible
     site: SITE,
@@ -169,7 +180,22 @@ const run = async () => {
 
   console.log();
   say('PROOF', 'appended to results/events.jsonl');
-  console.log('\n' + JSON.stringify(proof, null, 2) + '\n');
+
+  // ---------------- PUBLISH ----------------
+  // The row that leaves the building. A heal publishes the relocated value; an
+  // abstain publishes a labelled hole. Nothing else is possible by construction.
+  const row = publishRow({
+    values: { recall_title: g.decision === 'heal' ? clean(g.fingerprint.text) : null },
+    statuses: {
+      recall_title: g.decision === 'heal'
+        ? { status: 'healed' }
+        : { status: 'quarantined', reason: g.reason, held_since_run: f2.slice(0, 8) },
+    },
+    run: f2.slice(0, 8),
+    proof: proofId,
+  });
+  say('PUBLISH', g.decision === 'heal' ? 'healed value published' : 'held -- labelled hole published');
+  console.log('\n' + JSON.stringify({ proof, row }, null, 2) + '\n');
 };
 
 run();

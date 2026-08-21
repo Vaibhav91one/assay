@@ -13,6 +13,9 @@ import {
   isVolatileId,
 } from '../src/fingerprint.js';
 import { ned, jaccard, sharedWords, score } from '../src/heal.js';
+import { healGated } from '../src/heal.js';
+import { MUTATIONS, markTarget } from '../src/mutate.js';
+import { publishRow, STATUSES } from '../src/envelope.js';
 
 const capturesOf = async (site) =>
   (await readdir(`corpus/${site}`)).filter((f) => f.endsWith('.html')).sort();
@@ -228,6 +231,68 @@ const run = async () => {
     const b = { ...a, id: 'ffffffff-0000-0000-0000-000000000000' };
     assert.ok(!('id' in score(a, b).parts), 'volatile id was scored');
   });
+
+  // ---- trust envelope: a hole is null AND labelled, and never filled ----
+  console.log('\ntrust envelope over a real capture');
+  {
+    const files = await capturesOf('ikea');
+    const mkPage = async () => parse('ikea', files.at(-1));
+    const $base = await mkPage();
+    const el = findRecallItem($base);
+    const target = fingerprint($base, el);
+    const gateOn = async (mutationId) => {
+      const $ = await mkPage();
+      const e = findRecallItem($);
+      markTarget($, e);
+      MUTATIONS.find((m) => m.id === mutationId).apply($, e);
+      return healGated($, target, { tau: 0.6, delta: 0.16, limit: 5 });
+    };
+    const abstainReasons = ['no_candidates', 'below_tau', 'thin_margin'];
+
+    const gHeal = await gateOn('rename_class');
+    const gHold = await gateOn('remove_field');
+
+    check('a healthy value publishes live, non-null', () => {
+      const row = publishRow({
+        values: { recall_title: target.text },
+        statuses: { recall_title: { status: 'live' } },
+        run: 'r', proof: 'pr_x',
+      });
+      assert.equal(row._assay.fields.recall_title.status, 'live');
+      assert.ok(row.recall_title, 'live field came out null');
+    });
+
+    check('a clean heal publishes healed, non-null', () => {
+      assert.equal(gHeal.decision, 'heal', `expected heal, got ${gHeal.decision}`);
+      const row = publishRow({
+        values: { recall_title: gHeal.fingerprint.text },
+        statuses: { recall_title: { status: 'healed' } },
+        run: 'r', proof: 'pr_x',
+      });
+      assert.equal(row._assay.fields.recall_title.status, 'healed');
+      assert.ok(row.recall_title, 'healed field came out null');
+    });
+
+    check('an abstain publishes a labelled hole with an engine reason', () => {
+      assert.equal(gHold.decision, 'abstain', `expected abstain, got ${gHold.decision}`);
+      assert.ok(abstainReasons.includes(gHold.reason), `reason ${gHold.reason} not in vocabulary`);
+      const row = publishRow({
+        values: { recall_title: 'anything the caller tries to sneak in' },
+        statuses: { recall_title: { status: 'quarantined', reason: gHold.reason, held_since_run: 'r' } },
+        run: 'r', proof: 'pr_x',
+      });
+      assert.ok('recall_title' in row, 'held field was omitted');
+      assert.equal(row.recall_title, null, 'held field was filled');
+      assert.equal(row._assay.fields.recall_title.reason, gHold.reason);
+    });
+
+    check('the status vocabulary is closed', () => {
+      assert.deepEqual(STATUSES, ['live', 'healed', 'quarantined', 'stale', 'degraded']);
+      assert.throws(() => publishRow({
+        values: {}, statuses: { x: { status: 'confident' } }, run: 'r', proof: 'p',
+      }));
+    });
+  }
 
   console.log(
     `\n${failures ? `${failures} FAILURE(S)` : 'all checks pass'}\n`
