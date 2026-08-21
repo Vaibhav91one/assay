@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Assay — design directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&family=Lora:ital,wght@0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  /* ---------- page chrome (neutral, never styled like a variant) ---------- */
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    font-family: Inter, -apple-system, "Segoe UI", system-ui, sans-serif;
+    background: #e9e9eb; color: #1a1a1a; padding: 48px 24px 96px;
+  }
+  .page { max-width: 1180px; margin: 0 auto; }
+  .page > header h1 { font-size: 26px; font-weight: 700; }
+  .page > header p { color: #55565a; font-size: 14px; margin-top: 6px; max-width: 70ch; }
+  section.variant {
+    margin-top: 56px; border: 1px solid #c9c9cd; border-radius: 14px;
+    overflow: hidden; background: #f7f7f8;
+  }
+  .v-head { padding: 22px 28px; border-bottom: 1px solid #c9c9cd; background:#f7f7f8; }
+  .v-head h2 { font-size: 17px; font-weight: 600; }
+  .v-head .tagline { font-size: 12px; color:#85868c; margin-left: 8px; font-weight: 400; }
+  .v-head p { font-size: 13px; color: #55565a; margin-top: 8px; max-width: 90ch; line-height: 1.55; }
+  .v-body { padding: 0; }
+  .tokens { padding: 16px 28px 22px; border-top: 1px dashed #c9c9cd; }
+  .tokens table { border-collapse: collapse; font-size: 12px; }
+  .tokens td { padding: 3px 18px 3px 0; color: #55565a; vertical-align: top; }
+  .tokens td:first-child { color: #85868c; width: 90px; }
+  .tokens .sw { display:inline-block; width:11px; height:11px; border-radius:3px; border:1px solid rgba(0,0,0,.18); vertical-align:-1px; margin-right:5px; }
+  footer { margin-top: 72px; font-size: 13px; color: #55565a; line-height: 1.7; max-width: 86ch; }
+  footer h2 { font-size: 15px; color: #1a1a1a; margin-bottom: 8px; }
+  footer h3 { font-size: 13px; color: #1a1a1a; margin: 20px 0 4px; }
+  footer a { color: #3b4bd8; }
+
+  /* ---------- shared structure for the rendered demo (tokens per variant) ---------- */
+  .demo {
+    display: flex; min-height: 480px;
+    background: var(--bg); color: var(--t1);
+    font-family: var(--font); font-size: 13.5px;
+  }
+  .demo .side {
+    width: 178px; flex: none; background: var(--side-bg); color: var(--side-t);
+    padding: 18px 16px; display: flex; flex-direction: column; gap: 3px;
+    border-right: var(--side-br);
+  }
+  .side .logo { font-weight: 600; color: var(--side-t1); margin-bottom: 14px; font-size: 14px; }
+  .side .nav { padding: 5px 8px; border-radius: var(--r-s); font-size: 12.5px; color: var(--side-t); }
+  .side .nav.on { background: var(--side-on-bg); color: var(--side-on-t); font-weight: 500; }
+  .side .nav .n { float: right; opacity: .7; }
+  .demo .main { flex: 1; padding: 22px 28px; min-width: 0; }
+  .statline { font-size: 12.5px; color: var(--t3); margin-bottom: 16px; }
+  .statline b { color: var(--t1); font-weight: 600; font-size: 13.5px; margin-right: 8px; }
+
+  .card {
+    background: var(--surface); border: var(--card-br); border-radius: var(--r);
+    box-shadow: var(--shadow); padding: 20px 24px;
+  }
+  .card .meta { font-size: 12px; color: var(--t3); display: flex; justify-content: space-between; margin-bottom: 12px; }
+  .card .meta b { color: var(--t1); font-weight: 500; }
+  .card h3 { font-family: var(--font-h, var(--font)); font-size: 16.5px; font-weight: 600; letter-spacing: var(--h-ls, 0); }
+  .card .body { color: var(--t2); line-height: 1.55; margin: 8px 0 16px; max-width: 58ch; font-size: 13px; }
+  .cols { display: flex; gap: 24px; }
+  .cols .l { flex: 1.25; min-width: 0; }
+  .cols .r { flex: 1; min-width: 0; border-left: var(--split-br); padding-left: 24px; }
+  .label { font-size: 10px; letter-spacing: .9px; text-transform: uppercase; color: var(--t3); font-weight: 500; margin: 14px 0 6px; }
+  .label:first-child { margin-top: 0; }
+
+  .leadbar { position: relative; height: 8px; background: var(--track); border-radius: 99px; margin: 10px 0 6px; }
+  .leadbar .fill { position: absolute; inset: 0 auto 0 0; width: 34%; background: var(--ink); border-radius: 99px; }
+  .leadbar .gate { position: absolute; top: -5px; bottom: -5px; left: 61%; width: 2px; background: var(--t3); }
+  .leadnotes { display: flex; justify-content: space-between; font-size: 11px; color: var(--t3); }
+  .leadnotes b { color: var(--t1); font-weight: 500; }
+  .just { font-family: var(--mono); font-size: 10.5px; color: var(--t3); margin-top: 12px; }
+
+  .ans { font-size: 14px; font-weight: 500; margin-bottom: 8px; }
+  .ans.dim { color: var(--t2); font-weight: 400; }
+  .hint { font-size: 11.5px; color: var(--t3); margin-top: 4px; }
+  .btn {
+    display: inline-block; font-size: 12.5px; font-weight: 500; cursor: pointer;
+    padding: 7px 16px; border-radius: var(--r-s); border: var(--btn2-br);
+    background: var(--surface); color: var(--t1); box-shadow: var(--btn2-sh, none);
+  }
+  .btn.primary {
+    background: var(--ink); color: var(--ink-t); border: var(--btn1-br, 1px solid transparent);
+    box-shadow: var(--btn1-sh, none);
+  }
+  .r hr { border: 0; border-top: var(--hair); margin: 16px 0 0; }
+  .foot { display: flex; gap: 20px; align-items: center; border-top: var(--hair); margin-top: 18px; padding-top: 14px; font-size: 12.5px; color: var(--t2); }
+  .foot .see { margin-left: auto; color: var(--t2); }
+</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <h1>Assay — design directions</h1>
+  <p>Six visual systems applied to the same real artifact — the hazard decision card — so styles compete on identical content. Pick a direction; tokens for each are listed under its render. House law holds in every variant: no gauges, no confidence percentages, machine tokens in mono, one primary action per card.</p>
+</header>
+
+<!-- the one card, stamped into all six variants by the script below -->
+<template id="card-t">
+  <div class="demo">
+    <aside class="side">
+      <div class="logo">Assay</div>
+      <div class="nav">Home</div>
+      <div class="nav on">Decisions <span class="n">2</span></div>
+      <div class="nav">Runs</div>
+      <div class="nav">Fields</div>
+      <div class="nav">Schedule</div>
+    </aside>
+    <div class="main">
+      <div class="statline"><b>Decisions</b> 2 waiting on you · nothing here has been written to your data</div>
+      <div class="card">
+        <div class="meta"><span><b>IKEA recalls</b> &nbsp;run 74 · today 09:12 · field <span style="font-family:var(--mono);font-size:11px">hazard</span></span><span>held 4 hours ago</span></div>
+        <h3>Two answers look about equally likely.</h3>
+        <p class="body">The part of the page that held hazard is gone. Assay found two things that could replace it, but neither is clearly better than the other, so it did not pick one.</p>
+        <div class="cols">
+          <div class="l">
+            <div class="label">How far ahead the best answer was</div>
+            <div class="leadbar"><span class="fill"></span><span class="gate"></span></div>
+            <div class="leadnotes"><b>not even halfway</b><span>this far ahead is enough to publish</span></div>
+            <p class="body" style="margin-top:12px">Assay only publishes when one answer is clearly ahead of the rest. This one was barely ahead, so a coin flip would have decided your data.</p>
+            <div class="just">match 0.71 vs 0.62 · lead 0.09, needs 0.16</div>
+          </div>
+          <div class="r">
+            <div class="label">Best answer</div>
+            <div class="ans">burn, electric shock</div>
+            <span class="btn primary">Use this</span>
+            <div class="label">Close second</div>
+            <div class="ans dim">Contact IKEA for a full refund</div>
+            <span class="btn">Use this</span>
+            <hr>
+            <div class="label">What it said last time</div>
+            <div class="ans" style="font-weight:400">burn, electric shock</div>
+            <div class="hint">the same for the last 41 runs</div>
+          </div>
+        </div>
+        <div class="foot"><span>Leave this field empty</span><span>Neither is right</span><span class="see">See it on the page →</span></div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- ======================= 1 · current direction, refined ======================= -->
+<section class="variant v-refined" id="refined">
+  <div class="v-head">
+    <h2>1 · Monochrome, productionized <span class="tagline">current direction, refined</span></h2>
+    <p>What the wireframes already are, given elevation, states and micro-contrast instead of flat hairlines. Signals restraint and seriousness; the one-ink-button system <em>is</em> the refusal brand — nothing decorates, so the single black action carries all the weight. Risk: reads austere on a marketing page; in-product that austerity is the point.</p>
+  </div>
+  <div class="v-body"></div>
+  <div class="tokens"><table>
+    <tr><td>bg / surface</td><td><span class="sw" style="background:#fafafa"></span>#FAFAFA · <span class="sw" style="background:#fff"></span>#FFFFFF</td><td>radius</td><td>12 / 8</td></tr>
+    <tr><td>text ramp</td><td>#1A1A1A · #6B6B6B · #A2A2A2</td><td>shadow</td><td>0 1px 2px rgba(0,0,0,.05)</td></tr>
+    <tr><td>accent</td><td><span class="sw" style="background:#0e0e0f"></span>ink #0E0E0F (action only)</td><td>fonts</td><td>Inter + Roboto Mono</td></tr>
+  </table></div>
+</section>
+
+<!-- ======================= 2 · dark minimal (Linear school) ======================= -->
+<section class="variant v-linear" id="linear">
+  <div class="v-head">
+    <h2>2 · Dark minimal <span class="tagline">the Linear school — dark-first, borders barely there</span></h2>
+    <p>The default dialect of 2024–26 dev tooling (Linear, Vercel, Supabase): near-black tokens-first dark mode, hierarchy from weight and spacing, colour reserved for state. Signals "built for people who live in this tool"; fits Assay's engineer audience and makes the held/ink states glow. Risk: fifty-percent-of-new-SaaS sameness — the voice, not the theme, must do the differentiating.</p>
+  </div>
+  <div class="v-body"></div>
+  <div class="tokens"><table>
+    <tr><td>bg / surface</td><td><span class="sw" style="background:#0d0e10"></span>#0D0E10 · <span class="sw" style="background:#17181b"></span>#17181B</td><td>radius</td><td>10 / 7</td></tr>
+    <tr><td>text ramp</td><td>#EDEEF0 · #9FA1A7 · #64666D</td><td>shadow</td><td>none — borders do the work</td></tr>
+    <tr><td>accent</td><td><span class="sw" style="background:#e8e9eb"></span>light ink #E8E9EB (action only)</td><td>fonts</td><td>Inter + Roboto Mono</td></tr>
+  </table></div>
+</section>
+
+<!-- ======================= 3 · polished fintech ======================= -->
+<section class="variant v-stripe" id="stripe">
+  <div class="v-head">
+    <h2>3 · Polished fintech <span class="tagline">the Stripe school — trust through finish</span></h2>
+    <p>Light, crisp, one saturated brand accent, soft layered shadows, generous radii: the grammar of products that touch money. Signals institutional trust — useful for a product whose pitch is "believe our data". Risk: the accent colour starts making promises; Assay's law says colour belongs to state, so the accent here stays on the single primary action and nowhere else.</p>
+  </div>
+  <div class="v-body"></div>
+  <div class="tokens"><table>
+    <tr><td>bg / surface</td><td><span class="sw" style="background:#f6f8fb"></span>#F6F8FB · <span class="sw" style="background:#fff"></span>#FFFFFF</td><td>radius</td><td>12 / 8</td></tr>
+    <tr><td>text ramp</td><td>#30313D · #6A7383 · #9BA3B0</td><td>shadow</td><td>layered, soft (Stripe-ish)</td></tr>
+    <tr><td>accent</td><td><span class="sw" style="background:#4f46e5"></span>#4F46E5 (primary action only)</td><td>fonts</td><td>Inter + Roboto Mono</td></tr>
+  </table></div>
+</section>
+
+<!-- ======================= 4 · warm editorial ======================= -->
+<section class="variant v-editorial" id="editorial">
+  <div class="v-head">
+    <h2>4 · Warm editorial <span class="tagline">the Notion school — paper, serif, calm</span></h2>
+    <p>Warm paper background, serif display over humanist body, chrome that almost disappears. Signals "a thoughtful document, not a machine" — flattering to Assay's first-person prose voice, which is the product's strongest asset. Risk: softness can read as imprecision in a tool whose subject is whether a number is true; the mono tokens have to work harder to keep the machine's edges visible.</p>
+  </div>
+  <div class="v-body"></div>
+  <div class="tokens"><table>
+    <tr><td>bg / surface</td><td><span class="sw" style="background:#fbfaf7"></span>#FBFAF7 · <span class="sw" style="background:#fffefb"></span>#FFFEFB</td><td>radius</td><td>8 / 6</td></tr>
+    <tr><td>text ramp</td><td>#37352F · #6B675F · #A5A199</td><td>shadow</td><td>hairline border, no shadow</td></tr>
+    <tr><td>accent</td><td><span class="sw" style="background:#37352f"></span>warm ink #37352F</td><td>fonts</td><td>Lora (display) + Inter + Roboto Mono</td></tr>
+  </table></div>
+</section>
+
+<!-- ======================= 5 · dense enterprise ======================= -->
+<section class="variant v-enterprise" id="enterprise">
+  <div class="v-head">
+    <h2>5 · Dense enterprise <span class="tagline">the Datadog/Grafana school — density is respect</span></h2>
+    <p>Compact type, tight spacing, visible structure, minimal radius: built for operators comparing many things at once. Signals "this is an instrument"; the right dialect if Assay's buyer runs hundreds of scrapers, and the run/fields tables would thrive in it. Risk: the decision card is a reading task, not a monitoring task — density fights the five-second decision.</p>
+  </div>
+  <div class="v-body"></div>
+  <div class="tokens"><table>
+    <tr><td>bg / surface</td><td><span class="sw" style="background:#f2f3f5"></span>#F2F3F5 · <span class="sw" style="background:#fff"></span>#FFFFFF</td><td>radius</td><td>4 / 3</td></tr>
+    <tr><td>text ramp</td><td>#1d1f24 · #565b66 · #8b909b</td><td>shadow</td><td>1px borders everywhere, no shadow</td></tr>
+    <tr><td>accent</td><td><span class="sw" style="background:#1d1f24"></span>ink #1D1F24 · 12px base type</td><td>fonts</td><td>Inter (12px) + Roboto Mono</td></tr>
+  </table></div>
+</section>
+
+<!-- ======================= 6 · brutalist utilitarian ======================= -->
+<section class="variant v-brutalist" id="brutalist">
+  <div class="v-head">
+    <h2>6 · Brutalist utilitarian <span class="tagline">the dev-tool zine — honesty as aesthetic</span></h2>
+    <p>Flat white, 2px rules, zero radius, zero shadows, mono everywhere it can get away with it. Signals "nothing here is dressed up" — which is literally Assay's pitch, making this the most on-thesis and the most polarizing option. Risk: reads hobbyist to enterprise buyers; brutalism sells honesty to individuals and rawness to procurement.</p>
+  </div>
+  <div class="v-body"></div>
+  <div class="tokens"><table>
+    <tr><td>bg / surface</td><td><span class="sw" style="background:#fff"></span>#FFFFFF · <span class="sw" style="background:#fff"></span>#FFFFFF</td><td>radius</td><td>0</td></tr>
+    <tr><td>text ramp</td><td>#000000 · #444444 · #8a8a8a</td><td>shadow</td><td>hard offset 3px/3px on primary</td></tr>
+    <tr><td>accent</td><td><span class="sw" style="background:#000"></span>#000 + 2px rules</td><td>fonts</td><td>Roboto Mono (display) + Inter</td></tr>
+  </table></div>
+</section>
+
+<footer>
+  <h2>Recommendation</h2>
+  <p>Ship <b>1 (monochrome refined)</b> as the light theme and <b>2 (dark minimal)</b> as the dark theme off the same tokens — Assay's brand is refusal, and a system where the only saturated thing on screen is the one action you may take is that brand rendered as CSS. Variant 4's serif display is worth stealing for the landing page and incident record, where the first-person prose voice carries the argument; leave 3, 5 and 6 as documented roads-not-taken.</p>
+  <h3>Sources</h3>
+  <p>
+    Surfaced and summarized via web search (search-result summaries; pages not fetched in full):<br>
+    <a href="https://blog.logrocket.com/ux-design/linear-design/">LogRocket — Linear design: the SaaS trend that's boring and bettering UI</a> ·
+    <a href="https://blog.logrocket.com/ux-design/linear-design-vs-brutalism-neumorphism-minimalism/">LogRocket — Linear design vs. minimalism, brutalism, neumorphism</a> ·
+    <a href="https://www.925studios.co/blog/linear-design-breakdown-saas-ui-2026">925studios — Linear design breakdown</a> ·
+    <a href="https://www.designstudiouiux.com/blog/top-saas-design-trends/">DesignStudio — 12 SaaS design trends for 2026</a> ·
+    <a href="https://www.saasframe.io/blog/the-anatomy-of-high-performance-saas-dashboard-design-2026-trends-patterns">SaaSFrame — anatomy of SaaS dashboard design 2026</a>
+  </p>
+  <p><b>Limitations:</b> variants 3 (Stripe-school polish), 4 (Notion-school editorial), 5 (dense enterprise) and 6 (brutalist) rest on well-established, widely documented convention rather than pages fetched for this file; token values are this file's own interpretations, not copied from any product. No proprietary assets were used.</p>
+</footer>
+</div>
+
+<script>
+  // stamp the shared card into each variant's body — one source of truth for the artifact
+  const t = document.getElementById('card-t');
+  document.querySelectorAll('.v-body').forEach(el => el.appendChild(t.content.cloneNode(true)));
+</script>
+
+<style>
+  /* ---------- variant tokens (scoped; structure above consumes them) ---------- */
+  .v-refined .demo {
+    --bg:#fafafa; --surface:#fff; --t1:#1a1a1a; --t2:#6b6b6b; --t3:#a2a2a2;
+    --ink:#0e0e0f; --ink-t:#fff; --track:#efefef;
+    --r:12px; --r-s:8px; --font:Inter,sans-serif; --mono:"Roboto Mono",monospace;
+    --card-br:1px solid #e4e4e6; --hair:1px solid #ededed; --split-br:1px solid #ededed;
+    --btn2-br:1px solid #dbdbdb; --shadow:0 1px 2px rgba(0,0,0,.05), 0 4px 12px rgba(0,0,0,.04);
+    --side-bg:#0e0e0f; --side-t:#a3a5a9; --side-t1:#fff; --side-on-bg:#232428; --side-on-t:#fff; --side-br:none;
+  }
+  .v-linear .demo {
+    --bg:#0d0e10; --surface:#17181b; --t1:#edeef0; --t2:#9fa1a7; --t3:#64666d;
+    --ink:#e8e9eb; --ink-t:#0d0e10; --track:#26272b;
+    --r:10px; --r-s:7px; --font:Inter,sans-serif; --mono:"Roboto Mono",monospace;
+    --card-br:1px solid #26272b; --hair:1px solid #232428; --split-br:1px solid #232428;
+    --btn2-br:1px solid #32343a; --shadow:none;
+    --side-bg:#0d0e10; --side-t:#9fa1a7; --side-t1:#edeef0; --side-on-bg:#1e2024; --side-on-t:#edeef0; --side-br:1px solid #1e2024;
+  }
+  .v-linear .btn { background: #1e2024; color: var(--t1); }
+  .v-stripe .demo {
+    --bg:#f6f8fb; --surface:#fff; --t1:#30313d; --t2:#6a7383; --t3:#9ba3b0;
+    --ink:#4f46e5; --ink-t:#fff; --track:#e8ebf1;
+    --r:12px; --r-s:8px; --font:Inter,sans-serif; --mono:"Roboto Mono",monospace;
+    --card-br:1px solid #e6e9ef; --hair:1px solid #eceff3; --split-br:1px solid #eceff3;
+    --btn2-br:1px solid #dde1e8; --btn2-sh:0 1px 2px rgba(48,49,61,.06);
+    --btn1-sh:0 2px 5px rgba(79,70,229,.28), 0 1px 1px rgba(0,0,0,.08);
+    --shadow:0 2px 5px rgba(48,49,61,.06), 0 15px 35px rgba(48,49,61,.08);
+    --side-bg:#fff; --side-t:#6a7383; --side-t1:#30313d; --side-on-bg:#eef0fe; --side-on-t:#4f46e5; --side-br:1px solid #e6e9ef;
+  }
+  .v-editorial .demo {
+    --bg:#fbfaf7; --surface:#fffefb; --t1:#37352f; --t2:#6b675f; --t3:#a5a199;
+    --ink:#37352f; --ink-t:#fffefb; --track:#edeae3;
+    --r:8px; --r-s:6px; --font:Inter,sans-serif; --font-h:Lora,Georgia,serif; --mono:"Roboto Mono",monospace;
+    --card-br:1px solid #e7e4dc; --hair:1px solid #eceae2; --split-br:1px solid #eceae2;
+    --btn2-br:1px solid #dcd8cf; --shadow:none;
+    --side-bg:#f4f2ec; --side-t:#6b675f; --side-t1:#37352f; --side-on-bg:#e9e6de; --side-on-t:#37352f; --side-br:1px solid #e7e4dc;
+  }
+  .v-editorial .card h3 { font-size: 19px; font-weight: 600; }
+  .v-enterprise .demo {
+    --bg:#f2f3f5; --surface:#fff; --t1:#1d1f24; --t2:#565b66; --t3:#8b909b;
+    --ink:#1d1f24; --ink-t:#fff; --track:#e3e5e9;
+    --r:4px; --r-s:3px; --font:Inter,sans-serif; --mono:"Roboto Mono",monospace;
+    --card-br:1px solid #d4d7dd; --hair:1px solid #e3e5e9; --split-br:1px solid #e3e5e9;
+    --btn2-br:1px solid #c8ccd4; --shadow:none;
+    --side-bg:#1d1f24; --side-t:#9ba0aa; --side-t1:#fff; --side-on-bg:#33363e; --side-on-t:#fff; --side-br:none;
+    font-size: 12px;
+  }
+  .v-enterprise .card { padding: 14px 16px; }
+  .v-enterprise .card h3 { font-size: 14px; }
+  .v-enterprise .card .body { font-size: 12px; margin: 6px 0 10px; }
+  .v-enterprise .cols { gap: 16px; } .v-enterprise .cols .r { padding-left: 16px; }
+  .v-enterprise .label { margin: 10px 0 4px; } .v-enterprise .foot { margin-top: 12px; padding-top: 10px; }
+  .v-brutalist .demo {
+    --bg:#fff; --surface:#fff; --t1:#000; --t2:#444; --t3:#8a8a8a;
+    --ink:#000; --ink-t:#fff; --track:#eee;
+    --r:0; --r-s:0; --font:Inter,sans-serif; --font-h:"Roboto Mono",monospace; --mono:"Roboto Mono",monospace;
+    --card-br:2px solid #000; --hair:1px solid #000; --split-br:2px solid #000;
+    --btn2-br:2px solid #000; --btn1-sh:3px 3px 0 #8a8a8a; --shadow:none;
+    --side-bg:#fff; --side-t:#444; --side-t1:#000; --side-on-bg:#000; --side-on-t:#fff; --side-br:2px solid #000;
+  }
+  .v-brutalist .card h3 { font-size: 15px; letter-spacing: -.2px; }
+  .v-brutalist .leadbar, .v-brutalist .leadbar .fill { border-radius: 0; }
+</style>
+</body>
+</html>
