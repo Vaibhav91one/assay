@@ -339,6 +339,73 @@ Rules of repair, calibrated with the owner:
 
 ---
 
+## 5c. Visual system (the Screens layer)
+
+Decided 2026-08-22 after a conformance audit found 201 raw-hex paints where a token
+existed. The rule that matters: **the design language must hold by binding, not by
+coincidence.** A frame that merely looks right is wrong if changing a token wouldn't
+move it.
+
+**Tokens** — collection `assay`, 23 variables. Bind every fill and stroke; never raw hex
+where a token exists. `accent/primary` was retired: it was ink (`#0E0E0F`), which
+collided with `bg/sidebar` and misnamed the real accent. There is exactly one accent now.
+
+| Token | Means |
+|---|---|
+| `accent/brand` #FF4D00 | the primary action, and counts that need you |
+| `semantic/link` #2563EB | links, toggles, and **in-motion** state (building, checking, running) |
+| `semantic/success` #16A34A | settled, captured, verified, clean |
+| `semantic/warning` #CA8A04 | held, fragile, unconfigured — needs attention, not broken |
+| `semantic/danger` #DC2626 | failed, unrecognised, blocked |
+
+Green/amber/blue/red are three *different* meanings from orange, and blue is
+specifically progress — without that separation orange does double duty as both "in
+flight" and "waiting on you", which are opposite states to the user.
+
+**Type** — Questrial for prose, Roboto Mono for machine tokens (field names, ids,
+selectors, hashes, values). Ramp: 28 / 22 / 20 / 16 / 15 / 14 / 13.5 / 13 / 12.5 / 12 /
+10.5 / 10. Questrial ships one weight, so hierarchy rides on size, caps-with-tracking and
+colour — never weight.
+
+**Geometry** — radii {8 control, 12 card, 16 elevated}; button heights {32 compact, 40
+standard, 48 input}; icons {14 inline, 16–18 in controls}; 8px spacing grid.
+
+**Elevation, two tiers** — the file previously mixed both on the same surface class:
+- **Floating** — `0 12 48 rgba(0,0,0,.20)` + `0 2 6 rgba(0,0,0,.10)`, no stroke. Dialogs,
+  popovers, and cards sitting over imagery.
+- **Inline** — 1px `border/default` hairline, no shadow. Content cards on white.
+
+**Icon+label alignment** — align the icon to the label's **cap-height centre**, not its
+box centre. A text node's box includes ascender and descender space; centring against it
+puts every icon ~1.5–2.25px low, which is invisible at 1× and obvious at 4×.
+
+**Page titles** — every screen carries one except `home`, whose hero headline is its
+identity. The sign-in family has no top bar at all (split layout).
+
+### Failure modes this file has actually produced
+
+Check these before declaring a pass clean; each has recurred:
+
+1. **Controls as empty frames with sibling parts.** 14 of 23 buttons have their icon and
+   label as siblings, positioned absolutely — `childCount: 0`. Any parent→child audit
+   reports them clean. **Detect by bounding-box containment among siblings**, and validate
+   the detector against a known-broken node before trusting its output. Two passes
+   returned false all-clears this way.
+2. **Containers silently invalidated when children grow.** Adding a logo lockup to a form
+   left three auth cards too short; a button overflowed by 8px, invisible until zoomed.
+   Anything appended to an auto-layout child must trigger a container refit.
+3. **Opacity dropped by variable binding.** Put opacity *into* the paint object before
+   `setBoundVariableForPaint`; spreading it on afterwards silently loses it and renders a
+   tint as a solid fill.
+4. **Paint properties lost on rebuild.** Spread the original paint and override `color`;
+   rebuilding from `{type, color}` discards `visible:false` and turns hidden icon
+   backgrounds into solid squares.
+5. **Instances resized without their children.** Check every instance's size against its
+   main component.
+6. **Lucide glyphs are stroked, not filled** — recolour `strokes`, or the glyph won't move.
+
+---
+
 ## 6. Connectors — Claude and Codex
 
 Nothing in the file covers this; it is net-new.
