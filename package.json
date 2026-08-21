@@ -20,9 +20,12 @@
     "ingest": "node tools/ingest.js",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "apikey": "node tools/apikey.js"
+    "apikey": "node tools/apikey.js",
+    "mcp": "node src/mcp/server.js",
+    "test:app": "vitest run"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "cheerio": "^1.2.0",
     "drizzle-orm": "^0.45.2",
     "drizzle-zod": "^0.8.3",
@@ -44,6 +47,10 @@
     "./engine/*": "./src/*",
     "./store": "./src/store/index.js",
     "./store/captures": "./src/store/captures.js",
-    "./api/*": "./src/api/*.js"
+    "./api/*": "./src/api/*.js",
+    "./mcp/*": "./src/mcp/*.js"
+  },
+  "bin": {
+    "assay-mcp": "./src/mcp/server.js"
   }
 }
