@@ -15,14 +15,16 @@ node_modules/
 app/vendor/
 
 # --- corpus ------------------------------------------------------------------
-# 77 archived HTML captures, ~14 MB of other companies' pages.
+# corpus/ IS COMMITTED ON PURPOSE.
 #
-# corpus/manifest.json IS committed: it records every capture's URL, timestamp
-# and content digest, so `npm run corpus` rebuilds the exact same corpus from
-# the Wayback Machine. That gives full reproducibility of every published number
-# without redistributing 77 copies of someone else's site.
-corpus/*
-!corpus/manifest.json
+# 77 archived HTML captures of three public product-recall pages, Jan 2024 to
+# Aug 2026, fetched from the Internet Archive. 14 MB raw, ~2 MB packed.
+#
+# Every number this project publishes is a measurement over these files. Without
+# them `npm test` and `npm run bench` cannot run on a fresh clone and none of the
+# results are verifiable, which for a project whose entire claim is a measurement
+# is worse than the disk cost. manifest.json records each capture's URL,
+# timestamp and content digest so `npm run corpus` reproduces it exactly.
 
 # --- results -----------------------------------------------------------------
 # results/ IS COMMITTED ON PURPOSE.
