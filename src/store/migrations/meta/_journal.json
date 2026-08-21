@@ -15,6 +15,20 @@
       "when": 1787343091962,
       "tag": "0001_amused_ken_ellis",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787344848206,
+      "tag": "0002_fixed_nightshade",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787345172074,
+      "tag": "0003_round_hex",
+      "breakpoints": true
     }
   ]
 }

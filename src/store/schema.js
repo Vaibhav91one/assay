@@ -45,6 +45,13 @@ export const runs = pgTable('runs', {
   skeletonHash: text('skeleton_hash'),
   startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
   status: text('status').notNull(),
+  // The detector's history reads from here, not from captures: a healthy run
+  // keeps no capture, and robustZ needs an unbroken series. A gap disarms it.
+  pageBytes: integer('page_bytes'),
+  // The digest of the page as fetched, on EVERY run including skipped ones --
+  // this is the "fingerprint check" a skipped run still records. Deliberately
+  // no FK to captures: we record what we saw even when we keep no bytes.
+  pageSha: text('page_sha'),
 }, (t) => ({
   history: index('runs_target_started_idx').on(t.targetId, t.startedAt),
 }));
@@ -106,6 +113,9 @@ export const episodes = pgTable('episodes', {
   cause: text('cause'),
   openedRun: integer('opened_run').notNull(),
   closedRun: integer('closed_run'),
+  // How the alert went out, or why it did not. A bounced break alert is an
+  // unread break, so the failure is state, not just a log line.
+  notified: text('notified'),
 }, (t) => ({
   open: index('episodes_target_field_closed_idx').on(t.targetId, t.field, t.closedRun),
 }));

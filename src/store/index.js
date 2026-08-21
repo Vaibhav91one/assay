@@ -3,11 +3,12 @@
 
 import pg from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { eq, and, isNull } from 'drizzle-orm';
+import { eq, and, isNull, sql } from 'drizzle-orm';
 import * as schema from './schema.js';
+import { nextRunAt } from '../schedule.js';
 
 export * from './schema.js';
-export { eq, and, isNull };
+export { eq, and, isNull, sql };
 
 export const DATABASE_URL =
   process.env.DATABASE_URL || 'postgres://localhost:5432/assay';
@@ -66,6 +67,8 @@ export async function recordRun({ runId, targetId, capture, result, proofId, gro
       captureSha: capture?.sha ?? null,
       skeletonHash: result.event.skeleton?.after ?? null,
       status: result.event.event,
+      pageBytes: result.sample?.pageBytes ?? null,
+      pageSha: result.event.capture_sha256 ?? null,
     }).returning({ runId: schema.runs.runId });
 
     const field = result.event.field;
@@ -196,4 +199,79 @@ export async function explain(proofId) {
 export async function heldCells() {
   const d = getDb();
   return d.select().from(schema.fieldRuns).where(eq(schema.fieldRuns.status, 'quarantined'));
+}
+
+/**
+ * Claim one due target, or null.
+ *
+ * `FOR UPDATE SKIP LOCKED` plus bumping next_run_at inside the same transaction
+ * IS the claim: once committed, another worker's `next_run_at <= now()` no
+ * longer matches, so two workers cannot take the same target. No claim column,
+ * no jobs table, no broker -- real load is ~0.07 jobs a minute.
+ */
+export async function claimDueTarget(now = new Date()) {
+  const d = getDb();
+  return d.transaction(async (tx) => {
+    const { rows } = await tx.execute(sql`
+      SELECT target_id, url, cadence, contract FROM targets
+      WHERE next_run_at IS NOT NULL AND next_run_at <= ${now}
+      ORDER BY next_run_at FOR UPDATE SKIP LOCKED LIMIT 1`);
+    if (!rows.length) return null;
+    const t = rows[0];
+    await tx.execute(
+      sql`UPDATE targets SET next_run_at = ${nextRunAt(t.cadence, now)} WHERE target_id = ${t.target_id}`,
+    );
+    return { targetId: t.target_id, url: t.url, cadence: t.cadence, contract: t.contract };
+  });
+}
+
+/** Schedule a target to run at `at` (default: now). Used to seed and to resume. */
+export async function scheduleTarget(targetId, at = new Date()) {
+  await getDb().execute(sql`UPDATE targets SET next_run_at = ${at} WHERE target_id = ${targetId}`);
+}
+
+/**
+ * The most recent run for a target, or null.
+ *
+ * `page_sha` comes from field_runs.capture_sha256, not runs.capture_sha: a
+ * healthy run deliberately keeps no capture bytes, so the FK column is null on
+ * exactly the runs skip-if-unchanged needs to compare against. The digest is
+ * recorded either way -- that IS the fingerprint check the schedule screen
+ * promises still happens on a skipped run.
+ */
+export async function lastRunFor(targetId) {
+  const { rows } = await getDb().execute(sql`
+    SELECT run_id, status, page_bytes, page_sha
+    FROM runs WHERE target_id = ${targetId} ORDER BY run_id DESC LIMIT 1`);
+  return rows[0] ?? null;
+}
+
+/**
+ * The detector's history, oldest first.
+ *
+ * detect() guards on history.length >= 3 and robustZ needs an unbroken series,
+ * so a skipped run must still contribute a sample. That is why page_bytes lives
+ * on `runs` rather than being read off `captures`: a healthy run keeps no
+ * capture, and a gap in this series silently disarms the detector.
+ */
+export async function historyFor(targetId, limit = 6) {
+  const { rows } = await getDb().execute(sql`
+    SELECT r.run_id, r.status, r.page_bytes, fr.value IS NULL AS is_null, fr.run_id IS NOT NULL AS evaluated
+    FROM runs r LEFT JOIN field_runs fr ON fr.run_id = r.run_id
+    WHERE r.target_id = ${targetId} AND r.page_bytes IS NOT NULL
+    ORDER BY r.run_id DESC LIMIT ${limit}`);
+  // A LEFT JOIN, not an inner one: a skipped run has no field_runs row, and an
+  // inner join would silently drop it -- leaving robustZ a series with holes in
+  // it and no error to show for them. A skipped page is byte-identical to the
+  // last evaluated one, so its null rate is that run's, carried forward.
+  let carried = 0;
+  return rows.reverse().map((r) => {
+    if (r.evaluated) carried = r.is_null ? 1 : 0;
+    return { nullRate: carried, pageBytes: r.page_bytes };
+  });
+}
+
+/** Record that an episode was (or was not) delivered. A bounced alert is unread. */
+export async function markNotified(episodeId, notified) {
+  await getDb().execute(sql`UPDATE episodes SET notified = ${notified} WHERE episode_id = ${episodeId}`);
 }
