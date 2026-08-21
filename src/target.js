@@ -19,9 +19,24 @@ export const RECALL_TITLE = {
   tags: 'h2,h3,a,li',
   minLen: 20,
   maxLen: 140,
-  include: /recall|rappel|retirada|remedy kit/i,
-  exclude: /recalls\.gov|learn more|click here|^product recalls$/i,
+  include: 'recall|rappel|retirada|remedy kit',
+  exclude: 'recalls\\.gov|learn more|click here|^product recalls$',
+  flags: 'i',
 };
+
+/**
+ * Compile a contract pattern.
+ *
+ * Patterns are STRINGS, not RegExp literals, because a contract is stored as
+ * jsonb and `JSON.stringify(/x/i)` is `{}` -- a regex written as a literal
+ * silently becomes an empty object on the way to the database and matches
+ * nothing on the way back. `expected.regex` in detect.js already uses the
+ * string form; this is the same rule applied to the resolver.
+ *
+ * A RegExp is still accepted so an in-process caller can pass one.
+ */
+const compile = (p, flags = 'i') =>
+  p == null ? null : (p instanceof RegExp ? p : new RegExp(p, flags));
 
 /**
  * First element satisfying the contract, or null.
@@ -31,7 +46,9 @@ export const RECALL_TITLE = {
  * Ranking is heal-time behaviour and lives in heal.js.
  */
 export function pickTarget($, contract = RECALL_TITLE) {
-  const { tags, minLen, maxLen, include, exclude } = contract;
+  const { tags, minLen, maxLen, flags } = contract;
+  const include = compile(contract.include, flags);
+  const exclude = compile(contract.exclude, flags);
   let best = null;
   $(tags).each((i, el) => {
     if (best) return;
