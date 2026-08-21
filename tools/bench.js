@@ -10,7 +10,7 @@ import { load } from 'cheerio';
 import { readFile, readdir, writeFile, mkdir } from 'node:fs/promises';
 import { fingerprint, candidates } from '../src/fingerprint.js';
 import { heal, healGated, rank } from '../src/heal.js';
-import { MUTATIONS, markTarget, isTarget, TRUTH_ATTR } from '../src/mutate.js';
+import { MUTATIONS, markTarget, TRUTH_ATTR } from '../src/mutate.js';
 
 const arg = (name, dflt) => {
   const i = process.argv.indexOf(`--${name}`);
@@ -119,6 +119,17 @@ const run = async () => {
         const truthEl = $m(`[${TRUTH_ATTR}]`).get(0) || null;
         const truthText = truthEl ? $m(truthEl).text().replace(/\s+/g, ' ').trim() : null;
 
+        // Strip the truth marker BEFORE any arm sees the page. The scorer never
+        // reads it, but a future model arm reads raw HTML -- an answer key
+        // visible in the input is contamination (docs/CRITIQUE.md). Identity
+        // survives as a node reference; the canary fails the bench loudly if
+        // the attribute ever leaks back into arm input.
+        if (truthEl) $m(truthEl).removeAttr(TRUTH_ATTR);
+        if ($m.html().includes(TRUTH_ATTR)) {
+          throw new Error(`canary: ${TRUTH_ATTR} leaked into arm input (${site}/${file} ${mut.id})`);
+        }
+        const isTruth = (el2) => !!el2 && el2 === truthEl;
+
         byMutation[mut.id] ||= { label: mut.label, expect: mut.expect, plain: blank(), gated: blank() };
 
         // --- naive
@@ -127,18 +138,18 @@ const run = async () => {
 
         const n = healNaive($m, target);
         tally(arms.naive, mut.expect, n ? 'heal' : 'abstain',
-          n && isTarget(n.element), n && sameValue(n.element));
+          n && isTruth(n.element), n && sameValue(n.element));
 
         // --- plain (always answers)
         const p = heal($m, target, { limit: 3 });
-        const pOk = p && isTarget(p.element);
+        const pOk = p && isTruth(p.element);
         const pVal = p && sameValue(p.element);
         tally(arms.plain, mut.expect, p ? 'heal' : 'abstain', pOk, pVal);
         tally(byMutation[mut.id].plain, mut.expect, p ? 'heal' : 'abstain', pOk, pVal);
 
         // --- gated
         const g = healGated($m, target, { tau: TAU, delta: DELTA, limit: 3 });
-        const gOk = g.decision === 'heal' && isTarget(g.element);
+        const gOk = g.decision === 'heal' && isTruth(g.element);
         const gVal = g.decision === 'heal' && sameValue(g.element);
         tally(arms.gated, mut.expect, g.decision, gOk, gVal);
         tally(byMutation[mut.id].gated, mut.expect, g.decision, gOk, gVal);
