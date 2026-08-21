@@ -11,7 +11,13 @@ set -euo pipefail
 
 NET=assay
 PGVOL=assay-pgdata
-CAPVOL=assay-captures
+# A host directory, not a `container volume`. Apple Container backs a named
+# volume with a block device and attaches it to ONE vm at a time, so web and
+# worker sharing one fails with "storage device attachment is invalid". Docker
+# and Podman share named volumes happily -- this is a genuine divergence.
+# A bind mount is shareable and, for content-addressed captures, also easier
+# to back up: it is just a directory of files.
+CAPVOL="${ASSAY_CAPTURES_DIR:-$PWD/data/captures}"
 IMAGE=assay:local
 PGPASS=assay
 # Host ports are overridable: a self-hoster with Postgres already on 5432 (or
@@ -36,7 +42,7 @@ exists() { container "$1" list --quiet 2>/dev/null | grep -qx "$2"; }
 
 exists network "$NET"   || container network create "$NET"
 exists volume  "$PGVOL" || container volume create "$PGVOL"
-exists volume  "$CAPVOL" || container volume create "$CAPVOL"
+mkdir -p "$CAPVOL"
 
 echo "==> building $IMAGE"
 container build --tag "$IMAGE" .
@@ -106,8 +112,27 @@ container run --detach --name assay-web --network "$NET" \
   --publish "${WEBPORT}:3000" \
   "$IMAGE"
 
-# The worker lands in D3; tools/worker.js does not exist yet. When it does,
-# start it here with the same env and the captures volume.
+# The worker is a second container off the same image, not a route in web: a
+# run would otherwise hold a request open and compete with page loads.
+if running assay-worker || container list --all 2>/dev/null | grep -q assay-worker; then
+  echo "==> replacing worker"
+  running assay-worker && container stop assay-worker >/dev/null
+  container rm assay-worker >/dev/null
+fi
+
+echo "==> starting worker"
+container run --detach --name assay-worker --network "$NET" \
+  --env DATABASE_URL="$DBURL" \
+  --env ASSAY_CAPTURES=/data/captures \
+  --env "ASSAY_RESEND_KEY=${ASSAY_RESEND_KEY:-}" \
+  --env "ASSAY_MAIL_FROM=${ASSAY_MAIL_FROM:-}" \
+  --env "ASSAY_MAIL_TO=${ASSAY_MAIL_TO:-}" \
+  --env "ASSAY_WEBHOOK_URL=${ASSAY_WEBHOOK_URL:-}" \
+  --env "ASSAY_WEBHOOK_SECRET=${ASSAY_WEBHOOK_SECRET:-}" \
+  --volume "$CAPVOL:/data/captures" \
+  "$IMAGE" node tools/worker.js
 
 echo
-echo "up. http://localhost:${WEBPORT}    logs: container logs -f assay-web"
+echo "up. http://localhost:${WEBPORT}"
+echo "    web    logs: container logs -f assay-web"
+echo "    worker logs: container logs -f assay-worker"

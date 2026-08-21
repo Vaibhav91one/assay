@@ -43,22 +43,28 @@ services:
     ports:
       - "3000:3000"
 
-  # The worker lands in D3 (scheduling). `tools/worker.js` does not exist yet,
-  # so the service is commented out rather than shipped broken -- an `up` that
-  # crashes on a missing entrypoint is worse than an `up` that starts what
-  # exists. Uncomment when the scheduler is written.
-  #
-  # worker:
-  #   build: .
-  #   command: node tools/worker.js
-  #   environment:
-  #     DATABASE_URL: postgres://assay:assay@postgres:5432/assay
-  #     ASSAY_CAPTURES: /data/captures
-  #   volumes:
-  #     - captures:/data/captures
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
+  # The worker owns fetch -> detect -> heal -> gate -> publish. It is a separate
+  # service, not a route in `web`: a run would otherwise hold a request open and
+  # compete with page loads. Same image, different entrypoint.
+  worker:
+    build: .
+    command: node tools/worker.js
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://assay:assay@postgres:5432/assay
+      ASSAY_CAPTURES: /data/captures
+      # Delivery is optional: with no key the worker records the break as
+      # undelivered and carries on. An unset key must never stop a run.
+      ASSAY_RESEND_KEY: ${ASSAY_RESEND_KEY:-}
+      ASSAY_MAIL_FROM: ${ASSAY_MAIL_FROM:-}
+      ASSAY_MAIL_TO: ${ASSAY_MAIL_TO:-}
+      ASSAY_WEBHOOK_URL: ${ASSAY_WEBHOOK_URL:-}
+      ASSAY_WEBHOOK_SECRET: ${ASSAY_WEBHOOK_SECRET:-}
+    volumes:
+      - captures:/data/captures
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   pgdata:
