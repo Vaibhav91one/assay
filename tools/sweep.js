@@ -15,6 +15,7 @@ import { readFile, readdir, writeFile, mkdir } from 'node:fs/promises';
 import { fingerprint } from '../src/fingerprint.js';
 import { rank } from '../src/heal.js';
 import { MUTATIONS, markTarget, isTarget, TRUTH_ATTR } from '../src/mutate.js';
+import { pickTarget } from '../src/target.js';
 
 const arg = (n, d) => {
   const i = process.argv.indexOf(`--${n}`);
@@ -29,18 +30,6 @@ const fresh = async (site, file) => {
   return $;
 };
 
-function pickTarget($) {
-  let best = null;
-  $('h2,h3,a,li').each((i, el) => {
-    if (best) return;
-    const t = $(el).text().replace(/\s+/g, ' ').trim();
-    if (t.length < 20 || t.length > 140) return;
-    if (!/recall|rappel|retirada|remedy kit/i.test(t)) return;
-    if (/recalls\.gov|learn more|click here|^product recalls$/i.test(t)) return;
-    best = el;
-  });
-  return best;
-}
 
 /** Collect the ranking facts once. Thresholds are applied later, in memory. */
 async function collect() {

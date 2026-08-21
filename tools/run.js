@@ -17,6 +17,7 @@ import { fingerprint, skeletonHash } from '../src/fingerprint.js';
 import { healGated } from '../src/heal.js';
 import { detect } from '../src/detect.js';
 import { publishRow } from '../src/envelope.js';
+import { pickTarget } from '../src/target.js';
 
 const [, , SITE = 'ikea', FROM = '202401', TO = '202608'] = process.argv;
 const TAU = 0.6;
@@ -30,18 +31,6 @@ const parse = async (site, file) => {
 const clean = (s) => (s || '').replace(/\s+/g, ' ').trim();
 const sha = (s) => createHash('sha256').update(s).digest('hex').slice(0, 16);
 
-function pickTarget($) {
-  let best = null;
-  $('h2,h3,a,li').each((i, el) => {
-    if (best) return;
-    const t = clean($(el).text());
-    if (t.length < 20 || t.length > 140) return;
-    if (!/recall|rappel|retirada|remedy kit/i.test(t)) return;
-    if (/recalls\.gov|learn more|click here|^product recalls$/i.test(t)) return;
-    best = el;
-  });
-  return best;
-}
 
 /** CSS selector good enough to re-run next time. What breaks on a redesign. */
 function selectorFor($, el) {

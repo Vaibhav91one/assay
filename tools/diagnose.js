@@ -7,6 +7,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import { fingerprint } from '../src/fingerprint.js';
 import { rank, score, SPEC } from '../src/heal.js';
 import { MUTATIONS, markTarget, isTarget } from '../src/mutate.js';
+import { pickTarget } from '../src/target.js';
 
 const arg = (n, d) => {
   const i = process.argv.indexOf(`--${n}`);
@@ -22,18 +23,6 @@ const fresh = async (site, file) => {
   return $;
 };
 
-function pickTarget($) {
-  let best = null;
-  $('h2,h3,a,li').each((i, el) => {
-    if (best) return;
-    const t = clean($(el).text());
-    if (t.length < 20 || t.length > 140) return;
-    if (!/recall|rappel|retirada|remedy kit/i.test(t)) return;
-    if (/recalls\.gov|learn more|click here|^product recalls$/i.test(t)) return;
-    best = el;
-  });
-  return best;
-}
 
 const run = async () => {
   const failures = [];

@@ -7,6 +7,7 @@ import { load } from 'cheerio';
 import { readFile, readdir } from 'node:fs/promises';
 import { fingerprint, skeletonHash } from '../src/fingerprint.js';
 import { heal } from '../src/heal.js';
+import { pickTarget } from '../src/target.js';
 
 const [, , SITE = 'ikea', FROM = '202401', TO = '202608'] = process.argv;
 
@@ -19,18 +20,6 @@ const parse = async (site, file) => {
 const norm = (s) => (s || '').replace(/\s+/g, ' ').trim().toLowerCase();
 
 /** A real recall headline, chosen the way a human would at capture time. */
-function pickTarget($) {
-  let best = null;
-  $('h2,h3,a,li').each((i, el) => {
-    if (best) return;
-    const t = $(el).text().replace(/\s+/g, ' ').trim();
-    if (t.length < 20 || t.length > 140) return;
-    if (!/recall|rappel|retirada|remedy kit/i.test(t)) return;
-    if (/recalls\.gov|learn more|click here|^product recalls$/i.test(t)) return;
-    best = el;
-  });
-  return best;
-}
 
 const run = async () => {
   const files = (await readdir(`corpus/${SITE}`)).filter((f) => f.endsWith('.html')).sort();

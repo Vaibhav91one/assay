@@ -11,6 +11,7 @@ import { readFile, readdir, writeFile, mkdir } from 'node:fs/promises';
 import { fingerprint, candidates } from '../src/fingerprint.js';
 import { heal, healGated, rank } from '../src/heal.js';
 import { MUTATIONS, markTarget, TRUTH_ATTR } from '../src/mutate.js';
+import { pickTarget } from '../src/target.js';
 
 const arg = (name, dflt) => {
   const i = process.argv.indexOf(`--${name}`);
@@ -28,18 +29,6 @@ const fresh = async (site, file) => {
 };
 
 /** A real recall item, picked the way a human would at capture time. */
-function pickTarget($) {
-  let best = null;
-  $('h2,h3,a,li').each((i, el) => {
-    if (best) return;
-    const t = $(el).text().replace(/\s+/g, ' ').trim();
-    if (t.length < 20 || t.length > 140) return;
-    if (!/recall|rappel|retirada|remedy kit/i.test(t)) return;
-    if (/recalls\.gov|learn more|click here|^product recalls$/i.test(t)) return;
-    best = el;
-  });
-  return best;
-}
 
 /** Naive baseline: first element sharing the original tag. What a beginner writes. */
 function healNaive($, target) {

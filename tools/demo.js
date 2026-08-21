@@ -12,6 +12,7 @@ import { fingerprint } from '../src/fingerprint.js';
 import { healGated } from '../src/heal.js';
 import { MUTATIONS, markTarget } from '../src/mutate.js';
 import { publishRow } from '../src/envelope.js';
+import { pickTarget } from '../src/target.js';
 
 const SITE = 'ikea';
 const TAU = 0.6;
@@ -21,18 +22,6 @@ const sha = (s) => createHash('sha256').update(s).digest('hex').slice(0, 16);
 
 // ponytail: fourth copy of this finder (run.js, heal-demo.js, selftest.js have
 // their own) -- extract to src/ if a fifth appears
-function pickTarget($) {
-  let best = null;
-  $('h2,h3,a,li').each((i, el) => {
-    if (best) return;
-    const t = clean($(el).text());
-    if (t.length < 20 || t.length > 140) return;
-    if (!/recall|rappel|retirada|remedy kit/i.test(t)) return;
-    if (/recalls\.gov|learn more|click here|^product recalls$/i.test(t)) return;
-    best = el;
-  });
-  return best;
-}
 
 const page = async () => {
   const files = (await readdir(`corpus/${SITE}`)).filter((f) => f.endsWith('.html')).sort();

@@ -13,6 +13,7 @@ import { createHash } from 'node:crypto';
 import { fingerprint, skeletonHash } from '../src/fingerprint.js';
 import { healGated } from '../src/heal.js';
 import { detect } from '../src/detect.js';
+import { pickTarget } from '../src/target.js';
 
 const outIdx = process.argv.indexOf('--out');
 const OUT = outIdx > -1 ? process.argv[outIdx + 1] : 'results/events.jsonl';
@@ -29,18 +30,6 @@ const parse = async (site, file) => {
   return $;
 };
 
-function pickTarget($) {
-  let best = null;
-  $('h2,h3,a,li').each((i, el) => {
-    if (best) return;
-    const t = clean($(el).text());
-    if (t.length < 20 || t.length > 140) return;
-    if (!/recall|rappel|retirada|remedy kit/i.test(t)) return;
-    if (/recalls\.gov|learn more|click here|^product recalls$/i.test(t)) return;
-    best = el;
-  });
-  return best;
-}
 
 function selectorFor(el) {
   const a = el.attribs || {};
