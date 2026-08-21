@@ -1,0 +1,46 @@
+# --- secrets -----------------------------------------------------------------
+.env
+.env.*
+!.env.example
+
+# Agent/harness state. Excluded because session transcripts have been observed
+# to contain a live Bright Data API token. Never commit this directory.
+.claude/
+
+# --- dependencies ------------------------------------------------------------
+node_modules/
+
+# Vendored third-party bundle, reproducible with `npm run vendor`.
+# Kept out of history so the repo stays readable.
+app/vendor/
+
+# --- corpus ------------------------------------------------------------------
+# 77 archived HTML captures, ~14 MB of other companies' pages.
+#
+# corpus/manifest.json IS committed: it records every capture's URL, timestamp
+# and content digest, so `npm run corpus` rebuilds the exact same corpus from
+# the Wayback Machine. That gives full reproducibility of every published number
+# without redistributing 77 copies of someone else's site.
+corpus/*
+!corpus/manifest.json
+
+# --- results -----------------------------------------------------------------
+# results/ IS COMMITTED ON PURPOSE.
+#
+# The hackathon requires "example structured output" as a submission artifact,
+# and these files are the evidence behind every claim in the README:
+#   events.jsonl      74 proof records, one per run, heals and abstentions alike
+#   bench.json        the benchmark, 135 cases with exact ground truth
+#   sweep.json        110 threshold pairs, the calibration behind tau and delta
+#   ikea-recalls.json 60 live records from Bright Data collector c_mt1nrjboski90goqc
+# Excluding them would make the numbers unverifiable and the submission
+# non-qualifying.
+#
+# Raw API dumps are the one exception - they are re-fetchable and add nothing.
+results/*.ndjson
+
+# --- os / editor -------------------------------------------------------------
+.DS_Store
+*.swp
+.idea/
+.vscode/

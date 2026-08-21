@@ -1,0 +1,22 @@
+{
+  "name": "assay",
+  "version": "0.1.0",
+  "description": "Self-healing scraper that abstains when it is not sure, and measures how often heals are wrong.",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "corpus": "node tools/fetch-corpus.js",
+    "test": "node tools/selftest.js",
+    "bench": "node tools/bench.js",
+    "sweep": "node tools/sweep.js",
+    "replay": "node tools/replay.js",
+    "audit": "node tools/audit.js",
+    "app": "node tools/build-app.js",
+    "vendor": "mkdir -p app/vendor && cp node_modules/mermaid/dist/mermaid.min.js app/vendor/"
+  },
+  "dependencies": {
+    "cheerio": "^1.2.0",
+    "fastest-levenshtein": "^1.0.16",
+    "mermaid": "^11.17.0"
+  }
+}
