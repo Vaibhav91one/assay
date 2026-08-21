@@ -151,28 +151,64 @@ async function save(transcript) {
  * Reporting a Bright Data approval as having gone "through the margin gate" would
  * be a false claim about how the decision was made. It went through this.
  */
+/**
+ * A rule returns true (PASS), false (FAIL) or N_A. N_A means the preview does not
+ * carry the evidence the rule needs, which is not the same as the rule being
+ * violated, and must never be counted as one.
+ */
+const N_A = null;
+const mark = (v) => (v === N_A ? 'N/A ' : v ? 'PASS' : 'FAIL');
+
 function acceptance(row) {
   const t = row?.recall_title ?? null;
-  const detail = row?.title_on_detail ?? null;
   const norm = (s) => String(s ?? '').replace(/\s+/g, ' ').trim().toLowerCase();
+  // recall_title and title_on_detail are produced by DIFFERENT pipeline stages:
+  // the listing step emits recall_title, the detail step emits title_on_detail.
+  // A preview covering only the listing step has no title_on_detail key at all,
+  // and absence of the second value is not disagreement between the two. Reading
+  // it as FAIL would reject a good heal for a reason that was never tested.
+  const hasDetail = !!row && 'title_on_detail' in row;
   return [
     ['recall_title is non-null', t !== null && t !== undefined && String(t).trim() !== ''],
     ['matches /(recall|rappel|retirada|alert)/i', /(recall|rappel|retirada|alert)/i.test(String(t ?? ''))],
     ['at least 15 chars', String(t ?? '').trim().length >= 15],
-    ['agrees with title_on_detail (case-insensitive)', !!detail && norm(t) === norm(detail)],
+    [
+      'agrees with title_on_detail (case-insensitive)',
+      hasDetail ? norm(t) === norm(row.title_on_detail) : N_A,
+      hasDetail ? null : 'title_on_detail is absent from this preview (detail stage, not listing stage)',
+    ],
   ];
 }
 
-/** preview_result's shape is undocumented, so find the first object anywhere in
- *  the payload that actually carries a recall_title key. */
-function findRow(node, depth = 0) {
-  if (!node || typeof node !== 'object' || depth > 8) return null;
-  if (!Array.isArray(node) && 'recall_title' in node) return node;
-  for (const v of Array.isArray(node) ? node : Object.values(node)) {
-    const hit = findRow(v, depth + 1);
-    if (hit) return hit;
+/** preview_result's shape is undocumented, so scan the whole payload for objects
+ *  carrying a recall_title key. Schema-definition objects carry that key too, and
+ *  their values are field descriptors rather than strings -- stringifying one
+ *  gives "[object Object]", which would sail past three of the four rules. So a
+ *  candidate counts as data only when every value is a primitive. Returns the
+ *  tally as well as the row: which rows were considered, and how many were thrown
+ *  out as schema, is part of the answer. */
+function findRow(node) {
+  const considered = [];
+  (function walk(n, depth) {
+    if (!n || typeof n !== 'object' || depth > 8) return;
+    if (!Array.isArray(n) && 'recall_title' in n) considered.push(n);
+    for (const v of Array.isArray(n) ? n : Object.values(n)) walk(v, depth + 1);
+  })(node, 0);
+  const isData = (o) => Object.values(o).every((v) => v === null || typeof v !== 'object');
+  const rows = considered.filter(isData);
+  return { row: rows[0] ?? null, considered: considered.length, schema: considered.length - rows.length };
+}
+
+/** Prints the four rules and returns true unless a rule actually FAILED. */
+function report(row, indent) {
+  let failed = 0;
+  let na = 0;
+  for (const [rule, verdict, why] of acceptance(row)) {
+    if (verdict === false) failed++;
+    if (verdict === N_A) na++;
+    console.log(`${indent}${mark(verdict)}  ${rule}${why ? `\n${indent}      N/A: ${why}` : ''}`);
   }
-  return null;
+  return { failed, na };
 }
 
 // --- commands ---------------------------------------------------------------
@@ -271,10 +307,11 @@ async function cmdHeal() {
   if (transcript.gate.reached) {
     console.log(`\n  APPROVAL GATE REACHED. preview:\n`);
     console.log(safeJson(transcript.preview).split('\n').slice(0, 60).join('\n'));
-    const row = findRow(transcript.preview);
+    const { row, considered, schema } = findRow(transcript.preview);
     console.log(`\n  acceptance check:`);
-    if (!row) console.log('    no object with a recall_title key found in the preview');
-    else for (const [rule, pass] of acceptance(row)) console.log(`    ${pass ? 'PASS' : 'FAIL'}  ${rule}`);
+    console.log(`    ${considered} candidate row(s) considered, ${schema} rejected as schema rather than data`);
+    if (!row) console.log('    no data row with a recall_title key found in the preview');
+    else report(row, '    ');
     console.log(
       `\n  NOT approved. Nothing was changed on the collector.\n` +
         `  To approve:  node tools/bd-heal.js --collector ${COLLECTOR} --approve\n` +
@@ -303,21 +340,24 @@ async function cmdVerify() {
     console.error(`\nerror: cannot read transcript ${OUT}: ${err.message}\n`);
     process.exit(2);
   }
-  const row = findRow(transcript.preview ?? transcript);
+  const { row, considered, schema } = findRow(transcript.preview ?? transcript);
   console.log(`\nacceptance check on ${OUT}`);
+  console.log(`  ${considered} candidate row(s) considered, ${schema} rejected as schema rather than data`);
   if (!row) {
-    console.error('  no object with a recall_title key found -- nothing to verify\n');
+    console.error('  no data row with a recall_title key found -- nothing to verify\n');
     process.exit(1);
   }
   console.log(`  recall_title      ${JSON.stringify(row.recall_title)}`);
-  console.log(`  title_on_detail   ${JSON.stringify(row.title_on_detail ?? null)}\n`);
-  let allPass = true;
-  for (const [rule, pass] of acceptance(row)) {
-    if (!pass) allPass = false;
-    console.log(`  ${pass ? 'PASS' : 'FAIL'}  ${rule}`);
-  }
-  console.log(`\n  ${allPass ? 'ACCEPT' : 'DO NOT ACCEPT'}\n`);
-  process.exit(allPass ? 0 : 1);
+  console.log(
+    `  title_on_detail   ${'title_on_detail' in row ? JSON.stringify(row.title_on_detail) : '(absent from this preview)'}\n`
+  );
+  const { failed, na } = report(row, '  ');
+  const tally = `${4 - failed - na} pass, ${failed} fail, ${na} not evaluable`;
+  console.log(`\n  ${failed ? 'DO NOT ACCEPT' : 'ACCEPT'}  (${tally})`);
+  if (na) console.log(`  ${na} rule(s) were not evaluable here, so this verdict rests on ${4 - na}.`);
+  console.log('');
+  // N/A is not a failure. Only a rule that was evaluated and lost blocks acceptance.
+  process.exit(failed ? 1 : 0);
 }
 
 // --- dispatch ---------------------------------------------------------------

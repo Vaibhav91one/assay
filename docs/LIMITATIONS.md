@@ -1,0 +1,171 @@
+# Limitations
+
+Where Assay is weak, with the numbers that show it. Every figure below is read
+off a file in `results/`, so each one can be checked or contradicted.
+
+The project's claim is narrow: on this corpus, with these thresholds, the margin
+gate takes the wrong-value count to zero. Everything that claim does not cover is
+in this document.
+
+---
+
+## 1. It abstains when it does not need to, on wrapper mutations
+
+`results/headtohead.jsonl` is the live run against the deployed testbed: nine
+mutations, one field, one system. Assay published five correct values, published
+nothing wrong, and abstained four times. Two of those four abstentions were right
+— `remove_field`, where nothing was recoverable, and `duplicate_similar`, marked
+`ambiguous`. Two were not:
+
+| variant | expect | score | runner-up | margin | delta |
+|---|---|---|---|---|---|
+| `wrapper_div` | target | 0.7363 | 0.6918 | **0.0446** | 0.16 |
+| `combo_redesign` | target | 0.6918 | 0.6380 | **0.0537** | 0.16 |
+
+Both fields were recoverable. Both went to a human. That is 2 of 9 cases on the
+live run sent to a queue for no reason.
+
+The cause is structural. Wrapping the target in a new parent creates an element
+whose `text` is character-for-character the target's own, and `text` carries the
+heaviest weight in the scorer (2.7 of 18.6). The wrapper therefore lands within a
+few hundredths of the thing it wraps. On `combo_redesign` it lands *above* it:
+the top candidate is `div.v2-shell`, not `h2.v2-recall-card__title`.
+
+`healGated` has an escape hatch for exactly this. When the margin is thin it
+collects every candidate within `delta` of the best and, if they all carry the
+same text, heals anyway — `reason: "benign_tie"`, on the grounds that it does not
+matter which node you read an identical string from. It did not fire on either
+case. The persisted ranked list says why:
+
+```
+wrapper_div      band = 0.7363 - 0.16 = 0.5763
+  0.7363  h2.recall-card__title   "Contoso recalls the Halden swivel chair..."
+  0.6918  div.layout-shell        "Contoso recalls the Halden swivel chair..."   <- same text
+  0.6314  h2.recall-card__title   "Contoso recalls the Ravensmoor space heater..." <- inside the band, different text
+```
+
+A third candidate — a different recall card on the same listing page — sits
+inside the delta band with different text. `values.size` is 2, not 1, so the
+benign tie is not recognised and the gate abstains. `combo_redesign` fails the
+same way, with the same third candidate at 0.6314 against a band floor of 0.5318.
+
+**The auditability gap.** That diagnosis is possible only because
+`serialiseDecision` in `tools/headtohead.js` keeps a ranked list, and it keeps
+less than the decision was made from: the **top 3 of 5** candidates, each reduced
+to a selector, a score rounded to four places, and the first 80 characters of its
+text. The per-property contributions that produced 0.7363 against 0.6918 are not
+kept anywhere. So the list is enough to see *that* an unrelated card broke the
+benign-tie check, and not enough to say *why* a wrapper div scores 0.6918 in the
+first place, or what candidates 4 and 5 were. `results/events.jsonl` truncates
+the same way. The ranked list is the evidence for every gate decision this
+project makes, and it is stored in a lossy form in both places.
+
+Nothing has been changed in response to this. The obvious repair — treat a
+candidate as a benign tie when it is an ancestor or descendant of the best
+candidate and carries the same text, regardless of what else is in the band — is
+untested, and an untested fix to the gate is the one thing this project should
+not ship.
+
+---
+
+## 2. The benchmark's zero is paid for
+
+`results/bench.json`, 135 cases, three arms:
+
+| arm | value correct | wrong values published | abstentions |
+|---|---|---|---|
+| naive | 48 | 75 | 12 |
+| plain (no gate) | 111 | 24 | 0 |
+| gated | 93 | **0** | 42 |
+
+The gated arm's 42 abstentions split 18 / 24. Eighteen are on `remove_field`,
+where the element is gone and refusing is the only correct answer. The other 24
+are on breaks where a correct answer existed, and on 18 of those 24 the ungated
+arm actually produced it — 6 on `swap_tag`, 12 on `duplicate_similar`.
+
+`duplicate_similar` is the worst of it. A near-identical decoy sits beside the
+real value; the ungated healer gets 12 of 18 right and 6 wrong; the gated healer
+abstains on **all 18**, discarding the 12 along with the 6. The gate cannot tell
+the two apart, which is the definition of a thin margin, but the cost is not
+symmetric — it loses twice as many right answers as wrong ones on that mutation.
+
+24 of 135 is 17.8%. Roughly one break in six lands in a review queue that did not
+have to. Whether that is a good trade depends entirely on what publishing a wrong
+value costs you. For a product-recall feed it is worth it. For a price tracker it
+is probably not, which is why `tau` and `delta` are arguments to every tool.
+
+---
+
+## 3. The gate has never fired on real drift
+
+`results/events.jsonl` is the replay over the archived corpus: 74 records, 50
+clean, 24 heals, **0 abstentions**.
+
+Two and a half years of genuine site changes across three sites never once
+produced a near-tie. When those pages moved, the right answer won by a wide
+margin — run 51 is typical, 0.8787 against a runner-up of 0.3763, a margin of
+0.50 against a threshold of 0.16.
+
+So on the only real-world data in this repo, the margin gate is inert. It costs
+nothing and it catches nothing. Every abstention the project has ever recorded
+comes from a manufactured near-tie: 42 from the benchmark's deliberate
+mutations, 4 from the deployed testbed. The claim "the gate prevents wrong
+values" is supported by constructed cases and by no observed production incident.
+
+---
+
+## 4. One field, one vertical
+
+All 74 replay records track a single field, `recall_title`, on product-recall
+listing pages from three sites (IKEA, Mattel, Chicco). The 135 benchmark cases
+are the same field on the same six captures.
+
+Nothing here has been run against a price, a stock count, a date, a paginated
+table, a review body, or a JavaScript-rendered page. `recall_title` is a long,
+distinctive, prose-like string, which is close to the best case for a
+text-weighted similarity scorer. A short numeric field would give `text` far less
+to work with and would likely shift where the thresholds belong.
+
+---
+
+## 5. The thresholds are calibrated on this corpus and nowhere else
+
+`tau = 0.6` and `delta = 0.16` came out of `tools/sweep.js`: an 11 x 10 grid, 110
+points, scored over these pages and these mutations. `results/sweep.json` holds
+the surface.
+
+That makes them fitted values, not constants. They are arguments to every tool
+for that reason. There is no evidence they transfer to another vertical, another
+field type, or another site's markup conventions, and the sweep that produced
+them would have to be rerun on a new corpus to find out. Treat any repo that
+copies 0.6 / 0.16 without rerunning the sweep as unvalidated.
+
+---
+
+## 6. No layout signal
+
+`fingerprint()` describes an element with text, tag, type, id, classes, ARIA
+label, neighbour text, href, alt and two XPaths. It records no position and no
+dimensions, and the comment in `src/fingerprint.js` says why: Cheerio parses HTML
+and has no layout engine, so there is no box to measure.
+
+The weights come from Kluge & Stocco (EMSE 2026), which weighted location at 1.7
+and dimension at 1.1. Both are dropped here — 2.8 of the source's 21.4 total
+weight, about 13%, discarded because this runtime cannot compute them.
+
+That is a real loss and it bears directly on limitation 1. A wrapper div occupies
+a visibly larger box than the `h2` inside it, and a geometry-aware scorer would
+separate the two on exactly the case where this one cannot. Recovering the signal
+means a headless browser, which would end the property that makes
+`src/fingerprint.js` useful: it imports nothing, so it pastes verbatim into a
+Bright Data collector's Cheerio parser and runs identically in both places. The
+trade was taken deliberately and it has a measurable cost.
+
+---
+
+## What is not claimed
+
+- That the gate improves outcomes on any corpus other than this one.
+- That 0.6 / 0.16 are correct for any field other than `recall_title`.
+- That zero wrong values is achievable without the abstention rate in section 2.
+- That the two unnecessary abstentions in section 1 have been fixed. They have not.
