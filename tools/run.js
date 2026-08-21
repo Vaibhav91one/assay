@@ -17,6 +17,8 @@ import { fingerprint, skeletonHash } from '../src/fingerprint.js';
 import { healGated } from '../src/heal.js';
 import { detect } from '../src/detect.js';
 import { publishRow } from '../src/envelope.js';
+import { putCapture } from '../src/store/captures.js';
+import { digest } from '../src/runner.js';
 import { pickTarget } from '../src/target.js';
 
 const [, , SITE = 'ikea', FROM = '202401', TO = '202608'] = process.argv;
@@ -127,6 +129,7 @@ const run = async () => {
   say('', `DECISION  ${g.decision.toUpperCase()}  (${g.reason})`);
 
   // ---------------- PROVE ----------------
+  const goldenSha = (await putCapture($1.html())).sha;
   const proofId = `pr_${sha(`${f1}${f2}${g.decision}${g.reason}`)}`;
   const proof = {
     id: proofId,
@@ -161,7 +164,7 @@ const run = async () => {
     decision: g.decision === 'heal' ? 'auto_approved' : 'abstain',
     reason: g.reason,
     approved_by: 'assay',
-    golden_sha256: sha(value1 || ''),
+    golden_sha256: goldenSha,
   };
 
   await mkdir('results', { recursive: true });

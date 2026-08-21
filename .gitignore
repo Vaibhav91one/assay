@@ -47,3 +47,8 @@ app/vendor/
 *.swp
 .idea/
 .vscode/
+
+# --- derived --------------------------------------------------------------
+# Content-addressed page captures. Regenerable with `npm run replay`, so they
+# are evidence you can rebuild rather than evidence you must keep.
+captures/

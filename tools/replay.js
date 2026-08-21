@@ -14,7 +14,8 @@
 import { load } from 'cheerio';
 import { readFile, readdir, writeFile, mkdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { establishBaseline, runTarget } from '../src/runner.js';
+import { establishBaseline, runTarget, digest } from '../src/runner.js';
+import { putCapture } from '../src/store/captures.js';
 import { pickTarget } from '../src/target.js';
 
 const outIdx = process.argv.indexOf('--out');
@@ -24,7 +25,7 @@ const SITES = ['mattel', 'ikea', 'chicco'];
 const TAU = 0.6;
 const DELTA = 0.16;
 
-const sha = (s) => createHash('sha256').update(s || '').digest('hex').slice(0, 16);
+const sha = (s) => createHash('sha256').update(s || '').digest('hex').slice(0, 16); // proof ids only
 
 const parse = async (site, file) => {
   const $ = load(await readFile(`corpus/${site}/${file}`, 'utf8'));
@@ -38,6 +39,8 @@ const run = async () => {
   const events = [];
   const rows = [];
   let runNo = 0;
+  let stored = 0;
+  let deduped = 0;
 
   for (const site of SITES) {
     const files = (await readdir(`corpus/${site}`)).filter((f) => f.endsWith('.html')).sort();
@@ -52,7 +55,7 @@ const run = async () => {
       el: el0,
       field: 'recall_title',
       expected: EXPECTED,
-      goldenSha: sha(fingerprintText($0, el0)),
+      goldenSha: (await putCapture($0.html())).sha,
     });
 
     const history = [];
@@ -72,6 +75,12 @@ const run = async () => {
       history.push(r.sample);
       events.push(r.event);
       rows.push(r.row);
+      // Keep the page only when a decision was made about it. A clean run has
+      // nothing to show a human, so storing it is retention for its own sake.
+      if (r.event.event !== 'ok') {
+        const put = await putCapture((await parse(site, file)).html());
+        if (put.deduped) deduped++; else stored++;
+      }
     }
   }
 
@@ -91,13 +100,10 @@ const run = async () => {
   console.log(`  causes   ${JSON.stringify(causes)}`);
   const held = rows.filter((r) => r._assay.fields.recall_title.status === 'quarantined').length;
   console.log(`  held     ${held} cells published as labelled holes`);
+  console.log(`  captures ${stored} stored, ${deduped} deduped`);
   console.log(`-> ${OUT}`);
   console.log(`-> ${ROWS}\n`);
 };
 
-// The baseline value is the fingerprint's text, read the same way runner does.
-function fingerprintText($, el) {
-  return ($(el).text() || '').replace(/\s+/g, ' ').trim().slice(0, 200) || null;
-}
 
 run();

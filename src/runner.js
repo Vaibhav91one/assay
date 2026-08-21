@@ -8,12 +8,16 @@
 // Imports nothing but the engine -- no cheerio, no fs, no network. `$` arrives
 // already parsed, so this runs anywhere the engine runs.
 
+import { createHash } from 'node:crypto';
 import { fingerprint, skeletonHash } from './fingerprint.js';
 import { healGated } from './heal.js';
 import { detect } from './detect.js';
 import { publishRow } from './envelope.js';
 
 const clean = (s) => (s || '').replace(/\s+/g, ' ').trim();
+
+/** Full sha256. Not truncated: a 16-hex prefix in a field named sha256 is a lie. */
+export const digest = (s) => createHash('sha256').update(s || '').digest('hex');
 
 /** A stable-ish selector for an element: id, else tag.firstClass, else tag. */
 export function selectorFor(el) {
@@ -95,6 +99,7 @@ export function evaluate({ $, baseline, history = [], thresholds, meta = {} }) {
     value_now: value,
     baseline_value: baseline.value,
     golden_sha256: baseline.goldenSha,
+    capture_sha256: digest($.html()),
   };
 
   const sample = { nullRate: value == null ? 1 : 0, pageBytes };
