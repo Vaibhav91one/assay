@@ -4,6 +4,7 @@ import { notices, outstandingCount } from '@/lib/notifications';
 import { Notifications } from './notifications';
 import { Settings } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 /**
  * Screen chrome: what this screen is, and one plain fact about its state.
@@ -14,7 +15,13 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
  * `action` replaces the Settings link on screens that have a better right-hand
  * verb of their own (Explain copies a proof id). There is only ever one,
  * because the one-primary law does not stop at the page body. Pass `null` for
- * none -- Settings itself must not offer a button to Settings.
+ * none -- Settings itself must not offer a button to Settings. Both properties
+ * survive the control becoming a glyph: it is the same slot, drawn smaller.
+ *
+ * Settings gets no dot. The bell's dot means work is outstanding and the
+ * queue can say when that is true; nothing on Settings can, so a dot there
+ * would either be permanent or invented, and both teach the reader to stop
+ * seeing dots.
  */
 export async function TopBar({
   title,
@@ -49,10 +56,18 @@ export async function TopBar({
         {action !== undefined ? (
           action
         ) : (
-          <Link href="/settings" className={actionVariants({ variant: 'outline' })}>
-            <Settings size={16} strokeWidth={1.5} aria-hidden />
-            Settings
-          </Link>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger
+                render={<Link href="/settings" />}
+                className={actionVariants({ variant: 'icon' })}
+                aria-label="Settings"
+              >
+                <Settings size={16} strokeWidth={1.5} aria-hidden />
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Settings</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
       </div>
     </header>

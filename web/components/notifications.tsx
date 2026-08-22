@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { Popover } from '@base-ui/react/popover';
-import { Bell, Check, CircleAlert, ListChecks, MailWarning } from 'lucide-react';
+import { Bell, Check, CircleAlert, MailWarning, Split } from 'lucide-react';
 import type { Notice, NoticeKind } from '@/lib/notifications';
 import { actionVariants } from './button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 /**
  * What is waiting on a person, next to the control they would reach for.
@@ -27,9 +28,20 @@ import { actionVariants } from './button';
  * /decisions, /runs or /settings, and a link to nowhere is worse than no link
  * because it looks like it worked. Grouping the flyout into tabs was
  * considered and dropped: four kinds across two groups do not need them.
+ *
+ * The trigger is a glyph and a dot, with no word beside it. The dot inherits
+ * the count's meaning exactly and adds nothing to it: it is drawn when
+ * something is OUTSTANDING and it goes away when the work is done, never
+ * because the panel was opened. It is emphatically not the unread dot ruled
+ * out two paragraphs up -- same shape, opposite claim.
+ *
+ * Losing the word "Activity" costs a sighted user nothing they cannot get by
+ * hovering, and would have cost a screen reader user the control's whole name,
+ * so the `aria-label` still carries the count in full and the tooltip fires on
+ * keyboard focus as well as on hover.
  */
 const ICON: Record<NoticeKind, typeof Bell> = {
-  decision: ListChecks,
+  decision: Split,
   break: CircleAlert,
   undelivered: MailWarning,
   healed: Check,
@@ -45,25 +57,35 @@ const TONE: Record<NoticeKind, string> = {
 export function Notifications({ items, count }: { items: Notice[]; count: number }) {
   return (
     <Popover.Root>
-      <Popover.Trigger
-        className={actionVariants({ variant: 'outline', className: 'relative' })}
-        aria-label={label(count)}
-      >
-        <Bell size={16} strokeWidth={1.5} aria-hidden />
-        <span className="meta-12_5">Activity</span>
-        {count > 0 && (
-          <span className="absolute -right-[5px] -top-[5px] flex size-[17px] items-center justify-center rounded-full bg-[var(--accent-brand)]">
-            <span className="caption-11 text-[var(--accent-on-primary)]">{count}</span>
-          </span>
-        )}
-      </Popover.Trigger>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger
+            render={<Popover.Trigger />}
+            className={actionVariants({ variant: 'icon', className: 'relative' })}
+            aria-label={label(count)}
+          >
+            <Bell size={16} strokeWidth={1.5} aria-hidden />
+            {/* aria-hidden, and the label above already said the number. A dot
+                that announced itself would make the reader hear the same fact
+                twice, once precisely and once as "something". */}
+            {count > 0 && (
+              <span
+                aria-hidden
+                className="absolute -bottom-[2px] -right-[2px] size-[9px] rounded-full border-2 border-[var(--surface-card)] bg-[var(--accent-brand)]"
+              />
+            )}
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{label(count)}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
 
       <Popover.Portal>
         <Popover.Positioner side="bottom" align="end" sideOffset={8}>
-          {/* `motion-pop-in` rather than numbers of its own, and the origin Base
-              UI computed for the side it actually opened on, so the panel grows
-              out of the bell instead of out of its own middle. See docs/MOTION.md. */}
-          <Popover.Popup className="motion-pop-in z-50 w-[380px] origin-[var(--transform-origin)] overflow-hidden rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] outline-none shadow-elevation-floating">
+          {/* `motion-popup` rather than numbers of its own: it grows out of the
+              origin Base UI computed for the side it actually opened on, so the
+              panel arrives out of the bell instead of out of its own middle,
+              and collapses back into it faster than it came. See docs/MOTION.md. */}
+          <Popover.Popup className="motion-popup z-50 w-[380px] overflow-hidden rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] outline-none shadow-elevation-floating">
             <p className="label-10 border-b border-[var(--border-hairline)] px-[16px] py-[12px] text-[var(--text-muted)]">
               {count > 0 ? `${count} WAITING ON YOU` : 'NOTHING WAITING ON YOU'}
             </p>
@@ -108,7 +130,7 @@ function Group({ items, label }: { items: Notice[]; label?: string }) {
             <li key={n.id} className="border-b border-[var(--border-hairline)] last:border-b-0">
               <Link
                 href={n.href}
-                className="flex items-start gap-[12px] px-[16px] py-[12px] hover:bg-[var(--surface-subtle)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--semantic-link)]"
+                className="focus-ring-inset flex items-start gap-[12px] px-[16px] py-[12px] hover:bg-[var(--surface-subtle)]"
               >
                 <Icon
                   size={15}
