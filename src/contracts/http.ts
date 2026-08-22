@@ -47,16 +47,18 @@ const asJson = (v: ContractVersion) => ({
   ),
 });
 
-const PostBody = z.strictObject({
-  yaml: z.string().min(1, 'Send the contract as a YAML string in "yaml".'),
-});
+const PostBody = z.strictObject({ yaml: z.string().min(1) });
 
 /** POST /api/v1/contracts -- append a version. 422 carries the line to fix. */
 export const postContract = guarded(async (request) => {
   const body = PostBody.safeParse(await request.json().catch(() => null));
   if (!body.success) {
+    // Written out rather than taken from the issue: Zod 4's default messages
+    // live in a locale module that Next's production bundle drops, so
+    // `issue.message` reads "Invalid input" over HTTP. Same reason as
+    // EXPLAIN in src/contracts/index.ts.
     return Response.json(
-      { error: 'invalid_request', issues: body.error.issues.map((i) => i.message) },
+      { error: 'invalid_request', detail: 'The body must be {"yaml": "<the contract>"} and nothing else.' },
       { status: 400 },
     );
   }

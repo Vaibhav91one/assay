@@ -177,9 +177,34 @@ describe('validation names the line and what was allowed', () => {
     expect(i.message).toContain('DUPLICATE_KEY');
   });
 
-  it('rejects a tier it does not have', () => {
+  it('rejects a tier it does not have, and names the tiers that exist', () => {
     expect(issues('target: t\nfields:\n  p:\n    policy: paranoid\n')[0].message)
-      .toContain('"strict"');
+      .toBe('policy must be one of: strict, normal, loose.');
+  });
+
+  // Zod 4 keeps its default messages in a locale module that Next 16's
+  // production bundle drops, so `issue.message` arrives as a bare "Invalid
+  // input" over HTTP -- reproduced against `next start` before EXPLAIN existed.
+  // Every message this validator emits has to be built here, not read off Zod.
+  it('never falls through to a Zod default message', () => {
+    const bad = [
+      'target: t\nfields:\n  p:\n    policy: paranoid\n',
+      'target: t\nfields:\n  p:\n    on_abstain: quarrantine\n',
+      'target: t\nfields:\n  p:\n    auto_approve: 1.5\n',
+      'target: t\nfields:\n  p:\n    auto_approve: sometimes\n',
+      'target: t\nfields:\n  p:\n    tau: 4\n',
+      'target: t\nfields:\n  p:\n    alert: ""\n',
+      'fields:\n  p:\n    policy: strict\n',
+      'target: t\n',
+      'target: t\nfields:\n  p: not-a-map\n',
+    ];
+    for (const source of bad) {
+      for (const i of issues(source)) {
+        expect(i.message, source).not.toMatch(/^Invalid input$/);
+        expect(i.message, source).not.toMatch(/^Invalid option/);
+        expect(i.message.length, source).toBeGreaterThan(12);
+      }
+    }
   });
 
   it('rejects an empty document rather than treating it as an empty contract', () => {

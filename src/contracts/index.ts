@@ -207,6 +207,48 @@ export type ParseResult =
   | { ok: true; contract: Contract }
   | { ok: false; issues: ContractIssue[] };
 
+/**
+ * What each key accepts, in this project's words rather than Zod's.
+ *
+ * Not a nicety. Zod 4 carries its default messages in a locale module, and
+ * Next 16's production bundle drops it -- the same bad contract reads
+ * `Invalid option: expected one of "strict"|"normal"|"loose"` in process and a
+ * bare `Invalid input` over HTTP, which was reproduced against `next start`
+ * before this table existed. Telling an operator which line is wrong is the
+ * entire feature, so it cannot depend on a message surviving a bundler.
+ */
+const EXPLAIN: Record<string, string> = {
+  target: 'target must be the id of a registered target.',
+  fields: 'fields must be a map of field name to policy.',
+  policy: `policy must be one of: ${TIERS.join(', ')}.`,
+  on_abstain: `on_abstain must be one of: ${ON_ABSTAIN.join(', ')}.`,
+  auto_approve: AUTO_APPROVE_ERROR,
+  tau: 'tau must be a score above 0 and at most 1.',
+  delta: 'delta must be at least 0 and below 1.',
+  alert: 'alert must be a non-empty string, or "none" for nobody.',
+};
+
+/** One Zod issue, in a sentence built here rather than read off the locale. */
+function explain(issue: z.core.$ZodIssue, missing: boolean): string {
+  const hint = EXPLAIN[String(issue.path.at(-1) ?? '')];
+  if (hint) return missing ? `Missing. ${hint}` : hint;
+
+  switch (issue.code) {
+    case 'invalid_type':
+      return missing ? `Missing. Expected ${issue.expected}.` : `Expected ${issue.expected}.`;
+    case 'invalid_value':
+      return `Expected one of: ${issue.values.map((v) => JSON.stringify(v)).join(', ')}.`;
+    case 'too_small':
+      return `Must be ${issue.inclusive ? 'at least' : 'greater than'} ${issue.minimum}.`;
+    case 'too_big':
+      return `Must be ${issue.inclusive ? 'at most' : 'less than'} ${issue.maximum}.`;
+    // The code is kept even when the message is the bundler's bare "Invalid
+    // input", so a reader is never left with nothing to search for.
+    default:
+      return `${issue.code}: ${issue.message}`;
+  }
+}
+
 /** Which keys are legal at this point in the document. */
 function knownKeysAt(path: readonly PropertyKey[]): readonly string[] | null {
   if (path.length === 0) return TOP_KEYS;
@@ -280,7 +322,7 @@ export function parseContract(
       issues.push({
         ...at(issue.path),
         path: dotted(issue.path),
-        message: issue.message,
+        message: explain(issue, !doc.hasIn(issue.path.map(String))),
       });
     }
     return { ok: false, issues };
