@@ -22,6 +22,12 @@ jobs:
           cache: npm
       - run: npm ci
 
+      # The migration to TypeScript put a second kind of breakage in reach: a
+      # type error that `tsx` happily strips and runs anyway. Checked before the
+      # numbers, so a red build says which of the two went wrong.
+      - name: typecheck — strict, whole repo
+        run: npx tsc --noEmit
+
       - name: selftest — 34 assertions
         run: |
           out=$(npm test 2>&1)
@@ -96,6 +102,18 @@ jobs:
           done
 
       - run: npx vitest run
+
+      # dist/fingerprint.js is what gets pasted into Bright Data's Cheerio
+      # worker, and a worker has no module loader. The vitest run above rebuilds
+      # and checks it; this proves the build step works from a clean checkout.
+      - name: fingerprint artifact — imports nothing
+        run: |
+          npm run build:fingerprint
+          if grep -vE '^\s*(//|\*|/\*)' dist/fingerprint.js | grep -qE '\b(import|require)\b'; then
+            echo "::error::dist/fingerprint.js contains an import or require"
+            exit 1
+          fi
+          echo "artifact imports nothing ✓"
 
   web:
     name: web — build

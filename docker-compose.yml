@@ -48,7 +48,7 @@ services:
   # compete with page loads. Same image, different entrypoint.
   worker:
     build: .
-    command: node tools/worker.js
+    command: npx tsx tools/worker.ts
     restart: unless-stopped
     environment:
       DATABASE_URL: postgres://assay:assay@postgres:5432/assay

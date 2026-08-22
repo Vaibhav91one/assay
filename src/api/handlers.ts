@@ -9,11 +9,14 @@ import { rowByProof, heldCells, runsFor, openQueue, explain } from '../store/ind
 // The Next route-handler shape, named here rather than imported: `src/` is
 // engine-side and must not take a dependency on next just to describe two
 // parameters. Route files stay thin wrappers over these functions.
-type RouteCtx = { params: Promise<Record<string, string>> };
-// `ctx` is optional because Next passes it and half these handlers ignore it:
-// /held and /runs take no path parameter, and requiring one would mean inventing
-// an empty params object at every call site that does not have one.
-type Handler = (request: Request, ctx?: RouteCtx) => Promise<Response>;
+//
+// `params` is `Promise<any>` rather than `Promise<Record<string, string>>`, and
+// that is not laziness. Next generates a per-route type check against the exact
+// params of THAT route -- `{ proof: string }` for `/rows/[proof]`, an empty
+// object for `/held` -- and a single concrete type cannot satisfy all of them.
+// Narrowing happens in each handler, where the route is known.
+type RouteCtx = { params: Promise<any> };
+type Handler = (request: Request, ctx: RouteCtx) => Promise<Response>;
 
 const notFound = (what: string): Response =>
   Response.json({ error: 'not_found', detail: `No ${what} with that id.` }, { status: 404 });
@@ -38,15 +41,15 @@ const intParam = (url: URL, name: string, dflt: number, max: number): number => 
 
 /** GET /api/v1/rows/:proof -- the warehouse join, rebuilt from the store. */
 export const getRow = guarded(async (_req, ctx) => {
-  const { proof } = await ctx!.params;
-  const row = await rowByProof(proof!);
+  const { proof } = await ctx.params;
+  const row = await rowByProof(proof);
   return row ? Response.json(row) : notFound('row');
 });
 
 /** GET /api/v1/explain/:proof -- full provenance for one cell (F12). */
 export const getExplain = guarded(async (_req, ctx) => {
-  const { proof } = await ctx!.params;
-  const x = await explain(proof!);
+  const { proof } = await ctx.params;
+  const x = await explain(proof);
   return x ? Response.json(x) : notFound('proof');
 });
 

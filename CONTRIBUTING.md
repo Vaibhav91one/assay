@@ -15,12 +15,17 @@ a change that moves them has broken the thing being built — not merely a test.
 | `npm run bench` | 153 cases; gated arm at **0.0% wrong values** |
 | `npm run replay` | 74 runs, 24 heals, **0 abstentions** |
 | `git diff results/events.jsonl` | empty — proof records are byte-identical |
-| `npx vitest run` | 33 passing |
+| `npx vitest run` | 39 passing |
 
-Two more, unmeasured but load-bearing:
+| `npx tsc --noEmit` | clean, strict, whole repo |
 
-- **`src/fingerprint.js` imports nothing.** It has to paste verbatim into Bright
-  Data's Cheerio worker and run identically in both places. An import breaks that.
+One more, load-bearing:
+
+- **`dist/fingerprint.js` imports nothing.** It has to paste verbatim into
+  Bright Data's Cheerio worker, which has no module loader, and run identically
+  in both places. `npm run build:fingerprint` emits it from
+  `src/fingerprint.ts`; the vitest run rebuilds and checks it, so a
+  checked-in artifact can never go stale against its source.
 - **All CLIs keep working.** They resolve the corpus by relative path; moving
   files breaks them silently.
 
@@ -59,7 +64,7 @@ Two processes over one Postgres, and Next never runs a scrape:
 
 A scrape holds a request open and competes with page loads, which is why it does
 not belong in a route handler even self-hosted, where no timeout applies.
-`src/runner.js` takes `fetch` as a parameter, so the local worker and the Bright
+`src/runner.ts` takes `fetch` as a parameter, so the local worker and the Bright
 Data webhook path run identical detection and gating. Page captures live on a
 bind-mounted volume, content-addressed by digest — never in the database.
 

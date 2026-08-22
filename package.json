@@ -59,11 +59,11 @@
     "web"
   ],
   "exports": {
-    "./engine/*": "./src/*",
-    "./store": "./src/store/index.js",
-    "./store/captures": "./src/store/captures.js",
-    "./api/*": "./src/api/*.js",
-    "./mcp/*": "./src/mcp/*.js"
+    "./engine/*": "./src/*.ts",
+    "./store": "./src/store/index.ts",
+    "./store/captures": "./src/store/captures.ts",
+    "./api/*": "./src/api/*.ts",
+    "./mcp/*": "./src/mcp/*.ts"
   },
   "bin": {
     "assay-mcp": "./src/mcp/server.ts"

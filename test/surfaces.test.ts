@@ -23,6 +23,10 @@ beforeAll(async () => {
 });
 afterAll(async () => { await closeDb().catch(() => {}); });
 
+// Next always passes a context; these handlers ignore it, but the type says
+// what Next does, not what one handler happens to need.
+const noCtx = { params: Promise.resolve({}) };
+
 const req = (url: string, key?: string): Request =>
   new Request(url, { headers: key ? { authorization: `Bearer ${key}` } : {} });
 
@@ -115,14 +119,14 @@ describe('MCP tool surface', () => {
 
 describe('REST', () => {
   it('rejects an unauthenticated call', async () => {
-    const res = await getHeld(req('http://x/api/v1/held'));
+    const res = await getHeld(req('http://x/api/v1/held'), noCtx);
     expect(res.status).toBe(401);
     expect(((await res.json()) as { error: string }).error).toBe('unauthorized');
   });
 
   it('rejects a bogus bearer token', async () => {
     if (!dbUp) return;
-    const res = await getHeld(req('http://x/api/v1/held', 'ak_notarealkey'));
+    const res = await getHeld(req('http://x/api/v1/held', 'ak_notarealkey'), noCtx);
     expect(res.status).toBe(401);
   });
 

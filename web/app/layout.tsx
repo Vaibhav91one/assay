@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { Questrial, Roboto_Mono } from 'next/font/google';
 import './globals.css';
 
@@ -21,12 +22,12 @@ const robotoMono = Roboto_Mono({
   fallback: ['ui-monospace', 'SFMono-Regular', 'monospace'],
 });
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Assay',
   description: 'A scraper that abstains when it is not sure.',
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${questrial.variable} ${robotoMono.variable}`}>
       <body>{children}</body>

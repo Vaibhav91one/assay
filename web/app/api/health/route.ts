@@ -3,14 +3,17 @@
 //
 // No UI here on purpose -- screens wait for the design.
 
-import { healGated } from 'assay/engine/heal.js';
-import { STATUSES } from 'assay/engine/envelope.js';
+import { healGated } from 'assay/engine/heal';
+import { STATUSES } from 'assay/engine/envelope';
 import { getDb, heldCells } from 'assay/store';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const health = {
+  const health: {
+    engine: { heal: boolean; statuses: string[] };
+    store: { reachable: boolean; heldCells: number | null; error?: string };
+  } = {
     engine: { heal: typeof healGated === 'function', statuses: STATUSES },
     store: { reachable: false, heldCells: null },
   };
@@ -19,7 +22,7 @@ export async function GET() {
     health.store.heldCells = (await heldCells()).length;
     health.store.reachable = true;
   } catch (e) {
-    health.store.error = e.message;
+    health.store.error = (e as Error).message;
   }
   return Response.json(health, { status: health.store.reachable ? 200 : 503 });
 }

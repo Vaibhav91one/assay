@@ -95,7 +95,7 @@ describe('the claim', () => {
     const { rows } = await getDb().execute(
       sql`SELECT next_run_at FROM targets WHERE target_id = ${T}`,
     );
-    expect(new Date(rows[0].next_run_at).getTime()).toBeGreaterThan(Date.now() + 5 * 3600e3);
+    expect(new Date((rows as any[])[0].next_run_at).getTime()).toBeGreaterThan(Date.now() + 5 * 3600e3);
   });
 });
 
@@ -112,8 +112,8 @@ describe('skip-if-unchanged', () => {
                         VALUES (${T}, 'skipped', 1000, 'sha_a')`);
 
     const last = await lastRunFor(T);
-    expect(last.status).toBe('skipped');
-    expect(last.page_sha).toBe('sha_a');       // what skip compares against
+    expect(last!.status).toBe('skipped');
+    expect(last!.page_sha).toBe('sha_a');       // what skip compares against
 
     const h = await historyFor(T);
     expect(h.length).toBe(3);                   // skipped runs are IN the series
@@ -140,7 +140,7 @@ describe('episode grouping', () => {
     // Recovering and breaking again IS a new incident.
     const reopened = await openEpisode({ targetId: T, field: 'hazard', cause: 'below_tau', runId: 7 });
     expect(reopened).toBeTruthy();
-    expect(reopened.episodeId).not.toBe(first.episodeId);
+    expect(reopened!.episodeId).not.toBe(first!.episodeId);
   });
 });
 
@@ -157,8 +157,8 @@ describe('delivery', () => {
   });
 
   it('sends through the injected transport without a live key', async () => {
-    const seen = [];
-    const out = await send({
+    const seen: any[] = [];
+    const out: any = await send({
       to: 'a@b.test', subject: 's', html: '<p>h</p>',
       apiKey: 'test', from: 'x@y.test',
       transport: async (a) => { seen.push(a); return { id: 'stub' }; },

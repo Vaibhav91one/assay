@@ -42,8 +42,8 @@ describe('auth seam', () => {
     // it is staged, and a guard that passes only after `git add` is no guard.
     // Prune node_modules and .next DURING the walk. A recursive readdir that
     // filters afterwards still descends into them, and never returns.
-    const hits = [];
-    const walk = (rel) => {
+    const hits: string[] = [];
+    const walk = (rel: string) => {
       for (const e of readdirSync(join(ROOT, rel), { withFileTypes: true })) {
         if (e.name === 'node_modules' || e.name === '.next' || e.name.startsWith('.')) continue;
         const p = join(rel, e.name);
@@ -54,7 +54,7 @@ describe('auth seam', () => {
     };
     walk('web'); walk('src');
 
-    expect(hits.sort()).toEqual(['web/lib/auth.js', 'web/middleware.js']);
+    expect(hits.sort()).toEqual(['web/lib/auth.ts', 'web/proxy.ts']);
   });
 
   it('keeps @clerk/nextjs out of the install a self-hoster pays for', () => {

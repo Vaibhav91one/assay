@@ -130,7 +130,7 @@ container run --detach --name assay-worker --network "$NET" \
   --env "ASSAY_WEBHOOK_URL=${ASSAY_WEBHOOK_URL:-}" \
   --env "ASSAY_WEBHOOK_SECRET=${ASSAY_WEBHOOK_SECRET:-}" \
   --volume "$CAPVOL:/data/captures" \
-  "$IMAGE" node tools/worker.js
+  "$IMAGE" npx tsx tools/worker.ts
 
 echo
 echo "up. http://localhost:${WEBPORT}"

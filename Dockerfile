@@ -22,9 +22,10 @@ RUN npm ci
 
 COPY src ./src
 COPY tools ./tools
-COPY drizzle.config.js ./
+COPY drizzle.config.ts tsconfig.json ./
 COPY web/app ./web/app
-COPY web/next.config.js ./web/
+COPY web/lib ./web/lib
+COPY web/next.config.ts web/tsconfig.json web/next-env.d.ts web/postcss.config.mjs web/proxy.ts ./web/
 RUN npm --workspace web run build
 
 FROM node:22-alpine
@@ -35,7 +36,7 @@ ENV NODE_ENV=production
 # is a devDependency. Pruning would mean a second image just to run migrations.
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/web ./web
-COPY package.json package-lock.json drizzle.config.js ./
+COPY package.json package-lock.json drizzle.config.ts tsconfig.json ./
 COPY src ./src
 COPY tools ./tools
 # The CLIs (bench, replay, selftest) read the archived corpus; without it the
