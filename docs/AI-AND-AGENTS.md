@@ -205,7 +205,7 @@ decision, not a paragraph about it.
 
 ## 7. What is not claimed
 
-- No measurement exists for any of this. The 135-case benchmark has three arms;
+- No measurement exists for any of this. The 153-case benchmark has three arms;
   none of them uses a model. Until there is a fourth arm, no accuracy claim.
 - Disagreement-based abstention is argued for, not demonstrated. It is
   plausible that the two methods disagree far more often than expected, which

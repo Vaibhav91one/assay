@@ -70,18 +70,19 @@ not ship.
 
 ## 2. The benchmark's zero is paid for
 
-`results/bench.json`, 135 cases, three arms:
+`results/bench.json`, 153 cases, three arms:
 
 | arm | value correct | wrong values published | abstentions |
 |---|---|---|---|
-| naive | 48 | 75 | 12 |
-| plain (no gate) | 111 | 24 | 0 |
-| gated | 93 | **0** | 42 |
+| naive | 48 | 93 | 12 |
+| plain (no gate) | 117 | 36 | 0 |
+| gated | 99 | **0** | 54 |
 
-The gated arm's 42 abstentions split 18 / 24. Eighteen are on `remove_field`,
-where the element is gone and refusing is the only correct answer. The other 24
-are on breaks where a correct answer existed, and on 18 of those 24 the ungated
-arm actually produced it — 6 on `swap_tag`, 12 on `duplicate_similar`.
+The gated arm's 54 abstentions split 18 / 36. Eighteen are on `remove_field`,
+where the element is gone and refusing is the only correct answer. The other 36
+are on breaks where a correct answer existed, and on 24 of those 36 the ungated
+arm actually produced it — 6 on `swap_tag`, 12 on `duplicate_similar`, 6 on
+`duplicate_longtail`.
 
 `duplicate_similar` is the worst of it. A near-identical decoy sits beside the
 real value; the ungated healer gets 12 of 18 right and 6 wrong; the gated healer
@@ -89,7 +90,7 @@ abstains on **all 18**, discarding the 12 along with the 6. The gate cannot tell
 the two apart, which is the definition of a thin margin, but the cost is not
 symmetric — it loses twice as many right answers as wrong ones on that mutation.
 
-24 of 135 is 17.8%. Roughly one break in six lands in a review queue that did not
+36 of 153 is 23.5%. Roughly one break in four lands in a review queue that did not
 have to. Whether that is a good trade depends entirely on what publishing a wrong
 value costs you. For a product-recall feed it is worth it. For a price tracker it
 is probably not, which is why `tau` and `delta` are arguments to every tool.
@@ -108,7 +109,7 @@ margin — run 51 is typical, 0.8787 against a runner-up of 0.3763, a margin of
 
 So on the only real-world data in this repo, the margin gate is inert. It costs
 nothing and it catches nothing. Every abstention the project has ever recorded
-comes from a manufactured near-tie: 42 from the benchmark's deliberate
+comes from a manufactured near-tie: 54 from the benchmark's deliberate
 mutations, 4 from the deployed testbed. The claim "the gate prevents wrong
 values" is supported by constructed cases and by no observed production incident.
 
@@ -117,7 +118,7 @@ values" is supported by constructed cases and by no observed production incident
 ## 4. One field, one vertical
 
 All 74 replay records track a single field, `recall_title`, on product-recall
-listing pages from three sites (IKEA, Mattel, Chicco). The 135 benchmark cases
+listing pages from three sites (IKEA, Mattel, Chicco). The 153 benchmark cases
 are the same field on the same six captures.
 
 Nothing here has been run against a price, a stock count, a date, a paginated
