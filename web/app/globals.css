@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import './tokens.css';
 @import './shadcn-bridge.css';
+@import './motion.css';
 
 /* The page ground. Everything else is a token away. */
 body {

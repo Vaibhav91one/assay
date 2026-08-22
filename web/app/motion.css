@@ -1,0 +1,229 @@
+/* Motion. The seven keyframes and two easings the app is allowed to use.
+ *
+ * Written by hand, unlike tokens.css -- Figma holds colour, type and geometry,
+ * it does not hold timing. The names are roles, not numbers: you reach for
+ * --duration-pop because you are opening a popover, not because you counted
+ * 160ms. Change a number here and every popover in the app changes with it.
+ *
+ * Declared in `@theme static` for the same reason shadcn-bridge.css does: the
+ * value lands as a CSS custom property AND as a Tailwind utility, so a
+ * component can write `ease-glide` or `var(--ease-glide)` and get the same
+ * curve. `static` because these are referenced from raw CSS below, which
+ * Tailwind's usage scan does not see.
+ *
+ * The reduced-motion block at the bottom is global on purpose. It is not a
+ * courtesy applied per component -- it is the contract, and it covers CSS
+ * written by people who never read this file. Where JS drives the animation
+ * and CSS cannot stop it, branch on usePrefersReducedMotion() instead.
+ */
+
+@theme static {
+  /* The signature curve. Fast out of the gate, long tail, comes to rest
+     without a bounce. Every reveal, glide and expand uses it. */
+  --ease-glide: cubic-bezier(0.23, 1, 0.32, 1);
+  /* Sharper. For motion that appears under the cursor and must feel
+     attached to the click rather than to the layout. */
+  --ease-pop: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --duration-tint: 100ms; /* hover colour, focus ring -- below noticing */
+  --duration-pop: 160ms; /* a popover, menu or chip arriving */
+  --duration-glide: 220ms; /* the highlight travelling between rows */
+  --duration-reveal: 300ms; /* content fading up into place */
+  --duration-expand: 360ms; /* a collapse opening to its own height */
+  --duration-settle: 500ms; /* the slowest thing allowed; use rarely */
+  --duration-stagger: 90ms; /* the gap between one child and the next */
+
+  /* Loops. These run until something stops them, so they are slower than
+     anything one-shot -- a fast loop reads as an alarm. */
+  --duration-shimmer: 1400ms;
+  --duration-spin: 700ms;
+  --duration-eq: 900ms;
+}
+
+/* -- keyframes ----------------------------------------------------------- */
+
+/* Scale + fade from a transform-origin the caller sets. Set
+   `transform-origin` to the corner the thing grew out of, or it looks like it
+   arrived from the middle of the screen. */
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* A highlight sweeping through text. The gradient is twice the width of the
+   box, so moving the background one full width carries the bright band from
+   one edge to the other. */
+@keyframes shimmer-text {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: 0% 0;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Three bars, out of phase, the way a level meter moves. */
+@keyframes eq-bounce {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+/* One cell of a grid brightening as a wavefront passes over it. */
+@keyframes pixel-on {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+/* -- classes ------------------------------------------------------------- */
+
+.motion-pop-in {
+  animation: pop-in var(--duration-pop) var(--ease-pop) both;
+}
+
+.motion-fade-in {
+  animation: fade-in var(--duration-reveal) var(--ease-glide) both;
+}
+
+.motion-fade-up {
+  animation: fade-up var(--duration-reveal) var(--ease-glide) both;
+}
+
+/* The "something is running" label. A gradient clipped to the glyphs, swept
+   on a linear loop -- linear because an eased loop reads as a stutter.
+   `currentColor` at both ends means the caller still owns the text colour and
+   only the bright band is ours. */
+.motion-shimmer {
+  background: linear-gradient(
+    100deg,
+    currentColor 0%,
+    currentColor 35%,
+    var(--text-muted) 50%,
+    currentColor 65%,
+    currentColor 100%
+  );
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer-text var(--duration-shimmer) linear infinite;
+}
+
+.motion-spin {
+  animation: spin var(--duration-spin) linear infinite;
+}
+
+.motion-eq > * {
+  animation: eq-bounce var(--duration-eq) var(--ease-glide) infinite;
+  transform-origin: bottom;
+}
+.motion-eq > *:nth-child(2) {
+  animation-delay: calc(var(--duration-eq) / -3);
+}
+.motion-eq > *:nth-child(3) {
+  animation-delay: calc(var(--duration-eq) / -1.5);
+}
+
+.motion-pixel {
+  animation: pixel-on var(--duration-settle) var(--ease-glide) infinite;
+}
+
+/* Tactile press. Three sizes because the same scale on a 24px icon and a
+   320px button are not the same gesture -- the smaller the target, the more
+   it has to move before the finger believes it. */
+.press-icon,
+.press-row,
+.press-wide {
+  transition: transform var(--duration-tint) var(--ease-pop);
+}
+.press-icon:active {
+  transform: scale(0.94);
+}
+.press-row:active {
+  transform: scale(0.96);
+}
+.press-wide:active {
+  transform: scale(0.98);
+}
+
+/* -- the reduced-motion contract ----------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  /* Deliberately `*`, not a list of the classes above. Someone will write a
+     `transition-` utility next week without reading this file and the promise
+     still has to hold. Not `animation: none` -- that would fire animationend
+     never and strand anything waiting on it; a 0.01ms animation still
+     completes, it just does so before the frame is painted. */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Motion that carried meaning has to keep carrying it. The shimmer said
+     "working"; frozen mid-sweep it says nothing and, worse, leaves half the
+     glyphs transparent. Put the text back. The word still reads "Working",
+     the role="status" still announces, only the sweep is gone. */
+  .motion-shimmer {
+    background: none;
+    color: inherit;
+    -webkit-text-fill-color: currentColor;
+  }
+
+  /* The equaliser stops mid-stride wherever the 0.01ms run left it, which for
+     a scaleY keyframe can be a 35%-height sliver that reads as a rendering
+     bug. Pin all three bars to a legible height instead: still a level meter,
+     just a still one. The spinner needs no rule -- a ring that has stopped
+     turning is still a ring, and still sits beside the label saying what is
+     running. */
+  .motion-eq > * {
+    transform: scaleY(0.7) !important;
+  }
+}
