@@ -632,6 +632,59 @@ In order. Everything here is an addition to page `03 · Wireframes` or a new
 A frame that exposes a raw threshold as a control, or a user-facing confidence
 percentage, has failed review regardless of how it looks.
 
+## 11b. Screens layer — final gate (2026-08-22)
+
+The port from `03 · Wireframes` to `04 · Screens` is complete. 54 frames in 8
+sections and 18 flows, zero loose frames on the page.
+
+| Measure | Result |
+|---|---|
+| Auto-layout frames | 1112/1177 (94%) |
+| Generic layer names (`Frame 12`, `Rectangle 4`) | **0** |
+| Text nodes carrying a text style | **1175/1175 (100%)** |
+| Solid paints bound to a variable | 2027/2079 (97%) |
+| Sidebar / TopBar instances | 50 / 50 |
+| Text overlaps | **0** |
+| Parent-bounds overflows | 3 (all intentional, below) |
+
+**The three known deviations, each deliberate:**
+
+1. **52 unbound paints** are the logo mark's vector paths (`#FE5D00`, `#C24703`,
+   `#F05900`, `#111110`) and the Google glyph. Brand artwork is multi-tone; binding
+   it to one token would flatten the shading. Artwork is not a token.
+2. **3 overflows** are `mark/hero` on the three sign-in frames — the 3D mark sits
+   deliberately above its container and does not clip.
+3. **65 non-auto-layout frames** are absolutely-positioned overlays where absolute
+   *is* the correct semantic: popovers, dimming scrims, plotted markers on a track,
+   and the oscillation crossings on `brake`.
+
+**Two classes of false positive** that a box-intersection test reports and vision
+disproves — do not "fix" these:
+
+- FILL-width table cells whose boxes span the row while the text sits left. The
+  boxes intersect; the glyphs never do.
+- A popover deliberately floating over dimmed rows. Overlap is the design.
+
+The rule that follows: **measurement and vision disagree, and the disagreement is
+itself the finding.** Geometry alone reported a clean bill on frames where every
+`KeyHint` chip read `1`; vision alone cannot count a 0.75px cap-height drift. Both,
+every time.
+
+**Dev-mode contract.** `get_design_context` on a Screens frame returns typed React
+components — `Sidebar({active})`, `TopBar({title, status, hasPrimary, …})`,
+`Icon({name})`, `ScraperItem({name})` — with colours emitted as
+`var(--text-primary, #1a1a1a)` matching `web/app/tokens.css`, the named type ramp
+(`body/13.5`, `nav/15`, `mono/value/12.5`), semantic node names (`card/refusal`,
+`row/assay_propose`, `cell/tool`), and each component's usage description. A
+developer gets components and tokens, not coordinates.
+
+**Shared chrome is invariant.** All 50 sidebars carry the identical scraper list,
+corpus-backed and starting `IKEA recalls` (`corpus/ikea`, `mattel`, `chicco` are
+real captured pages of really-published recalls). `Contoso` is the synthetic
+testbed at `assay-testbed.vercel.app/recalls` used by the setup flow, and belongs
+in the topbar title and body copy of those frames — never in the sidebar, which
+shows scrapers that already exist.
+
 ## Voice bank (copy removed from operational screens, 2026-08-21)
 
 The 34-frame audit found the file's dominant anti-pattern was the product explaining
