@@ -295,6 +295,66 @@ export async function historyFor(targetId: string, limit = 6) {
   });
 }
 
+/**
+ * The stored "then" for one field, or null on a field that has never run.
+ *
+ * Without this, `establishBaseline` runs on the page being evaluated and the
+ * runner compares a page to itself -- a gate that cannot fire and a break that
+ * cannot be seen. Two columns, not a serialised Baseline: the page is the
+ * record, and `establishBaseline` rebuilds everything else from it, so the
+ * fingerprint's shape stays owned by one function.
+ */
+export async function baselineFor(
+  targetId: string,
+  field: string,
+): Promise<{ goldenSha: string; selector: string } | null> {
+  const { rows } = await getDb().execute(sql`
+    SELECT baseline_golden_sha, baseline_selector FROM field_state
+    WHERE target_id = ${targetId} AND field = ${field}
+      AND baseline_golden_sha IS NOT NULL AND baseline_selector IS NOT NULL`);
+  const r = (rows as Row[])[0];
+  return r ? { goldenSha: r.baseline_golden_sha, selector: r.baseline_selector } : null;
+}
+
+/**
+ * Move the baseline to a page and an element on it.
+ *
+ * The capture row is written in the same transaction as the pointer, and that
+ * is the point of the transaction: a healthy run keeps no capture row, so the
+ * one page the baseline depends on would otherwise be the one page nothing in
+ * the store accounts for -- invisible to the kept/pruned counts and to anything
+ * that later reclaims bytes.
+ *
+ * `set` names three columns and no others, the same rule the brake follows on
+ * this table: `fragility_grade`, `drift_state` and `brake_active` on an
+ * existing row survive untouched.
+ */
+export async function setBaseline({
+  targetId,
+  field,
+  capture,
+  url,
+  selector,
+}: {
+  targetId: string;
+  field: string;
+  capture: StoredCapture;
+  url?: string | null;
+  selector: string;
+}): Promise<void> {
+  await getDb().transaction(async (tx) => {
+    await tx.insert(schema.captures)
+      .values({ sha256: capture.sha, bytes: capture.bytes, url: url ?? null })
+      .onConflictDoNothing();
+    await tx.insert(schema.fieldState)
+      .values({ targetId, field, baselineGoldenSha: capture.sha, baselineSelector: selector })
+      .onConflictDoUpdate({
+        target: [schema.fieldState.targetId, schema.fieldState.field],
+        set: { baselineGoldenSha: capture.sha, baselineSelector: selector, updatedAt: new Date() },
+      });
+  });
+}
+
 /** Record that an episode was (or was not) delivered. A bounced alert is unread. */
 export async function markNotified(episodeId: number, notified: string | null): Promise<void> {
   await getDb().execute(sql`UPDATE episodes SET notified = ${notified} WHERE episode_id = ${episodeId}`);

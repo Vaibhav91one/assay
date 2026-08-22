@@ -17,14 +17,14 @@
 import { z } from 'zod';
 import { load } from 'cheerio';
 import { createHash } from 'node:crypto';
-import { establishBaseline, runTarget, digest, type Evaluation } from '../runner.js';
+import { establishBaseline, runTarget, digest, type Baseline, type Evaluation } from '../runner.js';
 import { pickTarget } from '../target.js';
-import { putCapture } from '../store/captures.js';
+import { putCapture, getCapture, CAPTURE_DIR, type StoredCapture } from '../store/captures.js';
 import { openEpisode, closeEpisode } from '../api/webhooks.js';
 import { latestContract } from '../contracts/store.js';
 import { shouldHeal, recordHeal, checkBrake } from '../brake/index.js';
 import {
-  getDb, reserveRunId, recordRun, lastRunFor, historyFor, sql,
+  getDb, reserveRunId, recordRun, lastRunFor, historyFor, baselineFor, setBaseline, sql,
 } from '../store/index.js';
 
 // TODO(types): `targets.contract` is jsonb and the full shape is owned by the
@@ -98,6 +98,51 @@ async function healBlockFor(targetId: string, field: string): Promise<string | n
   }
 }
 
+/**
+ * Rebuild the baseline from the page it was taken from.
+ *
+ * The stored pointer is a sha and a selector; everything else -- fingerprint,
+ * skeleton, anchors, baseline value -- is recomputed by `establishBaseline`
+ * from those bytes. That is the reason for storing a page rather than a
+ * serialised `Baseline`: the fingerprint's shape stays owned by one function,
+ * so adding a property to it does not silently leave every stored baseline
+ * describing the old shape. `readAnchors` is a closure and could not be stored
+ * at all.
+ */
+async function rebuild(
+  prior: { goldenSha: string; selector: string },
+  targetId: string,
+  c: z.infer<typeof Contract>,
+): Promise<Baseline> {
+  let html: string;
+  try {
+    html = await getCapture(prior.goldenSha);
+  } catch (e) {
+    // Nothing in this repo prunes captures yet, so reaching this is an
+    // operator fault -- ASSAY_CAPTURES moved out from under an existing
+    // database. Left as a throw rather than a recorded run because there is no
+    // baseline, so nothing was compared and there is no comparison to record. A
+    // resolver miss is a different thing and is NOT handled this way: the page
+    // is still evaluated against the baseline and the break is recorded. If
+    // pruning ever lands, the golden has to be exempt from it -- this must not
+    // become a re-baseline, which is the bug this whole change removes.
+    throw new Error(
+      `baseline capture ${prior.goldenSha} for ${targetId}/${c.field} is not in `
+      + `${CAPTURE_DIR}: ${(e as Error).message.split('\n')[0]}`,
+    );
+  }
+  const $b = normalise(html);
+  const el = $b(prior.selector).first()[0];
+  if (!el) {
+    throw new Error(
+      `baseline selector "${prior.selector}" matches nothing in capture ${prior.goldenSha}`,
+    );
+  }
+  return establishBaseline({
+    $: $b, el, field: c.field, expected: c.expected, goldenSha: prior.goldenSha,
+  });
+}
+
 export interface IngestResult {
   runId: number;
   /** null on a skipped run: nothing was evaluated, so there is no proof. An
@@ -148,15 +193,42 @@ export async function ingestPage({
   // undefined, which on an arbitrary page is a silent wrong answer rather than
   // an error. An absent resolver is an absence, so say so.
   const c = Contract.parse(target.contract);
-  const el = pickTarget($, c.resolver);
-  if (!el) throw new Error('no target element in the delivered page');
-  const golden = await putCapture(normalised);
-  const baseline = establishBaseline({
-    $, el,
-    field: c.field,
-    expected: c.expected,
-    goldenSha: golden.sha,
-  });
+
+  // The "then". This used to be established from the page being evaluated on
+  // every run, so runTarget compared each page to itself: the gate could not
+  // fire, no heal was possible, and a site that broke read as `live`. The
+  // corpus path (tools/ingest.ts) never had the bug -- it takes the baseline
+  // from the FIRST capture and evaluates every later one against it, which is
+  // what produces the measured numbers. This is that, persisted.
+  const prior = await baselineFor(target.targetId, c.field);
+
+  // Only the first run of a field has no prior, and it is the only run where
+  // establishing from the page in hand is correct. `newBaseline` is what gets
+  // written back afterwards -- null means this run is not entitled to move it.
+  let newBaseline: { capture: StoredCapture; selector: string } | null = null;
+  let baseline: Baseline;
+
+  if (prior) {
+    baseline = await rebuild(prior, target.targetId, c);
+  } else {
+    // pickTarget is how a baseline is CHOSEN, once, from a page believed good.
+    // It is not how a later run READS the field -- that is `baseline.selector`,
+    // inside evaluate() -- so it is deliberately not consulted again below. A
+    // resolver that stops matching on a later page is a break for the engine to
+    // diagnose, not a reason to re-derive what "working" looked like.
+    const el = pickTarget($, c.resolver);
+    if (!el) {
+      throw new Error(
+        `no target element in the first page for ${target.targetId}/${c.field}, `
+        + 'and no baseline to hold it against',
+      );
+    }
+    const golden = await putCapture(normalised);
+    baseline = establishBaseline({
+      $, el, field: c.field, expected: c.expected, goldenSha: golden.sha,
+    });
+    newBaseline = { capture: golden, selector: baseline.selector };
+  }
 
   const history = await historyFor(target.targetId);
   // The operator's field contract (F2), if this target has one. Null is "no
@@ -195,6 +267,30 @@ export async function ingestPage({
     proofId,
     groupKey: `${result.event.skeleton.after}:${baseline.field}`,
   });
+
+  // The baseline moves here, and only here.
+  //
+  // A published heal is the only run that may move it. An unverified heal is
+  // how a healer poisons its own baseline (src/runner.ts:72), so a candidate
+  // the gate refused -- however well it scored -- leaves the "then" exactly
+  // where it was, and the field keeps being measured against the page it last
+  // worked on. Written after recordRun so the run is durable first: a baseline
+  // that advanced past a run nobody has a record of is worse than one that did
+  // not advance.
+  // `capture` is non-null on every branch that can reach here: a healed status
+  // means `event.event === 'heal'`, and only an `ok` event keeps no bytes.
+  if (result.status.status === 'healed' && result.event.healed_to && capture) {
+    newBaseline = { capture, selector: result.event.healed_to.selector };
+  }
+  if (newBaseline) {
+    await setBaseline({
+      targetId: target.targetId,
+      field: baseline.field,
+      capture: newBaseline.capture,
+      url: target.url,
+      selector: newBaseline.selector,
+    });
+  }
 
   // A heal is the evidence F11 grades. `heal_history` had no writer anywhere in
   // the pipeline, so detectPingPong was reading an empty table on every field

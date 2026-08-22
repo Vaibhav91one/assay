@@ -18,6 +18,21 @@
 //      F9 requires corrections be published as a new version, never an in-place
 //      rewrite. This module records the decision; republishing it is F9's job.
 //
+// NOT DONE, and not an oversight. A human accepting candidate 1 or 2 is a
+// verification, and by the rule in src/runner.ts:72 a verified candidate is
+// exactly what may move a field's baseline -- which now lives on
+// `field_state.baseline_golden_sha` / `baseline_selector` and is otherwise only
+// moved by a published heal in `ingestPage`. Wiring `resolve()` to move it needs
+// one thing this repo does not have yet: `field_runs.ranked[i].selector` is
+// `selectorFor(el)`, which is `tag.firstClass` and is NOT unique -- a listing
+// page routinely ranks five candidates that all serialise to
+// `h2.recall-card__title`. Re-resolving the accepted one with `$(sel).first()`
+// would silently adopt the first card on the page instead of the one the
+// operator chose, which is a confident wrong baseline written by the safety
+// mechanism. The prerequisite is a positionally unique reference on the ranked
+// list (an nth-of-type path, or the index within `$(sel)`); until that exists,
+// a resolution settles the queue item and leaves the baseline where it was.
+//
 // The logic functions take plain arguments and return plain results, so a Next
 // Server Action can call them directly. The Response-shaped handlers at the
 // bottom are for the machine-to-machine REST surface and add only auth,
