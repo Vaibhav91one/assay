@@ -2,7 +2,7 @@
 
 Everything the app is allowed to animate, and the numbers it animates with. Two files hold it all:
 `web/app/motion.css` (tokens, keyframes, classes, the reduced-motion guard) and `web/lib/motion.ts`
-(the same numbers for JavaScript). Four primitives sit in `web/components/motion/`.
+(the same numbers for JavaScript). Five primitives sit in `web/components/motion/`.
 
 This exists because the same three patterns were being hand-rolled per component — a collapse in
 `model-access.tsx`, a highlight in three separate menus — and each copy drifted. There is now one
@@ -51,6 +51,15 @@ Loops are slower than anything one-shot — a fast loop reads as an alarm.
 | `--duration-shimmer` | `1400ms` | The "working" sweep. |
 | `--duration-spin` | `700ms` | The ring spinner. |
 | `--duration-eq` | `900ms` | One bar of the equaliser, the other two offset from it. |
+
+Two of them describe waiting rather than moving. They are thresholds for a route loader — when it
+may start, and how long it must then stay — and they are tuned against each other, so they are
+declared together and read together.
+
+| Token | Value | When |
+|---|---|---|
+| `--duration-loader-delay` | `220ms` | Nothing is drawn before this. A navigation that resolves inside it shows no loader at all. Under about 150ms the delay stops catching the fast cases; over about 250ms a slow route sits blank long enough to feel broken. |
+| `--duration-loader-min` | `500ms` | Once a loader has appeared it stays at least this long. A spinner that comes and goes inside 80ms is read as a rendering fault, not as work. |
 
 ### The same numbers in TypeScript
 
@@ -231,6 +240,48 @@ substitute for a Spinner on work that has no signal behind it.
 
 None of the three takes focus. A progress indicator is not a control.
 
+### RouteLoader
+
+```tsx
+import { RouteLoader } from '@/components/motion/route-loader';
+
+export default function DecisionsLoading() {
+  return (
+    <>
+      <TopBar title="Decisions" status="loading…" />
+      <RouteLoader>Reading the queue.</RouteLoader>
+    </>
+  );
+}
+```
+
+```ts
+function RouteLoader(props: { children: React.ReactNode }): React.ReactElement
+```
+
+The body of a route's `loading.tsx`: a centred `Spinner` and the sentence saying what is being read.
+It replaced the layout-matching skeletons those files used to draw. A skeleton has to guess the shape
+of data nobody has read yet — two cards, six rows — and when it guesses wrong the page jumps anyway,
+which is the one thing it existed to prevent.
+
+Keep the sentence specific to the route. "Reading the queue" and "Reading every page kept for these
+fields" are different facts and a generic "Loading…" throws both away.
+
+It applies the two threshold tokens above, and both matter more than the fade does. Without the
+delay every warm navigation flashes a spinner; without the minimum, a route that lands just after the
+delay strobes.
+
+The exit is worth explaining, because the App Router does not make it easy. React swaps a
+`loading.tsx` segment out the instant the page is ready: no unmount hook, nothing to animate against.
+So on unmount the effect cleanup clones the loader, pins the clone over the box the original held,
+and lets that copy serve out the rest of the minimum and then fade. The copy is outside React by
+then — `aria-hidden`, `pointer-events: none`, and it removes itself. The arriving page is already
+mounted and painted underneath, so the loader genuinely dissolves off it rather than being cut.
+
+One consequence to know about: while the copy is holding, the `TopBar` underneath has already swapped
+to the arrived page's status. The copy covers the body only. For up to 500ms the bar can read the new
+state while the body still says it is reading.
+
 ---
 
 ## 4. The reduced-motion contract
@@ -334,3 +385,23 @@ and it needs a static form that still says the same thing.
 `npm run dev --workspace web` and open it. Turn the OS reduced-motion setting on and reload: the
 banner at the top flips, the shimmer becomes plain text, the bars stop at a legible height, and
 nothing else moves.
+
+---
+
+## 7. Where this came from
+
+The motion vocabulary here was adapted from Beautiful UI (beautifului.dev), MIT, © 2026 Shane Levine.
+
+No files were copied. The keyframes and primitives in `motion.css` and `components/motion/` were
+written from a described vocabulary — which effects a small app needs, what each one is for, roughly
+how long each should run — onto Assay's own tokens. The durations, the two easing curves, the
+reduced-motion contract and the component APIs are this repo's.
+
+This note is a courtesy, not a compliance step. MIT requires the notice to travel with copies of the
+covered work, and nothing here is a copy of it; there was no obligation to credit and this does not
+create one. It records where the ideas came from, which is worth recording on its own.
+
+One detail worth knowing if the licence is ever checked: the MIT grant for Beautiful UI is published
+as a web page the author controls, not as a LICENSE file in a repository. A page can change or go
+away, and there is no commit to point at for what it said on the day it was read. If this ever needs
+to be relied on rather than acknowledged, capture the page as it stands then.
