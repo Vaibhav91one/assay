@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { modelAuth, type ModelAuth } from 'assay/engine/ai/model';
 import { alertsView, setDigestEnabled } from '@/lib/alerts';
+import { assertOperator } from '@/lib/auth';
 
 /**
  * Ask again which credential the model path has.
@@ -25,6 +26,7 @@ import { alertsView, setDigestEnabled } from '@/lib/alerts';
  * Presence only, as everywhere else: the return is one of four words.
  */
 export async function recheckModelAccess(): Promise<ModelAuth> {
+  await assertOperator();
   return modelAuth(true);
 }
 
@@ -40,6 +42,7 @@ export async function recheckModelAccess(): Promise<ModelAuth> {
 export type DigestOutcome = { ok: true; enabled: boolean } | { ok: false; detail: string };
 
 export async function setDigest(on: boolean): Promise<DigestOutcome> {
+  await assertOperator();
   if (typeof on !== 'boolean') return { ok: false, detail: 'Not a switch position.' };
 
   try {

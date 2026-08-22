@@ -20,6 +20,7 @@ import { revalidatePath } from 'next/cache';
 import { and, desc, eq, gt, inArray } from 'drizzle-orm';
 import { getDb, scheduleTarget, workersUp } from 'assay/store';
 import * as schema from 'assay/engine/store/schema';
+import { assertOperator } from '@/lib/auth';
 
 export interface Asked {
   ok: boolean;
@@ -53,6 +54,7 @@ async function rowsFor(slug: string) {
  * `at` is a parameter so a test does not race the wall clock.
  */
 export async function askForRun(slug: string, at: Date = new Date()): Promise<Asked> {
+  await assertOperator();
   const since = new Date(at.getTime() - 1000).toISOString();
   const rows = await rowsFor(slug);
 
@@ -110,6 +112,7 @@ export interface Landed {
  * true after the ask.
  */
 export async function landedSince(slug: string, since: string): Promise<Landed> {
+  await assertOperator();
   const at = new Date(since);
   if (Number.isNaN(at.getTime())) throw new Error(`unparseable timestamp: ${since}`);
 

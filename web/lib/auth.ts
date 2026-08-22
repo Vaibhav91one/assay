@@ -74,10 +74,6 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
  * self-host path `getCurrentUser()` returns the single operator and this is a
  * pass-through -- callers get one code path for both deployments, which is the
  * same bargain the rest of the seam makes.
- *
- * Server Actions need this too and do not have it yet: they are reachable by
- * POST without going through any route handler, so the proxy is currently their
- * only gate. See the audit note in test/auth.test.ts.
  */
 export async function requireOperator(): Promise<Response | null> {
   if (await getCurrentUser()) return null;
@@ -85,4 +81,38 @@ export async function requireOperator(): Promise<Response | null> {
     { error: 'unauthorized', detail: 'Sign in to use this instance.' },
     { status: 401 },
   );
+}
+
+/** What a refused Server Action throws. Named so a test can assert the reason. */
+export class Unauthorized extends Error {}
+
+/**
+ * The same gate, for a Server Action.
+ *
+ * WHY A SECOND FUNCTION. `requireOperator()` answers with a `Response`, which is
+ * what a route handler returns. A Server Action returns its own value to the
+ * client -- there is no status code to hand back and no way to make a caller
+ * that ignores the return value safe. So this throws, and the first line of
+ * every action is a call to it. An action that forgets is the failure this is
+ * meant to survive, which is why test/actions-auth.ts calls every exported
+ * action in the four action files rather than grepping for the line.
+ *
+ * WHY IT WAS NEEDED. A Server Action is reachable by POST to the page's own url
+ * with an action id -- it goes through no route handler at all, so until now
+ * `web/proxy.ts` was its only gate. Next documents a proxy as an OPTIMISTIC
+ * check, and an audit demonstrated exactly what that means here: with
+ * AUTH_MODE=clerk and no session, an anonymous same-origin POST of `resolveCell`
+ * reached the database and was answered from it. With a real proof id that POST
+ * would have settled a held decision.
+ *
+ * SELF-HOST IS UNCHANGED, DELIBERATELY. With AUTH_MODE unset `getCurrentUser()`
+ * returns the single operator -- never null, which test/auth.test.ts pins -- so
+ * this returns without doing anything. Self-host has no accounts and no
+ * signed-out state by design; a guard that started demanding one there would be
+ * this seam breaking the product it exists to keep whole. This makes HOSTED
+ * correct. It is not supposed to make self-host different.
+ */
+export async function assertOperator(): Promise<void> {
+  if (await getCurrentUser()) return;
+  throw new Unauthorized('Sign in to use this instance.');
 }
