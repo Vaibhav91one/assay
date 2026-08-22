@@ -13,7 +13,7 @@
 // defend against.
 
 import { load } from 'cheerio';
-import { readFile, readdir } from 'node:fs/promises';
+import { fetchHtml } from '../src/skills/page.js';
 import { ingestPage } from '../src/connectors/ingest.js';
 import { recomputeField } from '../src/health/observe.js';
 import { dueDigests, markDigestSent } from '../src/reports/digest.js';
@@ -35,23 +35,18 @@ for (const sig of ['SIGTERM', 'SIGINT']) {
  *
  * `corpus://site` reads the newest local capture, so the worker can be exercised
  * against the committed corpus with no network. Everything else is an ordinary
- * fetch. The runner takes this as a parameter, so a Bright Data webhook can
- * supply its own and still get identical detection and gating.
+ * fetch -- and, if the operator has enabled a page-source connector AND that
+ * ordinary fetch was refused, that connector. `src/skills/page.ts` owns the
+ * whole decision so this and `src/setup/index.ts` cannot answer it differently;
+ * with nothing enabled it does precisely what the copy that used to be here did.
+ *
+ * The runner takes this as a parameter, so a Bright Data webhook can supply its
+ * own and still get identical detection and gating -- and so can a connector.
  */
 function fetcherFor(url: any) {
-  if (url.startsWith('corpus://')) {
-    const site = url.slice('corpus://'.length).split('/')[0];
-    return async () => {
-      const files = (await readdir(`corpus/${site}`)).filter((f) => f.endsWith('.html')).sort();
-      const html = await readFile(`corpus/${site}/${files.at(-1)}`, 'utf8');
-      const $ = load(html); $('script,style,noscript').remove();
-      return { $ };
-    };
-  }
   return async () => {
-    const res = await fetch(url, { headers: { 'user-agent': 'assay/0.1 (+self-hosted)' } });
-    if (!res.ok) throw new Error(`fetch ${res.status}`);
-    const $ = load(await res.text()); $('script,style,noscript').remove();
+    const { html } = await fetchHtml(url);
+    const $ = load(html); $('script,style,noscript').remove();
     return { $ };
   };
 }

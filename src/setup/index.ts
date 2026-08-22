@@ -31,7 +31,7 @@
 import { z } from 'zod';
 import { load } from 'cheerio';
 import { inArray } from 'drizzle-orm';
-import { readFile, readdir } from 'node:fs/promises';
+import { fetchHtml } from '../skills/page.js';
 import { ingestPage, type TargetRow } from '../connectors/ingest.js';
 import { nextRunAt, cadenceMs } from '../schedule.js';
 import { getDb, targets, eq, sql } from '../store/index.js';
@@ -156,28 +156,14 @@ export interface TargetView {
 /**
  * The page, as bytes.
  *
- * `corpus://site` reads the newest committed capture, exactly as `tools/worker.ts`
- * does, so the setup path is exercisable with no network -- and so a target
- * created here can be compared against one the CLI created from the same page.
- * Four lines rather than an import because worker.ts does not export its copy
- * and is frozen.
+ * `src/skills/page.ts` now owns this for every caller. It was four lines here
+ * and four more in `tools/worker.ts`, which was survivable while the answer was
+ * always "fetch it" -- but a connector wired into one copy is a connector that
+ * works when you create a target and stops working when the worker runs it. The
+ * behaviour with nothing enabled is unchanged: the newest committed capture for
+ * `corpus://`, and otherwise one ordinary request.
  */
-async function fetchPage(url: string): Promise<string> {
-  if (url.startsWith('corpus://')) {
-    const site = url.slice('corpus://'.length).split('/')[0]!;
-    // Resolved against the PACKAGE, not the process. `tools/worker.ts` reads
-    // `corpus/<site>` relative to cwd, which is the repo root when it runs; a
-    // Next route's cwd is `web/`, so the same url would mean two different
-    // directories depending on who asked. A corpus url names one page.
-    const dir = new URL(`../../corpus/${site}/`, import.meta.url);
-    const files = (await readdir(dir)).filter((f) => f.endsWith('.html')).sort();
-    if (!files.length) throw new Error(`corpus/${site} holds no captures`);
-    return readFile(new URL(files.at(-1)!, dir), 'utf8');
-  }
-  const res = await fetch(url, { headers: { 'user-agent': 'assay/0.1 (+self-hosted)' } });
-  if (!res.ok) throw new Error(`fetch ${res.status}`);
-  return res.text();
-}
+const fetchPage = async (url: string): Promise<string> => (await fetchHtml(url)).html;
 
 /** `https://www.ikea.com/us/en/recalls/` -> `ikea-com-us-en-recalls`. */
 export function slugFor(url: string): string {
