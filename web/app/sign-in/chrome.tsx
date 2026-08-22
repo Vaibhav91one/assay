@@ -60,7 +60,11 @@ export function CardHalf({ children }: { children: React.ReactNode }) {
         sizes="(min-width: 1024px) 535px, 100vw"
         className="pointer-events-none object-cover"
       />
-      <div className="relative w-full max-w-[455px] rounded-[16px] bg-[var(--surface-card)] p-[40px] shadow-[var(--shadow-elevation-floating)]">
+      {/* shadow-elevation-floating, not shadow-[var(--shadow-elevation-floating)]:
+          Tailwind cannot tell whether a bare var() is a length or a colour, reads
+          the arbitrary value as a colour, and emits a fully transparent shadow.
+          The token is in the --shadow-* namespace, so it has a real utility. */}
+      <div className="relative w-full max-w-[455px] rounded-[16px] bg-[var(--surface-card)] p-[40px] shadow-elevation-floating">
         {children}
       </div>
     </div>
