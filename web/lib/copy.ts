@@ -58,6 +58,7 @@ const COPY = {
   'nav.runs': 'Runs',
   'nav.fields': 'Fields',
   'nav.schedule': 'Schedule',
+  'nav.library': 'Library',
   'nav.skills': 'Skills',
   'nav.settings': 'Settings',
   'nav.newScrape': 'New scrape',
