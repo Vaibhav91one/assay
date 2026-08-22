@@ -11,12 +11,23 @@ import type { Proposal } from './watch-actions';
 /**
  * The proposal, as the schema it would become, waiting on a person.
  *
- * COLUMNS ARE FIELDS; THE ROW IS THE PAGE. There is exactly one row and that is
- * not a stub: `assay_inspect` reads the page once, so what exists is one
- * observation per field -- what the page said when Assay looked. A grid of
- * plausible-looking extra rows would be fabricated records on the screen whose
- * entire job is to be trusted, so the table shows the one row it has and labels
- * it as that one row.
+ * ONE ROW PER FIELD, AND THE ROW IS THE OBSERVATION. There is exactly one
+ * reading per field and that is not a stub: `assay_inspect` reads the page
+ * once, so what exists is what the page said when Assay looked. A grid of
+ * plausible-looking extra readings would be fabricated records on the screen
+ * whose entire job is to be trusted, so this shows the one it has and says so
+ * in the column head.
+ *
+ * WHY THE AXES TURNED. This was a column per field, which is the shape of the
+ * fact -- one row of readings -- and the wrong shape for the screen. Every
+ * field costs 150px of width in a 760px transcript, so three fit and the
+ * fourth starts a horizontal scroll nothing announced; at the seven a real
+ * proposal came back with, the names, the tick and the tier control were
+ * colliding inside 150px while the values were clipped to a couple of words.
+ * Down the page each field gets the full width for its value and costs 44px of
+ * height, so the seven fit without scrolling and fifteen scroll vertically --
+ * which is the direction a reader already expects a list to go, and the
+ * direction the scrollbar below is drawn in.
  *
  * NOTHING IS CREATED UNTIL THE BUTTON IS CLICKED. The agent's tools are
  * read-only by construction (`src/agent/index.ts`, property 2) and this changes
@@ -24,7 +35,7 @@ import type { Proposal } from './watch-actions';
  * hand-filled form takes. There is no privileged "the agent said so" route into
  * the store.
  *
- * The header popover is the field's real configuration, read from
+ * The tier disclosure is the field's real configuration, read from
  * `src/contracts` -- the tier vocabulary, the tau/delta each tier implies, what
  * happens on an abstention. It is a disclosure and not a control: FEATURES.md F2
  * says a user hand-tuning deltas per field is a user the tiers have failed, and
@@ -43,45 +54,37 @@ export function SchemaTable({
   const fields = proposal.fields;
 
   return (
-    <div className="w-full overflow-x-auto">
-      <table className="w-full min-w-[560px] border-collapse">
-        <thead>
-          <tr className="border-b border-[var(--border-hairline)]">
-            <th scope="col" className="label-10 w-[110px] pb-[10px] pr-[16px] text-left font-normal text-[var(--text-muted)]">
-              ON THE PAGE
-            </th>
-            {fields.map((f) => (
-              <th key={f.name} scope="col" className="pb-[10px] pr-[16px] text-left align-bottom">
-                <FieldHead
-                  field={f}
-                  on={keep.includes(f.name)}
-                  onToggle={() =>
-                    onKeep(keep.includes(f.name) ? keep.filter((n) => n !== f.name) : [...keep, f.name])
-                  }
-                />
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope="row" className="caption-11 py-[14px] pr-[16px] text-left font-normal align-top text-[var(--text-muted)]">
-              right now
-            </th>
-            {fields.map((f) => (
-              <td key={f.name} className="py-[14px] pr-[16px] align-top">
-                <Cell field={f} on={keep.includes(f.name)} />
-              </td>
-            ))}
-          </tr>
-        </tbody>
-      </table>
+    <div className="w-full rounded-[var(--radius-card)] border border-[var(--border-hairline)]">
+      <div className="flex items-baseline gap-[16px] border-b border-[var(--border-hairline)] px-[16px] py-[9px]">
+        <span className="label-10 w-[230px] shrink-0 text-[var(--text-muted)]">FIELD</span>
+        <span className="label-10 text-[var(--text-muted)]">ON THE PAGE, RIGHT NOW</span>
+      </div>
+
+      {/*
+        The cap is seven rows and a sliver of the eighth. Seven because that is
+        what a real proposal came back with and it should not scroll at all;
+        the sliver because a list cut off flush at the border is a list that
+        looks finished, and half a row showing is the cheapest possible
+        statement that it is not.
+      */}
+      <ul className="scroller-visible max-h-[320px] overflow-y-auto overscroll-contain py-[4px]">
+        {fields.map((f) => (
+          <FieldRow
+            key={f.name}
+            field={f}
+            on={keep.includes(f.name)}
+            onToggle={() =>
+              onKeep(keep.includes(f.name) ? keep.filter((n) => n !== f.name) : [...keep, f.name])
+            }
+          />
+        ))}
+      </ul>
     </div>
   );
 }
 
-/** One column header: the field name, a tick to keep it, and its configuration. */
-function FieldHead({
+/** One field: a tick to keep it, its name, its tier, and what the page says in it. */
+function FieldRow({
   field, on, onToggle,
 }: {
   field: Proposal['fields'][number]; on: boolean; onToggle: () => void;
@@ -94,38 +97,47 @@ function FieldHead({
   const t = TIER_THRESHOLDS[tier];
 
   return (
-    <div className="flex min-w-[150px] flex-col gap-[6px]">
-      <label className="flex cursor-pointer items-center gap-[8px]">
-        <input
-          type="checkbox"
-          checked={on}
-          onChange={onToggle}
-          aria-label={`Watch ${field.name}`}
-          className="size-[14px] shrink-0 accent-[var(--accent-brand)]"
-        />
-        <span className={`mono-value-13 ${on ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)] line-through'}`}>
-          {field.name}
-        </span>
-      </label>
+    <li className="px-[16px] py-[7px]">
+      <div className="flex items-baseline gap-[16px]">
+        <div className="flex w-[230px] shrink-0 items-baseline gap-[8px]">
+          <label className="flex min-w-0 cursor-pointer items-baseline gap-[8px]">
+            <input
+              type="checkbox"
+              checked={on}
+              onChange={onToggle}
+              aria-label={`Watch ${field.name}`}
+              className="size-[14px] shrink-0 translate-y-[2px] accent-[var(--accent-brand)]"
+            />
+            <span className={`mono-value-13 truncate ${on ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)] line-through'}`}>
+              {field.name}
+            </span>
+          </label>
 
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="flex items-center gap-[5px] self-start rounded-[var(--radius-control)] px-[4px] py-[2px] transition-colors duration-[var(--duration-tint)] hover:bg-[var(--surface-subtle)]"
-      >
-        <span className="caption-11 text-[var(--text-muted)]">{tier}</span>
-        <ChevronDown
-          size={11}
-          strokeWidth={1.5}
-          className="text-[var(--text-muted)] transition-transform duration-[var(--duration-pop)] ease-[var(--ease-glide)]"
-          style={{ transform: open ? 'rotate(180deg)' : 'none' }}
-          aria-hidden
-        />
-      </button>
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-label={`How ${field.name} is compared`}
+            className="focus-ring ml-auto flex shrink-0 items-center gap-[4px] rounded-[var(--radius-control)] px-[4px] py-[2px] transition-colors duration-[var(--duration-tint)] hover:bg-[var(--surface-subtle)]"
+          >
+            <span className="caption-11 text-[var(--text-muted)]">{tier}</span>
+            <ChevronDown
+              size={11}
+              strokeWidth={1.5}
+              className="text-[var(--text-muted)] transition-transform duration-[var(--duration-pop)] ease-[var(--ease-glide)]"
+              style={{ transform: open ? 'rotate(180deg)' : 'none' }}
+              aria-hidden
+            />
+          </button>
+        </div>
 
-      <Collapse open={open}>
-        <dl className="flex w-[220px] flex-col gap-[5px] rounded-[var(--radius-control)] bg-[var(--surface-subtle)] p-[10px]">
+        <div className="min-w-0 flex-1">
+          <Cell field={field} on={on} />
+        </div>
+      </div>
+
+      <Collapse open={open} contentClassName="pt-[8px]">
+        <dl className="flex max-w-[420px] flex-col gap-[5px] rounded-[var(--radius-control)] bg-[var(--surface-subtle)] p-[10px]">
           <Spec k="reads" v={field.selector} mono />
           <Spec k="tier" v={tier} />
           <Spec k="tau" v={t.tau.toFixed(2)} mono />
@@ -139,7 +151,7 @@ function FieldHead({
           </p>
         </dl>
       </Collapse>
-    </div>
+    </li>
   );
 }
 
@@ -174,8 +186,11 @@ function Cell({ field, on }: { field: Proposal['fields'][number]; on: boolean })
       </span>
     );
   }
+  // Two lines, not three: a row per field means the row height is what decides
+  // how many fields are on screen at once, and a full page width fits most
+  // values on one line anyway.
   return (
-    <span className={`body-13_5 line-clamp-3 break-words ${on ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>
+    <span className={`body-13_5 line-clamp-2 break-words ${on ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>
       {field.example}
     </span>
   );
