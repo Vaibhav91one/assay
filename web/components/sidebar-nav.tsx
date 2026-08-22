@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, ListChecks, Activity, Columns3, Clock } from 'lucide-react';
+import { Home, Split, Activity, Columns3, Clock, Blocks } from 'lucide-react';
 import {
   SidebarMenu,
   SidebarMenuBadge,
@@ -10,14 +10,30 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 
+/**
+ * `Split` is the Decisions glyph, everywhere the concept is drawn: here, the
+ * notification row, the button that opens the queue, the empty state.
+ *
+ * A Decision on this product is one held value with two candidates and a
+ * person who has to pick one. `Split` is a single path forking into two
+ * arrowheads -- one thing, two ways, choose -- which is that sentence as a
+ * picture. It replaced two glyphs that were each saying something else: a
+ * balance beam, which reads as justice and weighing evidence rather than as
+ * something waiting, and a checklist, which reads as tasks to tick off.
+ */
 const NAV = [
   { href: '/', label: 'Home', icon: Home },
-  { href: '/decisions', label: 'Decisions', icon: ListChecks },
+  { href: '/decisions', label: 'Decisions', icon: Split },
   // Routes with no rail entry of their own still belong under one. A proof
   // opened from the runs table must not leave the rail pointing at nothing.
   { href: '/runs', label: 'Runs', icon: Activity, also: ['/explain'] },
   { href: '/fields', label: 'Fields', icon: Columns3, also: ['/compare'] },
   { href: '/schedule', label: 'Schedule', icon: Clock },
+  // `Blocks` rather than a plug or a sparkle: what this screen lists is things
+  // that slot into a seam the engine already has, and a plug reads as "wire up
+  // an integration" while a sparkle reads as "AI happens here". Neither is what
+  // is on the page.
+  { href: '/skills', label: 'Skills', icon: Blocks },
 ] as const satisfies readonly {
   href: string;
   label: string;

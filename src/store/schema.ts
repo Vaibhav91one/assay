@@ -261,6 +261,53 @@ export const contracts = pgTable('contracts', {
 }));
 
 /**
+ * One conversation on the home screen, and the scraper it produced.
+ *
+ * WHY THIS TABLE EXISTS. Until now a turn was stateless -- `src/agent/http.ts`
+ * takes `history` in the request body, so the conversation lived in the tab and
+ * a reload lost it. That was survivable while the transcript was scratch. It
+ * stops being survivable the moment the rail LISTS conversations: a list that
+ * empties on reload, or that disagrees between two tabs, is the same class of
+ * dishonesty `web/lib/notifications.ts` refuses when it counts what is
+ * outstanding rather than what is unread.
+ *
+ * `scraperSlug` is the ownership edge, and it is deliberately NOT a foreign key.
+ * A scraper is not a row: `createTarget` writes one `targets` row per field,
+ * keyed `slug__field` (see `targetIdFor`), and the slug is the only name the
+ * group has. A FK would have to point at one arbitrary field's row and would
+ * break when that field is deleted while the others live on.
+ *
+ * Null until the operator approves a schema -- a conversation exists from the
+ * first message, and most of them never make a scraper. It stays null forever
+ * for every target that predates this table. Those have NO conversation and the
+ * rail must say so rather than invent one; there is no backfill here and there
+ * must never be one, because a fabricated transcript is worse than no transcript.
+ *
+ * `turns` is jsonb rather than a second table. This is a log read whole, written
+ * append-only, and never queried across conversations -- a turns table would buy
+ * a join and nothing else. See `src/store/conversations.ts` for the shape.
+ *
+ * No owner column: this instance has no user identity (`queue_items.resolved_by`
+ * stores the literal 'human'), and inventing one for a sidebar list would be a
+ * large change disguised as a small one.
+ */
+export const conversations = pgTable('conversations', {
+  conversationId: serial('conversation_id').primaryKey(),
+  // Derived from the operator's first message, never from a model call. A
+  // truncated sentence is honest and free; a generated title is a second thing
+  // that can be wrong.
+  title: text('title').notNull(),
+  turns: jsonb('turns').notNull().default([]),
+  scraperSlug: text('scraper_slug'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  // The rail's query is `ORDER BY updated_at DESC LIMIT n`, and nothing else
+  // reads this table.
+  recent: index('conversations_updated_at_idx').on(t.updatedAt),
+}));
+
+/**
  * Digest scheduling. Same shape as `targets.next_run_at`, for the same reason:
  * the due query is one indexed SELECT and there is no queue anywhere in this
  * product.

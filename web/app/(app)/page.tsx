@@ -4,13 +4,39 @@ import { TopBar } from '@/components/top-bar';
 import { RunStrip } from '@/components/run-strip';
 import { homeStats } from '@/lib/home';
 import { openDecisions } from '@/lib/queue';
+import { getConversation } from 'assay/engine/store/conversations';
 import { Watch } from './watch';
 
 export const metadata: Metadata = { title: 'Assay' };
 export const dynamic = 'force-dynamic';
 
-export default async function HomePage() {
-  const [stats, queue] = await Promise.all([homeStats(), openDecisions()]);
+/**
+ * Home, and every conversation that has ever happened on it.
+ *
+ * `?c=<id>` is the whole of the routing. A conversation is not a separate screen
+ * -- it is what this screen becomes -- so it gets a search param rather than a
+ * segment, and the client can move the URL onto it with `history.replaceState`
+ * without unmounting a turn that is mid-stream.
+ *
+ * The title is read here, on the server, from the row. That is what renames the
+ * top bar from "Home": it is not a client override of a server-rendered string,
+ * so a reload, a link from the rail and a deep link all agree.
+ */
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ c?: string }>;
+}) {
+  const { c } = await searchParams;
+  const wanted = c && /^\d+$/.test(c) ? Number(c) : null;
+
+  const [stats, queue, conversation] = await Promise.all([
+    homeStats(),
+    openDecisions(),
+    // A `?c=` naming a conversation that is not there resolves to null and the
+    // screen is Home. Better than a 404 on a link to something deleted.
+    wanted == null ? Promise.resolve(null) : getConversation(wanted),
+  ]);
   // Read HERE, on the server, and passed down as a string. `assay/engine/ai/model`
   // imports the Agent SDK and pulls Node built-ins, so a `'use client'` import of
   // it would drag them into the browser bundle -- the failure
@@ -20,13 +46,23 @@ export default async function HomePage() {
 
   return (
     <>
-      <TopBar title="Home" />
-      <div className="flex flex-1 flex-col">
-        <div className="flex flex-1 items-center justify-center px-[32px] py-[48px]">
-          <Watch waiting={queue.length} auth={auth} />
-        </div>
-        <StatsBand stats={stats} />
-      </div>
+      <TopBar title={conversation?.title ?? 'Home'} />
+      <Watch
+        waiting={queue.length}
+        auth={auth}
+        conversation={
+          conversation && {
+            id: conversation.id,
+            title: conversation.title,
+            scraperSlug: conversation.scraperSlug,
+            turns: conversation.turns,
+          }
+        }
+        // Passed as a rendered node rather than as data: the band is a server
+        // component reading the store, and the client only decides whether the
+        // screen still has room for it.
+        stats={<StatsBand stats={stats} />}
+      />
     </>
   );
 }

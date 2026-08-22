@@ -14,6 +14,7 @@ import {
   SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { SidebarNav, ScraperList } from './sidebar-nav';
+import { ConversationList } from './conversation-list';
 import { actionVariants } from './button';
 
 /**
@@ -32,9 +33,12 @@ import { actionVariants } from './button';
 export async function Sidebar({
   waiting = 0,
   scrapers = [],
+  conversations = [],
 }: {
   waiting?: number;
+  /** Scrapers no conversation owns. The layout filters the owned ones out. */
   scrapers?: { id: string; url: string; fields: number }[];
+  conversations?: { id: number; title: string; scraperSlug: string | null; turns: number }[];
 }) {
   // Not decoration: on a self-hosted instance there are no accounts, so this
   // reports what lib/auth.ts actually knows. The Figma frame shows a personal
@@ -57,11 +61,22 @@ export async function Sidebar({
 
       <SidebarContent className="gap-0 overflow-x-hidden">
         <div className="px-[20px] pb-[32px] group-data-[collapsible=icon]:px-[12px]">
+          {/*
+            `shimmer-edge` is the light that travels around this button's rim,
+            and this is the only button in the product that wears it. It is a
+            layer on top of an ordinary primary control -- press, focus and the
+            disabled state are untouched, because the effect is one
+            pointer-events: none pseudo-element and nothing else. Under
+            prefers-reduced-motion it is not drawn at all and what is left is a
+            plain solid orange button. See docs/MOTION.md, which records both
+            the numbers and the argument against having it.
+          */}
           <Link
             href="/?new=1"
             className={actionVariants({
               variant: 'primary',
-              className: 'w-full justify-center group-data-[collapsible=icon]:px-0',
+              className:
+                'shimmer-edge relative w-full justify-center group-data-[collapsible=icon]:px-0',
             })}
           >
             <Plus size={16} strokeWidth={2} className="shrink-0" aria-hidden />
@@ -73,16 +88,35 @@ export async function Sidebar({
 
         <SidebarSeparator className="mx-[20px] bg-[#292a2e] group-data-[collapsible=icon]:hidden" />
 
+        {/* Conversations first, because a conversation is the thing that makes
+            a scraper -- the rail reads in the order the work happens. */}
         <SidebarGroup className="gap-0 pt-[23px] group-data-[collapsible=icon]:hidden">
-          <SidebarGroupLabel className="label-10_5 h-auto px-0 text-[#65676d]">SCRAPERS</SidebarGroupLabel>
-          <SidebarGroupAction className="text-[#65676d] hover:bg-[#292a2e] hover:text-[var(--text-inverse)]">
+          <SidebarGroupLabel className="label-10_5 h-auto px-0 text-[#65676d]">CHATS</SidebarGroupLabel>
+          <SidebarGroupAction
+            render={<Link href="/" />}
+            className="text-[#65676d] hover:bg-[#292a2e] hover:text-[var(--text-inverse)]"
+          >
             <Plus size={14} strokeWidth={1.5} aria-hidden />
-            <span className="sr-only">Add a scraper</span>
+            <span className="sr-only">Start a new conversation</span>
           </SidebarGroupAction>
           <SidebarGroupContent className="pt-[17px]">
-            <ScraperList scrapers={scrapers} />
+            <ConversationList conversations={conversations} />
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Only the scrapers no conversation owns. This group is absent on an
+            instance where every scraper came from a chat, and it never claims
+            one of these has a transcript -- they do not, and none is invented. */}
+        {scrapers.length > 0 && (
+          <SidebarGroup className="gap-0 pt-[23px] group-data-[collapsible=icon]:hidden">
+            <SidebarGroupLabel className="label-10_5 h-auto px-0 text-[#65676d]">
+              SCRAPERS WITH NO CHAT
+            </SidebarGroupLabel>
+            <SidebarGroupContent className="pt-[17px]">
+              <ScraperList scrapers={scrapers} />
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="p-0">

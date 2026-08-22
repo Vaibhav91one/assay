@@ -2,29 +2,75 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useCallback, useRef, useState, useTransition } from 'react';
-import { CircleAlert, Eye, Hammer, ListChecks, ChevronRight, PencilLine } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
+import {
+  CircleAlert, Download, Eye, Hammer, Split, ChevronRight, PencilLine, Scissors,
+} from 'lucide-react';
 import { turn, type TraceEvent } from '@/lib/chat-stream';
 import { DEFAULT_MODEL } from 'assay/engine/agent/models';
+import { historyFor, HISTORY_TURNS, type Turn } from 'assay/engine/store/conversation-log';
 import { Composer } from './composer';
 import { Trace, ToolChips } from './trace';
 import { SchemaTable, HeldCell, tierFor } from './schema-table';
 import { ManualFields } from './manual-fields';
-import { build, type ChatResult, type Proposal } from './watch-actions';
+import {
+  build, openConversation, recordTurns, type ChatResult, type Proposal,
+} from './watch-actions';
 
 /**
- * "What should Assay watch?" -- the composer, the trace, and the schema the
- * turn comes back with.
+ * Home: the empty state, and the conversation it becomes.
  *
- * The shape of a turn: the operator types, the request opens an SSE stream, the
- * steps arrive as the agent's tools actually run, and the reply lands whole at
- * the end. See `src/agent/http.ts` for why the reply is not typed out character
- * by character -- in short, the model never writes it, so there is no generation
- * to animate.
+ * TWO STATES, ONE SCREEN. With no turns this is the hero, the composer and the
+ * two places to start from -- and that is the honest empty state, so it is not
+ * animated away as though it were clutter. The moment a message is sent the
+ * screen IS the conversation: the hero, the start-from rows and the statistics
+ * band go, the composer settles into a bar at the bottom, and the transcript
+ * scrolls above it. The top bar's title and the rail's entry are not this
+ * component's to change -- they are server-rendered from the conversation row,
+ * which is why the first message writes to Postgres before it asks the agent.
+ *
+ * WHY THE COMPOSER IS NOT `position: fixed`. It is the last child of a flex
+ * column that owns the viewport, so the transcript is what scrolls and the two
+ * cannot overlap by construction. A fixed bar would have to reserve its own
+ * height in the scroller's padding, and every change to the composer's height --
+ * the textarea grows to 240px -- would have to be mirrored there or the last
+ * message would go under it. This way there is nothing to keep in sync, and an
+ * on-screen keyboard resizes the flex box rather than covering a fixed element.
+ *
+ * The shape of a turn is unchanged: the operator types, the request opens an SSE
+ * stream, the steps arrive as the agent's tools actually run, and the reply
+ * lands whole at the end. See `src/agent/http.ts` for why the reply is not typed
+ * out character by character -- in short, the model never writes it, so there is
+ * no generation to animate.
  */
-export function Watch({ waiting, auth }: { waiting: number; auth: string }) {
+
+/** A conversation as the server hands it over. Dates are already strings on the wire. */
+export interface OpenConversation {
+  id: number;
+  title: string;
+  scraperSlug: string | null;
+  turns: Turn[];
+}
+
+export function Watch({
+  waiting, auth, conversation, stats,
+}: {
+  waiting: number;
+  auth: string;
+  /** The conversation `?c=` named, or null on a fresh Home. */
+  conversation: OpenConversation | null;
+  /** The statistics band, rendered on the server. Shown only in the empty state. */
+  stats: React.ReactNode;
+}) {
+  // Seeded from the server ONCE. After that this component owns the transcript:
+  // it is the thing that appended the turn, and re-reading the row it just wrote
+  // would replace a live proposal with the text of the reply that carried it.
+  const [turns, setTurns] = useState<Turn[]>(() => conversation?.turns ?? []);
+  const [convId, setConvId] = useState<number | null>(conversation?.id ?? null);
+  const [slug, setSlug] = useState<string | null>(conversation?.scraperSlug ?? null);
+
   const [result, setResult] = useState<ChatResult | null>(null);
-  const [asked, setAsked] = useState<string | null>(null);
   const [events, setEvents] = useState<TraceEvent[]>([]);
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [running, setRunning] = useState(false);
@@ -34,13 +80,52 @@ export function Watch({ waiting, auth }: { waiting: number; auth: string }) {
   const [model, setModel] = useState<string>(DEFAULT_MODEL);
   const [manual, setManual] = useState(false);
   const abort = useRef<AbortController | null>(null);
+  const router = useRouter();
+
+  /**
+   * Which conversation is on screen, as opposed to which one the server last
+   * sent. They differ for one render in both directions and the difference is
+   * the whole reason this is a ref rather than a `key` on the component.
+   *
+   * A `key` would remount on every server render whose id changed -- including
+   * the `router.refresh()` this component fires the moment it creates a
+   * conversation, which would tear down a turn that is still streaming. So
+   * instead: the client says which conversation it is showing, and only a
+   * server prop that DISAGREES with that is a navigation worth resetting for.
+   * Clicking another conversation in the rail, or "New scrape", is such a
+   * navigation. Our own refresh is not.
+   */
+  const shown = useRef<number | null>(conversation?.id ?? null);
+  const incoming = conversation?.id ?? null;
+  useEffect(() => {
+    if (incoming === shown.current) return;
+    shown.current = incoming;
+    abort.current?.abort();
+    setTurns(conversation?.turns ?? []);
+    setConvId(incoming);
+    setSlug(conversation?.scraperSlug ?? null);
+    setResult(null);
+    setEvents([]);
+    setStartedAt(null);
+    setRunning(false);
+    setManual(false);
+    // `conversation` is read fresh on every render; depending on the id alone is
+    // what makes this a navigation handler rather than a prop mirror.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [incoming]);
 
   const submit = useCallback(async (message: string) => {
     abort.current?.abort();
     const ctl = new AbortController();
     abort.current = ctl;
 
-    setAsked(message);
+    const at = new Date().toISOString();
+    const asked: Turn = { role: 'operator', text: message, at };
+    // Read the window BEFORE the new message joins the list -- `history` is what
+    // came before, and `converse` appends the message itself.
+    const { history } = historyFor(turns);
+
+    setTurns((t) => [...t, asked]);
     setResult(null);
     setEvents([]);
     setManual(false);
@@ -49,89 +134,320 @@ export function Watch({ waiting, auth }: { waiting: number; auth: string }) {
     setStartedAt(Date.now());
     setRunning(true);
 
+    // The transcript is written before the agent is asked, so a question that
+    // got no answer is still a question this instance was asked. A store that is
+    // down must not stop the agent answering, so this is caught and the turn
+    // continues -- unpersisted, which the operator finds out on reload rather
+    // than being told a lie now.
+    let id = convId;
+    try {
+      if (id == null) {
+        id = await openConversation(message);
+        setConvId(id);
+        // Claimed before the refresh below delivers it, so the navigation
+        // handler above sees agreement rather than a change.
+        shown.current = id;
+        // Same route, new search param: the URL now names the conversation, so a
+        // reload lands back here. `refresh` is what re-renders the server
+        // components above this one -- the top bar's title and the rail's list.
+        window.history.replaceState(null, '', `/?c=${id}`);
+        router.refresh();
+      } else {
+        await recordTurns(id, [asked]);
+      }
+    } catch {
+      id = convId;
+    }
+
+    const collected: TraceEvent[] = [];
     try {
       const r = await turn(
-        { message, history: [], model },
-        (e) => setEvents((prev) => [...prev, e]),
+        { message, history, model },
+        (e) => { collected.push(e); setEvents((prev) => [...prev, e]); },
         ctl.signal,
       );
       // A stream that ended without a result is a turn that did not land. It is
       // not an empty proposal and must never render as one.
       setResult(r);
+      if (r && !ctl.signal.aborted) {
+        const replied: Turn = {
+          role: 'assay',
+          text: r.reply,
+          at: new Date().toISOString(),
+          events: collected.filter((e) => e.kind === 'tool_result'),
+          ...(r.kind === 'propose'
+            ? {
+                proposed: {
+                  url: r.proposal.url,
+                  cadence: r.proposal.cadence,
+                  fields: r.proposal.fields.map((f) => f.name),
+                },
+              }
+            : {}),
+        };
+        setTurns((t) => [...t, replied]);
+        if (id != null) recordTurns(id, [replied]).catch(() => {});
+      }
     } catch {
       if (!ctl.signal.aborted) setResult(null);
     } finally {
       if (!ctl.signal.aborted) setRunning(false);
     }
-  }, [model]);
+  }, [model, convId, turns, router]);
 
-  const restart = () => {
-    setResult(null); setAsked(null); setEvents([]); setStartedAt(null); setManual(false);
-  };
+  const started = turns.length > 0;
 
-  if (result?.kind === 'propose') {
-    return <ProposalView asked={asked} result={result} events={events} onRestart={restart} />;
+  const composer = (
+    <Composer auth={auth} model={model} onModel={setModel} onSubmit={submit} busy={running} />
+  );
+
+  // The manual path, on the same condition it has always had: reachable whether
+  // or not a model answered, because the moment it is needed most is the moment
+  // the model could not help. In a conversation it lands under the newest reply
+  // instead of under the composer, and a target it creates belongs to this
+  // conversation like any other.
+  const manualPath = manual ? (
+    <ManualFields
+      seedUrl={urlIn(lastAsked(turns))}
+      conversationId={convId ?? undefined}
+      onCancel={() => setManual(false)}
+    />
+  ) : (
+    <button
+      type="button"
+      onClick={() => setManual(true)}
+      className="press-row flex w-full items-center gap-[16px] rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] px-[20px] py-[14px] text-left transition-colors duration-[var(--duration-tint)] hover:bg-[var(--surface-subtle)]"
+    >
+      <PencilLine size={18} strokeWidth={1.5} className="shrink-0 text-[var(--text-primary)]" aria-hidden />
+      <span className="flex min-w-0 flex-1 flex-col gap-[2px]">
+        <span className="body-14 text-[var(--text-primary)]">Describe the fields yourself</span>
+        <span className="caption-12 text-[var(--text-secondary)]">
+          a page, and what to watch on it -- no model needed
+        </span>
+      </span>
+      <ChevronRight size={16} strokeWidth={1.5} className="shrink-0 text-[var(--text-muted)]" aria-hidden />
+    </button>
+  );
+
+  if (!started) {
+    return (
+      <div className="flex flex-1 flex-col">
+        <div className="flex flex-1 items-center justify-center px-[32px] py-[48px]">
+          <div className="flex w-full max-w-[700px] flex-col items-center gap-[28px]">
+            <h1 className="display-28 flex flex-wrap items-center justify-center gap-[12px] text-center text-[var(--text-primary)]">
+              What should
+              <Image src="/brand/assay-mark.svg" alt="" width={26} height={26} className="inline-block rounded-[7px]" />
+              Assay watch?
+            </h1>
+            {composer}
+            {manualPath}
+            {!manual && <StartFrom waiting={waiting} />}
+          </div>
+        </div>
+        {stats}
+      </div>
+    );
   }
 
   return (
-    <div className="flex w-full max-w-[700px] flex-col items-center gap-[28px]">
-      <h1 className="display-28 flex flex-wrap items-center justify-center gap-[12px] text-center text-[var(--text-primary)]">
-        What should
-        <Image src="/brand/assay-mark.svg" alt="" width={26} height={26} className="inline-block rounded-[7px]" />
-        Assay watch?
-      </h1>
+    <Conversation
+      id={convId}
+      slug={slug}
+      turns={turns}
+      running={running}
+      events={events}
+      startedAt={startedAt}
+      result={result}
+      composer={composer}
+      manualPath={manualPath}
+      onBuilt={(builtSlug) => setSlug(builtSlug)}
+    />
+  );
+}
 
-      {asked && (
-        <p className="self-end rounded-[var(--radius-control)] bg-[var(--surface-subtle)] px-[16px] py-[10px]">
-          <span className="body-13_5 text-[var(--text-primary)]">{asked}</span>
-        </p>
-      )}
+/**
+ * The conversation, once there is one.
+ *
+ * `h-[calc(100svh-64px)]` is the viewport less the top bar, and `svh` rather
+ * than `vh` so a mobile browser's collapsing address bar does not leave the
+ * composer under the fold. The scroller is the only thing that scrolls.
+ */
+function Conversation({
+  id, slug, turns, running, events, startedAt, result, composer, manualPath, onBuilt,
+}: {
+  id: number | null;
+  slug: string | null;
+  turns: Turn[];
+  running: boolean;
+  events: TraceEvent[];
+  startedAt: number | null;
+  result: ChatResult | null;
+  composer: React.ReactNode;
+  manualPath: React.ReactNode;
+  onBuilt: (slug: string) => void;
+}) {
+  const scroller = useRef<HTMLDivElement>(null);
+  // Whether the newest message should pull the view down. True until someone
+  // scrolls up to read something, false from then until they come back -- a
+  // transcript that yanks itself to the bottom while you are reading is the
+  // behaviour this ref exists to prevent.
+  const stick = useRef(true);
 
-      <Composer auth={auth} model={model} onModel={setModel} onSubmit={submit} busy={running} />
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el || !stick.current) return;
+    el.scrollTop = el.scrollHeight;
+  }, [turns.length, events.length, running]);
 
-      <Trace events={events} running={running} startedAt={startedAt} />
+  const spoken = turns.filter((t) => t.role !== 'event').length;
+  const windowed = Math.max(0, spoken - HISTORY_TURNS);
+  // The index of the first turn the agent was actually given, so the notice
+  // lands where the context begins rather than at the top of the screen.
+  const firstSent = windowed > 0 ? indexOfNthSpoken(turns, windowed) : -1;
 
-      {/* need_url / need_fields / manual all land here: a sentence, not an
-          error. The manual path is a real path -- the model only ever
-          proposes, so its absence costs typing, not capability. */}
-      {result && !running && (
-        <div className="motion-fade-up flex w-full flex-col gap-[8px] rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-subtle)] px-[20px] py-[16px]">
-          <p className="body-13_5 text-[var(--text-primary)]">{result.reply}</p>
-          {!result.model_configured && (
+  return (
+    // One class, and it fires exactly once: this component mounts when the
+    // first message is sent and stays mounted for the rest of the conversation,
+    // so the reveal marks the screen becoming a conversation and never re-runs
+    // on a turn. docs/MOTION.md 5 warns against animating a path someone walks
+    // many times a day, which is why the transcript itself is not staggered and
+    // the arriving message has no motion of its own -- the whole budget for
+    // this transition is this one 200ms fade, and the `*` reduced-motion query
+    // takes even that.
+    <div className="motion-fade-up flex h-[calc(100svh-64px)] flex-col">
+      <div
+        ref={scroller}
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+        }}
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+      >
+        <div className="mx-auto flex w-full max-w-[760px] flex-col gap-[20px] px-[32px] pb-[32px] pt-[24px]">
+          {id != null && <ConversationHeader id={id} slug={slug} />}
+
+          {/* `log`, not `alert`: additions are announced, and focus stays in
+              the composer where the operator left it. */}
+          <div role="log" aria-live="polite" aria-relevant="additions" className="flex flex-col gap-[20px]">
+            {turns.map((t, i) => (
+              <div key={i} className="flex flex-col gap-[12px]">
+                {i === firstSent && <ContextWindow dropped={windowed} />}
+                <TurnView turn={t} />
+              </div>
+            ))}
+          </div>
+
+          <Trace events={events} running={running} startedAt={startedAt} />
+
+          {/* The live turn's extras. Only ever the newest turn: a proposal is a
+              reading of a page at one moment, and an older one has no button. */}
+          {!running && result?.kind === 'propose' && (
+            <ProposalView result={result} conversationId={id} onBuilt={onBuilt} />
+          )}
+          {!running && result && result.kind !== 'propose' && !result.model_configured && (
             <p className="meta-12_5 text-[var(--text-secondary)]">
               Nothing about how Assay decides what to publish changes either way.
             </p>
           )}
+          {!running && result?.kind !== 'propose' && manualPath}
         </div>
+      </div>
+
+      <div className="shrink-0 border-t border-[var(--border-hairline)] bg-[var(--bg-page)]">
+        <div className="mx-auto w-full max-w-[760px] px-[32px] pb-[20px] pt-[16px]">{composer}</div>
+      </div>
+    </div>
+  );
+}
+
+/** The conversation's own controls: what it produced, and taking it away with you. */
+function ConversationHeader({ id, slug }: { id: number; slug: string | null }) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-[18px] gap-y-[6px] border-b border-[var(--border-hairline)] pb-[14px]">
+      {slug ? (
+        <Link href="/runs" className="meta-13 text-[var(--semantic-link)]">
+          Watching {slug} ›
+        </Link>
+      ) : (
+        <span className="meta-13 text-[var(--text-muted)]">No scraper from this conversation yet</span>
       )}
+      {/* A plain link, not a fetch-and-blob: the route sets the filename in a
+          header and the browser does the rest. */}
+      <a
+        href={`/api/conversations/${id}/export`}
+        className="meta-13 ml-auto flex items-center gap-[6px] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+      >
+        <Download size={13} strokeWidth={1.5} aria-hidden />
+        Export as Markdown
+      </a>
+    </div>
+  );
+}
 
-      {!running && events.length > 0 && <ToolChips events={events} />}
+/**
+ * "The agent was not given everything above this line."
+ *
+ * NOT A COMPACTION, AND THIS SAYS SO. `src/agent/http.ts` caps `history` at 40
+ * turns, and `converse` opens a fresh single-shot session per turn with the
+ * transcript flattened into the prompt -- so the Agent SDK's own auto-compaction
+ * never sees this conversation and never trims it (see the note in
+ * `src/store/conversation-log.ts`). What happens instead is a window: the stored
+ * transcript keeps every turn, and the agent is handed the most recent 40.
+ *
+ * Nothing is summarised, because a summary is a model call that can be wrong
+ * about what mattered, and a wrong summary of a scraper's reasoning is worse
+ * than a stated gap. The gap is stated, here, at the line where it falls.
+ */
+function ContextWindow({ dropped }: { dropped: number }) {
+  return (
+    <div className="flex items-start gap-[10px] rounded-[var(--radius-card)] border border-dashed border-[var(--border-default)] px-[16px] py-[12px]">
+      <Scissors size={14} strokeWidth={1.5} className="mt-[2px] shrink-0 text-[var(--text-muted)]" aria-hidden />
+      <p className="caption-12 text-[var(--text-secondary)]">
+        The agent&rsquo;s context starts here. {dropped} earlier turn{dropped === 1 ? ' is' : 's are'}{' '}
+        kept in this transcript and in the export, but {dropped === 1 ? 'was' : 'were'} not sent with
+        the newest message &mdash; nothing was summarised and nothing was deleted.
+      </p>
+    </div>
+  );
+}
 
-      {/* The composer's own promise: "describe the fields yourself". Reachable
-          whether or not a model answered, because the moment it is needed most
-          is the moment the model could not help. */}
-      {!running && (
-        manual
-          ? <ManualFields seedUrl={urlIn(asked)} onCancel={() => setManual(false)} />
-          : (
-            <button
-              type="button"
-              onClick={() => setManual(true)}
-              className="press-row flex w-full items-center gap-[16px] rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] px-[20px] py-[14px] text-left transition-colors duration-[var(--duration-tint)] hover:bg-[var(--surface-subtle)]"
-            >
-              <PencilLine size={18} strokeWidth={1.5} className="shrink-0 text-[var(--text-primary)]" aria-hidden />
-              <span className="flex min-w-0 flex-1 flex-col gap-[2px]">
-                <span className="body-14 text-[var(--text-primary)]">Describe the fields yourself</span>
-                <span className="caption-12 text-[var(--text-secondary)]">
-                  a page, and what to watch on it -- no model needed
-                </span>
-              </span>
-              <ChevronRight size={16} strokeWidth={1.5} className="shrink-0 text-[var(--text-muted)]" aria-hidden />
-            </button>
-          )
+/** One stored turn. The operator's own words are the only thing in blue. */
+function TurnView({ turn: t }: { turn: Turn }) {
+  if (t.role === 'operator') {
+    return (
+      <p className="max-w-[85%] self-end rounded-[var(--radius-card)] bg-[var(--semantic-link)] px-[16px] py-[10px]">
+        {/* #ffffff on #2563eb is 5.17:1 -- AA for body text, measured rather
+            than assumed. `--accent-on-primary` IS #ffffff, and naming the token
+            keeps it correct if the palette moves. */}
+        <span className="body-13_5 whitespace-pre-wrap break-words text-[var(--accent-on-primary)]">
+          {t.text}
+        </span>
+      </p>
+    );
+  }
+
+  if (t.role === 'event') {
+    return (
+      <p className="flex items-center gap-[10px] py-[2px]">
+        <span className="h-px flex-1 bg-[var(--border-hairline)]" />
+        <span className="caption-11 shrink-0 text-[var(--text-muted)]">{t.text}</span>
+        <span className="h-px flex-1 bg-[var(--border-hairline)]" />
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-[8px]">
+      <p className="body-13_5 whitespace-pre-wrap break-words text-[var(--text-primary)]">{t.text}</p>
+      {t.proposed && (
+        <p className="caption-12 text-[var(--text-secondary)]">
+          Proposed {t.proposed.fields.length} field{t.proposed.fields.length === 1 ? '' : 's'} on{' '}
+          {t.proposed.url}: {t.proposed.fields.join(', ')}.
+        </p>
       )}
-
-      {!running && !manual && <StartFrom waiting={waiting} />}
+      {/* Real calls that really ran, replayed from the record -- not a
+          reconstruction. Absent on a turn that called no tool. */}
+      {t.events?.length ? <ToolChips events={t.events} /> : null}
     </div>
   );
 }
@@ -142,6 +458,23 @@ function urlIn(text: string | null): string {
   return m ? m[0].replace(/[.,;:]+$/, '') : '';
 }
 
+/** The newest thing the operator said, which is what the manual form should seed from. */
+function lastAsked(turns: Turn[]): string | null {
+  for (let i = turns.length - 1; i >= 0; i--) if (turns[i]!.role === 'operator') return turns[i]!.text;
+  return null;
+}
+
+/** Where the nth spoken turn sits in the full list, events included. */
+function indexOfNthSpoken(turns: Turn[], n: number): number {
+  let seen = 0;
+  for (let i = 0; i < turns.length; i++) {
+    if (turns[i]!.role === 'event') continue;
+    if (seen === n) return i;
+    seen++;
+  }
+  return -1;
+}
+
 function StartFrom({ waiting }: { waiting: number }) {
   return (
     <div className="flex w-full flex-col gap-[10px]">
@@ -149,7 +482,7 @@ function StartFrom({ waiting }: { waiting: number }) {
       {waiting > 0 && (
         <Row
           href="/decisions"
-          icon={<ListChecks size={18} strokeWidth={1.5} className="text-[var(--text-primary)]" aria-hidden />}
+          icon={<Split size={18} strokeWidth={1.5} className="text-[var(--text-primary)]" aria-hidden />}
           badge={waiting}
           title={`Review ${waiting} decision${waiting === 1 ? '' : 's'} waiting on you`}
           sub="held rows, nothing published yet"
@@ -198,14 +531,21 @@ function Row({
  * One bold sentence, one table of the operator's own data, one filled button --
  * docs/APP-DESIGN.md 5b's density law. Everything the machine knows is grey,
  * small, or behind the header disclosure.
+ *
+ * ONLY EVER THE LIVE TURN. This is not rebuilt from the stored transcript on
+ * reload, and that is deliberate rather than an omission: `proposal.create`
+ * carries selectors derived from the page AS IT WAS when the agent read it, and
+ * offering a button hours later that builds a scraper from a stale reading would
+ * be exactly the kind of quiet wrongness the gate exists to refuse. The
+ * transcript records that a proposal was made and what it offered; taking it
+ * needs a fresh look at the page, which is another message.
  */
 function ProposalView({
-  asked, result, events, onRestart,
+  result, conversationId, onBuilt,
 }: {
-  asked: string | null;
   result: Extract<ChatResult, { kind: 'propose' }>;
-  events: TraceEvent[];
-  onRestart: () => void;
+  conversationId: number | null;
+  onBuilt: (slug: string) => void;
 }) {
   const p = result.proposal;
   const [keep, setKeep] = useState<string[]>(p.fields.map((f) => f.name));
@@ -214,23 +554,14 @@ function ProposalView({
 
   const unsure = p.fields.filter((f) => f.confidence !== 'high');
 
-  if (built?.ok) return <Built built={built} proposal={p} onRestart={onRestart} />;
+  if (built?.ok) return <Built built={built} proposal={p} />;
 
   return (
-    <div className="flex w-full max-w-[1000px] flex-col gap-[18px]">
-      {asked && (
-        <p className="self-end rounded-[var(--radius-control)] bg-[var(--surface-subtle)] px-[16px] py-[10px]">
-          <span className="body-13_5 text-[var(--text-primary)]">{asked}</span>
-        </p>
-      )}
-
-      <div className="flex flex-col gap-[4px]">
-        <h2 className="heading-18 text-[var(--text-primary)]">{result.reply}</h2>
-        <p className="body-13_5 text-[var(--text-secondary)]">
-          These are the fields and what the page says in each one right now. Nothing is
-          created until you start it.
-        </p>
-      </div>
+    <div className="motion-fade-up flex w-full flex-col gap-[18px]">
+      <p className="body-13_5 text-[var(--text-secondary)]">
+        These are the fields and what the page says in each one right now. Nothing is
+        created until you start it.
+      </p>
 
       <SchemaTable proposal={p} keep={keep} onKeep={setKeep} />
 
@@ -248,7 +579,11 @@ function ProposalView({
         <button
           type="button"
           disabled={pending || keep.length === 0}
-          onClick={() => start(async () => setBuilt(await build(p.create, keep)))}
+          onClick={() => start(async () => {
+            const r = await build(p.create, keep, conversationId ?? undefined);
+            setBuilt(r);
+            if (r.ok) onBuilt(r.id);
+          })}
           className="press-wide flex h-[40px] items-center gap-[10px] rounded-[var(--radius-control)] bg-[var(--accent-brand)] px-[18px] disabled:opacity-60"
         >
           <Hammer size={16} strokeWidth={1.5} className="text-[var(--accent-on-primary)]" aria-hidden />
@@ -260,9 +595,9 @@ function ProposalView({
           {keep.length} of {p.fields.length} field{p.fields.length === 1 ? '' : 's'} ·{' '}
           {/^\d/.test(p.cadence) ? `every ${p.cadence}` : p.cadence}
         </span>
-        <button type="button" onClick={onRestart} className="meta-13 ml-auto text-[var(--text-secondary)]">
-          Start over
-        </button>
+        <Link href="/" className="meta-13 ml-auto text-[var(--text-secondary)]">
+          Start a new conversation
+        </Link>
       </div>
 
       {built && !built.ok && (
@@ -271,8 +606,6 @@ function ProposalView({
           <span className="meta-12_5 text-[var(--semantic-danger)]">{built.detail}</span>
         </p>
       )}
-
-      <ToolChips events={events} />
     </div>
   );
 }
@@ -287,17 +620,16 @@ function ProposalView({
  * state -- if the gate published everything, no hole is drawn.
  */
 function Built({
-  built, proposal, onRestart,
+  built, proposal,
 }: {
   built: Extract<Awaited<ReturnType<typeof build>>, { ok: true }>;
   proposal: Proposal;
-  onRestart: () => void;
 }) {
   const held = built.fields.filter((f) => f.status === 'quarantined');
 
   return (
-    <div className="motion-fade-up flex w-full max-w-[1000px] flex-col gap-[16px]">
-      <h2 className="display-28 text-[var(--text-primary)]">Watching {built.id}.</h2>
+    <div className="motion-fade-up flex w-full flex-col gap-[16px]">
+      <h2 className="heading-18 text-[var(--text-primary)]">Watching {built.id}.</h2>
       <p className="body-13_5 text-[var(--text-secondary)]">
         {held.length === 0
           ? 'The first run is done and the baseline is what the page said just now. Every run from here is compared against it.'
@@ -349,9 +681,6 @@ function Built({
             Decide the held {held.length === 1 ? 'field' : 'fields'} ›
           </Link>
         )}
-        <button type="button" onClick={onRestart} className="meta-13 ml-auto text-[var(--text-secondary)]">
-          Watch something else
-        </button>
       </div>
     </div>
   );
