@@ -306,7 +306,15 @@ function Conversation({
   const firstSent = windowed > 0 ? indexOfNthSpoken(turns, windowed) : -1;
 
   return (
-    <div className="flex h-[calc(100svh-64px)] flex-col">
+    // One class, and it fires exactly once: this component mounts when the
+    // first message is sent and stays mounted for the rest of the conversation,
+    // so the reveal marks the screen becoming a conversation and never re-runs
+    // on a turn. docs/MOTION.md 5 warns against animating a path someone walks
+    // many times a day, which is why the transcript itself is not staggered and
+    // the arriving message has no motion of its own -- the whole budget for
+    // this transition is this one 200ms fade, and the `*` reduced-motion query
+    // takes even that.
+    <div className="motion-fade-up flex h-[calc(100svh-64px)] flex-col">
       <div
         ref={scroller}
         onScroll={(e) => {
