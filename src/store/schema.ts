@@ -200,6 +200,16 @@ export const fieldState = pgTable('field_state', {
   // until a human types the confirmation -- which is the whole point of a brake.
   brakeActive: boolean('brake_active').notNull().default(false),
   brakeReason: text('brake_reason'),
+  // The stored "then": which page the baseline was taken from, and which
+  // element on it. Two columns rather than a serialised Baseline, because
+  // establishBaseline() owns the fingerprint's shape and a jsonb copy of that
+  // shape goes stale the first time the shape changes. The bytes behind the sha
+  // are the record; these two say where to look.
+  //
+  // Standing state per field, which is what this table is for: a baseline is a
+  // property of the field over time, not a fact about one run.
+  baselineGoldenSha: text('baseline_golden_sha'),
+  baselineSelector: text('baseline_selector'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
   pk: primaryKey({ columns: [t.targetId, t.field] }),
