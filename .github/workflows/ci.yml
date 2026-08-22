@@ -9,6 +9,13 @@ name: ci
 on:
   push:
   pull_request:
+  # The corpus jobs are a closed loop: reproducible to the byte, and for that
+  # reason never fetching anything. `selfheal` closes the other half by running
+  # the same claim against a page that is actually served, with nobody watching.
+  # 07:00 UTC daily, and on demand.
+  schedule:
+    - cron: '0 7 * * *'
+  workflow_dispatch:
 
 jobs:
   engine:
@@ -121,6 +128,95 @@ jobs:
             exit 1
           fi
           echo "artifact imports nothing ✓"
+
+  # The claim, re-established on a live site, unattended.
+  #
+  # This is the only job that leaves the runner. It needs no secret: the testbed
+  # is a public page and Assay reads it with `fetch`. Nothing here is gated on a
+  # token, so a fork sees the same green check the parent does.
+  #
+  # tools/selfheal.ts explains what it asserts. What matters here is the two
+  # kinds of failure and that they are NOT the same colour:
+  #
+  #   75  the testbed did not answer. Nothing was measured, so nothing is
+  #       claimed, and the step passes with a warning. A check that goes red
+  #       when somebody else's host has a bad morning is a check people learn to
+  #       ignore, and an ignored check is worse than no check.
+  #   1   Assay published a wrong value on a page it should have held. That is
+  #       the one failure this whole project is about, and it is loud.
+  selfheal:
+    name: selfheal — a live page changes, and the number holds
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: assay
+          POSTGRES_DB: assay
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://postgres:assay@127.0.0.1:5432/assay
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: apply migrations
+        run: |
+          for f in src/store/migrations/*.sql; do
+            echo "-> $f"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"
+          done
+
+      - name: selfheal — heal to the right element or abstain, never a wrong value
+        run: |
+          set +e
+          out=$(npx tsx tools/selfheal.ts 2>&1)
+          code=$?
+          set -e
+          echo "$out"
+
+          if [ "$code" = "75" ]; then
+            echo "::warning::the testbed was unreachable — nothing was measured, so nothing is claimed"
+            exit 0
+          fi
+          [ "$code" = "0" ] || { echo "::error::selfheal exited $code"; exit 1; }
+
+          line=$(echo "$out" | grep '^selfheal: [0-9]') \
+            || { echo "::error::selfheal printed no summary line"; exit 1; }
+          n=$(echo      "$line" | sed -n 's/.*selfheal: \([0-9]*\) variants.*/\1/p')
+          correct=$(echo "$line" | sed -n 's/.*, \([0-9]*\) correct.*/\1/p')
+          healed=$(echo  "$line" | sed -n 's/.*, \([0-9]*\) healed.*/\1/p')
+          held=$(echo    "$line" | sed -n 's/.*, \([0-9]*\) held.*/\1/p')
+          wrong=$(echo   "$line" | sed -n 's/.*, \([0-9]*\) wrong.*/\1/p')
+
+          # The thesis. Everything else on this list exists to stop this line
+          # from being satisfied by a run that did nothing.
+          [ "$wrong" = "0" ] \
+            || { echo "::error::assay published $wrong wrong value(s) on a live page"; exit 1; }
+
+          # `>=`, not `=`: this is the TESTBED's count, not Assay's. A variant
+          # added over there must not turn this check red, but one that vanished
+          # would mean the run measured less than it claims to.
+          [ "$n" -ge 9 ] || { echo "::error::expected at least 9 variants, saw $n"; exit 1; }
+
+          # "0 wrong" is free if nothing was published and free if nothing broke.
+          # A heal and a hold in the same run is the gate demonstrably still
+          # saying both yes and no.
+          [ "$healed" -ge 1 ] \
+            || { echo "::error::no variant healed — the heal gate never said yes"; exit 1; }
+          [ "$held" -ge 1 ] \
+            || { echo "::error::no variant was held — the gate never said no"; exit 1; }
+          [ "$correct" -ge "$healed" ] \
+            || { echo "::error::$healed healed but only $correct correct"; exit 1; }
+
+          echo "$n variants, $correct correct ($healed by healing), $held held, 0 wrong ✓"
 
   web:
     name: web — build
