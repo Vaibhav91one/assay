@@ -121,9 +121,12 @@ export const correctCommand = new Command('correct')
     );
   });
 
-/** For a registry that takes a list rather than a default export. */
+// Both, as peers: `assay correct` is not a subcommand of `assay blast`. The
+// default export is the array because the loader takes the first of
+// `default` / `COMMAND` / `COMMANDS` and ignores the rest -- defaulting to
+// `blastCommand` alone dropped `correct` from the binary without saying so.
 export const commands = [blastCommand, correctCommand];
-export default blastCommand;
+export default commands;
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   // Run directly (`npm run blast ikea/price`) the argv has no `assay` in front

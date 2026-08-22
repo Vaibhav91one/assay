@@ -53,6 +53,10 @@ export const command = new Command('fragility')
     console.log(`\n${all.length} field(s) assessed.`);
   });
 
+// The loader reads `default` / `COMMAND` / `COMMANDS`; a lowercase `command`
+// alone is not one of them, and an unsatisfied module stops the whole binary.
+export default command;
+
 if (import.meta.url === `file://${process.argv[1]}`) {
   await command.parseAsync(process.argv);
   await closeDb();
