@@ -8,7 +8,8 @@
 // browser bundle. Repetition is only acceptable while something fails when the
 // two disagree, which is what these assert.
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { withoutCredentials } from './no-credentials.js';
 
 import { MODELS as ENGINE_MODELS, CADENCES, converse, type TraceEvent } from '../src/agent/index.js';
 import { TIER_THRESHOLDS as ENGINE_TIERS, DEFAULT_THRESHOLDS as ENGINE_DEFAULTS } from '../src/contracts/index.js';
@@ -180,57 +181,36 @@ describe('frames', () => {
 // --- the trace ---------------------------------------------------------------
 
 describe('the trace reports what happened, and nothing else', () => {
+  // Imposed, not guessed. Every developer who has run `claude setup-token` has
+  // a CLI login, so a suite that skipped itself when `hasKey()` was true would
+  // have quietly stopped proving the no-model path on exactly the machines
+  // that ship the product.
+  const creds = withoutCredentials();
+  beforeAll(creds.enter);
+  afterAll(creds.leave);
+
   it('emits a settled step and no tool steps when no model is configured', async () => {
-    // The manual path takes no steps, and the trace has to say that rather than
-    // draw an empty frame that reads as a stall.
-    const key = process.env.ANTHROPIC_API_KEY;
-    const tok = process.env.CLAUDE_CODE_OAUTH_TOKEN;
-    delete process.env.ANTHROPIC_API_KEY;
-    delete process.env.CLAUDE_CODE_OAUTH_TOKEN;
-    try {
-      const seen: TraceEvent[] = [];
-      const r = await converse(
-        { message: 'watch https://example.com' },
-        { onEvent: (e) => seen.push(e), now: () => 1000 },
-      );
-      expect(r.kind).toBe('manual');
-      expect(seen).toEqual([{ kind: 'settled', outcome: 'manual', at: 1000 }]);
-      expect(seen.some((e) => e.kind === 'tool')).toBe(false);
-    } finally {
-      if (key !== undefined) process.env.ANTHROPIC_API_KEY = key;
-      if (tok !== undefined) process.env.CLAUDE_CODE_OAUTH_TOKEN = tok;
-    }
+    const seen: TraceEvent[] = [];
+    const r = await converse(
+      { message: 'watch https://example.com' },
+      { onEvent: (e) => seen.push(e), now: () => 1000 },
+    );
+    expect(r.kind).toBe('manual');
+    expect(seen).toEqual([{ kind: 'settled', outcome: 'manual', at: 1000 }]);
+    expect(seen.some((e) => e.kind === 'tool')).toBe(false);
   });
 
   it('stamps every step from the injected clock, never the wall clock', async () => {
-    const key = process.env.ANTHROPIC_API_KEY;
-    const tok = process.env.CLAUDE_CODE_OAUTH_TOKEN;
-    delete process.env.ANTHROPIC_API_KEY;
-    delete process.env.CLAUDE_CODE_OAUTH_TOKEN;
-    try {
-      let t = 0;
-      const seen: TraceEvent[] = [];
-      await converse({ message: 'hello' }, { onEvent: (e) => seen.push(e), now: () => (t += 7) });
-      expect(seen.map((e) => e.at)).toEqual([7]);
-    } finally {
-      if (key !== undefined) process.env.ANTHROPIC_API_KEY = key;
-      if (tok !== undefined) process.env.CLAUDE_CODE_OAUTH_TOKEN = tok;
-    }
+    let t = 0;
+    const seen: TraceEvent[] = [];
+    await converse({ message: 'hello' }, { onEvent: (e) => seen.push(e), now: () => (t += 7) });
+    expect(seen.map((e) => e.at)).toEqual([7]);
   });
 
   it('runs the identical loop when nobody is watching', async () => {
-    const key = process.env.ANTHROPIC_API_KEY;
-    const tok = process.env.CLAUDE_CODE_OAUTH_TOKEN;
-    delete process.env.ANTHROPIC_API_KEY;
-    delete process.env.CLAUDE_CODE_OAUTH_TOKEN;
-    try {
-      // No `onEvent`: observing must not be what makes the turn work.
-      const r = await converse({ message: 'watch https://example.com' });
-      expect(r.kind).toBe('manual');
-    } finally {
-      if (key !== undefined) process.env.ANTHROPIC_API_KEY = key;
-      if (tok !== undefined) process.env.CLAUDE_CODE_OAUTH_TOKEN = tok;
-    }
+    // No `onEvent`: observing must not be what makes the turn work.
+    const r = await converse({ message: 'watch https://example.com' });
+    expect(r.kind).toBe('manual');
   });
 });
 

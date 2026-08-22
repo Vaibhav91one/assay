@@ -241,6 +241,9 @@ function MenuList({
     <div
       id="composer-menu"
       role="listbox"
+      // The menu sits above the box, so it grows out of its own bottom edge --
+      // the default centre origin reads as arriving from the middle of nowhere.
+      style={{ transformOrigin: 'bottom left' }}
       className="motion-pop-in absolute bottom-[calc(100%+8px)] left-0 z-20 w-full overflow-hidden rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] p-[6px] shadow-[var(--shadow-elevation-floating)]"
     >
       {rows.length === 0 ? (
@@ -355,6 +358,7 @@ function ModelPicker({ auth, model, onModel }: { auth: string; model: string; on
       {open && (
         <div
           role="listbox"
+          style={{ transformOrigin: 'bottom right' }}
           className="motion-pop-in absolute bottom-[calc(100%+8px)] right-0 z-30 w-[340px] overflow-hidden rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] p-[6px] shadow-[var(--shadow-elevation-floating)]"
         >
           {MODELS.map((m) => (
@@ -420,6 +424,14 @@ function credential(auth: string) {
       word: 'subscription', colour: 'var(--semantic-success)', Icon: Terminal,
       detail: 'CLAUDE_CODE_OAUTH_TOKEN is set, from `claude setup-token`. '
         + 'Assay reads presence only and never the value.',
+    };
+  }
+  if (auth === 'cli') {
+    return {
+      word: 'CLI login', colour: 'var(--semantic-success)', Icon: Terminal,
+      detail: 'You are logged in to the Claude Code CLI on this machine, and the SDK '
+        + 'uses that login. Assay detects it by asking the CLI whether it is '
+        + 'authenticated -- there is no token here to read, and none is stored.',
     };
   }
   return {
