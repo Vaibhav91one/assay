@@ -15,7 +15,7 @@ shadcn/ui · GSAP for motion · self-hosted first, open source.
 
 ## 0. Amendments — owner decisions, 2026-08-22
 
-Three decisions were revised after this document was first written. Where the sections
+Five decisions were revised after this document was first written. Where the sections
 below disagree with this block, **this block wins**; the original reasoning is kept
 because the trade-offs still hold, only the choice changed.
 
@@ -24,6 +24,32 @@ because the trade-offs still hold, only the choice changed.
 | SQLite only, Postgres a future port | **Postgres, committed** | "Zero ops" evaporates once compose is already running. Two processes sharing one SQLite file only works on a single host; WAL over a network filesystem can corrupt; the single-writer lock puts `worker` and `web` in contention. And since Drizzle cannot share a schema across dialects, hedging carried a port-one-file debt — committing removes it. Unlocks `pg-boss` and `pgvector` if ever needed. |
 | No auth in v1 | **Clerk on hosted, no-auth on self-host** | Hosted multi-user genuinely needs auth. Clerk cannot be self-hosted, so it is scoped to the hosted instance only; self-host runs single-operator behind the operator's own access control. |
 | No TanStack Query | **TanStack Query, for live surfaces** | Not because of auth — auth and client data-fetching are orthogonal, and Clerk's `auth()` works in Server Components. The real driver is `run-report · in progress`, where fields settle one at a time and the screen must update live. |
+| JavaScript throughout, no tsconfig | **TypeScript throughout, engine included** | Nobody had decided this, which meant nobody had ruled it out either — and nine features are about to be built in parallel by nine agents who will never read each other's code. A type is the cheapest contract between people who cannot talk. Migrated module by module under the invariant gate: 34 assertions, 153 bench cases at 0.0% wrong values, replay 74/24/0, `results/events.jsonl` byte-identical after every single step. `any` is permitted where a real type would mean refactoring, and each one carries a `// TODO(types)` saying which. |
+| `src/fingerprint.js` imports nothing | **`dist/fingerprint.js` imports nothing** | The rule could not survive as written: TypeScript source cannot be pasted into Bright Data's Cheerio worker, which has no module loader. So it moves to the artifact. `npm run build:fingerprint` emits the file that gets pasted, and a vitest case rebuilds it and asserts it contains no `import` and no `require`. The test rebuilds rather than reading a committed artifact — a checked-in one can go stale against its source and still pass. |
+| AI via the Agent SDK with OAuth / subscription login | **Agent SDK with `ANTHROPIC_API_KEY`, BYOK** | Not permitted otherwise. The Agent SDK overview (fetched 2026-08-22) states: *"Unless previously approved, Anthropic does not allow third party developers to offer claude.ai login or rate limits for their products, including agents built on the Claude Agent SDK. Use the API key authentication methods described in the Quickstart instead."* The Model connector panel already designs the API-key path, and the key stays optional and shown by presence only — "Assay runs with no model" stays true when it is absent. The injection-safety split below is unchanged: the same reference confirms `disallowedTools: ["Bash", "Write", "Edit"]` removes a built-in tool from the model's context entirely, and `outputFormat: { type: 'json_schema', schema }` gives the structured element *reference* the design depends on. |
+
+### What TypeScript changes
+
+`tsconfig.json` at the root is `strict`, `module: NodeNext`, ESM; `web/` has its own on
+`moduleResolution: bundler`, because Next owns that toolchain and the two do not have to
+agree. Node-side code runs through `tsx`; `web/` uses Next's native TypeScript.
+
+Two consequences worth knowing before touching either:
+
+- **`dist/fingerprint.js` is a build artifact, not a checked-in file.** `npm run
+  build:fingerprint` emits it, `test/fingerprint-artifact.test.ts` proves it imports
+  nothing, and CI rebuilds it from a clean checkout. `tools/figma-conformance.js` stays
+  JavaScript for a related reason — its body ends in a top-level `return`, which no ES
+  module may contain, because it is a payload for Figma's evaluator rather than a script.
+- **`web/` builds with webpack, not Turbopack.** NodeNext means every relative import in
+  the engine is written `./schema.js` and resolves to `./schema.ts`. Turbopack has no
+  equivalent of webpack's `resolve.extensionAlias` and cannot follow those specifiers
+  ([vercel/next.js#82945](https://github.com/vercel/next.js/issues/82945), open as of
+  2026-08-22), so a Turbopack build fails the moment a route imports `assay/store`. Six
+  lines in `next.config.ts` and `--webpack` on `dev` and `build`; delete both the day
+  that issue lands. The alternatives were dropping `.js` from every engine specifier —
+  tying the repo to a resolver Node does not implement — or compiling the engine to
+  `dist/` before the app can see an edit.
 
 ### What Postgres changes
 
@@ -50,7 +76,7 @@ Decide before the first migration is written.
 
 ### AI architecture — three surfaces, two trust levels
 
-Decided 2026-08-22. `@anthropic-ai/claude-agent-sdk` (0.3.238) is **Claude Code as a
+Decided 2026-08-22. `@anthropic-ai/claude-agent-sdk` (0.3.239 as of 2026-08-22) is **Claude Code as a
 library** — built-in Read/Write/Edit/Bash/Glob/Grep/WebSearch/WebFetch, subagents, hooks.
 It is a different product from `@anthropic-ai/sdk` (0.120.0, the API SDK). Both ship.
 
@@ -60,8 +86,8 @@ of a prompt injection:
 | Surface | Input | Tooling | Model |
 |---|---|---|---|
 | **Home chat agent** — "What should Assay watch?" | the operator's own words | Agent SDK, full loop, Assay's own tools (watch, discover, propose fields) | Opus 5, adaptive thinking |
-| **Agentic authoring** — "watch everything on contoso.example" | sitemap + sampled pages | Agent SDK, sandboxed, **no filesystem or shell tools** | Opus 5, effort tuned |
-| **Page analysis** — field inference, element nomination, discovery ranking | **untrusted scraped HTML** | narrow structured API call, `output_config.format`, no tools | per feature, measured |
+| **Agentic authoring** — "watch everything on contoso.example" | sitemap + sampled pages | Agent SDK, sandboxed, **`disallowedTools: ["Bash", "Write", "Edit"]`** | Opus 5, effort tuned |
+| **Page analysis** — field inference, element nomination, discovery ranking | **untrusted scraped HTML** | narrow structured call, `outputFormat: { type: 'json_schema', schema }`, no tools | per feature, measured |
 | **External agents** — Claude Code / Codex | Assay's MCP server | the Agent SDK as *client* | the user's own |
 
 **The rule that decides which:** operator input may reach an agent loop; **scraped page
@@ -70,6 +96,16 @@ returns an element *reference*, never a string, so the worst a hostile page achi
 pointing at the wrong element, which the scorer disagrees with, which is grounds to
 abstain. Handing that same page to an agent holding `Bash` and `Write` would trade a
 structural guarantee for a filter.
+
+**Authentication is BYOK — see 0.** `ANTHROPIC_API_KEY`, never claude.ai login: Anthropic
+does not permit third-party products to offer subscription login or rate limits, and the
+Agent SDK overview says so in as many words. The key is optional and reported by presence
+only, so "Assay runs with no model" stays literally true.
+
+The two option names above were read off the TypeScript SDK reference on 2026-08-22, not
+remembered. `disallowedTools` with a bare name removes the tool from the model's context
+entirely rather than prompting for it, which is what makes the second row a structural
+guarantee rather than a filter.
 
 **Still to author:** system prompts per surface, and Agent Skills for the chat agent.
 Model choice per feature is deliberately deferred until the 4th benchmark arm can measure
