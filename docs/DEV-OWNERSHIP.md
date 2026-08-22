@@ -15,6 +15,30 @@ clothing.
 
 ---
 
+## First thing in a fresh worktree
+
+`.env` is gitignored, so your worktree does not have one. The local Postgres on this
+machine answers on the built-in default, which is what `src/store/index.ts` falls back to
+when `DATABASE_URL` is unset — so the database-backed tests work with no setup at all:
+
+```bash
+ASSAY_REQUIRE_DB=1 npx vitest run      # 40 passing, and actually touching Postgres
+```
+
+`ASSAY_REQUIRE_DB=1` is not optional advice. Without it a test that cannot reach the
+database early-returns, and vitest reports that as **passed, not skipped** — the count is
+identical either way, so counting cannot catch it. Your feature is mostly database code;
+run it with the flag or you are testing nothing.
+
+The migration is already applied to that database. If a table is missing, the schema test
+in `test/surfaces.test.ts` will say which one:
+
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f src/store/migrations/0004_*.sql
+```
+
+---
+
 ## Check this before every commit
 
 ```bash
