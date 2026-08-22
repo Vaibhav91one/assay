@@ -64,3 +64,9 @@ dist/
 # it should be, and `tsc --noEmit` in web/ needs it present.
 !web/next-env.d.ts
 web/tsconfig.tsbuildinfo
+
+# `next dev` rewrites these on every start. Nine feature branches each ran the
+# dev server, so nine branches each produced a different version of the same
+# generated file -- a conflict with no author and no correct resolution.
+web/AGENTS.md
+web/CLAUDE.md
