@@ -33,4 +33,26 @@
   --color-ring: var(--semantic-link);
 
   --radius: var(--radius-card);
+
+  /* The sidebar has its own eight names in shadcn, and `shadcn add sidebar`
+     writes them into globals.css as raw HSL plus a `.dark` block -- a second
+     palette, sitting beside ours, free to drift. That is the exact thing this
+     file exists to stop, so the generated block was reverted and the names
+     are bound here instead.
+
+     Our rail is dark in every case: it is `bg/sidebar` on a light page, not a
+     light surface that goes dark in a dark theme. So there is no `.dark`
+     variant to write -- one mapping is the whole story. */
+  --color-sidebar: var(--bg-sidebar);
+  --color-sidebar-foreground: var(--text-inverse);
+  --color-sidebar-primary: var(--accent-brand);
+  --color-sidebar-primary-foreground: var(--accent-on-primary);
+  --color-sidebar-accent: #292a2e;          /* the rail's own hover/divider ink */
+  --color-sidebar-accent-foreground: var(--text-inverse);
+  --color-sidebar-border: #292a2e;
+  --color-sidebar-ring: var(--accent-brand);
+
+  /* 272px is the drawn width, and the icon rail is the header's own gutter. */
+  --sidebar-width: 272px;
+  --sidebar-width-icon: 64px;
 }

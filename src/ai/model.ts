@@ -124,14 +124,27 @@ export async function ask<S extends z.ZodType>(
         // No MCP servers: nothing for a page to reach through either.
         mcpServers: {},
         maxTurns: 1,
-        outputFormat: { type: 'json_schema', schema: z.toJSONSchema(shape) },
+        // draft-7 is not a preference. The SDK validates against JSON Schema
+        // draft-07 and rejects a schema declaring anything newer; Zod 4 emits
+        // 2020-12 unless told otherwise, so the bare call produced a schema
+        // that could never be accepted. The SDK's own types cannot catch this
+        // -- `schema` is typed `Record<string, unknown>`, which accepts
+        // anything. (code.claude.com/docs/en/agent-sdk/structured-outputs)
+        outputFormat: { type: 'json_schema', schema: z.toJSONSchema(shape, { target: 'draft-7' }) },
         ...(abort ? { abortController: abort } : {}),
       },
     });
     for await (const m of q) {
       if (m.type === 'result' && m.subtype === 'success') raw = m.structured_output;
     }
-  } catch {
+  } catch (err) {
+    // `null` means "the model did not answer", and the caller reads that as
+    // permission to fall back to the lexical path. A malformed request is not
+    // that: it is our bug, and it would degrade silently and permanently while
+    // looking exactly like a missing key. So it is still non-fatal -- a broken
+    // model path must not take a scrape down -- but it says so once, loudly,
+    // instead of being swallowed.
+    console.error('[assay/ai] model call failed, falling back to the lexical path:', err);
     return null;
   }
 
