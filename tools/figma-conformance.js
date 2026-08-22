@@ -1,0 +1,175 @@
+// Design conformance audit for the Assay Figma file (page `04 · Screens`).
+//
+// This is not a Node script. Paste the body into the Figma MCP `use_figma` tool:
+//   use_figma({ fileKey: 'FYnhhLeMulixqTTyjP7gJd',
+//               description: 'Run design conformance audit',
+//               skillNames: 'figma-use', code: <body of run()> })
+//
+// It mutates nothing. It returns `{frames, summary, detail}`; every count in
+// `summary` must be 0. `detail` lists up to 10 offenders per rule.
+//
+// Rules, and why each exists:
+//   paletteMismatch  a swatch whose fill disagrees with its own printed hex
+//   barColour        data bars must be semantic/link, tracks border/hairline
+//   orangeButtons    accent/brand is for brand primaries only, not every verb
+//   snakeProse       snake_case belongs in schema tables and code, not prose
+//   isoDates         displayed dates read "4 Aug 2026", not "2026-08-04"
+//   iconMismatch     the glyph must match the verb (copy is not settings)
+//   notCentred       button content sits on the button's centre line
+//   overlap          two texts sharing pixels with no opaque ground between
+//   rasterLogo       the mark is vector; no image fills named logo/*
+//   logoArtOffset    a LogoMark instance whose artwork drifted from 0,0
+//   connectorNoBrand every connector panel shows whose service it is
+//   devNotes         no spec:/TODO/CRITIQUE commentary on a product surface
+//   hover            disclosure affordances actually carry an ON_HOVER reaction
+//
+// Two detector bugs were found and fixed while writing this; both had made a
+// clean file look dirty. Kept as a warning: a failing rule is a claim about the
+// design AND about the rule. Check which one is wrong before editing the file.
+//   - palette pairing matched every swatch to the FIRST hex label on the page
+//   - a text node whose name equals its own characters is an identifier cell
+//     (data), not prose, so it is exempt from snakeProse
+
+async function run() {
+  const page = figma.root.children.find(p => p.name === '04 · Screens');
+  await page.loadAsync();
+  const comp = figma.root.children.find(p => p.name === '04 · Components');
+  await comp.loadAsync();
+  const hex = c => '#' + [c.r, c.g, c.b].map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join('');
+  const V = {};
+  for (const c of await figma.variables.getLocalVariableCollectionsAsync())
+    for (const id of c.variableIds) { const v = await figma.variables.getVariableByIdAsync(id); V[v.name] = v.id; }
+  const bound = n => { const f = Array.isArray(n.fills) && n.fills[0]; return f && f.boundVariables && f.boundVariables.color ? f.boundVariables.color.id : null; };
+  const LM = comp.findOne(n => n.type === 'COMPONENT' && n.name === 'LogoMark');
+  const iset = comp.findOne(n => n.type === 'COMPONENT_SET' && n.name === 'Icon');
+
+  const frames = [];
+  for (const s of page.children.filter(n => n.type === 'SECTION'))
+    for (const fr of s.findAll(n => n.type === 'FRAME' && n.parent.type === 'SECTION'))
+      frames.push({ fr, loc: s.name.slice(0, 2) + '/' + fr.name });
+  const R = {};
+
+  // -- palette: pair each swatch with the hex label physically nearest it
+  const pal = page.children.find(n => n.name === 'Color Palette');
+  const hexTexts = pal.findAll(t => t.type === 'TEXT' && /^#[0-9A-Fa-f]{6}$/.test(t.characters.trim()));
+  R.paletteMismatch = [];
+  pal.findAll(n => n.type !== 'TEXT' && Array.isArray(n.fills) && n.fills[0] && n.fills[0].type === 'SOLID' && n.width < 200).forEach(sw => {
+    const a = sw.absoluteBoundingBox; if (!a) return;
+    let best = null, bd = 1e9;
+    hexTexts.forEach(t => {
+      const b = t.absoluteBoundingBox; if (!b) return;
+      const d = Math.hypot((a.x + a.width / 2) - (b.x + b.width / 2), (a.y + a.height / 2) - (b.y + b.height / 2));
+      if (d < bd) { bd = d; best = t; }
+    });
+    if (best && bd < 140 && best.characters.trim().toLowerCase() !== hex(sw.fills[0].color).toLowerCase())
+      R.paletteMismatch.push(`${sw.name}: ${hex(sw.fills[0].color)} vs ${best.characters}`);
+  });
+
+  R.barColour = [];
+  frames.forEach(({ loc, fr }) => fr.findAll(n => /^(bar|progress)\/(fill|track)$/.test(n.name) && Array.isArray(n.fills) && n.fills.length).forEach(n => {
+    const want = /\/fill$/.test(n.name) ? V['semantic/link'] : V['border/hairline'];
+    if (bound(n) !== want) R.barColour.push(`${loc}/${n.name}`);
+  }));
+
+  const BRAND_OK = /new scrape|sign ?in|request access|start watching|create key|magic link|continue|send$|watch the|build the scraper/i;
+  R.orangeButtons = [];
+  frames.forEach(({ loc, fr }) => fr.findAll(n => /^(button|action)\//.test(n.name) && n.type === 'FRAME' && Array.isArray(n.fills) && n.fills[0] && n.fills[0].type === 'SOLID').forEach(n => {
+    if (bound(n) !== V['accent/brand']) return;
+    const t = n.findOne(x => x.type === 'TEXT');
+    // absolute-layout buttons keep their label as a sibling, so fall back to the name
+    const label = t ? t.characters.trim() : n.name.replace(/^button\/|^action\//, '').replace(/-/g, ' ');
+    if (!BRAND_OK.test(label)) R.orangeButtons.push(`${loc} · "${label}"`);
+  }));
+
+  const inData = n => { let p = n.parent; while (p) { if (/^(table|cell|row\/(header|assay)|card\/(code|curl|steps))/i.test(p.name)) return true; p = p.parent; } return false; };
+  const LITERAL = /[{}\[\]"]|sha256|^collector |mcp_servers|^\s*"|=|\bnpx\b|ASSAY_|ANTHROPIC_/;
+  R.snakeProse = [];
+  frames.forEach(({ loc, fr }) => fr.findAll(n => n.type === 'TEXT').forEach(t => {
+    const c = t.characters;
+    const isCell = t.name.trim() === c.trim() && /^[a-z0-9_]+$/.test(c.trim());
+    if (/[a-z0-9]+_[a-z]/.test(c) && !inData(t) && !LITERAL.test(c) && !isCell && !/^label\/field$|^cell\//.test(t.name))
+      R.snakeProse.push(`${loc} :: ${c.slice(0, 40)}`);
+  }));
+
+  R.isoDates = [];
+  frames.forEach(({ loc, fr }) => fr.findAll(n => n.type === 'TEXT' && /\d{4}-\d{2}-\d{2}/.test(n.characters)).forEach(t => {
+    if (!/^card\/(code|curl)/.test(t.parent.name)) R.isoDates.push(`${loc} :: ${t.characters.slice(0, 36)}`);
+  }));
+
+  const WANT = [[/^copy/i, 'copy'], [/download/i, 'download'], [/^export/i, 'download'], [/^docs$/i, 'paperclip'],
+    [/^retry|^re-check|^re-scrape|^resume|^undo|^repair (all|five)/i, 'refresh'], [/^use |^looks right|^save /i, 'check'],
+    [/^see |^view /i, 'eye'], [/^add /i, 'plus'], [/^cancel run/i, 'circleX'], [/^unheal/i, 'circleX'], [/^send a test/i, 'mail']];
+  R.iconMismatch = [];
+  frames.forEach(({ loc, fr }) => fr.findAll(n => /^(button|action)\//.test(n.name) && n.type === 'FRAME').forEach(n => {
+    const t = n.findOne(x => x.type === 'TEXT'); if (!t) return;
+    const L = t.characters.trim(), rule = WANT.find(([re]) => re.test(L)); if (!rule) return;
+    const ic = n.findAll(x => x.type === 'INSTANCE').find(x => { try { return x.mainComponent && x.mainComponent.parent && x.mainComponent.parent.id === iset.id; } catch (e) { return false; } });
+    if (!ic) return;
+    const got = ic.mainComponent.name.replace(/^Name=/, '');
+    if (got !== rule[1]) R.iconMismatch.push(`${loc} · "${L}" ${got}!=${rule[1]}`);
+  }));
+
+  R.notCentred = [];
+  frames.forEach(({ loc, fr }) => fr.findAll(n => /^(button|action|tab)\//.test(n.name) && n.type === 'FRAME').forEach(b => {
+    if (b.layoutMode && b.layoutMode !== 'NONE') {
+      if (Math.abs(b.paddingTop - b.paddingBottom) > 0.5) R.notCentred.push(`${loc}/${b.name} pad`);
+      if (b.counterAxisAlignItems !== 'CENTER') R.notCentred.push(`${loc}/${b.name} cross`);
+      return;
+    }
+    const pool = (b.children && b.children.length ? b.children : (b.parent.children || []).filter(o => o !== b));
+    const B = b.absoluteBoundingBox; if (!B) return;
+    const ins = pool.filter(o => o.absoluteBoundingBox && (o.type === 'TEXT' || o.type === 'INSTANCE') &&
+      o.absoluteBoundingBox.x >= B.x - 2 && o.absoluteBoundingBox.x + o.absoluteBoundingBox.width <= B.x + B.width + 2 &&
+      o.absoluteBoundingBox.y >= B.y - 8 && o.absoluteBoundingBox.y + o.absoluteBoundingBox.height <= B.y + B.height + 8);
+    if (!ins.length) return;
+    const y0 = Math.min(...ins.map(o => o.absoluteBoundingBox.y)), y1 = Math.max(...ins.map(o => o.absoluteBoundingBox.y + o.absoluteBoundingBox.height));
+    const dy = (B.y + B.height / 2) - (y0 + y1) / 2;
+    if (Math.abs(dy) >= 1) R.notCentred.push(`${loc}/${b.name} dy=${Math.round(dy * 10) / 10}`);
+  }));
+
+  // two texts sharing pixels are fine only when separate opaque grounds stack them
+  const opaque = n => { let p = n.parent; while (p && p.type !== 'PAGE') { if (Array.isArray(p.fills) && p.fills.some(f => f.type === 'SOLID' && f.visible !== false && (f.opacity === undefined || f.opacity > 0.95))) return p; p = p.parent; } return null; };
+  R.overlap = [];
+  frames.forEach(({ loc, fr }) => {
+    const ts = fr.findAll(n => n.type === 'TEXT' && n.visible && n.absoluteBoundingBox);
+    for (let i = 0; i < ts.length; i++) for (let j = i + 1; j < ts.length; j++) {
+      const a = ts[i].absoluteBoundingBox, b = ts[j].absoluteBoundingBox;
+      const ix = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x);
+      const iy = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y);
+      if (ix <= 1.5 || iy <= 1.5) continue;
+      const ga = opaque(ts[i]), gb = opaque(ts[j]); if (ga && gb && ga !== gb) continue;
+      R.overlap.push(`${loc}: "${ts[i].characters.slice(0, 18)}" x "${ts[j].characters.slice(0, 18)}"`);
+    }
+  });
+
+  R.rasterLogo = [];
+  frames.forEach(({ loc, fr }) => fr.findAll(n => /logo/i.test(n.name) && Array.isArray(n.fills) && n.fills.some(f => f.type === 'IMAGE'))
+    .forEach(n => R.rasterLogo.push(`${loc}/${n.name}`)));
+
+  R.logoArtOffset = [];
+  if (LM) frames.forEach(({ loc, fr }) => fr.findAll(n => n.type === 'INSTANCE' && n.mainComponent && n.mainComponent.id === LM.id).forEach(n => {
+    const k = n.children[0];
+    if (k && (Math.abs(k.x) > 0.6 || Math.abs(k.y) > 0.6)) R.logoArtOffset.push(`${loc}/${n.name} kid@${Math.round(k.x)},${Math.round(k.y)}`);
+  }));
+
+  R.connectorNoBrand = [];
+  ['connect', 'connect · codex', 'connect · claude-ai', 'connect · bright-data', 'connect · model'].forEach(nm => {
+    const f = frames.find(x => x.fr.name === nm); if (!f) return;
+    if (!f.fr.findOne(n => n.name === 'row/brand' || n.name === 'BrandRow')) R.connectorNoBrand.push(nm);
+  });
+
+  R.devNotes = [];
+  frames.forEach(({ loc, fr }) => fr.findAll(n => n.type === 'TEXT' && /^spec:|docs\/CRITIQUE|TODO\b|FIXME/.test(n.characters)).forEach(() => R.devNotes.push(loc)));
+
+  R.hover = [];
+  for (const { loc, fr } of frames)
+    for (const n of fr.findAll(x => /^action\/why$/.test(x.name) || /^marker\/run-/.test(x.name))) {
+      const rs = [...(n.reactions || []), ...((n.children || []).flatMap(c => c.reactions || []))];
+      if (!rs.some(r => r.trigger && r.trigger.type === 'ON_HOVER')) R.hover.push(`${loc}/${n.name}`);
+    }
+
+  const summary = {}; for (const k of Object.keys(R)) summary[k] = R[k].length;
+  return { frames: frames.length, summary, detail: Object.fromEntries(Object.entries(R).filter(([, v]) => v.length).map(([k, v]) => [k, v.slice(0, 10)])) };
+}
+
+return run();

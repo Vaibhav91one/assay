@@ -228,3 +228,119 @@ Frames that *should* have been click-reachable and now are:
 `decisions · resolved → decide-once` was **not** wired: the frame's only affordance is
 `button/leave-it-empty`, and `decide-once` is what the undo toast leads to, not a button.
 Wiring it to the receipt row was tried and reverted rather than left as a false edge.
+
+## 9. Design system conformance (2026-08-22)
+
+A review pass found the screens were drawing on three colours (brand orange, ink,
+white) while the palette frame defined seventeen, and that several conventions had
+drifted between sections. Everything below is enforced by `tools/figma-conformance.js`,
+which reads the file and returns a violation count per rule. **All 13 rules return 0
+across 62 frames.**
+
+### Colour: what each family means
+
+| Token | Used for | Not used for |
+|---|---|---|
+| `accent/brand` #FF4D00 | Brand primaries only — New scrape, Sign in, Start watching, Build the scraper | Any other verb |
+| `semantic/success` #16A34A | Constructive confirms — Use this, Save row, Repair all five, Add both fields | — |
+| `semantic/link` #2563EB | Data bars, and informational actions — Export, Retry, Open the decision | — |
+| `semantic/warning` #CA8A04 | Held or unverified state — `bar/held`, suspect run bands | — |
+| `semantic/danger` #DC2626 | Destructive — Unheal, Cancel run | — |
+
+34 buttons were recoloured off brand orange. Orange now appears on 5 primaries and
+the active nav item, which is what makes it read as the brand colour again.
+
+**The palette frame contradicted itself.** Its "Yellow / Warning" swatch was filled
+`#FFC346` while its own printed label and the `semantic/warning` token both said
+`#CA8A04`. The swatch was wrong; it now matches the token.
+
+**Progress bars.** `bar/fill` was `semantic/link` in section 01 and `accent/brand` in
+02 and 04 — the same component reading as two different things. All 31 fills are now
+`semantic/link`, all 31 tracks `border/hairline`.
+
+### Identifiers: database style vs human style
+
+`snake_case` is correct where the field name **is** the data — the Bright Data schema
+table, the Codex tool table, the `field | right now` table in `run-report · in progress`,
+and literal JSON/TOML. It is wrong in prose and in legends.
+
+The audit distinguishes these structurally: a text node whose layer name equals its own
+characters is an identifier cell and is exempt; anything else carrying an underscore in
+a sentence is a violation. Seven were rewritten, including the two the review called out
+by name — `anchors_died` → "Anchors died", `shape_mismatch` → "Shape mismatch".
+
+### Dates
+
+Displayed dates read `4 Aug 2026`, never `2026-08-04`. Ten were reformatted. Dates in
+`blast-radius` markers now carry a `calendar` glyph so the number is legible as a date
+without reading it.
+
+### Icons
+
+The glyph must match the verb. Nine were wrong, including three buttons using the
+**settings gear for Copy, Copy link and Export**, and **Download PDF using the pause
+glyph**. The two `Export retraction CSV` buttons on one screen used *different* icons.
+
+The set had no `copy` or `download` glyph, so both were added as Lucide paths rather
+than substituting a near-miss. `Repair the wrong one only` keeps `pencil` — it edits one
+row, it does not re-run a repair.
+
+### Density, and where the detail went
+
+Too much explanation on screen is not thoroughness, it is a reading tax. Two patterns:
+
+- **`blast-radius`** — the three run markers each carried a line of justification
+  ("value matched its shape, 5 of 5 anchors agreed"). Those moved to `ON_HOVER`
+  overlays. The export path caption (`results/blast/…csv`) was removed; the toast
+  already names the file.
+- **`decisions`** — the queue card carried a paragraph, a lead-margin chart with two
+  captions, a rule paragraph and a mono score line before the reader reached a choice.
+  It is now a **selection**: the question, then two option cards side by side, each with
+  one hint line and its own action. The scores that justify the hold
+  (`match 0.71 vs 0.62 · lead 0.09, needs 0.16`) live behind a "Why this is held"
+  hover. The card went from 411px to 327px without losing a fact.
+
+Hover is for detail that supports a decision, never for the decision itself — no action
+is hover-only.
+
+### The mark
+
+`sign-in` carried a new spider mark while all 54 other screens still used the old raster
+tile (image hash `c034574256`). The mark is now a `LogoMark` component built from that
+vector artwork, so the sidebar master alone updates every screen.
+
+Two mistakes are worth recording. The first pass took the wrong artwork — the orange
+asterisk (`mark/hero`) rather than the spider in `logo/lockup`. The second broke on
+geometry: the artwork sat one frame deep, so resizing an instance clipped it instead of
+scaling it, leaving the mark rendering at the frame origin. Flattening the 52 vectors
+directly into the component with `SCALE` constraints fixed it. `logoArtOffset` in the
+audit exists to catch exactly that regression.
+
+### Alignment
+
+Eight buttons in section 01 had their label and icon sitting 4.3px below the button's
+centre line — these are absolute-layout screens where the label is a *sibling* of the
+button rect, so nothing kept them aligned. All eight are now centred, and the rule
+covers both layout styles.
+
+`agent-fields · editing` had a stale hint line sliced by the inline editor's bottom
+edge; it is hidden while the editor is open. The other nine text overlaps the detector
+found are dialogs and popovers with an opaque ground between them — correct, and the
+rule now allows for it.
+
+### Connectors
+
+Only Bright Data showed whose service it was. Claude Code, Codex, claude.ai and Model
+now carry the correct `BrandIcon` — Anthropic for the first, third and fourth, OpenAI
+for Codex. Bright Data keeps `BrandRow`, the neutral glyph plus the service name in
+text, because no official open SVG exists and a wrong logo is worse than no logo.
+
+### Running it
+
+Paste the body of `tools/figma-conformance.js` into `use_figma`. It mutates nothing.
+Every count must be 0.
+
+Two of the rules were wrong before the design was: the palette check paired every swatch
+with the first hex label on the page, and the prose check flagged identifier cells. Both
+made a clean file look dirty. A failing rule is a claim about the design *and* about the
+rule — check which one is wrong before editing the file.
