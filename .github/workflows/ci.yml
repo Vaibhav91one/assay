@@ -48,16 +48,23 @@ jobs:
           [ "$wrong" = "0.0%" ] || { echo "::error::gated arm published $wrong wrong values, expected 0.0%"; exit 1; }
           echo "153 cases, 0.0% wrong ✓"
 
-      - name: replay — 74 runs, 24 heals, 0 abstentions
+      # 66, not 24. The label read "24 heals" from before the anchor fix and the
+      # assertion below caught the drift on every run since -- a red step whose
+      # own name disagreed with it. The `ok` count is asserted too now: heals and
+      # abstentions alone leave one degree of freedom, so a change that moved
+      # runs between `ok` and `heal` in equal numbers would have passed.
+      - name: replay — 74 runs, 8 ok, 66 heals, 0 abstentions
         run: |
           out=$(npm run replay 2>&1)
-          echo "$out" | grep -E 'replayed|heal|abstain'
+          echo "$out" | grep -E 'replayed|ok|heal|abstain'
           echo "$out" | grep -q 'replayed 74 runs' || { echo "::error::expected 74 runs"; exit 1; }
+          ok=$(echo    "$out" | awk '/^  ok /{print $2}')
           heals=$(echo "$out" | awk '/^  heal /{print $2}')
           abst=$(echo  "$out" | awk '/^  abstain /{print $2}')
-          [ "$heals" = "24" ] || { echo "::error::expected 24 heals, saw $heals"; exit 1; }
+          [ "$ok"    = "8"  ] || { echo "::error::expected 8 clean runs, saw $ok"; exit 1; }
+          [ "$heals" = "66" ] || { echo "::error::expected 66 heals, saw $heals"; exit 1; }
           [ "$abst"  = "0"  ] || { echo "::error::expected 0 abstentions, saw $abst"; exit 1; }
-          echo "74 / 24 / 0 ✓"
+          echo "74 / 8 / 66 / 0 ✓"
 
       - name: proof records are byte-identical
         run: |
