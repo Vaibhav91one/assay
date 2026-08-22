@@ -17,7 +17,7 @@ from it, so this is the one field that really matters.
 proof_id:
 ```
 
-`npm run explain <proof_id>` (or the `assay_explain` MCP tool) prints the
+`npm run cli -- explain <proof_id>` (or the `assay_explain` MCP tool) prints the
 record — paste it if you can.
 
 ## What happened

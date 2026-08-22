@@ -1,6 +1,7 @@
 # Assay — application design
 
-Status: **DESIGN ONLY. Nothing here is implemented.**
+Status: written as a design, since built. The screens live in `web/app/`. Where
+this document and the running app disagree, the app is what shipped.
 
 Scope locked 2026-08-21: hackathon tracks **03** (set a goal and walk away), **07**
 (competitive intel), **09** (parallel proposers). Track 08 cut, track 06 parked — §9.

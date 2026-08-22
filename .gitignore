@@ -16,10 +16,6 @@ data/
 # --- dependencies ------------------------------------------------------------
 node_modules/
 
-# Vendored third-party bundle, reproducible with `npm run vendor`.
-# Kept out of history so the repo stays readable.
-app/vendor/
-
 # --- corpus ------------------------------------------------------------------
 # corpus/ IS COMMITTED ON PURPOSE.
 #
@@ -48,11 +44,21 @@ app/vendor/
 # authentic example output in the repo and tools/audit.js reads it by default,
 # so it is committed too.
 
-# --- os / editor -------------------------------------------------------------
+# --- os / editor / tooling ---------------------------------------------------
 .DS_Store
 *.swp
 .idea/
 .vscode/
+.serena/
+
+# Tool scratch that lands at the root and belongs to nobody's checkout but the
+# one that made it.
+*.log
+npm-debug.log*
+coverage/
+.playwright-cli/
+playwright-report/
+test-results/
 
 # --- derived --------------------------------------------------------------
 # Content-addressed page captures. Regenerable with `npm run replay`, so they

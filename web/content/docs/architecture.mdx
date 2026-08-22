@@ -10,7 +10,7 @@ flowchart TB
   subgraph host["one host · docker compose up -d"]
     web["web<br/>Next 16 · App Router<br/>serves screens, writes decisions"]
     worker["worker<br/>tools/worker.ts<br/>fetch → detect → heal → gate → publish"]
-    pg[("postgres:17-alpine<br/>twelve tables<br/>volume: pgdata")]
+    pg[("postgres:17-alpine<br/>thirteen tables<br/>volume: pgdata")]
     caps["captures<br/>bind-mounted volume<br/>content-addressed by digest"]
   end
 
@@ -53,7 +53,7 @@ is no second, weaker code path that arrives over a webhook.
 
 | Service | Image | What it owns |
 |---|---|---|
-| `web` | `build: .`, `npm --workspace web run start` | Serves the screens and the read-only REST surface; writes decisions. Port 3000. |
+| `web` | `build: .`, `npm --workspace web run start` | Serves the screens and the REST surface; writes decisions. Port 3000. |
 | `worker` | the same image, `npx tsx tools/worker.ts` | The whole pipeline. `restart: unless-stopped`. No ports. |
 | `postgres` | `postgres:17-alpine` | The store. Healthchecked with `pg_isready`; both other services wait on `condition: service_healthy`. |
 

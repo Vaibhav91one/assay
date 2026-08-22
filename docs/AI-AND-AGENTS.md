@@ -1,6 +1,9 @@
 # AI and agents in Assay
 
-Status: design. Nothing here is implemented.
+Status: written as a design, since built. The agent, the model-backed nomination
+path, the consensus scorer, the skills surface and the MCP tools all live under
+`src/` now — `src/agent/`, `src/ai/`, `src/consensus/`, `src/skills/`,
+`src/mcp/`. Read this for why each piece exists; read the code for what it does.
 
 This extends `docs/FEATURES.md`. It adds no new product; every capability below
 either feeds an existing feature or adds a signal to an existing decision. Read

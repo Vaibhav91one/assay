@@ -14,7 +14,7 @@ question:
 > When the page changes underneath a scraper that was configured earlier, does
 > the system publish the right value, publish a wrong value, or refuse to answer?
 
-**Assay** (`src/heal.js`, `healGated`) ranks every element on the changed page
+**Assay** (`src/heal.ts`, `healGated`) ranks every element on the changed page
 against a fingerprint captured when the scraper last worked, then applies two
 guards: a score floor `tau = 0.6` and a runner-up margin `delta = 0.16`. If the
 best candidate is not good enough, or is not clearly better than the second-best,
@@ -41,18 +41,18 @@ are captured once, from `/v/baseline/`, and every subsequent variant is scraped
 with **that** selector and **that** fingerprint. Bright Data likewise gets one
 collector, configured against the baseline, and then the page moves under it.
 
-That is also why `tools/headtohead.js` establishes the baseline exactly once and
+That is also why `tools/headtohead.ts` establishes the baseline exactly once and
 reuses it across every variant, rather than re-picking a target per variant.
 
 ---
 
 ## 3. Why the mutation set is pre-registered
 
-The nine mutations come from `src/mutate.js`, which was written months before this
+The nine mutations come from `src/mutate.ts`, which was written months before this
 comparison, against real Wayback diffs of IKEA, Mattel and Chicco recall pages.
 It was not written to make Assay look good on a Bright Data comparison, because
 Bright Data was not in the picture when it was written. Check the git history of
-`src/mutate.js` against the git history of this file if you doubt it.
+`src/mutate.ts` against the git history of this file if you doubt it.
 
 Pre-registration matters because the failure mode of a benchmark like this is
 picking the mutations after seeing the results. The set is fixed:
@@ -82,7 +82,7 @@ uselessly timid — which is what `abstained_unnecessary` counts.
 
 ## 4. The four outcomes
 
-Scored by one function, `classify()` in `tools/headtohead.js`, which sees a
+Scored by one function, `classify()` in `tools/headtohead.ts`, which sees a
 decision, a published value and the truth — and nothing about which system
 produced them.
 
@@ -110,24 +110,24 @@ Two deliberate asymmetries, both stated so they can be argued with:
 
 ```bash
 # Assay, all variants in truth.json
-node tools/headtohead.js --origin https://<testbed>.vercel.app
+npm run headtohead -- --origin https://<testbed>.vercel.app
 
 # a subset
-node tools/headtohead.js --origin https://<testbed>.vercel.app \
+npm run headtohead -- --origin https://<testbed>.vercel.app \
   --variants remove_field,duplicate_similar
 
 # re-print the table without re-fetching (reads whatever systems are in the file)
-node tools/headtohead.js --summary-only
+npm run headtohead -- --summary-only
 
 # the classifier's own check
-node tools/headtohead.js --selftest
+npm run headtohead -- --selftest
 ```
 
 The harness fetches `<origin>/truth.json` for the scoring key and
 `<origin>/v/<variant>/` for each page, with a 15s timeout. It appends one JSON
 record per **(variant, system)** to `results/headtohead.jsonl`.
 
-For Bright Data, `tools/bd-heal.js` drives the REST heal flow and captures a
+For Bright Data, `tools/bd-heal.ts` drives the REST heal flow and captures a
 transcript. It **never auto-approves** — it polls to the approval gate, writes the
 transcript, prints the preview, and exits. Approval is a separate, explicit
 invocation:
@@ -135,9 +135,9 @@ invocation:
 ```bash
 export BRIGHTDATA_API_TOKEN=...          # never printed, never written to disk
 
-node tools/bd-heal.js --collector c_xxx --prompt "the recall title selector no longer resolves"
-node tools/bd-heal.js --verify           # acceptance check on the captured preview
-node tools/bd-heal.js --collector c_xxx --approve     # or --reject
+npm run bd:heal -- --collector c_xxx --prompt "the recall title selector no longer resolves"
+npm run bd:heal -- --verify           # acceptance check on the captured preview
+npm run bd:heal -- --collector c_xxx --approve     # or --reject
 ```
 
 The Bright Data result is then written into `results/headtohead.jsonl` as a record
@@ -147,7 +147,7 @@ same table.
 
 ### Bright Data's acceptance check is not Assay's margin gate
 
-`tools/bd-heal.js --verify` applies four rules to a captured preview:
+`tools/bd-heal.ts --verify` applies four rules to a captured preview:
 `recall_title` non-null, matches `/(recall|rappel|retirada|alert)/i`, at least 15
 characters, and agrees case-insensitively with `title_on_detail`.
 
@@ -173,7 +173,7 @@ One JSON object per line. The fields that carry the argument:
 | `selector` | the selector captured from the baseline and re-run here |
 | `selector_resolved` | what that selector returned on the mutated page (`null` if it did not resolve) |
 | `skeleton` | `{before, after, changed}` — structure-only page hash, corroboration only |
-| `detect` | `{broken, cause, corroborated, diagnosis}` from `src/detect.js` |
+| `detect` | `{broken, cause, corroborated, diagnosis}` from `src/detect.ts` |
 | `decision` | `publish` \| `abstain` |
 | `reason` | `not_broken`, or `healGated`'s reason: `no_candidates`, `below_tau`, `thin_margin`, `benign_tie`, `clear_margin` |
 | `raw_decision` | the decision object verbatim, minus the cheerio nodes: `score`, `runner_up`, `margin`, `tau`, `delta`, `candidates_scored`, and the top 3 `ranked` candidates as `{selector, score, value}` |
@@ -223,7 +223,7 @@ ruled out; they are the results we are looking for.
 **If Bright Data abstains correctly on `remove_field` and `duplicate_similar`, we
 report that and narrow the claim.** The harness is built so that result lands in
 the same file, through the same classifier, and prints in the same table as ours —
-there is nothing in `tools/headtohead.js` that can only be true of Assay, and the
+there is nothing in `tools/headtohead.ts` that can only be true of Assay, and the
 `--summary-only` tally is computed from whatever `system` values it finds. Check
 `classify()` yourself: it takes a decision, a value and the truth, and it has no
 parameter for who is being scored.
@@ -241,5 +241,5 @@ parameter for who is being scored.
   legitimate design choice — the question is what it shows the human at that gate.
 - **Bright Data's state machine is partly undocumented.** Only
   `status: "pending_answer"` / `step: "user_approval"` is specified. Everything
-  `tools/bd-heal.js` learns about the other states is empirical, recorded raw in
+  `tools/bd-heal.ts` learns about the other states is empirical, recorded raw in
   the transcript, and should be treated as observation rather than contract.

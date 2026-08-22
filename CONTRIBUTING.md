@@ -15,7 +15,7 @@ a change that moves them has broken the thing being built — not merely a test.
 | `npm run bench` | 153 cases; gated arm at **0.0% wrong values** |
 | `npm run replay` | 74 runs, 8 ok, 66 heals, **0 abstentions** |
 | `git diff results/events.jsonl` | empty — proof records are byte-identical |
-| `ASSAY_REQUIRE_DB=1 npx vitest run` | 534 passing |
+| `ASSAY_REQUIRE_DB=1 npx vitest run` | 570 passing |
 | `npx tsc --noEmit` | clean, strict, whole repo |
 
 One more, load-bearing:

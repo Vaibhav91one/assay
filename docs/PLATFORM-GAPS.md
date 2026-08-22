@@ -110,7 +110,7 @@ Severity: **L** = blocks-launch · **T** = blocks-trust · **later** = defer hon
 | Item | Status |
 |---|---|
 | Empty states / first run | **HAVE-design** (128:2) |
-| Docs site | **PARTIAL L** — `tools/build-docs.js` + `docs/index.html` exist; no hosted docs, no install guide, no API reference. An OSS tool is evaluated by its docs before its code [convention] |
+| Docs site | **DONE** — `web/content/docs/` is served at `/docs` by the running app: install, self-host, credentials, architecture, run flow, limitations. The earlier one-file `docs/index.html` renderer was deleted once this existed |
 | The voice bank → landing page | **HAVE-material** — the cut philosophy copy is the landing page, unbuilt |
 
 ### Billing & plans

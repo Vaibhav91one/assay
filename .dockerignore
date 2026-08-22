@@ -10,6 +10,5 @@ web/.next
 captures/
 design/
 docs/
-app/vendor/
 *.log
 .DS_Store

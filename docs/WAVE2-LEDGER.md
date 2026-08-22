@@ -229,7 +229,7 @@ exit codes:
 ```
 npm test                          # 34 assertions, "all checks pass"
 npm run bench                     # 153 cases, `margin gate` field 7 = 0.0%
-npm run replay                    # replayed 74 runs · heal 24 · abstain 0
+npm run replay                    # replayed 74 runs · ok 8 · heal 66 · abstain 0
 git diff --quiet -- results/events.jsonl
 ASSAY_REQUIRE_DB=1 npx vitest run
 npm run build --workspace web

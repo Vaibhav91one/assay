@@ -3,7 +3,7 @@
 **FigJam board (sitemap + system architecture): https://www.figma.com/board/sdJWJyOKgrDQgDQ8MnROCr**
 
 - Written: 2026-08-21 ~10:00 IST. Deadline: submissions close **Aug 23 2026** (closing TIME is NOT published anywhere — see A.1).
-- Status: **DESIGN ONLY. Nothing in this file is implemented. Every decision below awaits human review.** Do not start any task until the REVIEW QUEUE has been answered.
+- Status: **superseded.** This was the plan before the build, kept for the record. The architecture it proposes was built; the route names, screen inventory and numbers below are the plan's, not the app's. `README.md` and `web/content/docs/` describe what shipped.
 - Audience: a smaller AI model executing tasks one at a time. Every task has absolute paths, exact commands, and acceptance criteria. If a step is ambiguous, the plan is wrong — stop and ask the human, do not improvise.
 - Repo root everywhere below: `/Users/vaibhavtomar/Desktop/assay`
 
