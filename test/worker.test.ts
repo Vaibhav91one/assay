@@ -4,7 +4,7 @@
 // clean clone. Nothing here sends live mail: `send` takes its transport as a
 // parameter precisely so the shape can be proven without a key or a domain.
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
 import { cadenceMs, nextRunAt } from '../src/schedule.js';
 import { digestSubject, breakSubject, send } from '../src/notify.js';
 import { openEpisode, closeEpisode } from '../src/api/webhooks.js';
@@ -64,38 +64,64 @@ describe('cadence', () => {
   });
 });
 
+// `claimDueTarget` is `ORDER BY next_run_at` over the WHOLE table, so a claim
+// made with the wall clock asserts on whichever row of whoever's data happens to
+// be due -- and it has tripped for real. The clock is the only scope the queue
+// offers, so these tests use one of their own: park the target in 2020 and claim
+// as of a second later. Every other target in the store, seeded or written by
+// another file running beside this one, is due "around now" and is therefore
+// invisible at that instant. The one window left is between the schedule and the
+// claim, where a concurrent worker on the real clock could take the row first;
+// it is milliseconds wide, and it is the same window a second real worker has.
+const DUE = new Date('2020-01-01T00:00:00Z');
+const JUST_AFTER = new Date(DUE.getTime() + 1000);
+
 describe('the claim', () => {
+  // Parked after every case. A 2020 date is in the past on the real clock too,
+  // so a row left dated that way is due to every other claimer in the suite --
+  // this describe must not do to anyone else what was being done to it.
+  afterEach(async () => {
+    if (dbUp) {
+      await getDb().execute(sql`UPDATE targets SET next_run_at = NULL WHERE target_id = ${T}`);
+    }
+  });
+
   it('claims a target that is due', async () => {
     if (!dbUp) return;
-    await scheduleTarget(T, new Date());
-    const got = await claimDueTarget();
+    await scheduleTarget(T, DUE);
+    const got = await claimDueTarget(JUST_AFTER);
     expect(got?.targetId).toBe(T);
   });
 
   it('does not claim one that is not yet due', async () => {
     if (!dbUp) return;
-    await scheduleTarget(T, new Date(Date.now() + 3600e3));
-    const got = await claimDueTarget();
-    expect(got?.targetId).not.toBe(T);
+    await scheduleTarget(T, new Date(DUE.getTime() + 3600e3));
+    const got = await claimDueTarget(JUST_AFTER);
+    expect(got).toBeNull();
   });
 
   it('cannot be claimed twice — the second worker gets nothing', async () => {
     if (!dbUp) return;
-    await scheduleTarget(T, new Date());
+    await scheduleTarget(T, DUE);
     // Concurrent, as two workers would be. Exactly one may win.
-    const [a, b] = await Promise.all([claimDueTarget(), claimDueTarget()]);
+    const [a, b] = await Promise.all([claimDueTarget(JUST_AFTER), claimDueTarget(JUST_AFTER)]);
     const mine = [a, b].filter((x) => x?.targetId === T);
     expect(mine).toHaveLength(1);
   });
 
   it('bumps next_run_at by the cadence, so it is not immediately due again', async () => {
     if (!dbUp) return;
-    await scheduleTarget(T, new Date());
-    await claimDueTarget();
+    await scheduleTarget(T, DUE);
+    const got = await claimDueTarget(JUST_AFTER);
+    // The bump is on the row that was claimed, so the claim has to be this one
+    // -- otherwise this passed or failed on whether anything else was due.
+    expect(got?.targetId).toBe(T);
     const { rows } = await getDb().execute(
       sql`SELECT next_run_at FROM targets WHERE target_id = ${T}`,
     );
-    expect(new Date((rows as any[])[0].next_run_at).getTime()).toBeGreaterThan(Date.now() + 5 * 3600e3);
+    // 6h cadence, measured from the clock the claim was made with.
+    expect(new Date((rows as any[])[0].next_run_at).getTime())
+      .toBeGreaterThan(JUST_AFTER.getTime() + 5 * 3600e3);
   });
 });
 
