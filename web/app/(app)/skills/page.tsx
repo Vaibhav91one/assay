@@ -40,7 +40,7 @@ export default async function SkillsPage() {
           <Link href="/library" className="text-[var(--semantic-link)] hover:underline">
             Library
           </Link>{' '}
-          holds trackers — pick one, paste a page of yours, and Assay proposes what to watch on it.
+          holds trackers for Amazon, GitHub, Wikipedia and any other page.
         </p>
         <SkillsList initial={skills} />
       </div>

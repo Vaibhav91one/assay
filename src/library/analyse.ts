@@ -48,6 +48,16 @@ export interface Analysis {
 const clean = (s: string): string => s.replace(/\s+/g, ' ').trim();
 
 /**
+ * An element's identity as one string, for `Prior.select` to match against.
+ *
+ * `tag#id.class.class`, from the fingerprint's own `classes_stable` -- which is
+ * already this codebase's judgement about which classes survive a rebuild, so
+ * this borrows it rather than inventing a second notion of stability.
+ */
+const identity = (c: Candidate): string =>
+  `${c.tag ?? ''}${c.id ? `#${c.id}` : ''}${(c.classes_stable ?? []).map((x) => `.${x}`).join('')}`;
+
+/**
  * Compile a field's prior.
  *
  * Patterns are STRINGS in the tracker data for the same reason resolver
@@ -97,10 +107,18 @@ function bestFor(
   const avoid = field.match.avoid ? new RegExp(field.match.avoid, field.match.flags ?? 'i') : null;
   const tags = field.match.tags?.map((t) => t.toLowerCase());
 
+  // The site-specific half, and the only thing that makes a named tracker
+  // different from the generic one: a pattern matched against the element's own
+  // identity -- tag, id and the classes the fingerprint judged stable. Amazon's
+  // selling price and its list price are both a rupee amount in a span; only
+  // `a-color-price` tells them apart.
+  const select = field.match.select ? new RegExp(field.match.select) : null;
+
   const hits = cands.filter((c) => {
     const t = c.text ?? '';
     if (t.length < field.match.minLen || t.length > field.match.maxLen) return false;
     if (tags && !tags.includes((c.tag ?? '').toLowerCase())) return false;
+    if (select && !select.test(identity(c))) return false;
     if (avoid && avoid.test(t)) return false;
     // `test` on a `g` regex is stateful. Tracker patterns never set `g`, and
     // `test/library.test.ts` refuses one that does.

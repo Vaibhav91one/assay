@@ -677,7 +677,7 @@ function StartFrom({ waiting }: { waiting: number }) {
         href="/library"
         icon={<Shapes size={18} strokeWidth={1.5} className="text-[var(--text-primary)]" aria-hidden />}
         title="Pick a tracker and paste a link"
-        sub="a price, a release, a stock line — Assay reads the page and proposes the fields"
+        sub="Amazon, GitHub, Wikipedia, or any page"
       />
       <Row
         href="/runs"
