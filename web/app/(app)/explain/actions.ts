@@ -1,6 +1,7 @@
 'use server';
 
 import { provenance, type Provenance } from '@/lib/explain';
+import { assertOperator } from '@/lib/auth';
 
 /**
  * The same `provenance()` the route calls, reachable from the client.
@@ -17,5 +18,10 @@ import { provenance, type Provenance } from '@/lib/explain';
  * function.
  */
 export async function proofAction(proof: string): Promise<Provenance | null> {
+  // The two surfaces this mirrors are both gated -- `/explain/[proof]` by the
+  // proxy and `/api/v1/explain/[proof]` by a bearer key. Exposing the same
+  // function to the same origin has to mean the same gate, or this becomes the
+  // unguarded way to read what they guard.
+  await assertOperator();
   return provenance(proof);
 }

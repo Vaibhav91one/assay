@@ -79,6 +79,10 @@ describe('auth seam', () => {
  *
  * Same argument as the grep above: the thing that rots is a line someone
  * removes, and a source assertion is what catches that.
+ *
+ * The proxy is now the OUTER gate rather than the only one: every Server Action
+ * calls `assertOperator()` on its first line, and test/actions-auth.test.ts
+ * proves it by calling each of them with no session.
  */
 describe('hosted gate', () => {
   const proxy = readFileSync(join(ROOT, 'web', 'proxy.ts'), 'utf8');

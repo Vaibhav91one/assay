@@ -76,6 +76,18 @@ export function verifyBearer(header: string | null | undefined, secret: string):
 }
 
 /**
+ * The most a delivery may inflate to.
+ *
+ * A gzip stream a few kilobytes long can inflate to gigabytes -- the ratio is
+ * roughly a thousand to one on repetitive input, and a delivery body is
+ * attacker-shaped as soon as the bearer token leaks or the vendor is having a
+ * bad day. Without a bound, `gunzipSync` allocates whatever the stream asks for
+ * on the request thread and the process dies. 64 MiB is far above any real batch
+ * of page HTML and far below what it takes to hurt.
+ */
+const MAX_INFLATED = 64 * 1024 * 1024;
+
+/**
  * Bytes on the wire to rows.
  *
  * Gzip is detected by magic number rather than by `content-encoding`: no
@@ -85,8 +97,21 @@ export function verifyBearer(header: string | null | undefined, secret: string):
 export function decodeDelivery(raw: Buffer): unknown[] {
   let bytes: Buffer;
   try {
-    bytes = raw[0] === 0x1f && raw[1] === 0x8b ? gunzipSync(raw) : raw;
+    // `maxOutputLength` is zlib's own bound -- it stops at the limit rather than
+    // inflating first and measuring after, which is the only version of this
+    // check that helps.
+    bytes = raw[0] === 0x1f && raw[1] === 0x8b
+      ? gunzipSync(raw, { maxOutputLength: MAX_INFLATED })
+      : raw;
   } catch (e) {
+    // Told apart from a corrupt stream, because they are different facts about
+    // the sender and only one of them is worth waking up for.
+    if ((e as NodeJS.ErrnoException).code === 'ERR_BUFFER_TOO_LARGE') {
+      throw new DeliveryError(
+        413, 'too_large',
+        `the delivery inflates to more than ${MAX_INFLATED} bytes; Assay stopped decompressing it`,
+      );
+    }
     // A truncated or corrupt gzip is a bad request, not a server fault. It has
     // to be a 4xx: Bright Data retries anything that is not a 200, so a 500
     // here would make one broken delivery retry for ever.

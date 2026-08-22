@@ -1,6 +1,14 @@
 import { defineConfig } from 'vitest/config';
+import { fileURLToPath } from 'node:url';
 
 export default defineConfig({
+  resolve: {
+    // `@/` is a tsconfig path that Next's bundler resolves and Node does not.
+    // test/actions-auth.test.ts imports the Server Action modules and CALLS
+    // them, which is the only way to prove a guard is really on the data rather
+    // than merely imported, so the alias has to exist here too.
+    alias: { '@/': fileURLToPath(new URL('./web/', import.meta.url)) },
+  },
   test: {
     // Feature branches are developed in git worktrees under `.claude/worktrees/`,
     // which is inside the repo. Vitest globs the filesystem and does not consult

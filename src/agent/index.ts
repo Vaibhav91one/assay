@@ -60,6 +60,7 @@ import { query, tool, createSdkMcpServer } from '@anthropic-ai/claude-agent-sdk'
 import { fingerprint, candidates } from '../fingerprint.js';
 import { digest, hasKey } from '../ai/model.js';
 import { listTargets, type FieldInput } from '../setup/index.js';
+import { fetchHtml } from '../skills/page.js';
 import { CADENCES, DEFAULT_MODEL as DEFAULT_MODEL_ID, isModel } from './models.js';
 
 export { hasKey } from '../ai/model.js';
@@ -373,11 +374,25 @@ export function forgetPages(): void {
   readRecently.clear();
 }
 
-/** One read of one page, over the network. The only fetch this module makes. */
+/**
+ * One read of one page. The only fetch this module makes, and it goes through
+ * the same seam every other caller does.
+ *
+ * This was a bare `fetch` until 2026-08-23, which made the chat -- the product's
+ * front door -- the one path where a url the operator pasted reached the network
+ * with no address check at all. `fetchHtml` is where the private-address guard,
+ * the redirect re-check, the timeout and the size cap live, so there is one
+ * fetcher rather than a second copy that drifts. Going through it also means a
+ * page only an enabled connector can read is inspectable here, exactly as it
+ * already is on the describe-fields form.
+ *
+ * A REFUSED ADDRESS MUST NOT BE REMEMBERED. It throws, and `pageCandidates`
+ * writes to the memory only after `read` returns -- so a blocked url is refused
+ * again on the next turn rather than being cached as a page with no fields on
+ * it, which is the shape this whole product refuses to ship.
+ */
 async function readPage(url: string): Promise<Candidate[]> {
-  const res = await fetch(url, { headers: { 'user-agent': 'assay/0.1 (+self-hosted)' } });
-  if (!res.ok) throw new Error(`fetch ${res.status}`);
-  return candidatesOn(await res.text());
+  return candidatesOn((await fetchHtml(url)).html);
 }
 
 /**
@@ -493,7 +508,9 @@ function assayTools(
           } catch (e) {
             // The failure is the operator's own URL failing, so they get to see
             // it. `fetch 404` is the whole of it -- no internal detail, and the
-            // same wording `createTarget` already uses for the same event.
+            // same wording `createTarget` already uses for the same event. A
+            // refused address arrives here too, and its sentence is the one the
+            // operator needs -- see `readPage`.
             step({
               kind: 'tool_result', tool: 'assay_inspect', ok: false, found: null, url,
               detail: (e as Error).message,

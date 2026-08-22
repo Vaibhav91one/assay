@@ -10,6 +10,7 @@ import {
   appendTurns, attachScraper, startConversation, type Turn,
 } from 'assay/engine/store/conversations';
 import { fetchHtml } from 'assay/engine/skills/page';
+import { assertOperator } from '@/lib/auth';
 
 export type { ChatResult, Proposal };
 export type { Turn };
@@ -37,6 +38,7 @@ export interface Source {
  * docs/APP-DESIGN.md 4.1 refuses.
  */
 export async function sources(): Promise<Source[]> {
+  await assertOperator();
   const { targets } = await listTargets();
   return targets.map((t) => ({
     id: t.id, field: t.field, url: t.url,
@@ -59,6 +61,7 @@ export async function ask(
   message: string,
   history: { role: 'operator' | 'assay'; text: string }[],
 ): Promise<ChatResult> {
+  await assertOperator();
   return converse({ message, history });
 }
 
@@ -76,6 +79,7 @@ export async function ask(
  * call, and nothing invented.
  */
 export async function openConversation(message: string): Promise<number> {
+  await assertOperator();
   const id = await startConversation(message);
   revalidatePath('/', 'layout');
   return id;
@@ -92,6 +96,7 @@ export async function openConversation(message: string): Promise<number> {
  * by the export, and by nothing that decides anything.
  */
 export async function recordTurns(id: number, turns: Turn[]): Promise<void> {
+  await assertOperator();
   await appendTurns(id, turns);
   revalidatePath('/', 'layout');
 }
@@ -133,6 +138,7 @@ export async function build(
   keep: string[],
   conversationId?: number,
 ): Promise<BuildResult> {
+  await assertOperator();
   const parsed = CreateInput.safeParse(create);
   if (!parsed.success) return { ok: false, detail: 'That proposal is not a valid target.' };
 
@@ -191,6 +197,7 @@ export async function describeFields(input: {
   /** Set when the form was opened inside a conversation, so the scraper it makes belongs to one. */
   conversationId?: number;
 }): Promise<BuildResult> {
+  await assertOperator();
   const url = input.url.trim();
   if (!/^https?:\/\//i.test(url)) return { ok: false, detail: 'That is not an http or https URL.' };
   if (!input.fields.length) return { ok: false, detail: 'Name at least one field.' };

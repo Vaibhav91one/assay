@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { resolve, undo, Resolution } from 'assay/engine/decisions/index';
+import { assertOperator } from '@/lib/auth';
 
 /**
  * What the queue screen gets back from an answer.
@@ -16,6 +17,7 @@ export type Outcome =
   | { ok: false; detail: string };
 
 export async function resolveCell(proof: string, resolution: Resolution): Promise<Outcome> {
+  await assertOperator();
   const parsed = Resolution.safeParse(resolution);
   if (!parsed.success) return { ok: false, detail: 'Not one of the four answers.' };
 
@@ -27,6 +29,7 @@ export async function resolveCell(proof: string, resolution: Resolution): Promis
 }
 
 export async function undoCell(proof: string): Promise<Outcome> {
+  await assertOperator();
   const r = await undo({ proof });
   if (!r.ok) return { ok: false, detail: r.detail };
 

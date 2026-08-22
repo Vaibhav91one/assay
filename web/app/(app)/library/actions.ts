@@ -7,6 +7,7 @@ import { contractFor } from 'assay/engine/library/contract';
 import { saveContract } from 'assay/engine/contracts/store';
 import { fetchHtml } from 'assay/engine/skills/page';
 import { build, type BuildResult } from '../watch-actions';
+import { assertOperator } from '@/lib/auth';
 
 /**
  * Read the operator's page through a tracker, then watch it.
@@ -47,6 +48,11 @@ export type InspectResult =
 
 /** What this tracker's priors find on the operator's page. Read-only. */
 export async function inspect(trackerId: string, url: string): Promise<InspectResult> {
+  // Before the fetch, not after. This action takes a url from the caller and
+  // opens it from the server, so without this an anonymous POST would have the
+  // instance fetching arbitrary pages on its behalf -- the address guard in
+  // `fetchHtml` decides WHERE it may go, and this decides WHO may ask.
+  await assertOperator();
   const t = trackerById(trackerId);
   if (!t) return { ok: false, detail: 'No such tracker.' };
 
@@ -93,6 +99,7 @@ export async function approve(input: {
   keep: string[];
   cadence: string;
 }): Promise<ApproveResult> {
+  await assertOperator();
   const t = trackerById(input.trackerId);
   if (!t) return { build: { ok: false, detail: 'No such tracker.' }, contracts: [] };
 
