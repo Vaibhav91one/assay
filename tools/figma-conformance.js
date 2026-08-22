@@ -22,6 +22,7 @@
 //   connectorNoBrand every connector panel shows whose service it is
 //   devNotes         no spec:/TODO/CRITIQUE commentary on a product surface
 //   hover            disclosure affordances actually carry an ON_HOVER reaction
+//   selfNarration    the product explaining or reassuring instead of informing
 //
 // Two detector bugs were found and fixed while writing this; both had made a
 // clean file look dirty. Kept as a warning: a failing rule is a claim about the
@@ -29,6 +30,22 @@
 //   - palette pairing matched every swatch to the FIRST hex label on the page
 //   - a text node whose name equals its own characters is an identifier cell
 //     (data), not prose, so it is exempt from snakeProse
+//
+// selfNarration is a LEXICON, not a length test, and that is deliberate. The
+// screens are full of long prose that must stay -- a break diagnosis, an error,
+// an empty state's one message. Only the register is wrong: the product
+// narrating its own behaviour or reassuring without adding fact. A length rule
+// would flag the diagnosis and miss a short 'nothing was written to your data'.
+// It follows that the lexicon is not exhaustive -- extend it when a new phrasing
+// slips through, rather than trusting a 0 here to mean the screens are clean.
+// Exempt: `conduct` is a public policy page where prose IS the content, and
+// tooltip frames are hover bodies.
+// Do not widen 'nothing ... written' to sent/published/lost. Each of those three
+// occurs exactly once on the board and each carries a fact the user is owed:
+// where a pasted key goes (connect), that the undo window is still open
+// (decide-once), that the store being down cost no data (runs · store
+// unreachable). Widening the verb makes this rule permanently red on copy that
+// is correct.
 
 async function run() {
   const page = figma.root.children.find(p => p.name === '04 · Screens');
@@ -167,6 +184,20 @@ async function run() {
       const rs = [...(n.reactions || []), ...((n.children || []).flatMap(c => c.reactions || []))];
       if (!rs.some(r => r.trigger && r.trigger.type === 'ON_HOVER')) R.hover.push(`${loc}/${n.name}`);
     }
+
+  R.selfNarration = [];
+  {
+    const NARRATE = /(nothing (here |else )?(has been|is|was) written|went through on its own|you will only hear from|is (the reason|why) this (project|product) exists|that is the whole feature|pretending to be a quiet day|not sure enough to publish|left (them|it) alone and saved|nothing runs more often than)/i;
+    const EXEMPT = /^(conduct|tooltip)/;
+    frames.forEach(({ loc, fr }) => {
+      if (EXEMPT.test(fr.name)) return;
+      fr.findAll(n => n.type === 'TEXT').forEach(n => {
+        const fam = n.fontName && n.fontName !== figma.mixed ? n.fontName.family : '';
+        if (fam.includes('Mono')) return;
+        if (NARRATE.test(n.characters)) R.selfNarration.push(`${loc}/${n.name}`);
+      });
+    });
+  }
 
   const summary = {}; for (const k of Object.keys(R)) summary[k] = R[k].length;
   return { frames: frames.length, summary, detail: Object.fromEntries(Object.entries(R).filter(([, v]) => v.length).map(([k, v]) => [k, v.slice(0, 10)])) };

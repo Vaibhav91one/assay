@@ -778,3 +778,45 @@ old capture is what makes this button possible at all."
 **assay-empty** (frame pending redesign) — "An empty queue on top of 312 held cells
 would be the easiest lie in this product to ship by accident." · "No sample data, no
 demo scraper, no onboarding tour. The first thing you see is the thing you came to do."
+
+---
+
+## Voice bank, second pass (`04 · Screens`, 2026-08-22)
+
+The wireframe sweep above cleaned `03 · Wireframes`. The ported Screens carried the
+same register forward and grew more of it, so all 62 frames were re-read sentence by
+sentence against one question: **does this sentence carry information, or comfort?
+Comfort goes.** 30 nodes removed, 14 trimmed to the fact they contained. The rest of
+what came off duplicated lines already banked above (the connect intro, the
+`assay_propose` paragraph, the 400-pages episode rule) and is not repeated here.
+
+**decisions** (6 frames carried this verbatim) — "Assay was not sure enough to publish
+these, so it left them alone and saved them for you. Nothing here has been written to
+your data." · (3 frames) "Everything else went through on its own. 10 clean runs since
+Tuesday, nothing published in error."
+
+**home** — "Assay now knows what each field looks like, so it can tell a change from a
+break." · "Every route shows this same state […] never an empty table pretending to be
+a quiet day."
+
+**watching-confirmed** (twice, two frames) — "You will only hear from me when something
+needs you."
+
+**run-report · in progress** — "Nothing is written until every field settles." (trimmed;
+"Started 40 seconds ago." kept — it is the state.)
+
+**blocked** — "Nothing was written this run." (trimmed; "Last good values, exactly where
+they were." kept.)
+
+**compare** — "Nothing was written, and…" (trimmed; "…no diff was reported for it either
+way" kept — the silence is the thing the user needs explained.)
+
+**decide-once / templates** — "Both templates are the same objects […]" · the focus-ring
+design note ("focus ring = keyboard position…").
+
+Four sentences in this register were **kept deliberately**, and the conformance rule is
+narrowed so it does not flag them: where a pasted key goes (`connect` — "Keys stay on
+your machine. Nothing is sent to us."), that the undo window is still open
+(`decide-once`), that a downed store cost no data (`runs · store unreachable`), and the
+frozen-capture line on `decisions`. Each answers a question the user is actually asking
+at that moment. Comfort that arrives unasked is what came out.
