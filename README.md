@@ -319,4 +319,19 @@ asserted.
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).
+
+### Two dependencies are not OSI-licensed
+
+Worth knowing before you redistribute, because you would otherwise find out from
+a lawyer rather than from us:
+
+- **GSAP** ships under its Standard "no charge" licence, not an OSI-approved
+  one. It is free to use, including the plugins that were formerly paid, but it
+  is not open source. It is used for four animated moments and nothing else, so
+  removing it costs you those animations and nothing structural.
+- **`@anthropic-ai/claude-agent-sdk`** publishes as `SEE LICENSE IN README.md`.
+  It powers the conversational surfaces; the rest of the AI path uses the
+  ordinary Anthropic API SDK, which is MIT.
+
+Everything else in the dependency tree is MIT, ISC or Apache-2.0.
