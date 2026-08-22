@@ -96,7 +96,11 @@
 async function run() {
   const page = figma.root.children.find(p => p.name === '04 · Screens');
   await page.loadAsync();
-  const comp = figma.root.children.find(p => p.name === '04 · Components');
+  // Both page lookups are by exact name. `04 · Screens` and `06 · Components`
+  // are load-bearing strings -- renaming either silently breaks this audit,
+  // because `find` returns undefined and the next line throws on `.loadAsync`.
+  // The Components page was `04 · Components` until the duplicate-04 rename.
+  const comp = figma.root.children.find(p => p.name === '06 · Components');
   await comp.loadAsync();
   const hex = c => '#' + [c.r, c.g, c.b].map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join('');
   const V = {};

@@ -634,8 +634,11 @@ percentage, has failed review regardless of how it looks.
 
 ## 11b. Screens layer — final gate (2026-08-22)
 
-The port from `03 · Wireframes` to `04 · Screens` is complete. 54 frames in 8
-sections and 18 flows, zero loose frames on the page.
+The port from `03 · Wireframes` to `04 · Screens` is complete. 79 frames in 8
+sections and 18 flows, zero loose frames on the page. 58 are screens, 4 are
+tooltip hover bodies, 10 are loading states, 5 are case-variant regions, and 2
+are case key frames. (The 54 recorded here originally was already wrong when
+written: `STATES.md` §8 counted 58 screens at the same time.)
 
 | Measure | Result |
 |---|---|

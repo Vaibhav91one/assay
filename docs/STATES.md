@@ -234,8 +234,8 @@ Wiring it to the receipt row was tried and reverted rather than left as a false 
 A review pass found the screens were drawing on three colours (brand orange, ink,
 white) while the palette frame defined seventeen, and that several conventions had
 drifted between sections. Everything below is enforced by `tools/figma-conformance.js`,
-which reads the file and returns a violation count per rule. **All 13 rules return 0
-across 62 frames.**
+which reads the file and returns a violation count per rule. **All 18 rules return 0
+across 79 frames.**
 
 ### Colour: what each family means
 
