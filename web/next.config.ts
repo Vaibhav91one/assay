@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 import type { NextConfig } from 'next';
+import { createMDX } from 'fumadocs-mdx/next';
 
 // Page captures are addressed relative to the process's working directory
 // (`ASSAY_CAPTURES`, default `captures`), and every other consumer -- the
@@ -14,6 +15,13 @@ import type { NextConfig } from 'next';
 process.env.ASSAY_CAPTURES ||= resolve(process.cwd(), '..', 'captures');
 
 const config: NextConfig = {
+  // Pinned rather than left to default, because `createMDX` below fills this in
+  // when it is absent and its default is `['mdx', 'md', 'jsx', 'js', 'tsx',
+  // 'ts']` -- which would make every `.md` file anywhere under `app/` a route.
+  // Documentation lives in `content/docs`, is read through `lib/source.ts`, and
+  // is never a page module, so `app/` has no business compiling markdown.
+  pageExtensions: ['ts', 'tsx', 'js', 'jsx'],
+
   // The root `exports` map makes `assay/engine/*` and `assay/store` real
   // specifiers, so no `externalDir` escape hatch is needed. Since the migration
   // those specifiers resolve to TypeScript SOURCE -- the engine is a workspace
@@ -43,4 +51,11 @@ const config: NextConfig = {
   },
 };
 
-export default config;
+// Fumadocs compiles `content/docs/**` and generates `.source/`.
+//
+// It composes rather than replaces: the wrapper's own webpack callback ends
+// `return nextConfig.webpack?.(config, options) ?? config`, so the
+// `extensionAlias` above still runs and `assay/store` still resolves. That is
+// the one thing worth checking on every upgrade of this package -- the engine
+// becomes unresolvable the moment it stops calling through.
+export default createMDX()(config);

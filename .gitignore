@@ -66,6 +66,12 @@ web/out/
 # Generated: `npm run build:fingerprint` emits the Bright Data paste target.
 dist/
 
+# Generated: `fumadocs-mdx` compiles `web/content/docs/**` into entry files and
+# types here, on every dev start and at the top of every build. Same reasoning
+# as `dist/` -- it is emitted from source that IS committed, so committing it
+# only creates a second copy that can go stale against the first.
+web/.source/
+
 # Next's generated ambient types. Committed rather than ignored: Next docs say
 # it should be, and `tsc --noEmit` in web/ needs it present.
 !web/next-env.d.ts
