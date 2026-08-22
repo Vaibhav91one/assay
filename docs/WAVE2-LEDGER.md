@@ -95,6 +95,45 @@ where it bit, not speculative.
 
 ---
 
+## 3b. The Agent SDK, verified against the installed declaration
+
+H fetched the docs **and** read the installed `sdk.d.ts` (0.3.239), because
+docs and shipped code can disagree. Three corrections worth keeping, two of
+them to instructions this project had already written down:
+
+- **`allowedTools: []` is not a restriction.** It is *auto-approval*; the SDK's
+  own text says "To restrict which tools are available, use the `tools` option
+  instead." Passing it as a guard looks like a restriction while being none.
+  The feature passes `tools: []` ("Disable all built-in tools").
+- **`disallowedTools` with a bare name genuinely removes the tool** — the
+  installed declaration says such tools "will be removed from the model's
+  context and cannot be used, even if they would otherwise be allowed." A
+  *scoped* rule like `Bash(rm *)` leaves the tool available. The bare form is
+  the one that carries the safety property.
+- **Messages API structured output is `output_config: { format: { type, schema } }`**
+  — one nesting level deeper than a research subagent reported. The SDK's own
+  `outputFormat: { type: 'json_schema', schema }` is flatter. H caught this by
+  fetching the page rather than trusting the subagent.
+
+**Value emission is structurally impossible, not discouraged.** One Zod schema
+per shape is *both* the grammar (`z.toJSONSchema()` → `outputFormat`) and the
+return validator, so the two cannot drift. Every field is an integer index or a
+closed enum; the single string is a field *name* matching
+`/^[a-z][a-z0-9_]{0,30}$/`, which cannot express a price, a sentence or an
+instruction. The test walks the *generated* schema for any reachable free
+string and asserts none exists.
+
+**The fourth benchmark arm has not measured anything.** H has no
+`ANTHROPIC_API_KEY`, so the model rows print `-` and the tool says
+`NOT MEASURED … That is not a result and must not be reported as one.` What it
+did establish: the harness reproduces `bench.ts` exactly (153 / 60.8% / 64.7% /
+0.0% / 35.3%), and **the model could change the answer on 126 of 153 cases
+(82.4%)** — a per-run agent session on four fifths of breaks, which is a very
+different operating profile from Cheerio, and the cost `AI-AND-AGENTS.md` §7
+lists as unestimated.
+
+---
+
 ## 4. Smaller, but real
 
 - **`EVENTS` in `src/api/webhooks.ts` is a closed list.** F9's retraction
@@ -110,6 +149,19 @@ where it bit, not speculative.
 - **A CLI module must do nothing at import time.** `assay --help` imports every
   file in `tools/cli/`; a module that queries Postgres at load makes `--help`
   need a database.
+- **`package.json` `exports` has no `./reports/*`.** F's routes reach it through
+  the existing `./engine/*` wildcard (`assay/engine/reports/handlers`). It
+  resolves and builds; a proper entry would be cleaner. (F)
+- **Two files are written by tools but owned by nobody.** H's
+  `results/bench-model.json` sits in the frozen `results/` tree, so it is
+  deleted after each run rather than committed — if wave 2 wants it as
+  evidence, someone with `results/` rights has to add it. F's digest HTML comes
+  from the frozen `notify.digestBody`, deliberately, so there is no second
+  renderer.
+- **The digest claim and the send are separate calls on purpose** — `dueDigests()`
+  claims with `FOR UPDATE SKIP LOCKED` and bumps `next_run_at`; `markDigestSent()`
+  is called after a successful send, so a failed send re-covers the period
+  nobody received. Wire both or neither. (F)
 
 ---
 
