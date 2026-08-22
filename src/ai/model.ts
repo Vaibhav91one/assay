@@ -34,8 +34,35 @@
 import { query } from '@anthropic-ai/claude-agent-sdk';
 import { z } from 'zod';
 
-/** Presence only. The key is never returned, logged or echoed. */
-export const hasKey = (): boolean => !!process.env.ANTHROPIC_API_KEY;
+/**
+ * Which credential the model path has, if any. Presence only -- no value is
+ * ever returned, logged or echoed.
+ *
+ * Two are accepted because the SDK accepts two, and gating on only the API key
+ * made Assay stricter than the thing it calls: an operator whose machine had a
+ * subscription token was told "no model is configured" while the SDK would have
+ * worked. That is the same class of bug as the draft-07 one -- a working path
+ * reported as an absent one.
+ *
+ * Assay implements no login. `CLAUDE_CODE_OAUTH_TOKEN` is produced by
+ * Anthropic's own CLI (`claude setup-token`, which requires a Claude
+ * subscription) and read from the environment exactly as the API key is. There
+ * is no client id here, no redirect, no token exchange, and nothing stored.
+ *
+ * The API key remains the documented path for any deployment other people use;
+ * the SDK quickstart is explicit that third-party products must not offer
+ * claude.ai login. A single operator's own machine, authenticated with
+ * Anthropic's own tool, is not Assay offering anyone a login.
+ */
+export type ModelAuth = 'api-key' | 'subscription' | 'none';
+
+export const modelAuth = (): ModelAuth =>
+  process.env.ANTHROPIC_API_KEY ? 'api-key'
+  : process.env.CLAUDE_CODE_OAUTH_TOKEN ? 'subscription'
+  : 'none';
+
+/** Presence only. The credential is never returned, logged or echoed. */
+export const hasKey = (): boolean => modelAuth() !== 'none';
 
 // ID read off platform.claude.com/docs/en/about-claude/models/overview on
 // 2026-08-22, not from memory. Cheap and fast because this is a per-field call

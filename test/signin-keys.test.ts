@@ -22,7 +22,12 @@ const SECRET = 'sk-ant-api03-KEYPANELCANARY-must-never-be-rendered';
 
 describe('key panel', () => {
   const saved: Record<string, string | undefined> = {};
-  const NAMES = ['ANTHROPIC_API_KEY', 'BRIGHT_DATA_TOKEN', 'RESEND_API_KEY'];
+  // CLAUDE_CODE_OAUTH_TOKEN is cleared with the rest: a developer whose own
+  // machine has run `claude setup-token` would otherwise read `set: true` here
+  // and the absence assertion would pass or fail depending on whose shell ran it.
+  const NAMES = [
+    'ANTHROPIC_API_KEY', 'CLAUDE_CODE_OAUTH_TOKEN', 'BRIGHT_DATA_TOKEN', 'RESEND_API_KEY',
+  ];
 
   beforeEach(() => {
     for (const n of NAMES) {
@@ -40,6 +45,7 @@ describe('key panel', () => {
   it('reports absence as a boolean, and names the variables .env.example names', () => {
     expect(readKeys()).toEqual([
       { name: 'ANTHROPIC_API_KEY', buys: expect.any(String), set: false },
+      { name: 'CLAUDE_CODE_OAUTH_TOKEN', buys: expect.any(String), set: false },
       { name: 'BRIGHT_DATA_TOKEN', buys: expect.any(String), set: false },
       { name: 'RESEND_API_KEY', buys: expect.any(String), set: false },
     ]);
@@ -63,10 +69,14 @@ describe('key panel', () => {
   it('offers only the unset names to paste, and no values', () => {
     process.env.ANTHROPIC_API_KEY = SECRET;
     const lines = envLines(readKeys());
-    expect(lines).toBe('BRIGHT_DATA_TOKEN=\nRESEND_API_KEY=');
+    // The subscription token is still offered: the block is a list of unset
+    // VARIABLES, not of unmet capabilities, and it is the operator who knows
+    // which of the two model credentials their machine should carry.
+    expect(lines).toBe('CLAUDE_CODE_OAUTH_TOKEN=\nBRIGHT_DATA_TOKEN=\nRESEND_API_KEY=');
     expect(lines).not.toContain('KEYPANELCANARY');
 
     // Everything set means nothing to paste, rather than an empty box.
+    process.env.CLAUDE_CODE_OAUTH_TOKEN = SECRET;
     process.env.BRIGHT_DATA_TOKEN = SECRET;
     process.env.RESEND_API_KEY = SECRET;
     expect(envLines(readKeys())).toBe('');

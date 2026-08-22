@@ -33,6 +33,9 @@ export interface KeyPresence {
 // the auth pair chooses which panel you are looking at.
 const KEYS: readonly (readonly [string, string])[] = [
   ['ANTHROPIC_API_KEY', 'Field discovery and second-opinion checks.'],
+  // Either credential satisfies the model path, so both are reported. Produced
+  // by Anthropic's own CLI (`claude setup-token`); Assay implements no login.
+  ['CLAUDE_CODE_OAUTH_TOKEN', 'The same, on your own machine with a Claude subscription.'],
   ['BRIGHT_DATA_TOKEN', 'Fetches pages that refuse a plain request.'],
   ['RESEND_API_KEY', 'Sends the break alert and the digest.'],
 ];

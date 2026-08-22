@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { ModelAccess } from '@/components/model-access';
+import { modelAuth } from 'assay/engine/ai/model';
 import { TopBar } from '@/components/top-bar';
 import { StatusLine } from '@/components/status-line';
 import { Empty } from '@/components/empty';
@@ -100,6 +102,11 @@ export default async function SettingsPage() {
           </SpecTable>
         </div>
 
+        <Section label="MODEL ACCESS" top={52} />
+        <div className="w-full pt-[24px]">
+          <ModelAccess auth={modelAuth()} />
+        </div>
+
         <Section label="CONNECTIONS" top={52} />
         <div className="w-full pt-[32px]">
           <Connectors v={v} />
@@ -163,7 +170,7 @@ function SpecRow({
   return (
     <tr className="border-t border-[var(--border-hairline)]">
       <td className="body-13_5 py-[11px] pr-[16px] align-top text-[var(--text-primary)]">{a}</td>
-      <td className="meta-13 py-[11px] pr-[16px] align-top text-[var(--text-primary)]">{b}</td>
+      <td className="meta-13 break-all py-[11px] pr-[16px] align-top text-[var(--text-primary)]">{b}</td>
       <td className="caption-12 py-[11px] align-top text-[var(--text-muted)]">{c}</td>
     </tr>
   );
