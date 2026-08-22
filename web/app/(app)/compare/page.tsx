@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { CircleAlert, Scale } from 'lucide-react';
+import { CircleAlert, Split } from 'lucide-react';
 import { TopBar } from '@/components/top-bar';
 import { actionVariants } from '@/components/button';
 import { Empty } from '@/components/empty';
@@ -148,7 +148,7 @@ function WithheldCard({ w }: { w: Withheld }) {
       </div>
       {w.waiting ? (
         <Link href="/decisions" className={actionVariants({ variant: 'success' })}>
-          <Scale size={16} strokeWidth={1.5} aria-hidden />
+          <Split size={16} strokeWidth={1.5} aria-hidden />
           Decide
         </Link>
       ) : (
