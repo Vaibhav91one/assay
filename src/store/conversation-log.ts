@@ -41,7 +41,7 @@ export type Turn =
        */
       proposed?: { url: string; cadence: string; fields: string[] };
     }
-  | { role: 'event'; kind: 'built' | 'compacted'; text: string; at: string };
+  | { role: 'event'; kind: 'built' | 'compacted' | 'failed'; text: string; at: string };
 
 export interface Conversation {
   id: number;
@@ -77,6 +77,46 @@ export function titleFor(message: string): string {
   const cut = flat.slice(0, 60);
   const space = cut.lastIndexOf(' ');
   return `${(space > 24 ? cut.slice(0, space) : cut).replace(/[.,;:—-]+$/, '')}…`;
+}
+
+// --- a turn that never landed --------------------------------------------------
+
+/**
+ * What a failed turn leaves in the transcript.
+ *
+ * A QUESTION THAT GOT NO ANSWER HAS TO SAY SO. The operator's message is
+ * written before the agent is asked, so if the call then fails the row holds a
+ * question and nothing else -- and a stored `operator` turn with nothing after
+ * it is the same shape as a turn that is still running. The screen cannot tell
+ * those apart, so it showed neither, and the operator's only signal was
+ * silence. That is the failure this product exists to refuse, at the one place
+ * it had it: this event is what makes the difference legible, on the screen and
+ * in the export both.
+ *
+ * `detail` is what actually went wrong, in the product's voice. It is never an
+ * exception's own text verbatim on its own -- see the call site.
+ */
+export function turnFailed(detail: string, at = new Date().toISOString()): Turn {
+  return { role: 'event', kind: 'failed', text: detail, at };
+}
+
+/**
+ * How a transcript ends, which is what decides whether a retry is offered.
+ *
+ * `built` and `compacted` are things that happened AROUND the conversation and
+ * say nothing about whether the newest question was answered, so they are
+ * stepped over. The three that are left are the whole vocabulary: an answer, a
+ * recorded failure, or a question with neither -- which, once this function
+ * exists, only ever means a turn still in flight.
+ */
+export function tail(turns: Turn[]): 'empty' | 'answered' | 'failed' | 'unanswered' {
+  for (let i = turns.length - 1; i >= 0; i--) {
+    const t = turns[i]!;
+    if (t.role === 'assay') return 'answered';
+    if (t.role === 'operator') return 'unanswered';
+    if (t.kind === 'failed') return 'failed';
+  }
+  return 'empty';
 }
 
 // --- what the agent is given --------------------------------------------------
