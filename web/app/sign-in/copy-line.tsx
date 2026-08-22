@@ -15,7 +15,10 @@ export function CopyLine({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
 
   return (
-    <div className="flex items-start gap-[10px] rounded-[var(--radius-control)] border border-[var(--border-default)] bg-[var(--surface-subtle)] px-[14px] py-[12px]">
+    // Grey fill, no border. A block that takes both doubles its container and
+    // reads as a disabled field -- `greyBlockBordered` in tools/figma-conformance.js
+    // refuses it, and the Figma frame is built the same way.
+    <div className="flex items-start gap-[10px] rounded-[var(--radius-control)] bg-[var(--surface-subtle)] px-[14px] py-[12px]">
       <pre className="mono-value-12_5 flex-1 whitespace-pre text-[var(--text-primary)]">{text}</pre>
       <button
         type="button"

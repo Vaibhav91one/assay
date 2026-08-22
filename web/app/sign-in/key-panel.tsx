@@ -75,9 +75,12 @@ export function KeyPanel() {
 
       {missing ? (
         <>
+          {/* One text style for the whole sentence. A mono run inside it would
+              leave the Figma node's textStyleId `mixed`, and the board holds
+              100% text-style coverage; the machine content is the block below. */}
           <p className="meta-12_5 text-[var(--text-secondary)]">
-            Assay reads these from the environment when it starts. Put what you want in{' '}
-            <span className="mono-value-12_5">.env</span> and restart; what you leave out stays off.
+            Assay reads these from the environment when it starts. Put what you want in .env and
+            restart; what you leave out stays off.
           </p>
           <CopyLine text={missing} />
         </>
