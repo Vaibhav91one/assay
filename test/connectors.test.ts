@@ -366,9 +366,13 @@ suite('the seam', () => {
       }
     }
 
-    // Cleanup: this test writes real rows.
+    // Cleanup: this test writes real rows. field_state included -- a run that
+    // establishes a baseline leaves the pointer to it there, and leaving one
+    // behind would make the next run of this test compare against a page from
+    // the last one.
     await getDb().execute(sql`DELETE FROM field_runs WHERE run_id = ${r.runId}`);
     await getDb().execute(sql`DELETE FROM runs WHERE run_id = ${r.runId}`);
+    await getDb().execute(sql`DELETE FROM field_state WHERE target_id = 'ikea'`);
   });
 
   it('refuses a contract with no resolver instead of guessing one', async () => {

@@ -6,7 +6,7 @@ import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { eq, and, isNull, sql } from 'drizzle-orm';
 import * as schema from './schema.js';
 import { nextRunAt } from '../schedule.js';
-import type { Evaluation } from '../runner.js';
+import { selectorFor, type Evaluation } from '../runner.js';
 import type { StoredCapture } from './captures.js';
 
 // TODO(types): drizzle's `execute` hands back `Record<string, unknown>` rows,
@@ -107,8 +107,16 @@ export async function recordRun({
       captureSha: result.event.capture_sha256 ?? null,
       // Only an abstain needs the ranked list kept -- it is what a later
       // nomination must be scored against.
+      //
+      // `selectorFor(r.el)`, not `r.fp.tag`: the column is named `selector` and
+      // a tag name is not one. Every reader treats it as an element reference --
+      // the explain screen labels it "the element the value was read off", and
+      // assay_propose scores a nomination against it -- so storing "h2" told
+      // each of them the value came off some h2 somewhere on the page, which is
+      // not an answer to the question any of them asked. This is the same call
+      // the proof record's `candidates` list has always made.
       ranked: result.status.status === 'quarantined' ? (result.gate?.ranked ?? []).map((r) => ({
-        selector: r.fp?.tag ?? null,
+        selector: selectorFor(r.el),
         score: Number(r.score.toFixed(4)),
         value: (r.fp?.text || '').slice(0, 200),
       })) : null,
@@ -292,6 +300,66 @@ export async function historyFor(targetId: string, limit = 6) {
   return (rows as Row[]).reverse().map((r) => {
     if (r.evaluated) carried = r.is_null ? 1 : 0;
     return { nullRate: carried, pageBytes: r.page_bytes };
+  });
+}
+
+/**
+ * The stored "then" for one field, or null on a field that has never run.
+ *
+ * Without this, `establishBaseline` runs on the page being evaluated and the
+ * runner compares a page to itself -- a gate that cannot fire and a break that
+ * cannot be seen. Two columns, not a serialised Baseline: the page is the
+ * record, and `establishBaseline` rebuilds everything else from it, so the
+ * fingerprint's shape stays owned by one function.
+ */
+export async function baselineFor(
+  targetId: string,
+  field: string,
+): Promise<{ goldenSha: string; selector: string } | null> {
+  const { rows } = await getDb().execute(sql`
+    SELECT baseline_golden_sha, baseline_selector FROM field_state
+    WHERE target_id = ${targetId} AND field = ${field}
+      AND baseline_golden_sha IS NOT NULL AND baseline_selector IS NOT NULL`);
+  const r = (rows as Row[])[0];
+  return r ? { goldenSha: r.baseline_golden_sha, selector: r.baseline_selector } : null;
+}
+
+/**
+ * Move the baseline to a page and an element on it.
+ *
+ * The capture row is written in the same transaction as the pointer, and that
+ * is the point of the transaction: a healthy run keeps no capture row, so the
+ * one page the baseline depends on would otherwise be the one page nothing in
+ * the store accounts for -- invisible to the kept/pruned counts and to anything
+ * that later reclaims bytes.
+ *
+ * `set` names three columns and no others, the same rule the brake follows on
+ * this table: `fragility_grade`, `drift_state` and `brake_active` on an
+ * existing row survive untouched.
+ */
+export async function setBaseline({
+  targetId,
+  field,
+  capture,
+  url,
+  selector,
+}: {
+  targetId: string;
+  field: string;
+  capture: StoredCapture;
+  url?: string | null;
+  selector: string;
+}): Promise<void> {
+  await getDb().transaction(async (tx) => {
+    await tx.insert(schema.captures)
+      .values({ sha256: capture.sha, bytes: capture.bytes, url: url ?? null })
+      .onConflictDoNothing();
+    await tx.insert(schema.fieldState)
+      .values({ targetId, field, baselineGoldenSha: capture.sha, baselineSelector: selector })
+      .onConflictDoUpdate({
+        target: [schema.fieldState.targetId, schema.fieldState.field],
+        set: { baselineGoldenSha: capture.sha, baselineSelector: selector, updatedAt: new Date() },
+      });
   });
 }
 
