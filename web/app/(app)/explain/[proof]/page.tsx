@@ -23,6 +23,9 @@ export default async function ExplainPage({ params }: { params: Promise<{ proof:
       <TopBar
         title="Where did this number come from?"
         status={`proof ${p.proof}`}
+        // The target this value came off. Reading a proof and wanting the page
+        // read again is one thought, not two screens.
+        scraper={p.scraper}
         action={
           <Copy
             text={p.proof}
