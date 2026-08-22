@@ -58,8 +58,16 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
+  // `.next` wholesale was too wide: exclude beats include, so it also hid
+  // `.next/types`, where Next declares PageProps and LayoutProps -- every
+  // typed route stopped compiling and CI could not see it, because CI runs
+  // only the root `tsc` and never `-p web/tsconfig.json`.
+  //
+  // `.next/dev` alone keeps what that change was actually for: a stale dev
+  // build can no longer shadow the real AppRoutes.
   "exclude": [
     "node_modules",
-    ".next"
+    ".next/dev",
+    ".next/cache"
   ]
 }

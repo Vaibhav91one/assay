@@ -1,0 +1,6797 @@
+{
+  "arms": {
+    "gated": {
+      "correct": 93,
+      "wrong": 6,
+      "value_ok": 99,
+      "value_wrong": 0,
+      "abstain_right": 18,
+      "abstain_wrong": 36,
+      "n": 153
+    },
+    "consensus": {
+      "correct": 75,
+      "wrong": 6,
+      "value_ok": 81,
+      "value_wrong": 0,
+      "abstain_right": 18,
+      "abstain_wrong": 54,
+      "n": 153
+    },
+    "both": {
+      "correct": 63,
+      "wrong": 6,
+      "value_ok": 69,
+      "value_wrong": 0,
+      "abstain_right": 18,
+      "abstain_wrong": 66,
+      "n": 153
+    },
+    "either": {
+      "correct": 105,
+      "wrong": 6,
+      "value_ok": 111,
+      "value_wrong": 0,
+      "abstain_right": 18,
+      "abstain_wrong": 24,
+      "n": 153
+    }
+  },
+  "cards": {
+    "similarity": {
+      "voted": 153,
+      "right": 117,
+      "wrong": 36,
+      "silent": 0,
+      "errors": 0,
+      "n": 153
+    },
+    "selector": {
+      "voted": 66,
+      "right": 54,
+      "wrong": 12,
+      "silent": 36,
+      "errors": 0,
+      "n": 102
+    },
+    "structure": {
+      "voted": 81,
+      "right": 63,
+      "wrong": 18,
+      "silent": 72,
+      "errors": 0,
+      "n": 153
+    },
+    "contract": {
+      "voted": 141,
+      "right": 84,
+      "wrong": 57,
+      "silent": 12,
+      "errors": 0,
+      "n": 153
+    }
+  },
+  "byMutation": {
+    "wrapper_div": {
+      "label": "insert wrapper div",
+      "expect": "target",
+      "gated": {
+        "correct": 18,
+        "wrong": 0,
+        "value_ok": 18,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 18
+      },
+      "consensus": {
+        "correct": 18,
+        "wrong": 0,
+        "value_ok": 18,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 18
+      }
+    },
+    "swap_tag": {
+      "label": "swap tag (h2 -> div, a -> span)",
+      "expect": "target",
+      "gated": {
+        "correct": 12,
+        "wrong": 0,
+        "value_ok": 12,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 6,
+        "n": 18
+      },
+      "consensus": {
+        "correct": 0,
+        "wrong": 0,
+        "value_ok": 0,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 18,
+        "n": 18
+      }
+    },
+    "strip_id": {
+      "label": "strip id and data attributes",
+      "expect": "target",
+      "gated": {
+        "correct": 18,
+        "wrong": 0,
+        "value_ok": 18,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 18
+      },
+      "consensus": {
+        "correct": 18,
+        "wrong": 0,
+        "value_ok": 18,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 18
+      }
+    },
+    "translate_text": {
+      "label": "translate visible text",
+      "expect": "target",
+      "gated": {
+        "correct": 18,
+        "wrong": 0,
+        "value_ok": 18,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 18
+      },
+      "consensus": {
+        "correct": 6,
+        "wrong": 0,
+        "value_ok": 6,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 12,
+        "n": 18
+      }
+    },
+    "remove_field": {
+      "label": "remove the field entirely",
+      "expect": "none",
+      "gated": {
+        "correct": 0,
+        "wrong": 0,
+        "value_ok": 0,
+        "value_wrong": 0,
+        "abstain_right": 18,
+        "abstain_wrong": 0,
+        "n": 18
+      },
+      "consensus": {
+        "correct": 0,
+        "wrong": 0,
+        "value_ok": 0,
+        "value_wrong": 0,
+        "abstain_right": 18,
+        "abstain_wrong": 0,
+        "n": 18
+      }
+    },
+    "duplicate_similar": {
+      "label": "duplicate a near-identical decoy",
+      "expect": "ambiguous",
+      "gated": {
+        "correct": 0,
+        "wrong": 0,
+        "value_ok": 0,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 18,
+        "n": 18
+      },
+      "consensus": {
+        "correct": 12,
+        "wrong": 0,
+        "value_ok": 12,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 6,
+        "n": 18
+      }
+    },
+    "duplicate_longtail": {
+      "label": "decoy identical for 200 chars, divergent after",
+      "expect": "ambiguous",
+      "gated": {
+        "correct": 6,
+        "wrong": 0,
+        "value_ok": 6,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 12,
+        "n": 18
+      },
+      "consensus": {
+        "correct": 0,
+        "wrong": 0,
+        "value_ok": 0,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 18,
+        "n": 18
+      }
+    },
+    "combo_redesign": {
+      "label": "combo: wrapper + class rename + tag swap",
+      "expect": "target",
+      "gated": {
+        "correct": 12,
+        "wrong": 6,
+        "value_ok": 18,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 18
+      },
+      "consensus": {
+        "correct": 12,
+        "wrong": 6,
+        "value_ok": 18,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 18
+      }
+    },
+    "rename_class": {
+      "label": "rename class",
+      "expect": "target",
+      "gated": {
+        "correct": 6,
+        "wrong": 0,
+        "value_ok": 6,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 6
+      },
+      "consensus": {
+        "correct": 6,
+        "wrong": 0,
+        "value_ok": 6,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 6
+      }
+    },
+    "reorder_siblings": {
+      "label": "reorder siblings",
+      "expect": "target",
+      "gated": {
+        "correct": 3,
+        "wrong": 0,
+        "value_ok": 3,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 3
+      },
+      "consensus": {
+        "correct": 3,
+        "wrong": 0,
+        "value_ok": 3,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 3
+      }
+    }
+  },
+  "events": [
+    {
+      "site": "mattel",
+      "capture": "20240103",
+      "mutation": "wrapper_div",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20240103",
+      "mutation": "swap_tag",
+      "expect": "target",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20240103",
+      "mutation": "strip_id",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:4 readings agree",
+        "voted": 4,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20240103",
+      "mutation": "translate_text",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 2 values",
+        "voted": 4,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20240103",
+      "mutation": "remove_field",
+      "expect": "none",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20240103",
+      "mutation": "duplicate_similar",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:4 readings agree",
+        "voted": 4,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20240103",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 3 values",
+        "voted": 4,
+        "distinct": 3,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20240103",
+      "mutation": "combo_redesign",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20240617",
+      "mutation": "wrapper_div",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20240617",
+      "mutation": "swap_tag",
+      "expect": "target",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20240617",
+      "mutation": "strip_id",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:4 readings agree",
+        "voted": 4,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20240617",
+      "mutation": "translate_text",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 2 values",
+        "voted": 4,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20240617",
+      "mutation": "remove_field",
+      "expect": "none",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20240617",
+      "mutation": "duplicate_similar",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:4 readings agree",
+        "voted": 4,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20240617",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 3 values",
+        "voted": 4,
+        "distinct": 3,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20240617",
+      "mutation": "combo_redesign",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20241110",
+      "mutation": "wrapper_div",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20241110",
+      "mutation": "swap_tag",
+      "expect": "target",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20241110",
+      "mutation": "strip_id",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:4 readings agree",
+        "voted": 4,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20241110",
+      "mutation": "translate_text",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 2 values",
+        "voted": 4,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20241110",
+      "mutation": "remove_field",
+      "expect": "none",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20241110",
+      "mutation": "duplicate_similar",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:4 readings agree",
+        "voted": 4,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20241110",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 3 values",
+        "voted": 4,
+        "distinct": 3,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20241110",
+      "mutation": "combo_redesign",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20250404",
+      "mutation": "wrapper_div",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20250404",
+      "mutation": "swap_tag",
+      "expect": "target",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20250404",
+      "mutation": "strip_id",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:4 readings agree",
+        "voted": 4,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20250404",
+      "mutation": "translate_text",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 2 values",
+        "voted": 4,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20250404",
+      "mutation": "remove_field",
+      "expect": "none",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20250404",
+      "mutation": "duplicate_similar",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:4 readings agree",
+        "voted": 4,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20250404",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 3 values",
+        "voted": 4,
+        "distinct": 3,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20250404",
+      "mutation": "combo_redesign",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20250904",
+      "mutation": "wrapper_div",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20250904",
+      "mutation": "swap_tag",
+      "expect": "target",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20250904",
+      "mutation": "strip_id",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:4 readings agree",
+        "voted": 4,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20250904",
+      "mutation": "translate_text",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 2 values",
+        "voted": 4,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20250904",
+      "mutation": "remove_field",
+      "expect": "none",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20250904",
+      "mutation": "duplicate_similar",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:4 readings agree",
+        "voted": 4,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20250904",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 3 values",
+        "voted": 4,
+        "distinct": 3,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20250904",
+      "mutation": "combo_redesign",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20260201",
+      "mutation": "wrapper_div",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20260201",
+      "mutation": "swap_tag",
+      "expect": "target",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20260201",
+      "mutation": "strip_id",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:4 readings agree",
+        "voted": 4,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20260201",
+      "mutation": "translate_text",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 2 values",
+        "voted": 4,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20260201",
+      "mutation": "remove_field",
+      "expect": "none",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20260201",
+      "mutation": "duplicate_similar",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:4 readings agree",
+        "voted": 4,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20260201",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 3 values",
+        "voted": 4,
+        "distinct": 3,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "20260201",
+      "mutation": "combo_redesign",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20240114",
+      "mutation": "rename_class",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20240114",
+      "mutation": "wrapper_div",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "benign_tie",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20240114",
+      "mutation": "swap_tag",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20240114",
+      "mutation": "strip_id",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:4 readings agree",
+        "voted": 4,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20240114",
+      "mutation": "translate_text",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 2 values",
+        "voted": 4,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20240114",
+      "mutation": "remove_field",
+      "expect": "none",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20240114",
+      "mutation": "duplicate_similar",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 2 values",
+        "voted": 4,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20240114",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 3 values",
+        "voted": 4,
+        "distinct": 3,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20240114",
+      "mutation": "combo_redesign",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "benign_tie",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:2 readings agree",
+        "voted": 2,
+        "distinct": 1,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20240613",
+      "mutation": "rename_class",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20240613",
+      "mutation": "wrapper_div",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "benign_tie",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20240613",
+      "mutation": "swap_tag",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20240613",
+      "mutation": "strip_id",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:4 readings agree",
+        "voted": 4,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20240613",
+      "mutation": "translate_text",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 2 values",
+        "voted": 4,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20240613",
+      "mutation": "remove_field",
+      "expect": "none",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20240613",
+      "mutation": "duplicate_similar",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 2 values",
+        "voted": 4,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20240613",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 3 values",
+        "voted": 4,
+        "distinct": 3,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20240613",
+      "mutation": "combo_redesign",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "benign_tie",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:2 readings agree",
+        "voted": 2,
+        "distinct": 1,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20241106",
+      "mutation": "rename_class",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20241106",
+      "mutation": "wrapper_div",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "benign_tie",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20241106",
+      "mutation": "swap_tag",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20241106",
+      "mutation": "strip_id",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:4 readings agree",
+        "voted": 4,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20241106",
+      "mutation": "translate_text",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 2 values",
+        "voted": 4,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20241106",
+      "mutation": "remove_field",
+      "expect": "none",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20241106",
+      "mutation": "duplicate_similar",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 2 values",
+        "voted": 4,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20241106",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 3 values",
+        "voted": 4,
+        "distinct": 3,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20241106",
+      "mutation": "combo_redesign",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "benign_tie",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:2 readings agree",
+        "voted": 2,
+        "distinct": 1,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20250426",
+      "mutation": "rename_class",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20250426",
+      "mutation": "wrapper_div",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "benign_tie",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20250426",
+      "mutation": "swap_tag",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20250426",
+      "mutation": "strip_id",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:4 readings agree",
+        "voted": 4,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20250426",
+      "mutation": "translate_text",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 2 values",
+        "voted": 4,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20250426",
+      "mutation": "remove_field",
+      "expect": "none",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20250426",
+      "mutation": "duplicate_similar",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 2 values",
+        "voted": 4,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20250426",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 3 values",
+        "voted": 4,
+        "distinct": 3,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20250426",
+      "mutation": "combo_redesign",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "benign_tie",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:2 readings agree",
+        "voted": 2,
+        "distinct": 1,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20251005",
+      "mutation": "rename_class",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20251005",
+      "mutation": "wrapper_div",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "benign_tie",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20251005",
+      "mutation": "swap_tag",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20251005",
+      "mutation": "strip_id",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:4 readings agree",
+        "voted": 4,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20251005",
+      "mutation": "translate_text",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 2 values",
+        "voted": 4,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20251005",
+      "mutation": "remove_field",
+      "expect": "none",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20251005",
+      "mutation": "duplicate_similar",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 2 values",
+        "voted": 4,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20251005",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 3 values",
+        "voted": 4,
+        "distinct": 3,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20251005",
+      "mutation": "combo_redesign",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "benign_tie",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:2 readings agree",
+        "voted": 2,
+        "distinct": 1,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20260306",
+      "mutation": "rename_class",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20260306",
+      "mutation": "wrapper_div",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "benign_tie",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20260306",
+      "mutation": "swap_tag",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20260306",
+      "mutation": "strip_id",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:4 readings agree",
+        "voted": 4,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20260306",
+      "mutation": "translate_text",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 2 values",
+        "voted": 4,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20260306",
+      "mutation": "remove_field",
+      "expect": "none",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20260306",
+      "mutation": "duplicate_similar",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 2 values",
+        "voted": 4,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20260306",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:4 readings, 3 values",
+        "voted": 4,
+        "distinct": 3,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "20260306",
+      "mutation": "combo_redesign",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "benign_tie",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:2 readings agree",
+        "voted": 2,
+        "distinct": 1,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "selector",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20240214",
+      "mutation": "wrapper_div",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:2 readings agree",
+        "voted": 2,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20240214",
+      "mutation": "swap_tag",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "no_corroboration:1 of 2 readings",
+        "voted": 1,
+        "distinct": 1,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": false,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20240214",
+      "mutation": "strip_id",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20240214",
+      "mutation": "translate_text",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:2 readings agree",
+        "voted": 2,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": false,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20240214",
+      "mutation": "remove_field",
+      "expect": "none",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "no_corroboration:1 of 2 readings",
+        "voted": 1,
+        "distinct": 1,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": false,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20240214",
+      "mutation": "duplicate_similar",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20240214",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": false,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20240214",
+      "mutation": "combo_redesign",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:2 readings agree",
+        "voted": 2,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20240408",
+      "mutation": "wrapper_div",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:2 readings agree",
+        "voted": 2,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20240408",
+      "mutation": "swap_tag",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "no_corroboration:1 of 2 readings",
+        "voted": 1,
+        "distinct": 1,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": false,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20240408",
+      "mutation": "strip_id",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20240408",
+      "mutation": "translate_text",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:2 readings agree",
+        "voted": 2,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": false,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20240408",
+      "mutation": "remove_field",
+      "expect": "none",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "no_corroboration:1 of 2 readings",
+        "voted": 1,
+        "distinct": 1,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": false,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20240408",
+      "mutation": "duplicate_similar",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20240408",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": false,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20240408",
+      "mutation": "combo_redesign",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:2 readings agree",
+        "voted": 2,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20241214",
+      "mutation": "wrapper_div",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:2 readings agree",
+        "voted": 2,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20241214",
+      "mutation": "swap_tag",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "no_corroboration:1 of 2 readings",
+        "voted": 1,
+        "distinct": 1,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": false,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20241214",
+      "mutation": "strip_id",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20241214",
+      "mutation": "translate_text",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:2 readings agree",
+        "voted": 2,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": false,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20241214",
+      "mutation": "remove_field",
+      "expect": "none",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "no_corroboration:1 of 2 readings",
+        "voted": 1,
+        "distinct": 1,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": false,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20241214",
+      "mutation": "duplicate_similar",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20241214",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": false,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20241214",
+      "mutation": "combo_redesign",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:2 readings agree",
+        "voted": 2,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20250617",
+      "mutation": "wrapper_div",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:2 readings agree",
+        "voted": 2,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20250617",
+      "mutation": "swap_tag",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20250617",
+      "mutation": "reorder_siblings",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20250617",
+      "mutation": "strip_id",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20250617",
+      "mutation": "translate_text",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20250617",
+      "mutation": "remove_field",
+      "expect": "none",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20250617",
+      "mutation": "duplicate_similar",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20250617",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:3 readings, 2 values",
+        "voted": 3,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20250617",
+      "mutation": "combo_redesign",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:2 readings agree",
+        "voted": 2,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20250906",
+      "mutation": "wrapper_div",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:2 readings agree",
+        "voted": 2,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20250906",
+      "mutation": "swap_tag",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20250906",
+      "mutation": "reorder_siblings",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20250906",
+      "mutation": "strip_id",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20250906",
+      "mutation": "translate_text",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20250906",
+      "mutation": "remove_field",
+      "expect": "none",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20250906",
+      "mutation": "duplicate_similar",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20250906",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:3 readings, 2 values",
+        "voted": 3,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20250906",
+      "mutation": "combo_redesign",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:2 readings agree",
+        "voted": 2,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20251214",
+      "mutation": "wrapper_div",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:2 readings agree",
+        "voted": 2,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20251214",
+      "mutation": "swap_tag",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20251214",
+      "mutation": "reorder_siblings",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20251214",
+      "mutation": "strip_id",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20251214",
+      "mutation": "translate_text",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20251214",
+      "mutation": "remove_field",
+      "expect": "none",
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:2 readings, 2 values",
+        "voted": 2,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20251214",
+      "mutation": "duplicate_similar",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:3 readings agree",
+        "voted": 3,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20251214",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false
+      },
+      "consensus": {
+        "decision": "abstain",
+        "reason": "consensus_split:3 readings, 2 values",
+        "voted": 3,
+        "distinct": 2,
+        "correct": false,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": true,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": false,
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "20251214",
+      "mutation": "combo_redesign",
+      "expect": "target",
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true
+      },
+      "consensus": {
+        "decision": "publish",
+        "reason": "unanimous:2 readings agree",
+        "voted": 2,
+        "distinct": 1,
+        "correct": true,
+        "votes": [
+          {
+            "strategy": "similarity",
+            "resolved": true,
+            "right": true,
+            "error": null
+          },
+          {
+            "strategy": "structure",
+            "resolved": false,
+            "right": false,
+            "error": null
+          },
+          {
+            "strategy": "contract",
+            "resolved": true,
+            "right": true,
+            "error": null
+          }
+        ]
+      }
+    }
+  ],
+  "calibrations": {
+    "similarity": 18,
+    "selector": 12,
+    "structure": 18,
+    "contract": 18
+  },
+  "panels": [
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3
+  ],
+  "cross": {
+    "gate heals / consensus publishes": {
+      "n": 69,
+      "value_wrong": 0
+    },
+    "gate holds / consensus holds": {
+      "n": 42,
+      "value_wrong": 0
+    },
+    "gate heals / consensus holds": {
+      "n": 30,
+      "value_wrong": 0
+    },
+    "gate holds / consensus publishes": {
+      "n": 12,
+      "value_wrong": 0
+    }
+  },
+  "config": {
+    "tau": 0.6,
+    "delta": 0.16,
+    "quorum": 2,
+    "captures": 6,
+    "sites": [
+      "mattel",
+      "ikea",
+      "chicco"
+    ],
+    "strategies": [
+      {
+        "id": "similarity",
+        "independence": "Weighted fingerprint similarity, text at 2.7 of ~21 weight. Survives class, id, tag and position churn; loses to any decoy that copies the wording, which is the one thing the other three do not read."
+      },
+      {
+        "id": "selector",
+        "independence": "The stored CSS selector, resolved literally. Reads no text at all, so a reworded page cannot fool it and a duplicated wording cannot split it; dies outright on the class rename and id strip that similarity shrugs off."
+      },
+      {
+        "id": "structure",
+        "independence": "The remembered absolute path, walked positionally. Ignores every attribute and every character of text -- a full rewrite leaves it correct -- and is the only one of the four that a wrapper div or a sibling reorder breaks."
+      },
+      {
+        "id": "contract",
+        "independence": "The operator's field definition, re-resolved against the live page. Carries no memory of the old element whatsoever, so no amount of redesign moves it; it fails where the definition itself stops matching (a translated page) and where a decoy satisfies the definition earlier in document order."
+      }
+    ]
+  }
+}

@@ -35,6 +35,16 @@ jobs:
       - name: typecheck — strict, whole repo
         run: npx tsc --noEmit
 
+      # The root project does not cover web/: it has its own tsconfig, its own
+      # paths, and Next's generated types. Without this step a broken web
+      # typecheck is invisible to CI -- which is exactly what happened when
+      # `.next` went into `exclude` wholesale and PageProps stopped resolving,
+      # while every check here stayed green.
+      - name: typecheck — the web workspace, against Next's generated types
+        run: |
+          npm run build --workspace web
+          npx tsc --noEmit -p web/tsconfig.json
+
       - name: selftest — 34 assertions
         run: |
           out=$(npm test 2>&1)
