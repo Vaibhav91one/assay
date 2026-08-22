@@ -14,6 +14,19 @@ import { actionVariants } from './button';
  * the number a fact about this tab rather than about the instance -- it would
  * go to zero because someone looked, which is the opposite of what this
  * product is for. The count falls when the work is done.
+ *
+ * That is also why the list is cut in two. The badge names a number and the
+ * list under it used to mix the items that number counts with the ones it does
+ * not, separated only by text colour -- so the one fact the panel exists to
+ * carry was the one thing it did not draw. `EARLIER` is where the count stops.
+ *
+ * Deliberately absent, and each for a reason: an unread dot, a "mark all as
+ * read" and a mute, because all three need a read-state column that does not
+ * exist and would make the badge a fact about one browser tab; and a "view
+ * all", because there is no route that lists these -- a notice is answered on
+ * /decisions, /runs or /settings, and a link to nowhere is worse than no link
+ * because it looks like it worked. Grouping the flyout into tabs was
+ * considered and dropped: four kinds across two groups do not need them.
  */
 const ICON: Record<NoticeKind, typeof Bell> = {
   decision: ListChecks,
@@ -60,42 +73,72 @@ export function Notifications({ items, count }: { items: Notice[]; count: number
                 Nothing has happened yet. Runs, breaks and held cells land here.
               </p>
             ) : (
-              <ul className="max-h-[380px] overflow-y-auto">
-                {items.map((n) => {
-                  const Icon = ICON[n.kind];
-                  return (
-                    <li key={n.id} className="border-b border-[var(--border-hairline)] last:border-b-0">
-                      <Link
-                        href={n.href}
-                        className="flex items-start gap-[12px] px-[16px] py-[12px] hover:bg-[var(--surface-subtle)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--semantic-link)]"
-                      >
-                        <Icon
-                          size={15}
-                          strokeWidth={1.5}
-                          style={{ color: TONE[n.kind] }}
-                          className="mt-[2px] shrink-0"
-                          aria-hidden
-                        />
-                        <span className="flex min-w-0 flex-1 flex-col gap-[2px]">
-                          <span
-                            className={`body-13_5 ${
-                              n.outstanding ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'
-                            }`}
-                          >
-                            {n.text}
-                          </span>
-                          {n.at && <span className="caption-11 text-[var(--text-muted)]">{ago(n.at)}</span>}
-                        </span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
+              <div className="max-h-[380px] overflow-y-auto">
+                <Group items={items.filter((n) => n.outstanding)} />
+                <Group items={items.filter((n) => !n.outstanding)} label="EARLIER" />
+              </div>
             )}
           </Popover.Popup>
         </Popover.Positioner>
       </Popover.Portal>
     </Popover.Root>
+  );
+}
+
+/**
+ * One side of the cut, or nothing at all.
+ *
+ * The heading is on the second group only: the first needs no label because the
+ * line above the panel already named it, and `WAITING ON YOU` twice in 40px is
+ * the same fact rendered twice.
+ */
+function Group({ items, label }: { items: Notice[]; label?: string }) {
+  if (items.length === 0) return null;
+  return (
+    <>
+      {label && (
+        <p className="label-10 border-y border-[var(--border-hairline)] bg-[var(--surface-subtle)] px-[16px] py-[7px] text-[var(--text-muted)]">
+          {label}
+        </p>
+      )}
+      <ul>
+        {items.map((n) => {
+          const Icon = ICON[n.kind];
+          return (
+            <li key={n.id} className="border-b border-[var(--border-hairline)] last:border-b-0">
+              <Link
+                href={n.href}
+                className="flex items-start gap-[12px] px-[16px] py-[12px] hover:bg-[var(--surface-subtle)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--semantic-link)]"
+              >
+                <Icon
+                  size={15}
+                  strokeWidth={1.5}
+                  style={{ color: TONE[n.kind] }}
+                  className="mt-[2px] shrink-0"
+                  aria-hidden
+                />
+                <span
+                  className={`body-13_5 min-w-0 flex-1 ${
+                    n.outstanding ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'
+                  }`}
+                >
+                  {n.text}
+                </span>
+                {/* Right-hand column rather than a second line under the text.
+                    The age is the one thing every row wants compared against
+                    its neighbours, and stacked under sentences of different
+                    lengths there is no column to compare down. */}
+                {n.at && (
+                  <span className="caption-11 mt-[2px] shrink-0 text-[var(--text-muted)]">
+                    {ago(n.at)}
+                  </span>
+                )}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </>
   );
 }
 

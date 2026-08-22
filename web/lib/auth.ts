@@ -60,3 +60,29 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     label: sessionClaims?.email ?? userId,
   };
 }
+
+/**
+ * The operator, or the 401 to send instead.
+ *
+ * `web/proxy.ts` already turns signed-out traffic away on the hosted path, but
+ * Next documents a proxy as an OPTIMISTIC check that "should not be used as a
+ * full session management or authorization solution", and Clerk says the same:
+ * protect "as close to the resource as possible". A route that is safe only
+ * because of a regex in another file is safe until someone edits that regex.
+ *
+ * So this is the second gate, and it is the one that sits on the data. On the
+ * self-host path `getCurrentUser()` returns the single operator and this is a
+ * pass-through -- callers get one code path for both deployments, which is the
+ * same bargain the rest of the seam makes.
+ *
+ * Server Actions need this too and do not have it yet: they are reachable by
+ * POST without going through any route handler, so the proxy is currently their
+ * only gate. See the audit note in test/auth.test.ts.
+ */
+export async function requireOperator(): Promise<Response | null> {
+  if (await getCurrentUser()) return null;
+  return Response.json(
+    { error: 'unauthorized', detail: 'Sign in to use this instance.' },
+    { status: 401 },
+  );
+}

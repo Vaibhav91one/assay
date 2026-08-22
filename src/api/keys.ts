@@ -1,4 +1,14 @@
-// Consumer API keys for the read-only REST surface.
+// Consumer API keys for the /api/v1 REST surface.
+//
+// NOT read-only, whatever this comment used to say. The same `requireKey` is
+// the only gate on every write in that tree: resolving a held decision
+// (src/decisions/index.ts writeRoute), clearing a brake latch, creating and
+// deleting targets, editing contracts and connectors. There is one kind of key
+// and it can do all of it -- `api_keys` has no scope column, so a key minted to
+// let a dashboard read run history can also settle the queue.
+//
+// That is a boundary worth knowing about before handing a key to anything.
+// Narrowing it is a schema change, not a comment change.
 //
 // Only the hash is stored, so a leaked database is not a set of working
 // credentials. The plaintext is returned once at creation and never again.

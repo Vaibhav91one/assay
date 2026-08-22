@@ -98,7 +98,10 @@ export async function notices(limit = 12): Promise<Notice[]> {
         id: `e:${e.episodeId}:undelivered`,
         kind: 'undelivered',
         text: `The alert for ${e.field} on ${short(e.targetId)} did not go out`,
-        href: '/settings',
+        // The tab, not the screen. Settings is four panels now, and landing on
+        // the one showing which mail variable is unset is the difference
+        // between a link that answers the notice and one that starts a search.
+        href: '/settings?tab=notifications',
         at: null,
         outstanding: true,
       });
