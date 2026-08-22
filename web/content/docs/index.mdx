@@ -1,0 +1,175 @@
+---
+title: What Assay is
+description: A self-healing scraper that abstains when it is not sure, and publishes how often its heals are wrong.
+---
+
+Assay is a self-healing scraper that **abstains when it is not sure**, and
+measures how often its heals are wrong.
+
+Every number on this site is read off a file in `results/`, and every command
+that produces one is in the repository. Where the number is unflattering it is
+still here — see [Limitations](/docs/limitations), which is a page rather than a
+footnote on purpose.
+
+## The failure this is about
+
+When a scraper breaks loudly, everyone notices. The request 500s, the selector
+returns nothing, the row count drops to zero, and a healer kicks in.
+
+The breaks that matter are the quiet ones. The selector still resolves. The
+request still succeeds. The right number of rows still come back. The value is
+just wrong.
+
+Here is a real one from this repository's own run log, run 74:
+
+```
+baseline_value : "Chicco Polly Highchair Recall"
+value_now      : "Skip to main content"
+```
+
+Nothing errored. Nothing was empty. A row-count check sees twelve rows before
+and twelve rows after. An exception handler never fires. A healer that only
+wakes on errors sleeps through it, and the wrong string lands in your database.
+
+## Two things Assay does differently
+
+**It notices without an exception.** Detection does not wait for an error. It
+watches the value's shape against a regex and a minimum length, the null rate
+against a robust z-score over history, whether the landmark elements it anchored
+to still resolve, and whether multiple independent anchors now disagree with
+each other. A layout change alone is recorded as context and never counts as a
+break on its own, because sites redesign constantly without breaking anything.
+
+**It refuses to guess.** When a field does break, candidates are ranked by
+weighted similarity against a stored fingerprint. The winner is published only
+if it clears two gates:
+
+```
+score > tau (0.60)   AND   score - runner_up > delta (0.16)
+```
+
+The second gate is the point. A candidate can look very much like the thing you
+lost and still be the wrong answer, if something else looks nearly as much like
+it. When two candidates are that close, picking one is a coin flip, and a coin
+flip is not a heal. Assay publishes nothing and asks.
+
+<Callout title="Both thresholds were calibrated, not chosen">
+  `tools/sweep.ts` scans 110 pairs across an 11 x 10 grid; 0.60 / 0.16 is what
+  came out. They are **fitted values, not constants**, and they are arguments to
+  every tool for that reason — see [Limitations §5](/docs/limitations#the-thresholds-are-calibrated-on-this-corpus-and-nowhere-else).
+</Callout>
+
+## The measurement
+
+153 cases: ten deterministic mutations applied to real archived pages from three
+sites. Ground truth is marked before mutation using an attribute the scorer
+never reads, so labelling cannot leak into the score.
+
+Three arms, same cases:
+
+| arm | correct | wrong values published | abstained |
+|---|---|---|---|
+| naive (first element with the same tag) | 48 | **93** | 12 |
+| plain (weighted similarity, no gate) | 117 | **36** | 0 |
+| **gated (similarity + margin gate)** | 99 | **0** | 54 |
+
+`npm run bench` reproduces this. Numbers are read from `results/bench.json`.
+
+### The honest trade
+
+The gated arm publishes zero wrong values. It pays for that, and the price is
+visible in the per-mutation breakdown.
+
+On `remove_field`, where the element is genuinely gone and the only correct
+answer is "I do not know", the ungated healer publishes a wrong value 18 times
+out of 18. The gated one abstains 18 out of 18. That is the gate working exactly
+as intended.
+
+On `duplicate_similar`, where a near-identical decoy sits beside the real value,
+the ungated healer gets 12 right and 6 wrong. The gated one abstains on **all
+18**, including the 12 it would have got right. It is over-cautious there, and
+36 of the 54 abstentions across the whole benchmark are cases a human now has to
+look at that could in principle have been automated.
+
+That is the deal Assay offers: about 24% of breaks land in a review queue
+instead of being resolved automatically, and in exchange the wrong-value count
+goes from 36 to 0. For product-recall monitoring, where publishing the wrong
+hazard for a child's car seat is worse than publishing nothing, that is the
+right way round. For a price tracker it might not be. The thresholds are
+arguments to every tool, so the trade is yours to set.
+
+### What "correct" means here
+
+Two different notions, reported separately, because the literature conflates
+them.
+
+- **Exact node** asks whether the healer found the same DOM element.
+- **Value equivalence** asks whether it produced the same string.
+
+The gated arm scores 93 on exact node but 99 on value: six times it picked a
+different element that happened to contain the identical text. For scraping,
+value is what matters. For test automation, node identity does. Reporting only
+the flattering one would be cheating, so both are in `results/bench.json`.
+
+## The product, in one line
+
+From `docs/FEATURES.md`:
+
+> the scraper withholds the cell it isn't sure about, tells you which rows that
+> affects, and asks you exactly one answerable question.
+
+The feature that defines it is **Quarantine**: on abstain, or on an unresolved
+detect, hold the cell, publish a labelled hole, and log the reason.
+
+> If only one ships, ship the hole in the data. The hole is the product.
+
+## Reproduce it
+
+Everything runs offline.
+
+```bash
+npm install
+npm run demo      # 30 seconds: one break heals, one publishes a labelled hole
+npm test          # 34 assertions against the real corpus
+npm run bench     # the 153-case benchmark
+npm run sweep     # the threshold calibration
+npm run replay    # replays the full corpus, writes results/events.jsonl
+npm run audit     # the Bright Data output gap
+```
+
+The corpus is committed on purpose: 77 archived HTML captures of three public
+recall pages, Jan 2024 to Aug 2026, fetched from the Internet Archive. Without
+them none of the numbers above are checkable, which for a project whose entire
+claim is a measurement would be worse than the 14 MB.
+
+## Where to go next
+
+<Cards>
+  <Card title="Getting started" href="/docs/self-host" description="Two processes, Postgres, and the captures volume." />
+  <Card title="Configuring credentials" href="/docs/credentials" description="All four, what each buys, and what happens without it." />
+  <Card title="Architecture" href="/docs/architecture" description="The boundary that Next never runs a scrape." />
+  <Card title="The run flow" href="/docs/run-flow" description="fetch → detect → heal → gate → publish or abstain." />
+  <Card title="Limitations" href="/docs/limitations" description="Where Assay is weak, with the numbers that show it." />
+</Cards>
+
+---
+
+## Trademark attribution
+
+Assay is not affiliated with, endorsed by, or sponsored by any of the products
+named in this documentation. Each is named to describe what Assay
+interoperates with.
+
+Vercel, the Vercel design, Next.js and related marks, designs and logos are
+trademarks or registered trademarks of Vercel, Inc. or its affiliates in the US
+and other countries.
+
+Postgres, PostgreSQL and the Slonik Logo are trademarks or registered trademarks
+of the PostgreSQL Community Association of Canada.
+
+Docker and the Docker logo are trademarks or registered trademarks of Docker,
+Inc. in the United States and/or other countries. Docker, Inc. and other parties
+may also have trademark rights in other terms used herein.
+
+Claude, Claude Code and Anthropic are trademarks of Anthropic, PBC. Resend and
+Bright Data are trademarks of their respective owners.

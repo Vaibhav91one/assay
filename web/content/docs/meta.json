@@ -1,0 +1,12 @@
+{
+  "title": "Assay",
+  "root": true,
+  "pages": [
+    "index",
+    "self-host",
+    "credentials",
+    "architecture",
+    "run-flow",
+    "limitations"
+  ]
+}

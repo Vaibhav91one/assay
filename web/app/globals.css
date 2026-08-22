@@ -2,6 +2,10 @@
 @import './tokens.css';
 @import './shadcn-bridge.css';
 @import './motion.css';
+/* Last, so its `@layer base` preflight sits below everything above it and the
+   `body` rule at the foot of this file still wins. See the header of that file
+   for why the docs site borrows the palette instead of bringing one. */
+@import './fumadocs.css';
 
 /* The page ground. Everything else is a token away. */
 body {

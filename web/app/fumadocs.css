@@ -1,0 +1,132 @@
+/* Fumadocs, wearing Assay's palette.
+ *
+ * Fumadocs UI's components are written against seventeen `--color-fd-*` names,
+ * the same way shadcn's are written against `--background` and `--primary`.
+ * `shadcn-bridge.css` already exists in this app for exactly that problem, and
+ * this file is the same answer to the same question: map the foreign names onto
+ * the Figma tokens rather than let a second palette land beside them and drift.
+ * No new colour is defined here. Every value on the right-hand side is a token
+ * from `tokens.css`, which is generated from the Figma file.
+ *
+ * WHY `default-colors.css` IS STILL IMPORTED. It looks redundant -- every
+ * variable it sets is overridden below. It is not: its `@theme` block is what
+ * REGISTERS these names with Tailwind, and registration is what makes
+ * `bg-fd-background` and `text-fd-muted-foreground` exist as utilities at all.
+ * Fumadocs' own components are shipped as class names and compiled in this
+ * build, so dropping the import does not produce a differently-coloured docs
+ * site: it produces an unstyled one.
+ *
+ * ONE PALETTE, LIGHT. This app has no dark theme -- `tokens.css` declares 20
+ * colours and no `.dark` block, no `prefers-color-scheme` query and no
+ * `data-theme` attribute, and the sidebar rail is dark on a light page rather
+ * than a surface that inverts. So the `.dark` half of a normal Fumadocs setup
+ * is deliberately absent here. It is not an oversight and it is not a
+ * half-finished job: adding one would mean inventing twenty colour values that
+ * are in no Figma variable, which is the foreign-palette move this file exists
+ * to prevent. The docs site is exactly as light or dark as the app is, and it
+ * changes on the day `tokens.css` does. */
+
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+
+:root {
+  /* Ground and ink. */
+  --color-fd-background: var(--bg-page);
+  --color-fd-foreground: var(--text-primary);
+
+  /* Fumadocs' "muted" is a surface AND a text colour under one prefix. */
+  --color-fd-muted: var(--surface-subtle);
+  --color-fd-muted-foreground: var(--text-secondary);
+
+  --color-fd-card: var(--surface-card);
+  --color-fd-card-foreground: var(--text-primary);
+  --color-fd-popover: var(--surface-card);
+  --color-fd-popover-foreground: var(--text-primary);
+
+  /* Brand orange is the accent for the active nav item and the anchor state. */
+  --color-fd-primary: var(--accent-brand);
+  --color-fd-primary-foreground: var(--accent-on-primary);
+
+  --color-fd-secondary: var(--surface-subtle);
+  --color-fd-secondary-foreground: var(--text-primary);
+
+  /* `accent` is the hover ground, not the brand. Naming collision, not a bug:
+     the same word means the highlight in Fumadocs and the orange in Figma. */
+  --color-fd-accent: var(--surface-subtle);
+  --color-fd-accent-foreground: var(--text-primary);
+
+  --color-fd-border: var(--border-default);
+  --color-fd-ring: var(--semantic-link);
+  --color-fd-overlay: rgb(0 0 0 / 0.2);
+}
+
+/* Callouts. The four states are the four semantic tokens, so a warning in the
+   documentation is the same amber as a held field in the app. */
+@theme {
+  --color-fd-info: var(--semantic-link);
+  --color-fd-warning: var(--semantic-warning);
+  --color-fd-error: var(--semantic-danger);
+  --color-fd-success: var(--semantic-success);
+  --color-fd-idea: var(--accent-brand);
+}
+
+/* The sidebar rail. Assay's rail is `bg/sidebar` in every case -- see the note
+   in `shadcn-bridge.css` -- but the docs sidebar is a reading aid beside a
+   column of prose, not the app's navigation, so it takes the subtle surface
+   instead of the near-black. Two dark rails on one screen would read as two
+   applications. */
+#nd-sidebar {
+  background-color: var(--surface-subtle);
+  border-color: var(--border-hairline);
+}
+
+/* Assay's type scale, applied to the documentation body.
+ *
+ * Fumadocs ships a Tailwind typography plugin whose sizes are its own. The app
+ * has 20 text styles generated from Figma and a rule that hierarchy comes from
+ * size, colour and caps-with-tracking rather than from weight -- Questrial has
+ * one weight, so asking for a bold heading gets a synthesised face that matches
+ * nothing. These four rules put the docs back on the app's scale and stop the
+ * plugin from bolding anything. */
+#nd-docs-body {
+  font-family: var(--font-sans);
+  font-size: var(--text-body-14);
+}
+
+#nd-docs-body :is(h1, h2, h3, h4) {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  color: var(--text-primary);
+}
+
+#nd-docs-body h1 { font-size: var(--text-display-28); }
+#nd-docs-body h2 { font-size: var(--text-title-22); }
+#nd-docs-body h3 { font-size: var(--text-heading-18); }
+#nd-docs-body h4 { font-size: var(--text-heading-16); }
+
+/* Mono marks machine tokens -- field names, selectors, hashes, values -- apart
+   from prose. docs/APP-DESIGN.md 5c. */
+#nd-docs-body :is(code, pre) {
+  font-family: var(--font-mono);
+}
+
+/* Motion. The docs site borrows the app's two curves rather than bringing
+   Fumadocs' own timings, so a sidebar section opening here and a Collapse
+   opening in the app are the same gesture. `--duration-expand` is the token for
+   "a collapse opening to its own height"; `--ease-glide` is the signature
+   curve. Both come from `motion.css`, which owns the reduced-motion contract --
+   its `*` media query switches these off with everything else, so there is no
+   second escape hatch to keep in sync here. */
+#nd-sidebar [data-radix-collapsible-content],
+#nd-sidebar details > div {
+  transition:
+    height var(--duration-expand) var(--ease-glide),
+    opacity var(--duration-reveal) var(--ease-glide);
+}
+
+#nd-sidebar a,
+#nd-toc a {
+  transition:
+    color var(--duration-tint) var(--ease-glide),
+    background-color var(--duration-tint) var(--ease-glide);
+}

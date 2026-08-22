@@ -1,0 +1,184 @@
+---
+title: Getting started
+description: Two processes, one Postgres, a captures volume, and the compose file that wires them.
+---
+
+Self-hosting Assay is **three services and one volume**: `web`, `worker`, and
+Postgres. `web` and `worker` are the same image with different commands.
+
+Self-hosting is single-operator. `AUTH_MODE` defaults to `none`, so a clone
+boots with no account, no signup and no keys — you are already behind whatever
+access control fronts the box.
+
+## Before anything else
+
+```bash
+cp .env.example .env
+```
+
+Then read [Configuring credentials](/docs/credentials). Nothing in `.env` is
+required to boot; what you leave out stays off.
+
+## Docker Compose — the canonical path
+
+```bash
+docker compose up -d
+docker compose run --rm web npm run db:migrate
+```
+
+That is the path a Linux VPS should run. `web` comes up on port 3000.
+
+<Callout type="warn" title="Migrate before you use it">
+  The compose file's own comment is *"Schema first"*. `web` starts without a
+  schema and will not work until `db:migrate` has run once.
+</Callout>
+
+### Podman — rootless, no daemon
+
+```bash
+podman compose up -d
+podman compose run --rm web npm run db:migrate
+```
+
+Compose files are portable, so this is the same file.
+
+### Apple Container — Apple Silicon Macs only
+
+Apple's `container` (1.0.0) runs Linux containers in lightweight VMs with no
+daemon. Apple
+[declined to make Compose a core feature](https://github.com/apple/container/pull/239)
+and the community shims are immature, so Assay ships plain `container` CLI
+scripts rather than depending on one:
+
+```bash
+./scripts/container-up.sh                 # build, start postgres, migrate, start web
+./scripts/container-down.sh               # stop; volumes survive
+./scripts/container-down.sh --volumes     # stop and delete data
+```
+
+Ports are overridable if 5432 or 3000 are already taken:
+
+```bash
+ASSAY_PGPORT=55432 ASSAY_WEBPORT=53000 ./scripts/container-up.sh
+```
+
+**This is macOS on Apple Silicon only** — a fine local-development and
+Mac-self-host path, not a substitute for a Linux host in production.
+
+<Callout type="warn" title="Verified, and not">
+  `container-up.sh` was exercised end to end on Apple Container 1.0.0 / macOS
+  arm64: image builds, Postgres becomes ready, migrations apply, all seven
+  tables land, `GET /` returns 200 and `/api/health` reports the store
+  reachable. Re-running is idempotent, and teardown keeps volumes unless asked
+  otherwise.
+
+  **The Docker and Podman paths are unexercised** — neither runtime is installed
+  on the machine this was written on. The compose file is reviewed, not tested.
+</Callout>
+
+### Two things that differ under Apple Container
+
+Both are handled by the scripts. They are documented because they will bite
+anyone adapting them.
+
+**No container-name DNS.** Compose gives you `postgres` as a hostname for free.
+Apple Container does not resolve container names, and the only name-based
+alternative (`container system dns create`) requires administrator rights —
+which a self-host script has no business demanding. `container-up.sh` reads the
+address off the running container with `container inspect` and builds
+`DATABASE_URL` from it.
+
+**Volumes are real filesystems.** They carry a `lost+found`, so `initdb` refuses
+to use the mount point directly as its data directory. Both the compose file and
+the script set `PGDATA` to a subdirectory, which is the Postgres image's own
+recommendation and is harmless everywhere.
+
+## Running it without containers
+
+The engine needs no database at all:
+
+```bash
+npm install
+npm test          # engine assertions, no database needed
+npm run bench     # the 153-case benchmark
+npm run demo      # publishes a hole instead of a lie, in about 30 seconds
+```
+
+The store, API, MCP server and worker do need one:
+
+```bash
+docker compose up -d postgres          # or: ./scripts/container-up.sh
+export DATABASE_URL=postgres://postgres:assay@localhost:5432/assay
+npm run db:migrate
+npx vitest run
+```
+
+<Callout type="error" title="Set ASSAY_REQUIRE_DB=1 or your green is vacuous">
+  From `CONTRIBUTING.md`:
+
+  > **Database-backed tests early-return when Postgres is absent, which vitest
+  > reports as passed, not skipped** — the test count is identical either way.
+  > Set `ASSAY_REQUIRE_DB=1` to turn that vacuous green into a failure. CI
+  > always sets it.
+</Callout>
+
+## The two processes
+
+| | `web` | `worker` |
+|---|---|---|
+| Command | `npm --workspace web run start` | `npx tsx tools/worker.ts` |
+| Owns | serving, and writing decisions | fetch → detect → heal → gate → publish |
+| Ports | 3000 | none |
+| Restart | — | `unless-stopped` |
+
+They are one image. A scrape holds a request open and competes with page loads,
+which is why it does not belong in a route handler even self-hosted, where no
+timeout applies — see [Architecture](/docs/architecture).
+
+## The invariants
+
+These are the numbers the project is arguing for, and CI asserts each one on
+every push. A change that moves one has broken the thing being built, not merely
+a test.
+
+| Command | Must produce |
+|---|---|
+| `npm test` | 34 assertions, ending `all checks pass` |
+| `npm run bench` | 153 cases; gated arm at **0.0% wrong values** |
+| `npm run replay` | 74 runs, **0 abstentions**, `results/events.jsonl` byte-identical |
+| `npx tsc --noEmit` | clean, strict, whole repo |
+
+Two more, load-bearing:
+
+- **`dist/fingerprint.js` imports nothing.** It has to paste verbatim into
+  Bright Data's Cheerio worker, which has no module loader, and run identically
+  in both places. `npm run build:fingerprint` emits it from `src/fingerprint.ts`;
+  the vitest run rebuilds and checks it, so a checked-in artifact can never go
+  stale against its source.
+- **All CLIs keep working.** They resolve the corpus by relative path; moving
+  files breaks them silently.
+
+<Callout type="warn" title="One invariant in CONTRIBUTING.md is stale">
+  `CONTRIBUTING.md`, `README.md` and `docs/LIMITATIONS.md` §3 all describe the
+  replay as **74 runs, 24 heals**. Running it today gives **74 runs, 8 ok, 66
+  heals, 0 abstentions**, and the committed `results/events.jsonl` agrees with
+  the run rather than with the prose — 66 `auto_approved` records and 8
+  `no_action`. The run count and the zero abstentions are unchanged, and no
+  number on this site depends on the heal split, but the discrepancy is real and
+  is recorded here rather than smoothed over.
+</Callout>
+
+## Redistributing it
+
+MIT, with two dependencies that are not OSI-licensed and are worth knowing about
+before you redistribute:
+
+- **GSAP** ships under its Standard "no charge" licence. Free to use, including
+  the plugins that were formerly paid, but not open source. It is used for four
+  animated moments and nothing else, so removing it costs you those animations
+  and nothing structural.
+- **`@anthropic-ai/claude-agent-sdk`** publishes as `SEE LICENSE IN README.md`.
+  It powers the conversational surfaces; the rest of the AI path uses the
+  ordinary Anthropic API SDK, which is MIT.
+
+Everything else in the dependency tree is MIT, ISC or Apache-2.0.
