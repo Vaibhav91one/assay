@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, AtSign, Check, ChevronDown, KeyRound, Slash, Terminal } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useGlide } from '@/components/motion/glide';
-import { MODELS } from '@/lib/models';
+import { MODELS, MODEL_LABEL } from 'assay/engine/agent/models';
 import { menuAt, applyChoice, type Menu } from '@/lib/composer-menu';
 import { sources as loadSources, type Source } from './watch-actions';
 
@@ -340,7 +340,7 @@ function ModelPicker({ auth, model, onModel }: { auth: string; model: string; on
   }, [open]);
 
   const cred = credential(auth);
-  const current = MODELS.find((m) => m.id === model) ?? MODELS[0]!;
+  const current = MODELS.find((m) => m === model) ?? MODELS[0];
 
   return (
     <div ref={wrap} className="relative">
@@ -351,7 +351,7 @@ function ModelPicker({ auth, model, onModel }: { auth: string; model: string; on
         aria-haspopup="listbox"
         className="press-row flex items-center gap-[7px] rounded-[var(--radius-control)] px-[9px] py-[6px] transition-colors duration-[var(--duration-tint)] hover:bg-[var(--surface-subtle)]"
       >
-        <span className="meta-12_5 text-[var(--text-primary)]">{current.label}</span>
+        <span className="meta-12_5 text-[var(--text-primary)]">{MODEL_LABEL[current]}</span>
         <ChevronDown size={13} strokeWidth={1.5} className="text-[var(--text-muted)]" aria-hidden />
       </button>
 
@@ -363,19 +363,19 @@ function ModelPicker({ auth, model, onModel }: { auth: string; model: string; on
         >
           {MODELS.map((m) => (
             <button
-              key={m.id}
+              key={m}
               type="button"
               role="option"
-              aria-selected={m.id === model}
-              onClick={() => { onModel(m.id); setOpen(false); }}
+              aria-selected={m === model}
+              onClick={() => { onModel(m); setOpen(false); }}
               className="flex w-full items-center gap-[10px] rounded-[var(--radius-control)] px-[10px] py-[8px] text-left transition-colors duration-[var(--duration-tint)] hover:bg-[var(--surface-subtle)]"
             >
               <span className="flex size-[14px] shrink-0 items-center justify-center">
-                {m.id === model && <Check size={13} strokeWidth={2} className="text-[var(--text-primary)]" aria-hidden />}
+                {m === model && <Check size={13} strokeWidth={2} className="text-[var(--text-primary)]" aria-hidden />}
               </span>
               <span className="flex min-w-0 flex-1 flex-col">
-                <span className="meta-13 text-[var(--text-primary)]">{m.label}</span>
-                <span className="caption-11 truncate text-[var(--text-muted)]">{m.id}</span>
+                <span className="meta-13 text-[var(--text-primary)]">{MODEL_LABEL[m]}</span>
+                <span className="caption-11 truncate text-[var(--text-muted)]">{m}</span>
               </span>
               {/* The right-hand column: which credential backs this model. Not
                   a tier badge -- the fact an operator needs here is whether the

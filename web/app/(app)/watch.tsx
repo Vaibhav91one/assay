@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useCallback, useRef, useState, useTransition } from 'react';
 import { CircleAlert, Eye, Hammer, ListChecks, ChevronRight, PencilLine } from 'lucide-react';
 import { turn, type TraceEvent } from '@/lib/chat-stream';
-import { DEFAULT_MODEL } from '@/lib/models';
+import { DEFAULT_MODEL } from 'assay/engine/agent/models';
 import { Composer } from './composer';
 import { Trace, ToolChips } from './trace';
 import { SchemaTable, HeldCell, tierFor } from './schema-table';
@@ -28,7 +28,10 @@ export function Watch({ waiting, auth }: { waiting: number; auth: string }) {
   const [events, setEvents] = useState<TraceEvent[]>([]);
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [running, setRunning] = useState(false);
-  const [model, setModel] = useState(DEFAULT_MODEL);
+  // Typed `string`, not `Model`: `ModelPicker` hands back whatever the browser
+  // clicked and the server re-checks it against the allowlist regardless. See
+  // `isModel` in src/agent/models.ts -- membership is the guard, not this type.
+  const [model, setModel] = useState<string>(DEFAULT_MODEL);
   const [manual, setManual] = useState(false);
   const abort = useRef<AbortController | null>(null);
 

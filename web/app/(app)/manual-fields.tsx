@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { CircleAlert, Hammer, Plus, X } from 'lucide-react';
-import { CADENCE_OPTIONS } from '@/lib/models';
+import { CADENCES } from 'assay/engine/agent/models';
 import { describeFields, type BuildResult } from './watch-actions';
 
 /**
@@ -134,7 +134,7 @@ export function ManualFields({ seedUrl, onCancel }: { seedUrl: string; onCancel:
             onChange={(e) => setCadence(e.currentTarget.value)}
             className="meta-12_5 rounded-[var(--radius-control)] border border-[var(--border-default)] bg-[var(--surface-card)] px-[8px] py-[6px] outline-none"
           >
-            {CADENCE_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
+            {CADENCES.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </label>
 
