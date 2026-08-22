@@ -22,7 +22,7 @@ import { pickTarget } from '../target.js';
 import { putCapture } from '../store/captures.js';
 import { openEpisode, closeEpisode } from '../api/webhooks.js';
 import { latestContract } from '../contracts/store.js';
-import { shouldHeal } from '../brake/index.js';
+import { shouldHeal, recordHeal, checkBrake } from '../brake/index.js';
 import {
   getDb, reserveRunId, recordRun, lastRunFor, historyFor, sql,
 } from '../store/index.js';
@@ -195,6 +195,28 @@ export async function ingestPage({
     proofId,
     groupKey: `${result.event.skeleton.after}:${baseline.field}`,
   });
+
+  // A heal is the evidence F11 grades. `heal_history` had no writer anywhere in
+  // the pipeline, so detectPingPong was reading an empty table on every field
+  // and the brake could not engage on its own -- the whole of F11 was
+  // unreachable. Recorded after recordRun, so the run is durable first.
+  //
+  // Left to throw, like every other store call here. A heal that published
+  // without leaving a row blinds the oscillation detector against the very
+  // field that just moved, and that is not a thing to note and carry on from.
+  if (result.status.status === 'healed' && result.event.healed_to) {
+    await recordHeal({
+      targetId: target.targetId,
+      field: baseline.field,
+      fromSelector: baseline.selector,
+      toSelector: result.event.healed_to.selector,
+      runId,
+    });
+    // Engages the brake if this field is thrashing. It announces itself on the
+    // NEXT run, which is the right run: the brake stops the next heal, and that
+    // abstention opens an episode carrying `brake_engaged` as its reason.
+    await checkBrake(target.targetId, baseline.field);
+  }
 
   // An episode opens on a break and closes when the field recovers. openEpisode
   // returns null when one is already open -- that dedupe is why a template
