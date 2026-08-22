@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Tabs } from '@base-ui/react/tabs';
 import { Bell, HardDrive, Plug, ShieldCheck } from 'lucide-react';
+import { SECTION_TAB, TABS, type TabId } from './tabs';
 
 /**
  * Settings, in four groups this product already had names for.
@@ -19,34 +20,11 @@ import { Bell, HardDrive, Plug, ShieldCheck } from 'lucide-react';
  * `role="tablist"`/`"tab"`/`"tabpanel"`, `aria-selected` and arrow-key roving
  * focus with it, which is the entire reason not to hand-roll this.
  */
-const TABS = [
-  { id: 'publishing', label: 'Publishing', Icon: ShieldCheck },
-  { id: 'output', label: 'Output', Icon: HardDrive },
-  { id: 'notifications', label: 'Notifications', Icon: Bell },
-  { id: 'connections', label: 'Connections', Icon: Plug },
-] as const;
-
-export type TabId = (typeof TABS)[number]['id'];
-
-export const isTabId = (s: string | undefined): s is TabId =>
-  TABS.some((t) => t.id === s);
-
-/**
- * Where each of the old one-scroll headings ended up.
- *
- * The screen used to be a single column, so every section was reachable by
- * hash. Tabs hide three quarters of it at a time, and a `#per-field-policy`
- * link that lands on a page not showing that section is a worse link than one
- * that 404s -- it looks like it worked. This map is read once on mount and
- * selects the tab holding the section before the browser scrolls to it.
- */
-const SECTION_TAB: Record<string, TabId> = {
-  'what-assay-may-publish': 'publishing',
-  'per-field-policy': 'publishing',
-  'where-the-data-goes': 'output',
-  'model-access': 'connections',
-  connections: 'connections',
-  notifications: 'notifications',
+const ICON: Record<TabId, typeof Bell> = {
+  publishing: ShieldCheck,
+  output: HardDrive,
+  notifications: Bell,
+  connections: Plug,
 };
 
 export function SettingsTabs({
@@ -97,7 +75,9 @@ export function SettingsTabs({
             transitionTimingFunction: 'var(--ease-glide)',
           }}
         />
-        {TABS.map(({ id, label, Icon }) => (
+        {TABS.map(({ id, label }) => {
+          const Icon = ICON[id];
+          return (
           <Tabs.Tab
             key={id}
             value={id}
@@ -113,7 +93,8 @@ export function SettingsTabs({
                 faking it would be a second typeface. */}
             <span className="meta-12_5">{label}</span>
           </Tabs.Tab>
-        ))}
+          );
+        })}
       </Tabs.List>
 
       {TABS.map(({ id }) => (

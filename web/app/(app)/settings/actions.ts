@@ -47,8 +47,11 @@ export async function setDigest(on: boolean): Promise<DigestOutcome> {
   } catch (e) {
     // The store is the only thing that can fail here, and the caller has to put
     // the switch back where it was. Saying which failure it was is the
-    // difference between "try again" and "start Postgres".
-    return { ok: false, detail: (e as Error).message };
+    // difference between "try again" and "start Postgres" -- but first line
+    // only, the same cut `sendDueDigests` makes: a driver error carries the
+    // whole failed statement after the newline, and a settings row is not where
+    // anyone reads SQL.
+    return { ok: false, detail: (e as Error).message.split('\n')[0]! };
   }
 
   revalidatePath('/settings');

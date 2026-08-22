@@ -13,7 +13,8 @@ import {
   type SettingsView,
 } from '@/lib/settings';
 import { alertsView } from '@/lib/alerts';
-import { SettingsTabs, isTabId, type TabId } from './settings-tabs';
+import { SettingsTabs } from './settings-tabs';
+import { isTabId, type TabId } from './tabs';
 import { NotificationsPanel } from './notifications-panel';
 
 export const metadata: Metadata = { title: 'Settings · Assay' };
