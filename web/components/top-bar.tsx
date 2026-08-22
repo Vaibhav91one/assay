@@ -45,7 +45,11 @@ export async function TopBar({
         {/* The collapse control the rail's header draws. It lives here because
             it has to stay reachable once the rail is collapsed to icons. */}
         <SidebarTrigger className="-ml-[4px] size-[28px] shrink-0 text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)]" />
-        <h1 className="nav-15 shrink-0 text-[var(--text-primary)]">{title}</h1>
+        {/* Truncating, not `shrink-0`. Every title used to be a word Home,
+            Runs, Schedule and could never outgrow the bar; a conversation's
+            title is the operator's own first sentence, and an unshrinkable one
+            pushed straight through Activity and Settings on a narrow window. */}
+        <h1 className="nav-15 min-w-0 truncate text-[var(--text-primary)]">{title}</h1>
         {status && <p className="meta-13 truncate text-[var(--text-secondary)]">{status}</p>}
       </div>
       <div className="flex shrink-0 items-center gap-[12px]">
