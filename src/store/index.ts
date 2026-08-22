@@ -2,10 +2,18 @@
 // queries get added when a caller wants one, not in anticipation of one.
 
 import pg from 'pg';
-import { drizzle } from 'drizzle-orm/node-postgres';
+import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { eq, and, isNull, sql } from 'drizzle-orm';
 import * as schema from './schema.js';
 import { nextRunAt } from '../schedule.js';
+import type { Evaluation } from '../runner.js';
+import type { StoredCapture } from './captures.js';
+
+// TODO(types): drizzle's `execute` hands back `Record<string, unknown>` rows,
+// so every raw-SQL read below has to name the shape it expects. These aliases
+// are that naming, kept next to the queries rather than inline.
+type Row = Record<string, any>;
+type Db = NodePgDatabase<typeof schema>;
 
 export * from './schema.js';
 export { eq, and, isNull, sql };
@@ -13,10 +21,10 @@ export { eq, and, isNull, sql };
 export const DATABASE_URL =
   process.env.DATABASE_URL || 'postgres://localhost:5432/assay';
 
-let pool;
-let db;
+let pool: pg.Pool | undefined;
+let db: Db | undefined;
 
-export function getDb() {
+export function getDb(): Db {
   if (!db) {
     pool = new pg.Pool({ connectionString: DATABASE_URL });
     db = drizzle(pool, { schema });
@@ -38,12 +46,12 @@ export async function closeDb() {
  * a half-built row and updating it later. A gap in the sequence when a run
  * throws is normal; an orphan run row with no cell would not be.
  */
-export async function reserveRunId() {
+export async function reserveRunId(): Promise<number> {
   const d = getDb();
   const { rows } = await d.execute(
     "SELECT nextval(pg_get_serial_sequence('runs','run_id'))::int AS id",
   );
-  return rows[0].id;
+  return (rows as Row[])[0]!.id;
 }
 
 /**
@@ -52,9 +60,25 @@ export async function reserveRunId() {
  * Takes the runner's result as-is rather than a bespoke shape, so the worker
  * and the webhook path write identically. `runId` comes from reserveRunId().
  */
-export async function recordRun({ runId, targetId, capture, result, proofId, groupKey, stakesRows = 0 }) {
+export async function recordRun({
+  runId,
+  targetId,
+  capture,
+  result,
+  proofId,
+  groupKey,
+  stakesRows = 0,
+}: {
+  runId: number;
+  targetId: string;
+  capture?: (StoredCapture & { url?: string | null }) | null;
+  result: Evaluation;
+  proofId: string;
+  groupKey?: string | null;
+  stakesRows?: number;
+}): Promise<number> {
   const d = getDb();
-  return d.transaction(async (tx) => {
+  return d.transaction(async (tx): Promise<number> => {
     if (capture) {
       await tx.insert(schema.captures)
         .values({ sha256: capture.sha, bytes: capture.bytes, url: capture.url })
@@ -88,7 +112,7 @@ export async function recordRun({ runId, targetId, capture, result, proofId, gro
         score: Number(r.score.toFixed(4)),
         value: (r.fp?.text || '').slice(0, 200),
       })) : null,
-      heldSinceRun: result.status.held_since_run ?? null,
+      heldSinceRun: (result.status.held_since_run as number | null) ?? null,
       groupKey: groupKey ?? null,
     });
 
@@ -96,7 +120,7 @@ export async function recordRun({ runId, targetId, capture, result, proofId, gro
       await tx.insert(schema.queueItems).values({ proofId, groupKey: groupKey ?? null, stakesRows });
     }
 
-    return run.runId;
+    return run!.runId;
   });
 }
 
@@ -107,7 +131,7 @@ export async function recordRun({ runId, targetId, capture, result, proofId, gro
  * corpus collides on the unique constraint. Re-ingesting IS a replacement, so
  * clear first. Scoped to one target: never touches anything else in the store.
  */
-export async function resetTarget(targetId) {
+export async function resetTarget(targetId: string): Promise<number> {
   const d = getDb();
   return d.transaction(async (tx) => {
     // FK order: queue_items -> field_runs -> runs.
@@ -126,7 +150,7 @@ export async function resetTarget(targetId) {
 }
 
 /** The published row for a cell, rebuilt from the store. The warehouse join. */
-export async function rowByProof(proofId) {
+export async function rowByProof(proofId: string): Promise<Record<string, unknown> | null> {
   const d = getDb();
   const [fr] = await d.select().from(schema.fieldRuns)
     .where(eq(schema.fieldRuns.proofId, proofId)).limit(1);
@@ -148,7 +172,7 @@ export async function rowByProof(proofId) {
 }
 
 /** Run history for a target, newest first. */
-export async function runsFor(targetId, limit = 50) {
+export async function runsFor(targetId?: string | null, limit = 50) {
   const d = getDb();
   const q = d.select().from(schema.runs);
   const rows = await (targetId ? q.where(eq(schema.runs.targetId, targetId)) : q);
@@ -168,7 +192,7 @@ export async function openQueue(limit = 50) {
  * considered. This is F12 -- the answer to "where did this number come from?"
  * months later, from a proof id carried on the published row.
  */
-export async function explain(proofId) {
+export async function explain(proofId: string) {
   const d = getDb();
   const [fr] = await d.select().from(schema.fieldRuns)
     .where(eq(schema.fieldRuns.proofId, proofId)).limit(1);
@@ -217,7 +241,7 @@ export async function claimDueTarget(now = new Date()) {
       WHERE next_run_at IS NOT NULL AND next_run_at <= ${now}
       ORDER BY next_run_at FOR UPDATE SKIP LOCKED LIMIT 1`);
     if (!rows.length) return null;
-    const t = rows[0];
+    const t = (rows as Row[])[0]!;
     await tx.execute(
       sql`UPDATE targets SET next_run_at = ${nextRunAt(t.cadence, now)} WHERE target_id = ${t.target_id}`,
     );
@@ -226,7 +250,7 @@ export async function claimDueTarget(now = new Date()) {
 }
 
 /** Schedule a target to run at `at` (default: now). Used to seed and to resume. */
-export async function scheduleTarget(targetId, at = new Date()) {
+export async function scheduleTarget(targetId: string, at: Date = new Date()): Promise<void> {
   await getDb().execute(sql`UPDATE targets SET next_run_at = ${at} WHERE target_id = ${targetId}`);
 }
 
@@ -239,11 +263,11 @@ export async function scheduleTarget(targetId, at = new Date()) {
  * recorded either way -- that IS the fingerprint check the schedule screen
  * promises still happens on a skipped run.
  */
-export async function lastRunFor(targetId) {
+export async function lastRunFor(targetId: string) {
   const { rows } = await getDb().execute(sql`
     SELECT run_id, status, page_bytes, page_sha
     FROM runs WHERE target_id = ${targetId} ORDER BY run_id DESC LIMIT 1`);
-  return rows[0] ?? null;
+  return ((rows as Row[])[0] ?? null) as Row | null;
 }
 
 /**
@@ -254,7 +278,7 @@ export async function lastRunFor(targetId) {
  * on `runs` rather than being read off `captures`: a healthy run keeps no
  * capture, and a gap in this series silently disarms the detector.
  */
-export async function historyFor(targetId, limit = 6) {
+export async function historyFor(targetId: string, limit = 6) {
   const { rows } = await getDb().execute(sql`
     SELECT r.run_id, r.status, r.page_bytes, fr.value IS NULL AS is_null, fr.run_id IS NOT NULL AS evaluated
     FROM runs r LEFT JOIN field_runs fr ON fr.run_id = r.run_id
@@ -265,13 +289,13 @@ export async function historyFor(targetId, limit = 6) {
   // it and no error to show for them. A skipped page is byte-identical to the
   // last evaluated one, so its null rate is that run's, carried forward.
   let carried = 0;
-  return rows.reverse().map((r) => {
+  return (rows as Row[]).reverse().map((r) => {
     if (r.evaluated) carried = r.is_null ? 1 : 0;
     return { nullRate: carried, pageBytes: r.page_bytes };
   });
 }
 
 /** Record that an episode was (or was not) delivered. A bounced alert is unread. */
-export async function markNotified(episodeId, notified) {
+export async function markNotified(episodeId: number, notified: string | null): Promise<void> {
   await getDb().execute(sql`UPDATE episodes SET notified = ${notified} WHERE episode_id = ${episodeId}`);
 }

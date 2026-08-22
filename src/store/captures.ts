@@ -15,13 +15,20 @@ import { digest } from '../runner.js';
 
 export const CAPTURE_DIR = process.env.ASSAY_CAPTURES || 'captures';
 
-const pathFor = (sha, dir) => join(dir, `${sha}.html.gz`);
+const pathFor = (sha: string, dir: string): string => join(dir, `${sha}.html.gz`);
+
+/** What `putCapture` reports back. `deduped` true is the common case. */
+export interface StoredCapture {
+  sha: string;
+  bytes: number;
+  deduped: boolean;
+}
 
 /**
  * Store a page. Returns { sha, bytes, deduped } -- deduped true when this exact
  * page was already on disk, which is the common case and the whole point.
  */
-export async function putCapture(html, dir = CAPTURE_DIR) {
+export async function putCapture(html: string, dir = CAPTURE_DIR): Promise<StoredCapture> {
   const sha = digest(html);
   const file = pathFor(sha, dir);
   try {
@@ -37,11 +44,11 @@ export async function putCapture(html, dir = CAPTURE_DIR) {
 }
 
 /** Read a page back. Throws if the capture was pruned. */
-export async function getCapture(sha, dir = CAPTURE_DIR) {
+export async function getCapture(sha: string, dir = CAPTURE_DIR): Promise<string> {
   return gunzipSync(await readFile(pathFor(sha, dir))).toString('utf8');
 }
 
 /** Is this capture still on disk? Pruned captures are a normal state, not an error. */
-export async function hasCapture(sha, dir = CAPTURE_DIR) {
+export async function hasCapture(sha: string, dir = CAPTURE_DIR): Promise<boolean> {
   try { await stat(pathFor(sha, dir)); return true; } catch { return false; }
 }
