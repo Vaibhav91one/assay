@@ -345,6 +345,67 @@
   transition: none;
 }
 
+/* The sheet idiom: a panel that comes in from an edge, and the scrim behind it.
+   The same bargain as `.motion-popup` -- a transition on Base UI's own
+   `data-starting-style` / `data-ending-style`, so a sheet dismissed before it
+   has finished opening reverses smoothly instead of snapping, and Base UI holds
+   it mounted until `getAnimations()` says the transition is done.
+
+   `--duration-reveal` in rather than `--duration-pop`: a popover appears under
+   the cursor and a sheet crosses a third of the screen, and 160ms across that
+   distance reads as a jump rather than as an arrival. `--duration-dismiss` out,
+   which is the same rule the popups follow -- arriving is worth watching land,
+   leaving is not.
+
+   `translate` rather than `transform`, so the slide composes with any transform
+   a caller puts on the panel instead of overwriting it. The direction is read
+   off `data-side`, which is the same attribute that decided which edge the
+   panel is pinned to, so the two cannot disagree. */
+.motion-sheet {
+  transition:
+    opacity var(--duration-reveal) var(--ease-glide),
+    translate var(--duration-reveal) var(--ease-glide);
+}
+
+.motion-sheet[data-starting-style],
+.motion-sheet[data-ending-style] {
+  opacity: 0;
+}
+
+.motion-sheet[data-side='right'][data-starting-style],
+.motion-sheet[data-side='right'][data-ending-style] {
+  translate: 100% 0;
+}
+
+.motion-sheet[data-side='left'][data-starting-style],
+.motion-sheet[data-side='left'][data-ending-style] {
+  translate: -100% 0;
+}
+
+.motion-sheet[data-side='top'][data-starting-style],
+.motion-sheet[data-side='top'][data-ending-style] {
+  translate: 0 -100%;
+}
+
+.motion-sheet[data-side='bottom'][data-starting-style],
+.motion-sheet[data-side='bottom'][data-ending-style] {
+  translate: 0 100%;
+}
+
+.motion-sheet[data-ending-style],
+.motion-scrim[data-ending-style] {
+  transition-duration: var(--duration-dismiss);
+}
+
+.motion-scrim {
+  transition: opacity var(--duration-reveal) var(--ease-glide);
+}
+
+.motion-scrim[data-starting-style],
+.motion-scrim[data-ending-style] {
+  opacity: 0;
+}
+
 /* The icon swap. On a button with a glyph on the left, hovering slides the
    whole row one icon-slot to the left -- the glyph leaves through the left
    edge as it fades -- while a second copy of the same glyph arrives from

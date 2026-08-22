@@ -109,6 +109,8 @@ because a transition is the right tool whenever the thing can be interrupted.
 | Class | What it does |
 |---|---|
 | `.motion-popup` | Every Base UI popup: arrives on `--duration-pop`, leaves on `--duration-dismiss`. |
+| `.motion-sheet` | A panel that comes in from an edge. Arrives on `--duration-reveal`, leaves on `--duration-dismiss`. Reads its direction off the `data-side` the sheet was already pinned by, so the two cannot disagree. |
+| `.motion-scrim` | The dim behind a sheet, on the same two durations. |
 | `.icon-swap` | The hover swap on a button with a glyph on the left. |
 | `.focus-ring` / `.focus-ring-inset` | Where the keyboard is. |
 
@@ -171,6 +173,33 @@ It sets `transform-origin: var(--transform-origin)` itself — the origin Base U
 computed for the side the popup actually opened on — so callers no longer write
 `origin-[var(--transform-origin)]` and the popup collapses back into the control
 that opened it rather than shrinking into its own middle.
+
+**`z-index` goes on the positioner, never on the popup.** Base UI gives the
+positioner `position: absolute` and leaves the popup `position: static`, and
+`z-index` on a statically positioned element is ignored outright. A popup that
+carries its own `z-50` therefore contributes no stacking level at all and paints
+with the ordinary in-flow content — underneath the sidebar rail, which is
+`position: fixed; z-index: 10`. That is what made the run strip's tooltip look
+clipped at the viewport edge on home: it was not clipped, it was behind the
+rail, and the run id at the start of the sentence was the part the rail covered.
+
+### The sheet idiom
+
+```tsx
+<Sheet open={open} onOpenChange={setOpen}>
+  <SheetTrigger>…</SheetTrigger>
+  <SheetContent side="right">…</SheetContent>
+</Sheet>
+```
+
+The same bargain as the popup idiom, on the same two data attributes, for a
+panel that crosses a third of the screen rather than appearing under the cursor.
+`--duration-reveal` in rather than `--duration-pop`, because 160ms across that
+distance reads as a jump rather than as an arrival; `--duration-dismiss` out,
+because that rule does not change with distance.
+
+It slides with `translate` rather than `transform`, so the motion composes with
+any transform the caller puts on the panel instead of overwriting it.
 
 **One trap, found by measuring.** Base UI stamps `data-instant="click"` on every
 popover opened by clicking its trigger, which is how every popover in this app

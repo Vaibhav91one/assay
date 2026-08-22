@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Split, Activity, Columns3, Clock, Blocks } from 'lucide-react';
+import { Home, Split, Activity, Columns3, Clock, Blocks, Shapes } from 'lucide-react';
 import {
   SidebarMenu,
   SidebarMenuBadge,
@@ -30,6 +30,12 @@ const NAV = [
   { href: '/runs', label: t('nav.runs'), icon: Activity, also: ['/explain'] },
   { href: '/fields', label: t('nav.fields'), icon: Columns3, also: ['/compare'] },
   { href: '/schedule', label: t('nav.schedule'), icon: Clock },
+  // `Shapes` because that is literally what the entries are: a catalogue of
+  // page shapes, not of sites and not of features. A book or a stack would
+  // read as "documentation to go and study", which is the thing this screen
+  // is trying not to be -- every entry on it ends in a button that creates a
+  // watch.
+  { href: '/library', label: t('nav.library'), icon: Shapes },
   // `Blocks` rather than a plug or a sparkle: what this screen lists is things
   // that slot into a seam the engine already has, and a plug reads as "wire up
   // an integration" while a sparkle reads as "AI happens here". Neither is what

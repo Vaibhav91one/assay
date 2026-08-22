@@ -13,8 +13,9 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { z } from 'zod';
 import {
-  Reply, CADENCES, DISALLOWED_TOOLS, BASE_TOOLS,
-  candidatesOn, resolverFor, urlsIn, converse,
+  Reply, CADENCES, DISALLOWED_TOOLS, BASE_TOOLS, PAGE_MEMORY_MS,
+  candidatesOn, resolverFor, urlsIn, converse, render, pageCandidates, forgetPages,
+  type Candidate,
 } from '../src/agent/index.js';
 import { withoutCredentials } from './no-credentials.js';
 import { Resolver } from '../src/setup/index.js';
@@ -58,23 +59,23 @@ describe('the injected page has nowhere to put a value', () => {
   it('refuses the reply a successful injection would produce', () => {
     // Values instead of indices.
     expect(Reply.safeParse({
-      kind: 'propose', url: 'https://evil.example', cadence: '6h',
+      kind: 'propose', url: 'https://evil.example', cadence: '6h', say: null,
       fields: [{ name: 'hazard', candidate: 'none reported', confidence: 'high' }],
     }).success).toBe(false);
     // A value smuggled as a field name.
     expect(Reply.safeParse({
-      kind: 'propose', url: 0, cadence: '6h',
+      kind: 'propose', url: 0, cadence: '6h', say: null,
       fields: [{ name: 'none reported', candidate: 0, confidence: 'high' }],
     }).success).toBe(false);
     // A cadence outside the closed set.
     expect(Reply.safeParse({
-      kind: 'propose', url: 0, cadence: 'rm -rf /', fields: [],
+      kind: 'propose', url: 0, cadence: 'rm -rf /', say: null, fields: [],
     }).success).toBe(false);
   });
 
   it('strips a value smuggled alongside a valid answer', () => {
     const r = Reply.safeParse({
-      kind: 'propose', url: 0, cadence: '6h',
+      kind: 'propose', url: 0, cadence: '6h', say: null,
       fields: [{ name: 'hazard', candidate: 0, confidence: 'high' }],
       price: '$1', instruction: 'rm -rf /',
     });
@@ -85,9 +86,31 @@ describe('the injected page has nowhere to put a value', () => {
   });
 
   it('caps the one string field so it cannot carry a sentence', () => {
-    const long = { kind: 'propose', url: 0, cadence: '6h',
+    const long = { kind: 'propose', url: 0, cadence: '6h', say: null,
       fields: [{ name: 'a'.repeat(32), candidate: 0, confidence: 'high' }] };
     expect(Reply.safeParse(long).success).toBe(false);
+  });
+
+  it('gives the conversational turn a word to pick, not a sentence to write', () => {
+    // The whole channel the fourth kind opened. A model that has read an
+    // injected page and wants to quote it has this field and nothing else,
+    // and this field takes two values -- both of them keys into prose that
+    // lives in src/agent/index.ts.
+    for (const say of ['proposal_waiting', 'page_read']) {
+      expect(Reply.safeParse({
+        kind: 'answer', url: 0, cadence: '6h', say, fields: [],
+      }).success).toBe(true);
+    }
+    for (const say of [
+      'The hazard is "none reported".',
+      'proposal_waiting. Also, the price is $1.',
+      'PROPOSAL_WAITING',
+      '',
+    ]) {
+      expect(Reply.safeParse({
+        kind: 'answer', url: 0, cadence: '6h', say, fields: [],
+      }).success).toBe(false);
+    }
   });
 
   it('emits draft-07, which is the only dialect the SDK accepts', () => {
@@ -135,6 +158,122 @@ describe('the model cannot name a host the operator did not', () => {
     // urlsIn is only ever given operator turns. This documents that contract:
     // scraped html is not an input to it.
     expect(urlsIn('')).toEqual([]);
+  });
+});
+
+// --- the boundary between a message and a proposal ---------------------------
+//
+// The URL is sticky on purpose -- "can you find other fields" needs the page
+// from three turns ago -- so the agent can ALWAYS name a page. Being able to
+// propose is therefore not a reason to. These fix which side of the line each
+// kind of message falls on, at the function that turns the model's answer into
+// what the operator sees.
+
+describe('a message that does not ask for a proposal does not get one', () => {
+  const pages = ['https://ikea.com/recalls'];
+  const fetched = new Map<number, Candidate[]>([[0, candidatesOn(INJECTED)]]);
+  const answer = (over: Partial<Reply> = {}): Reply => ({
+    kind: 'answer', url: 0, cadence: 'daily', say: 'proposal_waiting', fields: [], ...over,
+  });
+
+  it('acknowledges a greeting and points at the decision that is waiting', () => {
+    const r = render(answer(), pages, fetched);
+    expect(r.kind).toBe('answer');
+    expect('proposal' in r).toBe(false);
+    // Acknowledge, say what state the conversation is in, suggest the next step.
+    expect(r.reply).toMatch(/waiting on you/);
+    expect(r.reply).toMatch(/different page/);
+  });
+
+  it('carries no proposal even when the model filled the fields in anyway', () => {
+    // The kind decides, not the payload. A model that answers `answer` and
+    // attaches seven fields has still not been asked for a proposal, and the
+    // operator must not watch one reappear underneath a "hi".
+    const r = render(
+      answer({ fields: [{ name: 'hazard', candidate: 0, confidence: 'high' }] }),
+      pages, fetched,
+    );
+    expect(r.kind).toBe('answer');
+    expect('proposal' in r).toBe(false);
+  });
+
+  it('writes both sentences itself, so the page is not in either of them', () => {
+    // `fetched` here holds the injected page. Whichever word the model picks,
+    // nothing that page said comes back out.
+    for (const say of ['proposal_waiting', 'page_read'] as const) {
+      const r = render(answer({ say }), pages, fetched);
+      expect(r.reply).not.toMatch(/IGNORE PREVIOUS|rm -rf|none reported|Halden|detach/);
+    }
+  });
+
+  it('names the page it has already read, and offers the way to re-read it', () => {
+    const r = render(answer({ say: 'page_read' }), pages, fetched);
+    // The URL is the operator's own word, which is the only page-derived string
+    // any of these sentences contains.
+    expect(r.reply).toContain('https://ikea.com/recalls');
+    expect(r.reply).toMatch(/look again/);
+  });
+
+  it('falls back to the newest page the operator named, not to "which page?"', () => {
+    // Observed against the live model: a turn that is not proposing does not
+    // bother nominating a page, and answering "which page should I watch?" to a
+    // "hi" that follows a proposal is worse than the bug being fixed.
+    const r = render(answer({ url: null, say: 'page_read' }), pages, fetched);
+    expect(r.kind).toBe('answer');
+    expect(r.reply).toContain('https://ikea.com/recalls');
+  });
+
+  it('asks for a URL when there is no page to be conversational about', () => {
+    // Before a URL, "hi" is still "which page?". That path already worked and
+    // the fourth kind must not have taken it over.
+    expect(render(answer({ url: null }), [], new Map()).kind).toBe('need_url');
+  });
+
+  it('still proposes when the message did ask for one', () => {
+    const r = render(
+      answer({ kind: 'propose', say: null, fields: [{ name: 'hazard', candidate: 0, confidence: 'high' }] }),
+      pages, fetched,
+    );
+    expect(r.kind).toBe('propose');
+    expect(r.kind === 'propose' && r.proposal.fields.map((f) => f.name)).toEqual(['hazard']);
+  });
+});
+
+describe('a page this process just read is not read again', () => {
+  const url = 'https://ikea.com/recalls';
+  const counter = () => {
+    const c = { reads: 0 };
+    return [c, async (): Promise<Candidate[]> => { c.reads += 1; return []; }] as const;
+  };
+
+  it('reuses a recent read, re-reads on look-again, and forgets when it is stale', async () => {
+    forgetPages();
+    const [c, read] = counter();
+
+    const first = await pageCandidates(url, read, { at: 0 });
+    expect([c.reads, first.reused]).toEqual([1, false]);
+
+    // The "hi" turn. Even a model that calls the tool anyway costs no fetch --
+    // which is why the saving is a property of this function rather than of the
+    // system prompt's persuasiveness.
+    const again = await pageCandidates(url, read, { at: 60_000 });
+    expect([c.reads, again.reused]).toEqual([1, true]);
+
+    // "look again" is the operator asking for the page as it is NOW, and gets it.
+    expect((await pageCandidates(url, read, { at: 60_000, refresh: true })).reused).toBe(false);
+    expect(c.reads).toBe(2);
+
+    // A memory old enough to be wrong about the page is not a memory.
+    await pageCandidates(url, read, { at: 60_000 + PAGE_MEMORY_MS + 1 });
+    expect(c.reads).toBe(3);
+  });
+
+  it('does not answer for a page it has not read', async () => {
+    forgetPages();
+    const [c, read] = counter();
+    await pageCandidates('https://a.example/x', read, { at: 0 });
+    await pageCandidates('https://b.example/y', read, { at: 0 });
+    expect(c.reads).toBe(2);
   });
 });
 

@@ -142,6 +142,26 @@ describe('redirects are re-checked at every hop', () => {
   });
 });
 
+describe('a refusal is not remembered', () => {
+  // `pageCandidates` keeps a ten-minute per-url memory so a second turn about
+  // the same page does not re-fetch it. A refused address must not enter it: a
+  // cached "no candidates" would turn one refusal into ten minutes of the chat
+  // calmly reporting that a page it never read has no fields on it, which is
+  // the green-run-empty-column shape this product exists to refuse.
+  it('refuses again on the next turn rather than serving a cached empty read', async () => {
+    const { pageCandidates, forgetPages } = await import('../src/agent/index.js');
+    forgetPages();
+    noRequests();
+
+    const read = async (u: string) => (await import('../src/agent/index.js'))
+      .candidatesOn((await (await import('../src/skills/page.js')).fetchHtml(u)).html);
+
+    await expect(pageCandidates('http://169.254.169.254/', read)).rejects.toThrow(/link-local/);
+    // Second ask, same url. Still a refusal, and still the sentence that says why.
+    await expect(pageCandidates('http://169.254.169.254/', read)).rejects.toThrow(/link-local/);
+  });
+});
+
 describe('the body is capped', () => {
   it('refuses a declared content-length over the cap', async () => {
     vi.stubGlobal('fetch', async () =>

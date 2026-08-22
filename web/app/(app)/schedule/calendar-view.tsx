@@ -8,6 +8,7 @@ import { Collapse } from '@/components/motion/collapse';
 import { Stagger } from '@/components/motion/stagger';
 import { useGlide } from '@/components/motion/glide';
 import { Empty } from '@/components/empty';
+import { ProofSheet } from '@/components/proof-sheet';
 import { actionVariants } from '@/components/button';
 import {
   Dialog,
@@ -1156,9 +1157,12 @@ function CellRow({ cell, targetId }: { cell: Cell; targetId: string }) {
           {cell.value ?? <span className="caption-12">no value recorded</span>}
         </p>
       )}
-      <Link href={`/explain/${cell.proof}`} className="caption-11 w-fit text-[var(--semantic-link)] hover:underline">
+      <ProofSheet
+        proof={cell.proof}
+        className="focus-ring caption-11 w-fit rounded-[var(--radius-control)] text-[var(--semantic-link)] hover:underline"
+      >
         where this came from ›
-      </Link>
+      </ProofSheet>
     </div>
   );
 }

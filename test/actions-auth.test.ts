@@ -7,17 +7,27 @@
 // with AUTH_MODE=clerk and no session, an anonymous same-origin POST of
 // `resolveCell` reached the database and was answered from it.
 //
-// A grep for `assertOperator` would pass on an action that imports the guard and
-// forgets to await it. So every exported action in the four files is IMPORTED
-// AND CALLED here with arguments that would otherwise reach the store, and the
-// assertion is on which error came back: `Unauthorized` means the guard answered
-// first, and anything else -- a driver error, a validation message, a success --
-// means it did not.
+// WHY THE FILES ARE DISCOVERED AND NOT LISTED. This test was written with a
+// hand-written list of four action files, and it was out of date before it was
+// committed: the tracker library landed `library/actions.ts` and the proof sheet
+// landed `explain/actions.ts` on the same day, both taking operator input, both
+// unguarded. A list only covers the actions someone remembered. So the tree is
+// walked for `'use server'`, every export is called, and a new action file is
+// covered on the day it is added rather than the day someone updates a test.
 //
-// The four modules are listed by hand rather than globbed. A new action file is
-// meant to be a decision someone makes about this list.
+// Every export is called WITH NO ARGUMENTS, which is not laziness about the
+// signature -- it is the assertion. The guard is the first statement in each
+// action, so it must answer before any argument is read. Anything that gets far
+// enough to complain about its arguments has already run further than an
+// anonymous caller should get.
 
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { readdirSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join, relative } from 'node:path';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const APP = join(ROOT, 'web', 'app');
 
 // The hosted deployment's auth package is deliberately NOT a dependency (see
 // web/lib/auth.ts), so there is nothing on disk to mock -- the factory IS the
@@ -32,50 +42,68 @@ afterAll(() => {
   else process.env.AUTH_MODE = saved;
 });
 
-const decisions = () => import('../web/app/(app)/decisions/actions.js');
-const schedule = () => import('../web/app/(app)/schedule/actions.js');
-const settings = () => import('../web/app/(app)/settings/actions.js');
-const watch = () => import('../web/app/(app)/watch-actions.js');
+/**
+ * The one action file that must stay open, and why.
+ *
+ * `sign-in/actions.ts` is how a signed-out visitor signs in. Guarding it with
+ * "you must be signed in" would be a locked door with the key inside. It is on
+ * the proxy's PUBLIC list for the same reason, and test/auth.test.ts pins that
+ * list at exactly three entries.
+ */
+const PUBLIC = ['app/sign-in/actions.ts'];
 
-/** Every exported action, with arguments that would otherwise reach the store. */
-const ACTIONS: [string, () => Promise<unknown>][] = [
-  // The one an audit actually reached the database with.
-  ['decisions.resolveCell', async () => (await decisions()).resolveCell('proof-1', 'accept-new')],
-  ['decisions.undoCell', async () => (await decisions()).undoCell('proof-1')],
-  ['schedule.askForRun', async () => (await schedule()).askForRun('some-slug')],
-  ['schedule.landedSince',
-    async () => (await schedule()).landedSince('some-slug', new Date().toISOString())],
-  ['settings.setDigest', async () => (await settings()).setDigest(true)],
-  ['settings.recheckModelAccess', async () => (await settings()).recheckModelAccess()],
-  ['watch.sources', async () => (await watch()).sources()],
-  ['watch.ask', async () => (await watch()).ask('watch this page', [])],
-  ['watch.openConversation', async () => (await watch()).openConversation('watch this page')],
-  ['watch.recordTurns', async () => (await watch()).recordTurns(1, [])],
-  ['watch.build',
-    async () => (await watch()).build({ url: 'https://example.com/', cadence: 'daily', fields: [] }, [])],
-  ['watch.describeFields', async () => (await watch()).describeFields({
-    url: 'https://example.com/', cadence: 'daily', fields: [{ name: 'price', example: '10' }],
-  })],
-];
+/** Every `'use server'` module under web/app, found by walking rather than listed. */
+function actionFiles(dir = APP): string[] {
+  const out: string[] = [];
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    const p = join(dir, e.name);
+    if (e.isDirectory()) { out.push(...actionFiles(p)); continue; }
+    if (!e.name.endsWith('.ts') && !e.name.endsWith('.tsx')) continue;
+    // The directive has to be the first statement in the module, so this is the
+    // same thing Next itself keys on.
+    if (/^\s*(['"])use server\1/.test(readFileSync(p, 'utf8'))) out.push(p);
+  }
+  return out;
+}
+
+const FILES = actionFiles()
+  .map((p) => relative(join(ROOT, 'web'), p))
+  .filter((p) => !PUBLIC.includes(p))
+  .sort();
 
 describe('AUTH_MODE=clerk, no session', () => {
-  it('found every action to check', () => {
-    // The list is hand-written, so it can rot by omission. This is the reminder.
-    expect(ACTIONS.length).toBe(12);
+  it('found the action files to check', () => {
+    // Not an exact list -- that is the thing this test stopped relying on. A
+    // floor, so a walk that silently finds nothing cannot pass.
+    expect(FILES.length).toBeGreaterThanOrEqual(6);
+    // The one an audit actually reached the database with, and the two the
+    // merge added, named so a refactor that moves them is visible here.
+    expect(FILES).toContain('app/(app)/decisions/actions.ts');
+    expect(FILES).toContain('app/(app)/library/actions.ts');
+    expect(FILES).toContain('app/(app)/explain/actions.ts');
   });
 
-  it.each(ACTIONS)('%s refuses before touching the store', async (name, call) => {
+  it.each(FILES)('%s refuses every export before touching the store', async (rel) => {
     const { Unauthorized } = await import('../web/lib/auth.js');
-    const err = await call().then(
-      (value) => ({ kind: 'returned' as const, value }),
-      (e: Error) => ({ kind: 'threw' as const, value: e }),
-    );
+    const mod = await import(join(ROOT, 'web', rel));
 
-    expect(err.kind, `${name} answered an anonymous caller instead of refusing`).toBe('threw');
-    // Specifically the guard. A store error here would mean the action ran and
-    // merely happened to fail, which is not the property being asserted.
-    expect(err.value, `${name} failed for a reason other than authorisation`)
-      .toBeInstanceOf(Unauthorized);
+    const exported = Object.entries(mod).filter(([, v]) => typeof v === 'function');
+    expect(exported.length, `${rel} exports no callable action`).toBeGreaterThan(0);
+
+    for (const [name, fn] of exported) {
+      const outcome = await (fn as () => Promise<unknown>)().then(
+        (value) => ({ kind: 'returned' as const, value }),
+        (e: Error) => ({ kind: 'threw' as const, value: e }),
+      );
+
+      expect(outcome.kind, `${rel} ${name} answered an anonymous caller instead of refusing`)
+        .toBe('threw');
+      // Specifically the guard. A store error or an argument complaint here
+      // would mean the action ran and merely happened to fail, which is not the
+      // property being asserted.
+      expect(outcome.value, `${rel} ${name} failed for a reason other than authorisation`)
+        .toBeInstanceOf(Unauthorized);
+    }
   });
 });
 

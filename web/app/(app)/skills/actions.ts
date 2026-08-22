@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { statesOf, type SkillState } from 'assay/engine/skills/index';
 import { enabled, enable, disable } from 'assay/engine/skills/store';
+import { assertOperator } from '@/lib/auth';
 
 export type { SkillState };
 
@@ -16,6 +17,7 @@ export type { SkillState };
  * written in the registry, so there is no path by which a value reaches a page.
  */
 export async function list(): Promise<SkillState[]> {
+  await assertOperator();
   return statesOf(await enabled());
 }
 
@@ -29,6 +31,9 @@ export async function list(): Promise<SkillState[]> {
  * when it is not.
  */
 export async function setEnabled(id: string, on: boolean): Promise<SkillState[]> {
+  // Turning a connector on is a decision with a bill attached. It is the
+  // operator's decision.
+  await assertOperator();
   if (on) await enable(id);
   else await disable(id);
   revalidatePath('/skills');
