@@ -12,6 +12,11 @@ import { Popover } from '@base-ui/react/popover';
  *
  * Base UI, not the Radix half of `components/ui` -- it is what `sidebar.tsx`
  * and `tooltip.tsx` already compose with, and it is already a dependency.
+ *
+ * The popup uses `motion-pop-in` from `app/motion.css` rather than its own
+ * numbers -- see `docs/MOTION.md`. Origin is Base UI's `--transform-origin`,
+ * which it sets to the side the popup actually opened on, so the panel grows
+ * out of the `›` rather than out of its own middle.
  */
 export function Disclosure({
   label,
@@ -24,12 +29,12 @@ export function Disclosure({
 }) {
   return (
     <Popover.Root>
-      <Popover.Trigger className="meta-12_5 w-fit cursor-pointer text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-link)]">
+      <Popover.Trigger className="press-row meta-12_5 w-fit cursor-pointer text-left text-[var(--text-secondary)] transition-colors duration-[var(--duration-tint)] hover:text-[var(--text-primary)] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-link)]">
         {label} ›
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Positioner sideOffset={8} align={align} className="z-50">
-          <Popover.Popup className="max-h-[60vh] w-[360px] overflow-auto rounded-[var(--radius-card)] bg-[var(--surface-card)] p-[20px] shadow-elevation-floating">
+          <Popover.Popup className="motion-pop-in max-h-[60vh] w-[360px] origin-[var(--transform-origin)] overflow-auto rounded-[var(--radius-card)] bg-[var(--surface-card)] p-[20px] shadow-elevation-floating">
             {children}
           </Popover.Popup>
         </Popover.Positioner>

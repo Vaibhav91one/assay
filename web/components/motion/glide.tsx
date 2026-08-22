@@ -36,19 +36,23 @@ export function useGlide<T extends HTMLElement = HTMLElement>(
 ): Glide<T> {
   const rows = useRef<(T | null)[]>([]);
   const [box, setBox] = useState<{ top: number; height: number } | null>(null);
-  // The source library only ever shows the band once a row has been engaged,
-  // and that is worth keeping: a highlight that fades in at mount claims a
-  // selection the user has not made. Once engaged it stays engaged, so leaving
-  // the list does not make it flash out and back in.
-  const engaged = useRef(false);
+  // A band that travels on its first appearance slides in from top:0, which
+  // reads as a selection sweeping down from nowhere. So the first placement is
+  // instant and only later moves are animated. This flips in useEffect, not in
+  // the layout effect above, because it must not be true during the render
+  // that first positions the band -- one paint later is exactly right.
+  const placed = useRef(false);
 
   useIsomorphicLayoutEffect(() => {
     rows.current.length = length;
     const el = activeIndex == null ? null : rows.current[activeIndex];
     if (!el) return; // keep the last box so the band fades out in place
-    engaged.current = true;
     setBox({ top: el.offsetTop, height: el.offsetHeight });
   }, [activeIndex, length]);
+
+  useEffect(() => {
+    if (box) placed.current = true;
+  }, [box]);
 
   const visible = activeIndex != null && box != null;
 
@@ -60,11 +64,16 @@ export function useGlide<T extends HTMLElement = HTMLElement>(
       top: box?.top ?? 0,
       height: box?.height ?? 0,
       opacity: visible ? 1 : 0,
-      // Before the first engagement there is nothing to travel from, so the
-      // band must appear where it is rather than slide in from row zero.
-      transition: engaged.current
-        ? 'top var(--duration-glide) var(--ease-glide), height var(--duration-glide) var(--ease-glide), opacity var(--duration-pop) var(--ease-glide)'
-        : 'none',
+      // Opacity always transitions -- the band fades in where it belongs. Top
+      // and height only once there is a previous position to travel from.
+      transition: [
+        'opacity var(--duration-pop) var(--ease-glide)',
+        placed.current
+          ? 'top var(--duration-glide) var(--ease-glide), height var(--duration-glide) var(--ease-glide)'
+          : '',
+      ]
+        .filter(Boolean)
+        .join(', '),
     },
   };
 }
