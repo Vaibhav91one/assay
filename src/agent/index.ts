@@ -64,9 +64,19 @@ const clean = (s: string | null | undefined): string => (s || '').replace(/\s+/g
 /**
  * The model. Opus tier per docs/STACK.md, which assigns this surface the
  * strongest model because it is the one doing open-ended interpretation.
- * Overridable so an operator can trade cost for judgement without a code change.
+ *
+ * `claude-opus-5` carries NO date suffix and that is not an omission: from the
+ * 4.6 generation on, a dateless id IS the pinned snapshot rather than an
+ * evergreen pointer, so appending a date would name a model that does not
+ * exist. (Contrast `claude-haiku-4-5-20251001` in src/ai/model.ts, which is
+ * pre-4.6 and genuinely an alias, so pinning the dated form there is stricter.)
+ *
+ * Overridable because this is the expensive surface and the trade is the
+ * operator's to make: a per-turn Opus call is a very different operating profile
+ * from the per-field Haiku call `src/ai` makes, and docs/AI-AND-AGENTS.md 7
+ * lists cost as unestimated.
  */
-const DEFAULT_MODEL = process.env.ASSAY_CHAT_MODEL || 'claude-opus-4-5';
+const DEFAULT_MODEL = process.env.ASSAY_CHAT_MODEL || 'claude-opus-5';
 
 /** Cadences the scheduler can act on. A closed set, so the reply cannot invent one. */
 export const CADENCES = ['hourly', '6h', '12h', 'daily', 'weekly'] as const;
@@ -207,22 +217,42 @@ export interface Proposal {
 }
 
 export type ChatResult =
-  | { kind: 'manual'; model_configured: false; reply: string; urls: string[] }
+  | { kind: 'manual'; model_configured: boolean; reply: string; urls: string[] }
   | { kind: 'need_url' | 'need_fields'; model_configured: true; reply: string; urls: string[] }
   | { kind: 'propose'; model_configured: true; reply: string; urls: string[]; proposal: Proposal };
 
 /**
- * What Assay says when it has no model.
+ * What Assay says when it cannot propose. Two different facts, two sentences.
  *
- * Not an error and not an empty proposal: the manual path is a real path, and
- * the honest thing is to name it. docs/APP-DESIGN.md 7.2 -- "a model only ever
- * proposes; the gate decides", so nothing about the product's guarantees
- * changes here, only the convenience of not typing the contract yourself.
+ * Collapsing them is the defect that hid the draft-07 bug for a whole release:
+ * a request that failed on every call was indistinguishable from a key nobody
+ * had set, so a permanently broken path looked like a supported configuration.
+ * `model_configured` therefore reports what is actually true, and an operator
+ * who HAS set a key is told the call failed rather than that they have not set
+ * one.
+ *
+ * Neither is an error and neither is an empty proposal. The manual path is a
+ * real path -- docs/APP-DESIGN.md 7.2, "a model only ever proposes; the gate
+ * decides" -- so nothing about the product's guarantees changes here, only the
+ * convenience of not typing the contract yourself.
  */
-const MANUAL =
+const NO_KEY =
   'No model is configured, so I cannot read the page and suggest fields. '
   + 'Assay still works: set ANTHROPIC_API_KEY to turn this box on, or describe '
   + 'the fields yourself and Assay will watch them.';
+
+const UNREACHABLE =
+  'I could not get an answer from the model just now. Describe the fields '
+  + 'yourself and Assay will watch them -- the gate, the queue and the proof '
+  + 'records are unaffected.';
+
+/** The manual result, telling the truth about which of the two happened. */
+const manual = (urls: string[]): ChatResult => ({
+  kind: 'manual',
+  model_configured: hasKey(),
+  reply: hasKey() ? UNREACHABLE : NO_KEY,
+  urls,
+});
 
 /**
  * Assay's own tools, as an in-process MCP server.
@@ -329,7 +359,7 @@ export async function converse(
   const pages = urlsIn([...history.filter((h) => h.role === 'operator').map((h) => h.text), message].join('\n'));
 
   if (!hasKey()) {
-    return { kind: 'manual', model_configured: false, reply: MANUAL, urls: pages };
+    return manual(pages);
   }
 
   const transcript = [
@@ -365,22 +395,43 @@ export async function converse(
         maxTurns: 8,
         // Property 3. One Zod schema is both the grammar and the validator, so
         // they cannot drift -- the same rule src/ai/model.ts follows.
-        outputFormat: { type: 'json_schema', schema: z.toJSONSchema(Reply) as Record<string, unknown> },
+        //
+        // `target: 'draft-7'` is not a preference. The SDK validates against
+        // JSON Schema draft-07 and REJECTS a schema declaring anything newer;
+        // Zod 4 emits 2020-12 unless told otherwise. The SDK's types cannot
+        // catch it -- `schema` is `Record<string, unknown>`, which accepts
+        // anything -- so the bare call fails on every request while looking
+        // exactly like an unconfigured key. It shipped that way once already;
+        // see 4bd2c3e. (code.claude.com/docs/en/agent-sdk/structured-outputs)
+        outputFormat: {
+          type: 'json_schema',
+          schema: z.toJSONSchema(Reply, { target: 'draft-7' }) as Record<string, unknown>,
+        },
         ...(abort ? { abortController: abort } : {}),
       },
     });
     for await (const m of q) {
       if (m.type === 'result' && m.subtype === 'success') raw = m.structured_output;
     }
-  } catch {
-    return { kind: 'manual', model_configured: false, reply: MANUAL, urls: pages };
+  } catch (err) {
+    // Degrading to the manual path must not be silent when the cause is OURS.
+    // "No model configured" and "we sent the model something it could not
+    // accept" produce the same screen, and the second is a bug that would
+    // otherwise look like a supported configuration forever -- which is exactly
+    // how the draft-07 defect above survived review. Non-fatal, because a broken
+    // model path must not take the setup surface down, but never quiet.
+    console.error('[assay/agent] model call failed, degrading to the manual path:', err);
+    return manual(pages);
   }
 
   const parsed = Reply.safeParse(raw);
   if (!parsed.success) {
     // A reply that does not validate is no proposal. It is NOT an empty
-    // proposal, and it must not become one.
-    return { kind: 'manual', model_configured: false, reply: MANUAL, urls: pages };
+    // proposal, and it must not become one. Also ours to see: a schema the model
+    // cannot satisfy is a schema we wrote wrong.
+    console.error('[assay/agent] reply failed validation, degrading to the manual path:',
+      z.prettifyError(parsed.error));
+    return manual(pages);
   }
   return render(parsed.data, pages, fetched);
 }
