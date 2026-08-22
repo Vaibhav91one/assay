@@ -6,7 +6,7 @@ import { createKey } from '../src/api/keys.js';
 import { closeDb } from '../src/store/index.js';
 
 const name = process.argv.slice(2).join(' ').trim();
-if (!name) { console.error('usage: node tools/apikey.js "<name>"'); process.exit(1); }
+if (!name) { console.error('usage: npm run apikey -- "<name>"'); process.exit(1); }
 
 const k = await createKey(name);
 console.log(`\n  ${k.key}\n`);

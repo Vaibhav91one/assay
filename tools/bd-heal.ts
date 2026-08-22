@@ -56,8 +56,8 @@ Auth: BRIGHTDATA_API_TOKEN in the environment. Never printed, never written.
 // --- args -------------------------------------------------------------------
 
 const argv = process.argv.slice(2);
-const flag = (n) => argv.includes(`--${n}`);
-const arg = (n, d = null) => {
+const flag = (n: any) => argv.includes(`--${n}`);
+const arg = (n: any, d: any = null) => {
   const i = argv.indexOf(`--${n}`);
   return i > -1 && argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : d;
 };
@@ -80,9 +80,9 @@ const TOKEN = process.env.BRIGHTDATA_API_TOKEN;
  * script writes raw bodies to disk verbatim, and "verbatim" plus "secret" is how
  * credentials end up in a repo. Everything printed or written goes through here.
  */
-const redact = (s) =>
+const redact = (s: any) =>
   TOKEN && typeof s === 'string' ? s.split(TOKEN).join('[REDACTED]') : s;
-const safeJson = (obj) => redact(JSON.stringify(obj, null, 2));
+const safeJson = (obj: any) => redact(JSON.stringify(obj, null, 2));
 
 function requireToken() {
   if (!TOKEN) {
@@ -105,7 +105,7 @@ function requireCollector() {
 
 /** Returns the RAW text alongside the parsed body. The raw text is what goes in
  *  the transcript -- parsing is a convenience, not the record. */
-async function call(method, path, body) {
+async function call(method: any, path: any, body?: any) {
   const res = await fetch(`${API}/${COLLECTOR}/${path}`, {
     method,
     headers: {
@@ -116,7 +116,7 @@ async function call(method, path, body) {
     signal: AbortSignal.timeout(60_000),
   });
   const text = await res.text();
-  let json = null;
+  let json: any = null;
   try {
     json = JSON.parse(text);
   } catch {
@@ -125,10 +125,10 @@ async function call(method, path, body) {
   return { http: res.status, ok: res.ok, raw: redact(text), json };
 }
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const sleep = (ms: any) => new Promise((r) => setTimeout(r, ms));
 const stamp = () => new Date().toISOString();
 
-async function save(transcript) {
+async function save(transcript: any) {
   await mkdir(dirname(OUT), { recursive: true });
   await writeFile(OUT, safeJson(transcript));
 }
@@ -157,11 +157,11 @@ async function save(transcript) {
  * violated, and must never be counted as one.
  */
 const N_A = null;
-const mark = (v) => (v === N_A ? 'N/A ' : v ? 'PASS' : 'FAIL');
+const mark = (v: any) => (v === N_A ? 'N/A ' : v ? 'PASS' : 'FAIL');
 
-function acceptance(row) {
+function acceptance(row: any) {
   const t = row?.recall_title ?? null;
-  const norm = (s) => String(s ?? '').replace(/\s+/g, ' ').trim().toLowerCase();
+  const norm = (s: any) => String(s ?? '').replace(/\s+/g, ' ').trim().toLowerCase();
   // recall_title and title_on_detail are produced by DIFFERENT pipeline stages:
   // the listing step emits recall_title, the detail step emits title_on_detail.
   // A preview covering only the listing step has no title_on_detail key at all,
@@ -187,20 +187,20 @@ function acceptance(row) {
  *  candidate counts as data only when every value is a primitive. Returns the
  *  tally as well as the row: which rows were considered, and how many were thrown
  *  out as schema, is part of the answer. */
-function findRow(node) {
-  const considered = [];
+function findRow(node: any) {
+  const considered: any[] = [];
   (function walk(n, depth) {
     if (!n || typeof n !== 'object' || depth > 8) return;
     if (!Array.isArray(n) && 'recall_title' in n) considered.push(n);
     for (const v of Array.isArray(n) ? n : Object.values(n)) walk(v, depth + 1);
   })(node, 0);
-  const isData = (o) => Object.values(o).every((v) => v === null || typeof v !== 'object');
+  const isData = (o: any) => Object.values(o).every((v) => v === null || typeof v !== 'object');
   const rows = considered.filter(isData);
   return { row: rows[0] ?? null, considered: considered.length, schema: considered.length - rows.length };
 }
 
 /** Prints the four rules and returns true unless a rule actually FAILED. */
-function report(row, indent) {
+function report(row: any, indent: any) {
   let failed = 0;
   let na = 0;
   for (const [rule, verdict, why] of acceptance(row)) {
@@ -227,7 +227,10 @@ async function cmdHeal() {
   }
 
   const customInput = arg('custom-input');
-  const transcript = {
+  // TODO(types): the transcript is a growing record of an undocumented
+  // vendor API's responses. Typing it would be asserting a shape the vendor
+  // has not published, which is the opposite of what this file exists to do.
+  const transcript: any = {
     collector: COLLECTOR,
     prompt,
     custom_input: customInput ? JSON.parse(customInput) : undefined,
@@ -276,7 +279,7 @@ async function cmdHeal() {
     const status = p.json?.status ?? `<http ${p.http}, unparsed>`;
     const step = p.json?.step ?? null;
     const key = `${status}${step ? `/${step}` : ''}`;
-    if (!transcript.statuses_seen.some((s) => s.key === key)) {
+    if (!transcript.statuses_seen.some((s: any) => s.key === key)) {
       transcript.statuses_seen.push({ key, status, step, first_seen_at: at, poll: n });
       console.log(`  ${at}  poll ${n}  NEW STATUS  ${key}`);
     } else {
@@ -297,7 +300,7 @@ async function cmdHeal() {
   if (!transcript.gate.reached) {
     transcript.outcome = 'timed_out_before_gate';
     console.log(`\n  timed out after ${Math.round(MAX_MS / 60000)} min without reaching the gate.`);
-    console.log(`  statuses observed: ${transcript.statuses_seen.map((s) => s.key).join(', ') || 'none'}`);
+    console.log(`  statuses observed: ${transcript.statuses_seen.map((s: any) => s.key).join(', ') || 'none'}`);
   }
 
   transcript.finished_at = stamp();
@@ -322,7 +325,7 @@ async function cmdHeal() {
 
 /** The only place resume_automation_job is called. Reached only from --approve
  *  or --reject, which cmdHeal cannot invoke. */
-async function resume(message) {
+async function resume(message: any) {
   requireToken();
   requireCollector();
   const body = message ? { message: true, auto_save: !flag('no-save') } : { message: false };
@@ -337,7 +340,7 @@ async function cmdVerify() {
   try {
     transcript = JSON.parse(await readFile(OUT, 'utf8'));
   } catch (err) {
-    console.error(`\nerror: cannot read transcript ${OUT}: ${err.message}\n`);
+    console.error(`\nerror: cannot read transcript ${OUT}: ${(err as Error).message}\n`);
     process.exit(2);
   }
   const { row, considered, schema } = findRow(transcript.preview ?? transcript);

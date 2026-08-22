@@ -28,7 +28,7 @@ import {
 const args = process.argv.slice(2);
 const ONCE = args.includes('--once');
 const POLL_MS = (Number(args[args.indexOf('--poll') + 1]) || 30) * 1000;
-const sha16 = (s) => createHash('sha256').update(s || '').digest('hex').slice(0, 16);
+const sha16 = (s: any) => createHash('sha256').update(s || '').digest('hex').slice(0, 16);
 
 let stopping = false;
 for (const sig of ['SIGTERM', 'SIGINT']) {
@@ -43,7 +43,7 @@ for (const sig of ['SIGTERM', 'SIGINT']) {
  * fetch. The runner takes this as a parameter, so a Bright Data webhook can
  * supply its own and still get identical detection and gating.
  */
-function fetcherFor(url) {
+function fetcherFor(url: any) {
   if (url.startsWith('corpus://')) {
     const site = url.slice('corpus://'.length).split('/')[0];
     return async () => {
@@ -62,7 +62,7 @@ function fetcherFor(url) {
 }
 
 /** Rebuild the baseline from the target's contract. */
-async function baselineFor(target, $) {
+async function baselineFor(target: any, $: any) {
   const el = pickTarget($, target.contract.resolver);
   if (!el) throw new Error('no target element in the capture');
   const golden = await putCapture($.html());
@@ -75,7 +75,7 @@ async function baselineFor(target, $) {
 }
 
 /** Email first, webhook as the fallback. Never fatal to the run. */
-async function notifyBreak({ target, field, diagnosis, runId, episodeId }) {
+async function notifyBreak({ target, field, diagnosis, runId, episodeId }: any) {
   const to = process.env.ASSAY_MAIL_TO;
   try {
     await send({
@@ -93,20 +93,20 @@ async function notifyBreak({ target, field, diagnosis, runId, episodeId }) {
           url: hook, secret: process.env.ASSAY_WEBHOOK_SECRET || '',
           event: 'episode.opened', data: { target, field, diagnosis, run: runId },
         });
-        await markNotified(episodeId, `webhook (email failed: ${e.message})`);
+        await markNotified(episodeId, `webhook (email failed: ${(e as Error).message})`);
         return 'webhook';
       } catch (e2) {
-        await markNotified(episodeId, `undelivered: ${e.message} / ${e2.message}`);
+        await markNotified(episodeId, `undelivered: ${(e as Error).message} / ${(e2 as Error).message}`);
         return 'undelivered';
       }
     }
-    await markNotified(episodeId, `undelivered: ${e.message}`);
+    await markNotified(episodeId, `undelivered: ${(e as Error).message}`);
     return 'undelivered';
   }
 }
 
 /** One target, start to finish. Returns a short line for the log. */
-async function runOne(target) {
+async function runOne(target: any) {
   const { targetId, contract } = target;
   const fetchPage = fetcherFor(target.url);
   const { $ } = await fetchPage();
@@ -187,7 +187,7 @@ const main = async () => {
       if (!target) break;
       claimed++;
       try { console.log(await runOne(target)); }
-      catch (e) { console.error(`${target.targetId}  failed: ${e.message}`); }
+      catch (e) { console.error(`${target.targetId}  failed: ${(e as Error).message}`); }
     }
     if (ONCE || stopping) { if (!claimed) console.log('nothing due'); break; }
     await new Promise((r) => setTimeout(r, POLL_MS));

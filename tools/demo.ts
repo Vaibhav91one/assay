@@ -17,26 +17,26 @@ import { pickTarget } from '../src/target.js';
 const SITE = 'ikea';
 const TAU = 0.6;
 const DELTA = 0.16;
-const clean = (s) => (s || '').replace(/\s+/g, ' ').trim();
-const sha = (s) => createHash('sha256').update(s).digest('hex').slice(0, 16);
+const clean = (s: any) => (s || '').replace(/\s+/g, ' ').trim();
+const sha = (s: any) => createHash('sha256').update(s).digest('hex').slice(0, 16);
 
 // ponytail: fourth copy of this finder (run.js, heal-demo.js, selftest.js have
 // their own) -- extract to src/ if a fifth appears
 
 const page = async () => {
   const files = (await readdir(`corpus/${SITE}`)).filter((f) => f.endsWith('.html')).sort();
-  const file = files.at(-1);
+  const file = files.at(-1)!;
   const html = await readFile(`corpus/${SITE}/${file}`, 'utf8');
   const $ = load(html);
   $('script,style,noscript').remove();
   return { $, file };
 };
 
-function breakAndDecide(mutationId, target) {
+function breakAndDecide(mutationId: any, target: any) {
   return page().then(({ $, file }) => {
     const el = pickTarget($);
     markTarget($, el);
-    const m = MUTATIONS.find((x) => x.id === mutationId);
+    const m = MUTATIONS.find((x) => x.id === mutationId)!;
     m.apply($, el);
     const g = healGated($, target, { tau: TAU, delta: DELTA, limit: 5 });
     const run = file.slice(0, 8);

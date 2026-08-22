@@ -18,10 +18,10 @@ const OUT = path.resolve('corpus');
 const FROM = '2024';
 const TO = '2026';
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const sleep = (ms: any) => new Promise((r) => setTimeout(r, ms));
 
 // IA soft-failures are HTTP 200 with an html body. Status alone proves nothing.
-function isSoftFail(body) {
+function isSoftFail(body: any) {
   if (!body || body.length < 200) return true;
   const head = body.slice(0, 3000).toLowerCase();
   return (
@@ -31,7 +31,7 @@ function isSoftFail(body) {
   );
 }
 
-async function get(url, { tries = 3 } = {}) {
+async function get(url: any, { tries = 3 } = {}) {
   for (let i = 0; i < tries; i++) {
     try {
       const res = await fetch(url, {
@@ -48,7 +48,7 @@ async function get(url, { tries = 3 } = {}) {
   }
 }
 
-async function captures(url) {
+async function captures(url: any) {
   const q = new URLSearchParams({
     url,
     output: 'json',
@@ -63,14 +63,15 @@ async function captures(url) {
     `https://web.archive.org/cdx/search/cdx?${q}` +
     `&filter=statuscode:200&filter=mimetype:text/html`;
 
-  const { body } = await get(api);
+  // `!`: the retry loop always returns on its final iteration.
+  const { body } = (await get(api))!;
   if (!body.trimStart().startsWith('[')) return []; // soft-fail, not json
   const rows = JSON.parse(body).slice(1); // row 0 is a HEADER, not data
-  return rows.map(([timestamp, original, digest]) => ({ timestamp, original, digest }));
+  return rows.map(([timestamp, original, digest]: any[]) => ({ timestamp, original, digest }));
 }
 
 async function main() {
-  const manifest = [];
+  const manifest: any[] = [];
   for (const site of SITES) {
     const dir = path.join(OUT, site.id);
     await mkdir(dir, { recursive: true });
@@ -98,7 +99,7 @@ async function main() {
 
       // the id_ suffix is load-bearing -- see header comment
       const raw = `https://web.archive.org/web/${cap.timestamp}id_/${cap.original}`;
-      const { status, body } = await get(raw);
+      const { status, body } = (await get(raw))!;
       if (status !== 200 || isSoftFail(body)) {
         console.log(`  skip ${cap.timestamp} (status ${status}, soft-fail ${isSoftFail(body)})`);
         await sleep(800);

@@ -9,15 +9,15 @@ import { rank, score, SPEC } from '../src/heal.js';
 import { MUTATIONS, markTarget, isTarget } from '../src/mutate.js';
 import { pickTarget } from '../src/target.js';
 
-const arg = (n, d) => {
+const arg = (n: any, d: any) => {
   const i = process.argv.indexOf(`--${n}`);
   return i > -1 ? Number(process.argv[i + 1]) : d;
 };
 const CAPTURES = arg('captures', 6);
 const SITES = ['mattel', 'ikea', 'chicco'];
-const clean = (s) => (s || '').replace(/\s+/g, ' ').trim();
+const clean = (s: any) => (s || '').replace(/\s+/g, ' ').trim();
 
-const fresh = async (site, file) => {
+const fresh = async (site: any, file: any) => {
   const $ = load(await readFile(`corpus/${site}/${file}`, 'utf8'));
   $('script,style,noscript').remove();
   return $;
@@ -25,9 +25,9 @@ const fresh = async (site, file) => {
 
 
 const run = async () => {
-  const failures = [];
-  const okMargins = [];
-  const badMargins = [];
+  const failures: any[] = [];
+  const okMargins: any[] = [];
+  const badMargins: any[] = [];
   let n = 0;
 
   for (const site of SITES) {
@@ -84,18 +84,18 @@ const run = async () => {
 
   console.log(`\n${n} cases, ${failures.length} wrong picks (excluding remove_field)\n`);
 
-  const stat = (a) => a.length
-    ? { min: Math.min(...a).toFixed(3), med: a.sort((x, y) => x - y)[Math.floor(a.length / 2)].toFixed(3), max: Math.max(...a).toFixed(3) }
+  const stat = (a: any) => a.length
+    ? { min: Math.min(...a).toFixed(3), med: a.sort((x: any, y: any) => x - y)[Math.floor(a.length / 2)].toFixed(3), max: Math.max(...a).toFixed(3) }
     : null;
   console.log('MARGIN separates right from wrong?');
   console.log('  correct picks  ', JSON.stringify(stat([...okMargins])));
   console.log('  WRONG picks    ', JSON.stringify(stat([...badMargins])));
   console.log('  -> if the wrong picks have LOW margins, delta can catch them.\n');
 
-  const byMut = {};
+  const byMut: any = {};
   failures.forEach((f) => { (byMut[f.mutation] ||= []).push(f); });
 
-  for (const [mut, fs] of Object.entries(byMut)) {
+  for (const [mut, fs] of Object.entries(byMut) as [string, any[]][]) {
     console.log(`\n=== ${mut}  (${fs.length} failures) ===`);
     for (const f of fs.slice(0, 4)) {
       console.log(`  ${f.site}/${f.capture}  margin ${f.margin.toFixed(4)}`);
@@ -104,11 +104,11 @@ const run = async () => {
       if (f.truthParts) {
         const diffs = Object.keys(f.chosenParts)
           .filter((k) => f.truthParts[k] !== undefined)
-          .map((k) => [k, (f.chosenParts[k] - f.truthParts[k])])
+          .map((k): [string, number] => [k, (f.chosenParts[k] - f.truthParts[k])])
           .filter(([, d]) => Math.abs(d) > 0.01)
           .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
           .slice(0, 4);
-        const w = Object.fromEntries(SPEC.map(([k, wt]) => [k, wt]));
+        const w: Record<string, number> = Object.fromEntries(SPEC.map(([k, wt]) => [k, wt]));
         console.log(`    lost on: ` + diffs.map(([k, d]) =>
           `${k} ${d > 0 ? '+' : ''}${d.toFixed(2)} (w${w[k]})`).join('  '));
       }

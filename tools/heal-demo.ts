@@ -11,20 +11,20 @@ import { pickTarget } from '../src/target.js';
 
 const [, , SITE = 'ikea', FROM = '202401', TO = '202608'] = process.argv;
 
-const parse = async (site, file) => {
+const parse = async (site: any, file: any) => {
   const $ = load(await readFile(`corpus/${site}/${file}`, 'utf8'));
   $('script,style,noscript').remove();
   return $;
 };
 
-const norm = (s) => (s || '').replace(/\s+/g, ' ').trim().toLowerCase();
+const norm = (s: any) => (s || '').replace(/\s+/g, ' ').trim().toLowerCase();
 
 /** A real recall headline, chosen the way a human would at capture time. */
 
 const run = async () => {
   const files = (await readdir(`corpus/${SITE}`)).filter((f) => f.endsWith('.html')).sort();
   const fromFile = files.find((f) => f.startsWith(FROM)) || files[0];
-  const toFile = files.find((f) => f.startsWith(TO)) || files.at(-1);
+  const toFile = files.find((f) => f.startsWith(TO)) || files.at(-1)!;
 
   const $old = await parse(SITE, fromFile);
   const $new = await parse(SITE, toFile);
@@ -41,7 +41,7 @@ const run = async () => {
   console.log(`skeleton  ${skeletonHash($old).hash}  ->  ${skeletonHash($new).hash}` +
     (skeletonHash($old).hash === skeletonHash($new).hash ? '   (template unchanged)' : '   TEMPLATE CHANGED'));
   console.log(`\ncaptured target`);
-  console.log(`  <${target.tag}>  "${target.text.slice(0, 66)}"`);
+  console.log(`  <${target.tag}>  "${(target.text || '').slice(0, 66)}"`);
   console.log(`  css classes kept ${(target.classes_stable || []).length}, dropped ${target.classes_dropped} as volatile`);
   console.log(`  abs_xpath ${target.abs_xpath.slice(0, 66)}`);
 
@@ -51,7 +51,9 @@ const run = async () => {
   console.log(`\n  original xpath resolves on new page: ${stillThere ? 'yes' : 'NO -- healing would fire'}`);
 
   const t0 = Date.now();
-  const result = heal($new, target, { limit: 5 });
+  // `!`: heal() returns null only when the page has no candidate elements at
+  // all, which cannot happen for a corpus capture this demo just parsed.
+  const result = heal($new, target, { limit: 5 })!;
   const ms = Date.now() - t0;
 
   console.log(`\nranked candidates  (${ms}ms)`);

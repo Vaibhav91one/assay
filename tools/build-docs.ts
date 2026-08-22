@@ -11,18 +11,18 @@ import { marked } from 'marked';
 
 /** Every number on the overview is read from disk at build time, never typed by hand. */
 async function facts() {
-  const j = async (p, d) => { try { return JSON.parse(await readFile(p, 'utf8')); } catch { return d; } };
+  const j = async (p: any, d: any) => { try { return JSON.parse(await readFile(p, 'utf8')); } catch { return d; } };
   const bench = await j('results/bench.json', {});
   const sweep = await j('results/sweep.json', {});
   const live  = await j('results/ikea-recalls.json', []);
-  let events = [];
+  let events: any[] = [];
   try {
     events = (await readFile('results/events.jsonl', 'utf8'))
       .split('\n').filter(Boolean).map((l) => JSON.parse(l));
   } catch {}
-  const sh = (c) => { try { return execSync(c, { encoding: 'utf8' }).trim(); } catch { return '—'; } };
+  const sh = (c: any) => { try { return execSync(c, { encoding: 'utf8' }).trim(); } catch { return '—'; } };
   const arms = bench.arms || {};
-  const pc = (a, k) => (a && a.n ? ((a[k] / a.n) * 100).toFixed(1) + '%' : '—');
+  const pc = (a: any, k: any) => (a && a.n ? ((a[k] / a.n) * 100).toFixed(1) + '%' : '—');
   return {
     arms: [
       ['naive — first tag match',   arms.naive, 'bad'],
@@ -59,17 +59,17 @@ const DOCS = [
     blurb: 'The original research and design log, including the prior-art survey.' },
 ];
 
-const esc = (s) => String(s).replace(/[&<>"']/g,
-  (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const esc = (s: any) => String(s).replace(/[&<>"']/g,
+  (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c]!);
 
-const slug = (s) => s.toLowerCase().replace(/[^\w]+/g, '-').replace(/^-|-$/g, '');
+const slug = (s: any) => s.toLowerCase().replace(/[^\w]+/g, '-').replace(/^-|-$/g, '');
 
-async function load(d) {
+async function load(d: any) {
   try {
     const md = await readFile(d.file, 'utf8');
     const info = await stat(d.file);
     // collect headings for the sidebar before rendering
-    const toc = [];
+    const toc: any[] = [];
     const seen = new Set();
     md.split('\n').forEach((line) => {
       const m = /^(#{2,3})\s+(.+?)\s*$/.exec(line);
@@ -163,8 +163,8 @@ const FINDINGS = [
    ''],
 ];
 
-function overview(f) {
-  const armRow = (a) => `
+function overview(f: any) {
+  const armRow = (a: any) => `
     <tr class="${a.tone}">
       <td>${esc(a.label)}</td>
       <td class="n">${a.n}</td>
@@ -267,7 +267,7 @@ const run = async () => {
         ${esc(d.title)}<span class="navmeta">${d.lines.toLocaleString()}</span>
       </button>
       <div class="navsub">
-        ${d.toc.filter((t) => t.level === 2).map((t) =>
+        ${d.toc.filter((t: any) => t.level === 2).map((t: any) =>
           `<a href="#${t.id}" data-doc="${d.id}">${esc(t.text)}</a>`).join('')}
       </div>
     </section>`).join('');
@@ -528,7 +528,7 @@ show(docs[0]);
   await writeFile('docs/index.html', html);
   const kb = (Buffer.byteLength(html) / 1024).toFixed(0);
   console.log(`docs/index.html  ${kb} KB`);
-  present.forEach((d) => console.log(`  ${d.title.padEnd(14)} ${String(d.lines).padStart(5)} lines, ${d.toc.filter(t => t.level === 2).length} sections`));
+  present.forEach((d) => console.log(`  ${d.title.padEnd(14)} ${String(d.lines).padStart(5)} lines, ${d.toc.filter((t: any) => t.level === 2).length} sections`));
   missing.forEach((d) => console.log(`  ${d.title.padEnd(14)} MISSING (${d.file})`));
 };
 

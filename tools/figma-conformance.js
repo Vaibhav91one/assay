@@ -1,5 +1,10 @@
 // Design conformance audit for the Assay Figma file (page `04 · Screens`).
 //
+// It stays JavaScript while the rest of the repo is TypeScript, and that is the
+// point rather than an omission: the body below ends in a top-level `return`,
+// which no ES module may contain. It is a payload for another runtime's
+// evaluator, in the same category as the generated `dist/fingerprint.js`.
+//
 // This is not a Node script. Paste the body into the Figma MCP `use_figma` tool:
 //   use_figma({ fileKey: 'FYnhhLeMulixqTTyjP7gJd',
 //               description: 'Run design conformance audit',

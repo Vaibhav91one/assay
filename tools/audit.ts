@@ -21,7 +21,7 @@ const PROMISED =
        'product_name', 'hazard', 'remedy', 'image_urls', 'recall_details_url'];
 
 // per-field expectations, the cheap way to catch "resolved but wrong"
-const EXPECT = {
+const EXPECT: Record<string, any> = {
   recall_title:    { regex: '(recall|rappel|retirada|alert)', minLen: 15 },
   title_on_detail: { regex: '(recall|rappel|retirada|alert)', minLen: 15 },
   recall_url:      { regex: '^https?://' },
@@ -29,7 +29,7 @@ const EXPECT = {
   remedy:          { minLen: 15 },
 };
 
-const isNull = (v) => v === null || v === undefined || v === '' ||
+const isNull = (v: any) => v === null || v === undefined || v === '' ||
   (Array.isArray(v) && v.length === 0);
 
 const run = async () => {
@@ -48,7 +48,7 @@ const run = async () => {
     'null-rate'.padStart(11) + '  verdict');
   console.log(line);
 
-  const findings = [];
+  const findings: any[] = [];
   for (const field of PROMISED) {
     const present = rows.filter((r) => field in r).length;
     const nonNull = rows.filter((r) => !isNull(r[field])).length;

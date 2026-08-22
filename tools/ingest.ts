@@ -29,9 +29,9 @@ const MUTATE = mIdx > -1 ? rest[mIdx + 1] : null;
 const TAU = 0.6;
 const DELTA = 0.16;
 const EXPECTED = { regex: '(recall|rappel|retirada|remedy|alert)', regexFlags: 'i', minLen: 20 };
-const sha16 = (s) => createHash('sha256').update(s || '').digest('hex').slice(0, 16);
+const sha16 = (s: any) => createHash('sha256').update(s || '').digest('hex').slice(0, 16);
 
-const parse = async (file) => {
+const parse = async (file: any) => {
   const $ = load(await readFile(`corpus/${SITE}/${file}`, 'utf8'));
   $('script,style,noscript').remove();
   return $;
@@ -61,10 +61,10 @@ const main = async () => {
     $: $0, el: el0, field: 'recall_title', expected: EXPECTED, goldenSha: golden.sha,
   });
   console.log(`baseline  ${SITE}/${files[0]}  golden ${golden.sha.slice(0, 12)}…`);
-  console.log(`          "${baseline.value.slice(0, 64)}"`);
+  console.log(`          "${(baseline.value || '').slice(0, 64)}"`);
 
-  const history = [];
-  let held = null;
+  const history: any[] = [];
+  let held: any = null;
 
   for (let i = 1; i < files.length; i++) {
     const file = files[i];

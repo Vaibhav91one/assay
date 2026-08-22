@@ -60,7 +60,7 @@ const run = async () => {
       goldenSha: (await putCapture($0.html())).sha,
     });
 
-    const history = [];
+    const history: any[] = [];
 
     for (let i = 1; i < files.length; i++) {
       const file = files[i];

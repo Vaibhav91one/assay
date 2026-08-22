@@ -17,14 +17,14 @@ import { rank } from '../src/heal.js';
 import { MUTATIONS, markTarget, isTarget, TRUTH_ATTR } from '../src/mutate.js';
 import { pickTarget } from '../src/target.js';
 
-const arg = (n, d) => {
+const arg = (n: any, d: any) => {
   const i = process.argv.indexOf(`--${n}`);
   return i > -1 ? Number(process.argv[i + 1]) : d;
 };
 const CAPTURES = arg('captures', 4);
 const SITES = ['mattel', 'ikea', 'chicco'];
 
-const fresh = async (site, file) => {
+const fresh = async (site: any, file: any) => {
   const $ = load(await readFile(`corpus/${site}/${file}`, 'utf8'));
   $('script,style,noscript').remove();
   return $;
@@ -33,7 +33,7 @@ const fresh = async (site, file) => {
 
 /** Collect the ranking facts once. Thresholds are applied later, in memory. */
 async function collect() {
-  const rows = [];
+  const rows: any[] = [];
   for (const site of SITES) {
     const files = (await readdir(`corpus/${site}`)).filter((f) => f.endsWith('.html')).sort();
     const step = Math.max(1, Math.floor(files.length / CAPTURES));
@@ -80,14 +80,14 @@ async function collect() {
 }
 
 /** Apply a (tau, delta) pair to the pre-computed rankings. */
-function evaluate(rows, tau, delta) {
+function evaluate(rows: any, tau: any, delta: any) {
   const r = { n: rows.length, correct: 0, wrong: 0, abstain_right: 0, abstain_wrong: 0 };
   for (const row of rows) {
     let decision;
     if (row.bestScore <= tau) decision = 'abstain';
     else if (row.margin <= delta) {
-      const tied = row.tiedTexts.filter((t) => row.bestScore - t.s <= delta);
-      decision = new Set(tied.map((t) => t.v)).size === 1 ? 'heal' : 'abstain';
+      const tied = row.tiedTexts.filter((t: any) => row.bestScore - t.s <= delta);
+      decision = new Set(tied.map((t: any) => t.v)).size === 1 ? 'heal' : 'abstain';
     } else decision = 'heal';
 
     if (decision === 'abstain') {
@@ -108,7 +108,7 @@ const run = async () => {
   const TAUS = [0.3, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85];
   const DELTAS = [0, 0.02, 0.05, 0.08, 0.12, 0.16, 0.2, 0.25, 0.3, 0.4];
 
-  const grid = [];
+  const grid: any[] = [];
   for (const tau of TAUS) {
     for (const delta of DELTAS) {
       const r = evaluate(rows, tau, delta);
@@ -124,7 +124,7 @@ const run = async () => {
     a.wrong - b.wrong || b.correct - a.correct || a.abstainPct - b.abstainPct);
   const best = sorted[0];
 
-  const pc = (x) => (x * 100).toFixed(1).padStart(5) + '%';
+  const pc = (x: any) => (x * 100).toFixed(1).padStart(5) + '%';
 
   console.log('VALUE-WRONG %  as a function of tau (rows) and delta (cols)');
   console.log('        ' + DELTAS.map((d) => String(d).padStart(7)).join(''));

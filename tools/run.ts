@@ -25,29 +25,29 @@ const [, , SITE = 'ikea', FROM = '202401', TO = '202608'] = process.argv;
 const TAU = 0.6;
 const DELTA = 0.16; // calibrated -- see tools/sweep.js and results/sweep.json
 
-const parse = async (site, file) => {
+const parse = async (site: any, file: any) => {
   const $ = load(await readFile(`corpus/${site}/${file}`, 'utf8'));
   $('script,style,noscript').remove();
   return $;
 };
-const clean = (s) => (s || '').replace(/\s+/g, ' ').trim();
-const sha = (s) => createHash('sha256').update(s).digest('hex').slice(0, 16);
+const clean = (s: any) => (s || '').replace(/\s+/g, ' ').trim();
+const sha = (s: any) => createHash('sha256').update(s).digest('hex').slice(0, 16);
 
 
 /** CSS selector good enough to re-run next time. What breaks on a redesign. */
-function selectorFor($, el) {
+function selectorFor($: any, el: any) {
   const a = el.attribs || {};
   if (a.id) return `#${a.id}`;
   const cls = (a.class || '').split(/\s+/).filter(Boolean);
   return cls.length ? `${el.name}.${cls[0]}` : el.name;
 }
 
-const say = (step, msg) => console.log(`  ${step.padEnd(9)} ${msg}`);
+const say = (step: any, msg: any) => console.log(`  ${step.padEnd(9)} ${msg}`);
 
 const run = async () => {
   const files = (await readdir(`corpus/${SITE}`)).filter((f) => f.endsWith('.html')).sort();
   const f1 = files.find((f) => f.startsWith(FROM)) || files[0];
-  const f2 = files.find((f) => f.startsWith(TO)) || files.at(-1);
+  const f2 = files.find((f) => f.startsWith(TO)) || files.at(-1)!;
 
   console.log(`\nASSAY  ${SITE}   run 1 = ${f1.slice(0, 8)}   run 2 = ${f2.slice(0, 8)}\n`);
 
@@ -62,7 +62,7 @@ const run = async () => {
   const skel1 = skeletonHash($1).hash;
 
   say('RUN 1', `selector  ${selector}`);
-  say('', `value     "${value1.slice(0, 58)}"`);
+  say('', `value     "${(value1 || '').slice(0, 58)}"`);
   say('', `skeleton  ${skel1}`);
   say('', `captured  ${Object.values(target).filter((v) => v !== null && v !== 0).length} non-null properties`);
 

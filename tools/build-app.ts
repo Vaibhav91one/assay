@@ -8,10 +8,10 @@
 
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 
-const readJson = async (p, dflt = null) => {
+const readJson = async (p: any, dflt: any = null) => {
   try { return JSON.parse(await readFile(p, 'utf8')); } catch { return dflt; }
 };
-const readJsonl = async (p) => {
+const readJsonl = async (p: any) => {
   try {
     return (await readFile(p, 'utf8')).split('\n').filter(Boolean)
       .map((l) => { try { return JSON.parse(l); } catch { return null; } })
@@ -29,11 +29,11 @@ const run = async () => {
   // stays dumb and the numbers stay reproducible
   const PROMISED = ['recall_title', 'recall_url', 'title_on_detail', 'date_published',
     'description', 'product_name', 'hazard', 'remedy', 'image_urls', 'recall_details_url'];
-  const isNull = (v) => v === null || v === undefined || v === '' ||
+  const isNull = (v: any) => v === null || v === undefined || v === '' ||
     (Array.isArray(v) && v.length === 0);
   const audit = PROMISED.map((f) => {
-    const present = live.filter((r) => f in r).length;
-    const nonNull = live.filter((r) => !isNull(r[f])).length;
+    const present = live.filter((r: any) => f in r).length;
+    const nonNull = live.filter((r: any) => !isNull(r[f])).length;
     return { field: f, present, nonNull, total: live.length,
       nullRate: live.length ? 1 - nonNull / live.length : 1 };
   });

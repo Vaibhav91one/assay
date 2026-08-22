@@ -53,8 +53,8 @@ with system:"brightdata" -- by hand or via tools/bd-heal.js -- and rerun with
 // --- args -------------------------------------------------------------------
 
 const argv = process.argv.slice(2);
-const flag = (name) => argv.includes(`--${name}`);
-const arg = (name, dflt = null) => {
+const flag = (name: any) => argv.includes(`--${name}`);
+const arg = (name: any, dflt: any = null) => {
   const i = argv.indexOf(`--${name}`);
   return i > -1 && argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : dflt;
 };
@@ -70,12 +70,12 @@ const ONLY = arg('variants');
 
 // --- helpers copied from the reference implementation ------------------------
 
-const clean = (s) => (s || '').replace(/\s+/g, ' ').trim();
+const clean = (s: any) => (s || '').replace(/\s+/g, ' ').trim();
 
 /** verbatim from tools/bench.js -- a real recall item, picked as a human would. */
-function pickTarget($) {
-  let best = null;
-  $('h2,h3,a,li').each((i, el) => {
+function pickTarget($: any) {
+  let best: any = null;
+  $('h2,h3,a,li').each((i: any, el: any) => {
     if (best) return;
     const t = $(el).text().replace(/\s+/g, ' ').trim();
     if (t.length < 20 || t.length > 140) return;
@@ -87,21 +87,21 @@ function pickTarget($) {
 }
 
 /** verbatim from tools/run.js -- the selector the scraper stores and re-runs. */
-function selectorFor($, el) {
+function selectorFor($: any, el: any) {
   const a = el.attribs || {};
   if (a.id) return `#${a.id}`;
   const cls = (a.class || '').split(/\s+/).filter(Boolean);
   return cls.length ? `${el.name}.${cls[0]}` : el.name;
 }
 
-async function fetchText(url) {
+async function fetchText(url: any) {
   const res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
   if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText} <- ${url}`);
   return res.text();
 }
 
 /** load + strip, in that order. Skip the strip and skeleton hashes stop comparing. */
-async function fetchDom(url) {
+async function fetchDom(url: any) {
   const $ = load(await fetchText(url));
   $('script,style,noscript').remove();
   return $;
@@ -116,10 +116,10 @@ async function fetchDom(url) {
  *   { "variants": { ... } }            (same, nested)
  * and a bare string entry is read as expect:"target" with that value.
  */
-function normaliseTruth(raw) {
+function normaliseTruth(raw: any) {
   const src = raw?.variants && typeof raw.variants === 'object' ? raw.variants : raw;
-  const out = {};
-  for (const [k, v] of Object.entries(src || {})) {
+  const out: any = {};
+  for (const [k, v] of Object.entries(src || {}) as [string, any][]) {
     if (v === null || typeof v !== 'object') {
       out[k] = { expect: 'target', value: v ?? null };
       continue;
@@ -140,7 +140,7 @@ function normaliseTruth(raw) {
  * synthetic, so a difference that survives this is a real difference, not a
  * rendering artefact.
  */
-const sameValue = (a, b) =>
+const sameValue = (a: any, b: any) =>
   a != null && b != null && clean(String(a)).toLowerCase() === clean(String(b)).toLowerCase();
 
 /**
@@ -157,7 +157,7 @@ const sameValue = (a, b) =>
  * still scored correct. We do not credit a system for guessing right, but we do
  * not punish it either -- abstaining is the safe answer, not the only right one.
  */
-function classify(decision, published, truth) {
+function classify(decision: any, published: any, truth: any) {
   if (decision === 'abstain') {
     return truth.expect === 'none' || truth.expect === 'ambiguous'
       ? 'abstained_correct'
@@ -176,7 +176,7 @@ function classify(decision, published, truth) {
  * { decision, reason, tau, delta } and NOTHING else. That is exactly the path
  * this harness exists to measure, so it must not be the path that crashes it.
  */
-function serialiseDecision($, g) {
+function serialiseDecision($: any, g: any) {
   if (!g) return null;
   return {
     decision: g.decision,
@@ -187,7 +187,7 @@ function serialiseDecision($, g) {
     tau: g.tau ?? null,
     delta: g.delta ?? null,
     candidates_scored: g.ranked?.length ?? 0,
-    ranked: (g.ranked ?? []).slice(0, 3).map((r) => ({
+    ranked: (g.ranked ?? []).slice(0, 3).map((r: any) => ({
       selector: selectorFor($, r.el),
       score: Number(r.score.toFixed(4)),
       value: clean(r.fp?.text).slice(0, 80) || null,
@@ -197,7 +197,7 @@ function serialiseDecision($, g) {
 
 // --- one variant ------------------------------------------------------------
 
-async function runVariant(variant, base, truth) {
+async function runVariant(variant: any, base: any, truth: any) {
   const $ = await fetchDom(`${ORIGIN}/v/${variant}/`);
   const skelAfter = skeletonHash($).hash;
 
@@ -216,7 +216,7 @@ async function runVariant(variant, base, truth) {
 
   // Not broken means the stored selector still works -- no heal is attempted and
   // the value the scraper publishes is simply what the selector returned.
-  let g = null;
+  let g: any = null;
   let decision = 'publish';
   let reason = 'not_broken';
   let published = resolved;
@@ -263,7 +263,7 @@ const OUTCOME_ORDER = [
   'abstained_unnecessary',
 ];
 
-async function summarise(out) {
+async function summarise(out: any) {
   let text = '';
   try {
     text = await readFile(out, 'utf8');
@@ -290,7 +290,7 @@ async function summarise(out) {
   const recs = [...latest.values()];
 
   const w = [22, 10, 12, 9, 20, 9, 22];
-  const cell = (v, i) => String(v ?? '-').slice(0, w[i]).padEnd(w[i]);
+  const cell = (v: any, i: any) => String(v ?? '-').slice(0, w[i]).padEnd(w[i]);
   const line = '-'.repeat(w.reduce((a, b) => a + b, 0));
 
   console.log(`\nHEAD TO HEAD  -  ${recs.length} records from ${out}\n`);
@@ -320,13 +320,13 @@ async function summarise(out) {
   console.log(line);
 
   // per-system tally. Built from whatever systems are present in the file.
-  const bySystem = {};
+  const bySystem: any = {};
   for (const r of recs) {
     bySystem[r.system] ||= Object.fromEntries(OUTCOME_ORDER.map((k) => [k, 0]));
     if (r.outcome in bySystem[r.system]) bySystem[r.system][r.outcome]++;
   }
   console.log('\n' + 'system'.padEnd(14) + OUTCOME_ORDER.map((o) => o.padStart(23)).join(''));
-  for (const [sys, t] of Object.entries(bySystem)) {
+  for (const [sys, t] of Object.entries(bySystem) as [string, Record<string, number>][]) {
     console.log(sys.padEnd(14) + OUTCOME_ORDER.map((o) => String(t[o]).padStart(23)).join(''));
   }
   console.log('\npublished_wrong is the headline number. Lower is better, for anyone.\n');
@@ -336,7 +336,7 @@ async function summarise(out) {
 
 /** The classifier is the only non-obvious logic here, so it gets one check. */
 function selftest() {
-  const eq = (got, want, what) => {
+  const eq = (got: any, want: any, what: any) => {
     if (got !== want) throw new Error(`${what}: got ${got}, want ${want}`);
     console.log(`  ok  ${what}`);
   };
@@ -352,7 +352,7 @@ function selftest() {
   eq(classify('publish', 'Recall of the Widget 3000', amb), 'published_correct', 'right answer on ambiguous still counts');
   // the thin no_candidates object must not crash the serialiser
   const thin = { decision: 'abstain', reason: 'no_candidates', tau: 0.6, delta: 0.16 };
-  eq(serialiseDecision(null, thin).candidates_scored, 0, 'no_candidates serialises without ranked/score');
+  eq(serialiseDecision(null as any, thin)!.candidates_scored, 0, 'no_candidates serialises without ranked/score');
   console.log('\n  all ok\n');
 }
 
@@ -367,8 +367,8 @@ const run = async () => {
 
   const truth = normaliseTruth(JSON.parse(await fetchText(`${ORIGIN}/truth.json`)));
   const variants = (ONLY ? ONLY.split(',') : Object.keys(truth))
-    .map((v) => v.trim())
-    .filter((v) => v && v !== BASELINE);
+    .map((v: string) => v.trim())
+    .filter((v: string) => v && v !== BASELINE);
 
   if (!variants.length) {
     console.error(`error: no variants to run (truth.json keys: ${Object.keys(truth).join(', ') || 'none'})`);
@@ -409,7 +409,7 @@ const run = async () => {
     } catch (err) {
       // a variant that will not fetch is a harness failure, not an abstain --
       // recording it as one would flatter whichever system was being run
-      console.log(`  ${v.padEnd(22)} FETCH/RUN ERROR: ${err.message}`);
+      console.log(`  ${v.padEnd(22)} FETCH/RUN ERROR: ${(err as Error).message}`);
     }
   }
 
