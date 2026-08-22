@@ -1,4 +1,7 @@
 import Link from 'next/link';
+import { TOP_BAR_ACTION } from './chrome';
+import { notices, outstandingCount } from '@/lib/notifications';
+import { Notifications } from './notifications';
 import { Settings } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 
@@ -13,15 +16,22 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
  * because the one-primary law does not stop at the page body. Pass `null` for
  * none -- Settings itself must not offer a button to Settings.
  */
-export function TopBar({
+export async function TopBar({
   title,
   status,
   action,
+  notifications,
 }: {
   title: string;
   status?: string;
   action?: React.ReactNode;
+  notifications?: React.ReactNode;
 }) {
+  // Fetched here rather than passed by each screen: the bell belongs to the
+  // chrome, and eight screens each remembering to thread it through is eight
+  // chances for one to forget and quietly show no badge.
+  const list = notifications === undefined ? await notices() : [];
+
   return (
     <header className="flex h-[64px] w-full items-center justify-between pl-[24px] pr-[32px]">
       <div className="flex min-w-0 items-center gap-[22px]">
@@ -31,18 +41,22 @@ export function TopBar({
         <h1 className="nav-15 shrink-0 text-[var(--text-primary)]">{title}</h1>
         {status && <p className="meta-13 truncate text-[var(--text-secondary)]">{status}</p>}
       </div>
-      {action !== undefined ? (
-        action
-      ) : (
-        <Link href="/settings" className={TOP_BAR_ACTION}>
-          <Settings size={16} strokeWidth={1.5} className="text-[var(--text-primary)]" aria-hidden />
-          <span className="meta-12_5 text-[var(--text-primary)]">Settings</span>
-        </Link>
-      )}
+      <div className="flex shrink-0 items-center gap-[12px]">
+        {/* Activity sits beside the right-hand control on every screen, so
+            "something is waiting on you" is reachable from wherever you are
+            rather than only from the one screen that lists it. */}
+        {notifications ?? <Notifications items={list} count={outstandingCount(list)} />}
+        {action !== undefined ? (
+          action
+        ) : (
+          <Link href="/settings" className={TOP_BAR_ACTION}>
+            <Settings size={16} strokeWidth={1.5} className="text-[var(--text-primary)]" aria-hidden />
+            <span className="meta-12_5 text-[var(--text-primary)]">Settings</span>
+          </Link>
+        )}
+      </div>
     </header>
   );
 }
 
-/** The outlined right-hand control, so an `action` matches the default. */
-export const TOP_BAR_ACTION =
-  'flex shrink-0 items-center gap-[8px] rounded-[var(--radius-control)] border border-[var(--border-default)] bg-[var(--surface-card)] py-[8px] pl-[12px] pr-[14px] hover:bg-[var(--surface-subtle)]';
+export { TOP_BAR_ACTION };
