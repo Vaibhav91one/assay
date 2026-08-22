@@ -41,7 +41,14 @@ export function DocLink({
   return (
     <a
       href={href}
-      aria-label={`See documentation for ${name}`}
+      // A NEW TAB, because of when this is pressed. Someone reads it while
+      // half-way through configuring a connector -- a key pasted into the
+      // environment, the restart not done -- and following it in place throws
+      // away where they were and makes them find their way back. The glyph
+      // already promised a departure; this makes the promise the harmless one.
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`See documentation for ${name} (opens in a new tab)`}
       className={actionVariants({ variant: 'quiet', className })}
     >
       See documentation

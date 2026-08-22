@@ -23,6 +23,8 @@ import { MODELS as ENGINE_MODELS, converse, type TraceEvent } from '../src/agent
 import { MODELS, MODEL_LABEL, DEFAULT_MODEL } from '../src/agent/models.js';
 import { HELD_BECAUSE, heldBecause } from '../src/reports/vocabulary.js';
 
+import { tail, turnFailed, toMarkdown, type Turn } from '../src/store/conversation-log.js';
+
 import { menuAt, applyChoice, insertSigil } from '../web/lib/composer-menu.js';
 import { frames } from '../web/lib/chat-stream.js';
 
@@ -201,6 +203,71 @@ describe('insertSigil', () => {
     // so the operator asking for one again gets one.
     expect(menuAt('@ike ', 5)).toBeNull();
     expect(insertSigil('@ike ', 5, '@')).toEqual({ value: '@ike @', caret: 6 });
+  });
+});
+
+// --- a turn that did not land -------------------------------------------------
+
+// From the live instance, and the reason this section exists. The stored
+// conversation held two `operator` turns back to back with no reply between
+// them: the first message was written to Postgres before the agent was asked,
+// the agent call was then killed by a stale server render, and the screen said
+// nothing at all -- so the operator typed it again. What made the silence
+// possible is that the transcript had no way to SAY a turn failed. An operator
+// turn with nothing after it is the same row shape whether the answer is still
+// coming or is never coming, so the screen could not draw the difference and
+// drew neither.
+describe('a transcript can say a turn failed, and not only that one is missing', () => {
+  const asked: Turn = { role: 'operator', text: 'watch https://example.com', at: '2026-08-22T19:52:45.035Z' };
+  const answered: Turn = { role: 'assay', text: 'I can watch that.', at: '2026-08-22T19:53:15.833Z' };
+
+  it('reads a question with nothing after it as unanswered, which is a turn in flight', () => {
+    // The state the live row was in, and the state the UI is entitled to draw
+    // as "still running" -- which is exactly why a failure must not look
+    // like it.
+    expect(tail([asked])).toBe('unanswered');
+  });
+
+  it('reads a recorded failure as failed, which is a state the UI can show', () => {
+    const failed = turnFailed('Assay did not answer this message.', '2026-08-22T19:52:50.000Z');
+    expect(tail([asked, failed])).toBe('failed');
+    // And the two are genuinely different values, which is the whole property:
+    // before this event existed the screen was handed the same list either way.
+    expect(tail([asked, failed])).not.toBe(tail([asked]));
+  });
+
+  it('reads an answered question as answered, failure or no failure earlier', () => {
+    const failed = turnFailed('Assay did not answer this message.', '2026-08-22T19:52:50.000Z');
+    expect(tail([asked, answered])).toBe('answered');
+    // The live shape: a failed turn, then the retype, then the reply. The
+    // conversation is answered and the retry must not still be offered.
+    expect(tail([asked, failed, asked, answered])).toBe('answered');
+  });
+
+  it('steps over the events that are not about whether an answer arrived', () => {
+    const built: Turn = { role: 'event', kind: 'built', text: 'Started watching x.', at: '2026-08-22T19:54:00.000Z' };
+    expect(tail([asked, answered, built])).toBe('answered');
+    expect(tail([asked, turnFailed('gone', 'now'), built])).toBe('failed');
+  });
+
+  it('is empty for a conversation with no turns', () => {
+    expect(tail([])).toBe('empty');
+  });
+
+  it('carries the failure into the export, where the transcript is audited', () => {
+    // The export is the only copy of this conversation that outlives the tab,
+    // and "the question was asked and never answered" is a fact about this
+    // instance. `toMarkdown` renders an event as a quoted line, so the new
+    // kind needs nothing of its own -- this asserts that it does not need it.
+    const md = toMarkdown({
+      id: 1,
+      title: 'watch',
+      scraperSlug: null,
+      turns: [asked, turnFailed('Assay did not answer this message.', 'now')],
+      createdAt: new Date(0),
+      updatedAt: new Date(0),
+    });
+    expect(md).toContain('Assay did not answer this message.');
   });
 });
 

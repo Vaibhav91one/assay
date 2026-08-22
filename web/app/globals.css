@@ -13,3 +13,60 @@ body {
   color: var(--text-primary);
   font-family: var(--font-sans);
 }
+
+/* A scroller that admits it scrolls.
+ *
+ * macOS draws overlay scrollbars: nothing is painted until the wheel turns,
+ * so a list with eleven fields in a box that shows six looks like a list with
+ * six fields. The operator on the proposal screen could not tell there was
+ * anything below the fold, which on a screen whose job is "here is everything
+ * Assay would watch" is the list lying about its own length.
+ *
+ * Styling ::-webkit-scrollbar at all opts the element out of overlay drawing,
+ * so the bar is painted for as long as the content overflows. `scrollbar-gutter:
+ * stable` reserves its width whether or not it is there, so a list that grows
+ * past the fold does not shove its own contents sideways -- which is the other
+ * half of the ask, and the half a bare ::-webkit-scrollbar rule does not give.
+ *
+ * No tabindex. The rows carry the checkboxes, so a keyboard already lands
+ * inside the box and scrolls it by moving through them; making the box itself
+ * focusable would add a stop that announces nothing. */
+.scroller-visible {
+  scrollbar-gutter: stable;
+}
+
+/* `scrollbar-width` is for Firefox and MUST NOT be set in Chrome: setting it
+   switches Chrome to the standard scrollbar path and makes it ignore every
+   ::-webkit-scrollbar rule below, which is how the first version of this shipped
+   -- `offsetWidth - clientWidth` measured 0, an overlay bar, no visible
+   scrollbar at fifteen fields. The @supports test asks whether the engine knows
+   the pseudo-element at all, so exactly one of the two branches applies. */
+@supports not selector(::-webkit-scrollbar) {
+  .scroller-visible {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-default) transparent;
+  }
+}
+
+.scroller-visible::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.scroller-visible::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* The 3px transparent border plus `background-clip: content-box` is how a
+   4px thumb gets a 10px hit target: the padding is part of the thumb for the
+   pointer and invisible to the eye. */
+.scroller-visible::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  background-clip: content-box;
+  background-color: var(--border-default);
+  border-radius: 999px;
+}
+
+.scroller-visible::-webkit-scrollbar-thumb:hover {
+  background-color: var(--text-muted);
+}

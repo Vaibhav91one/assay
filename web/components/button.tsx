@@ -70,6 +70,25 @@ export const actionVariants = cva(
           'press-wide body-13_5 h-[40px] [--action-gap:10px] gap-[var(--action-gap)] bg-[var(--accent-brand)] px-[16px] text-[var(--accent-on-primary)]',
         /** The same wide action where the verb is navigation rather than commitment. */
         link: 'press-wide body-13_5 h-[40px] [--action-gap:10px] gap-[var(--action-gap)] bg-[var(--semantic-link)] px-[16px] text-[var(--accent-on-primary)] hover:bg-[var(--semantic-link-hover)]',
+        /**
+         * Setting something going, from the bar at the top of every screen.
+         * Ask for a run.
+         *
+         * `outline`'s geometry, including the border, because it stands in that
+         * row beside Activity and Settings and a control 3px taller than its
+         * neighbours is the drift this file exists to stop. The border is the
+         * same green as the fill, so it reads as solid and still measures the
+         * same box. Green rather than `primary`'s orange because orange is the
+         * one verb per screen and Home already spends it on New scrape.
+         *
+         * White on #16a34a is 3.30:1 -- measured, not assumed. That clears
+         * WCAG's 3:1 for a user-interface component and does NOT clear 4.5:1
+         * for body text, which is the same reading `success` has carried since
+         * it shipped; the label is never the only signal, since the control
+         * also has a Play glyph and its own words.
+         */
+        start:
+          'press-row meta-12_5 [--action-gap:8px] gap-[var(--action-gap)] border border-[var(--semantic-success)] bg-[var(--semantic-success)] py-[8px] pl-[12px] pr-[14px] text-[var(--accent-on-primary)]',
         /** Committing to an answer. Use this. Green because it resolves, not because it is safe. */
         success:
           'press-row meta-12_5 h-[36px] [--action-gap:8px] gap-[var(--action-gap)] bg-[var(--semantic-success)] px-[15px] text-[var(--accent-on-primary)]',

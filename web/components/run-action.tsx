@@ -58,9 +58,12 @@ export function RunAction({
     <Dialog>
       {/* `asChild` so the trigger IS the product's Button -- press, focus ring
           and the icon swap come from the one recipe rather than from a second
-          control hand-rolled to look like it. */}
+          control hand-rolled to look like it.
+          `start`, not `outline`: this is the only control in the bar that sets
+          something going, and an outlined box said nothing about that. See the
+          variant in components/button.tsx for the green and its contrast. */}
       <DialogTrigger asChild>
-        <Button variant="outline" icon={Play} iconSize={16}>
+        <Button variant="start" icon={Play} iconSize={16}>
           Ask for a run
         </Button>
       </DialogTrigger>
