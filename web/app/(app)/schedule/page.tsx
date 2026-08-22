@@ -1,15 +1,19 @@
 import type { Metadata } from 'next';
+import { workersUp } from 'assay/store';
 import { TopBar } from '@/components/top-bar';
 import { Empty } from '@/components/empty';
 import { TimelineLanes, type Lane } from '@/components/timeline-lanes';
 import { scheduleView, until } from '@/lib/schedule';
 import { stamp } from '@/lib/when';
+import { RunNow } from './run-now';
 
 export const metadata: Metadata = { title: 'Schedule · Assay' };
 export const dynamic = 'force-dynamic';
 
 export default async function SchedulePage() {
-  const v = await scheduleView();
+  // Read together: a schedule drawn without saying whether anything is
+  // consuming it is a picture of intentions.
+  const [v, workers] = await Promise.all([scheduleView(), workersUp()]);
   const running = v.scrapers.filter((s) => !s.paused).length;
 
   const lanes: Lane[] = v.scrapers.map((s) => ({
@@ -49,14 +53,22 @@ export default async function SchedulePage() {
             </Empty>
           </div>
         ) : (
-          <TimelineLanes
-            lanes={lanes}
-            axis={['midnight', 'now', 'midnight']}
-            nowAt={(v.now.getTime() - v.dayStart.getTime()) / (v.dayEnd.getTime() - v.dayStart.getTime())}
-            legend={`filled = ran · hollow = coming up · one mark per minute${
-              v.runsToday > marks(v) ? `, so ${v.runsToday} runs sit on ${marks(v)} marks` : ''
-            }`}
-          />
+          <>
+            <TimelineLanes
+              lanes={lanes}
+              axis={['midnight', 'now', 'midnight']}
+              nowAt={(v.now.getTime() - v.dayStart.getTime()) / (v.dayEnd.getTime() - v.dayStart.getTime())}
+              legend={`filled = ran · hollow = coming up · one mark per minute${
+                v.runsToday > marks(v) ? `, so ${v.runsToday} runs sit on ${marks(v)} marks` : ''
+              }`}
+            />
+            <RunNow
+              workers={workers}
+              scrapers={v.scrapers.map((s) => ({
+                slug: s.scraper, paused: s.paused, fields: s.targets.length,
+              }))}
+            />
+          </>
         )}
       </div>
     </>

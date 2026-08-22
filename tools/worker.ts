@@ -19,7 +19,7 @@ import { recomputeField } from '../src/health/observe.js';
 import { dueDigests, markDigestSent } from '../src/reports/digest.js';
 import { deliver } from '../src/api/webhooks.js';
 import { send, breakSubject, breakBody } from '../src/notify.js';
-import { getDb, closeDb, claimDueTarget, markNotified } from '../src/store/index.js';
+import { getDb, closeDb, claimDueTarget, markNotified, holdWorkerLock } from '../src/store/index.js';
 
 const args = process.argv.slice(2);
 const ONCE = args.includes('--once');
@@ -177,6 +177,12 @@ async function sendDueDigests(): Promise<string[]> {
 
 const main = async () => {
   getDb();
+  // Held for as long as this process is willing to claim work, and dropped by
+  // Postgres the moment the connection goes -- SIGTERM, SIGKILL or a panic.
+  // Without it the schedule screen can say a target is due but cannot say
+  // whether anything is coming to take it, which makes "queued" a promise
+  // nobody is keeping.
+  const releaseLock = await holdWorkerLock();
   console.log(`worker up — polling every ${POLL_MS / 1000}s${ONCE ? ' (once)' : ''}`);
 
   do {
@@ -200,6 +206,9 @@ const main = async () => {
     await new Promise((r) => setTimeout(r, POLL_MS));
   } while (!stopping);
 
+  // Before closeDb: `pool.end()` waits for checked-out clients, and the lock
+  // is held by one.
+  releaseLock();
   await closeDb();
   console.log('worker down');
 };
