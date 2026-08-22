@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { modelAuth } from 'assay/engine/ai/model';
 import { TopBar } from '@/components/top-bar';
 import { RunStrip } from '@/components/run-strip';
 import { homeStats } from '@/lib/home';
@@ -10,13 +11,19 @@ export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
   const [stats, queue] = await Promise.all([homeStats(), openDecisions()]);
+  // Read HERE, on the server, and passed down as a string. `assay/engine/ai/model`
+  // imports the Agent SDK and pulls Node built-ins, so a `'use client'` import of
+  // it would drag them into the browser bundle -- the failure
+  // `web/components/chrome.ts` exists to document. It returns PRESENCE only;
+  // there is no value in it to pass on even by accident.
+  const auth = modelAuth();
 
   return (
     <>
       <TopBar title="Home" />
       <div className="flex flex-1 flex-col">
         <div className="flex flex-1 items-center justify-center px-[32px] py-[48px]">
-          <Watch waiting={queue.length} />
+          <Watch waiting={queue.length} auth={auth} />
         </div>
         <StatsBand stats={stats} />
       </div>

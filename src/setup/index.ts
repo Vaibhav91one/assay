@@ -207,6 +207,16 @@ export interface Created {
     /** What the page said at baseline, read from the DOM. Never from a model. */
     baseline_value: string | null;
     status: string;
+    /**
+     * Why the gate settled on that status, as the engine's own code.
+     *
+     * Carried so a caller rendering a held cell can say what held it instead of
+     * saying only that something did. It is a CODE -- `thin_margin`,
+     * `below_tau` -- and docs/APP-DESIGN.md 5b rule 5 forbids showing one raw,
+     * so a screen must put it through `heldBecause` in `src/reports/vocabulary.ts`
+     * rather than printing it. Null when the gate recorded none.
+     */
+    reason: string | null;
     next_run_at: string | null;
   }[];
 }
@@ -286,6 +296,7 @@ export async function createTarget(input: CreateInput): Promise<Created | Failur
         baseline_run: r.runId,
         baseline_value: r.result?.publishedValue ?? null,
         status: r.result?.status.status ?? 'skipped',
+        reason: r.result?.status.reason ?? null,
         next_run_at: null,
       });
     }

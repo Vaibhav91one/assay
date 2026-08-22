@@ -81,6 +81,44 @@ const DEFAULT_MODEL = process.env.ASSAY_CHAT_MODEL || 'claude-opus-5';
 /** Cadences the scheduler can act on. A closed set, so the reply cannot invent one. */
 export const CADENCES = ['hourly', '6h', '12h', 'daily', 'weekly'] as const;
 
+/**
+ * The models a browser may ask for, as a closed set.
+ *
+ * A model id arriving from the browser is untrusted input on its way into
+ * `query({ model })`. An allowlist is the whole guard: an unrecognised string is
+ * not passed through and not corrected, it simply loses to the default. There is
+ * no branch here that can reach the SDK with a name this file does not contain.
+ *
+ * `ASSAY_CHAT_MODEL` still wins where it is set, because an operator's
+ * environment outranks a browser control -- and `src/ai/model.ts` reads
+ * `ASSAY_MODEL` for the per-field path, which a browser cannot set and this does
+ * not touch.
+ *
+ * Ids read off platform.claude.com/docs/en/about-claude/models/overview on
+ * 2026-08-22, not from memory. Dateless ids from the 4.6 generation on ARE the
+ * pinned snapshot -- see the DEFAULT_MODEL note below.
+ */
+export const MODELS = [
+  'claude-opus-5',
+  'claude-sonnet-5',
+  'claude-fable-5',
+  'claude-haiku-4-5-20251001',
+] as const;
+export type Model = (typeof MODELS)[number];
+
+const isModel = (m: unknown): m is Model => MODELS.includes(m as Model);
+
+/**
+ * A cadence as it reads in a sentence.
+ *
+ * Half the vocabulary is already an adverb -- "daily" -- and half is an
+ * interval -- "6h". `every ${cadence}` is right for the second and produces
+ * "every daily" for the first. Exported because the screen prints the same
+ * phrase under the confirm button and the two must not diverge.
+ */
+export const cadencePhrase = (c: string): string =>
+  /^\d/.test(c) ? `every ${c}` : c;
+
 /** An index into a list this code built. Never a value, never a URL. */
 const Index = z.int().min(0).max(999);
 
@@ -200,6 +238,14 @@ export interface Turn {
   message: string;
   /** Prior turns, held by the caller. Stateless on this side: no session store. */
   history?: { role: 'operator' | 'assay'; text: string }[];
+  /**
+   * Which model to ask, scoped to this turn.
+   *
+   * A browser cannot set an env var, so the picker travels on the request
+   * instead. Anything not in `MODELS` is ignored rather than corrected -- see
+   * the note there. `ASSAY_CHAT_MODEL` still outranks it.
+   */
+  model?: string;
 }
 
 export interface Proposal {
@@ -254,6 +300,58 @@ const manual = (urls: string[]): ChatResult => ({
   urls,
 });
 
+// --- the trace ---------------------------------------------------------------
+
+/**
+ * One thing that actually happened, as the screen is allowed to describe it.
+ *
+ * EMITTED FROM THE TOOL HANDLERS THEMSELVES, not inferred from the model's
+ * messages. A handler that ran knows it ran, knows what it was asked for and
+ * knows what it gave back, so a row on the screen is a record of a call rather
+ * than a guess about one. There is no path here that can produce a step the
+ * engine did not take -- which is the property the trace is claiming when it
+ * shows its work, and a hardcoded stage list would be a lie in the shape of a
+ * feature.
+ *
+ * A tool that found nothing SAYS SO (`found: 0`, `ok: false`). The absence is
+ * the interesting half: docs/APP-DESIGN.md 5 calls a rendered absence a `Hole`
+ * and requires it to read as deliberate, so the renderer needs to be told the
+ * difference between "did not run" and "ran and came back empty".
+ *
+ * `detail` is composed HERE from values this file controls -- a URL the operator
+ * typed, a count this code took. Nothing the model wrote and nothing read out of
+ * a page reaches it, so the same rule that governs the reply governs the trace.
+ */
+export type Step =
+  | { kind: 'started'; model: string }
+  /** A read-only tool was called. `page` is an index into the operator's URLs. */
+  | { kind: 'tool'; tool: 'assay_watching' | 'assay_inspect'; page: number | null }
+  /** What that call came back with. `ok: false` is a real answer, not an error. */
+  | {
+      kind: 'tool_result';
+      tool: 'assay_watching' | 'assay_inspect';
+      ok: boolean;
+      /** Targets listed, or candidate elements found. Null when the call failed. */
+      found: number | null;
+      /** The page read, when there was one. The operator's own URL, never the model's. */
+      url: string | null;
+      detail: string | null;
+    }
+  /** The turn ended. `outcome` is the ChatResult's own kind, so the trace closes honestly. */
+  | { kind: 'settled'; outcome: ChatResult['kind'] };
+
+/**
+ * A step, stamped when it happened.
+ *
+ * Written as an intersection rather than `Omit<TraceEvent, 'at'>`: `Omit` over a
+ * union collapses it to the keys every member shares, which is `kind` alone, so
+ * the omitted form would silently stop type-checking the payload.
+ */
+export type TraceEvent = Step & { at: number };
+
+/** Where a trace event goes. Absent means nobody is watching and nothing is built. */
+export type OnEvent = (e: TraceEvent) => void;
+
 /**
  * Assay's own tools, as an in-process MCP server.
  *
@@ -264,8 +362,18 @@ const manual = (urls: string[]): ChatResult => ({
  * `pages` is captured in the closure rather than passed as a URL string, so the
  * model chooses a page by index out of the operator's own message. It cannot
  * name a host the operator did not.
+ *
+ * `emit` observes; it never decides. Nothing below branches on it, so a trace
+ * nobody is watching runs the identical loop -- the screen cannot change what
+ * the agent does merely by looking.
  */
-function assayTools(pages: string[], fetched: Map<number, Candidate[]>) {
+function assayTools(
+  pages: string[],
+  fetched: Map<number, Candidate[]>,
+  emit: OnEvent = () => {},
+  now: () => number = Date.now,
+) {
+  const step = (e: Step) => emit({ ...e, at: now() });
   return createSdkMcpServer({
     name: 'assay',
     version: '0.1.0',
@@ -275,7 +383,17 @@ function assayTools(pages: string[], fetched: Map<number, Candidate[]>) {
         'What Assay already watches, so you do not propose a duplicate.',
         {},
         async () => {
+          step({ kind: 'tool', tool: 'assay_watching', page: null });
           const { targets } = await listTargets();
+          // Zero is a real answer and says so. "Nothing is under watch yet" is a
+          // fact about this instance, not a failure to look.
+          step({
+            kind: 'tool_result', tool: 'assay_watching', ok: true,
+            found: targets.length, url: null,
+            detail: targets.length
+              ? `${targets.length} already under watch`
+              : 'nothing under watch yet',
+          });
           return {
             content: [{
               type: 'text' as const,
@@ -292,8 +410,13 @@ function assayTools(pages: string[], fetched: Map<number, Candidate[]>) {
         + 'could be fields. Answer later with the INDEX of an element, never its text.',
         { page: z.number().int().min(0).describe('Index into the operator\'s URLs.') },
         async ({ page }) => {
+          step({ kind: 'tool', tool: 'assay_inspect', page });
           const url = pages[page];
           if (!url) {
+            step({
+              kind: 'tool_result', tool: 'assay_inspect', ok: false, found: null, url: null,
+              detail: `no page ${page} -- the operator named ${pages.length}`,
+            });
             return {
               content: [{ type: 'text' as const, text: `No page ${page}. The operator named ${pages.length}.` }],
               isError: true,
@@ -306,6 +429,13 @@ function assayTools(pages: string[], fetched: Map<number, Candidate[]>) {
               if (!res.ok) throw new Error(`fetch ${res.status}`);
               cands = candidatesOn(await res.text());
             } catch (e) {
+              // The failure is the operator's own URL failing, so they get to see
+              // it. `fetch 404` is the whole of it -- no internal detail, and the
+              // same wording `createTarget` already uses for the same event.
+              step({
+                kind: 'tool_result', tool: 'assay_inspect', ok: false, found: null, url,
+                detail: (e as Error).message,
+              });
               return {
                 content: [{ type: 'text' as const, text: `Could not read ${url}: ${(e as Error).message}` }],
                 isError: true,
@@ -313,6 +443,12 @@ function assayTools(pages: string[], fetched: Map<number, Candidate[]>) {
             }
             fetched.set(page, cands);
           }
+          step({
+            kind: 'tool_result', tool: 'assay_inspect', ok: true, found: cands.length, url,
+            detail: cands.length
+              ? `${cands.length} element${cands.length === 1 ? '' : 's'} could be a field`
+              : 'nothing on it looks like a field',
+          });
           return {
             content: [{
               type: 'text' as const,
@@ -353,14 +489,26 @@ const SYSTEM =
  * is the answer to all of them.
  */
 export async function converse(
-  { message, history = [] }: Turn,
-  { abort }: { abort?: AbortController } = {},
+  { message, history = [], model }: Turn,
+  { abort, onEvent, now = Date.now }: { abort?: AbortController; onEvent?: OnEvent; now?: () => number } = {},
 ): Promise<ChatResult> {
   const pages = urlsIn([...history.filter((h) => h.role === 'operator').map((h) => h.text), message].join('\n'));
+  const emit: OnEvent = onEvent ?? (() => {});
+  const step = (e: Step) => emit({ ...e, at: now() });
+
+  // The browser's choice loses to the environment, and an unrecognised name
+  // loses to the default. `isModel` is the only way a caller-supplied string
+  // reaches `query` at all.
+  const chosen: string = process.env.ASSAY_CHAT_MODEL || (isModel(model) ? model : DEFAULT_MODEL);
 
   if (!hasKey()) {
+    // No model means no steps, and the trace says exactly that rather than
+    // drawing an empty frame that looks like a stall.
+    step({ kind: 'settled', outcome: 'manual' });
     return manual(pages);
   }
+
+  step({ kind: 'started', model: chosen });
 
   const transcript = [
     ...history.map((h) => `${h.role === 'operator' ? 'Operator' : 'Assay'}: ${h.text}`),
@@ -377,13 +525,13 @@ export async function converse(
     const q = query({
       prompt,
       options: {
-        model: DEFAULT_MODEL,
+        model: chosen,
         systemPrompt: SYSTEM,
         // Property 1. See the header for the quoted declarations.
         tools: BASE_TOOLS,
         disallowedTools: [...DISALLOWED_TOOLS],
         // Property 2: read-only, and the only server there is.
-        mcpServers: { assay: assayTools(pages, fetched) },
+        mcpServers: { assay: assayTools(pages, fetched, emit, now) },
         // The MCP tools still need approving, and there is no human at this end
         // to prompt. `dontAsk` auto-denies anything not listed rather than
         // hanging on a prompt nobody can answer.
@@ -421,6 +569,7 @@ export async function converse(
     // how the draft-07 defect above survived review. Non-fatal, because a broken
     // model path must not take the setup surface down, but never quiet.
     console.error('[assay/agent] model call failed, degrading to the manual path:', err);
+    step({ kind: 'settled', outcome: 'manual' });
     return manual(pages);
   }
 
@@ -431,9 +580,12 @@ export async function converse(
     // cannot satisfy is a schema we wrote wrong.
     console.error('[assay/agent] reply failed validation, degrading to the manual path:',
       z.prettifyError(parsed.error));
+    step({ kind: 'settled', outcome: 'manual' });
     return manual(pages);
   }
-  return render(parsed.data, pages, fetched);
+  const result = render(parsed.data, pages, fetched);
+  step({ kind: 'settled', outcome: result.kind });
+  return result;
 }
 
 /**
@@ -492,7 +644,7 @@ function render(r: Reply, pages: string[], fetched: Map<number, Candidate[]>): C
     kind: 'propose',
     model_configured: true,
     urls: pages,
-    reply: `I can watch ${url} every ${r.cadence} for ${named}.`
+    reply: `I can watch ${url} ${cadencePhrase(r.cadence)} for ${named}.`
       + (unsure.length ? ` I am least sure about ${unsure.join(' and ')} -- check ${unsure.length > 1 ? 'those' : 'that one'} before you confirm.` : '')
       + ' Nothing is created until you confirm.',
     proposal: { url, cadence: r.cadence, fields, create: { url, cadence: r.cadence, fields: create } },
