@@ -263,6 +263,71 @@ export async function scheduleTarget(targetId: string, at: Date = new Date()): P
 }
 
 /**
+ * The key the worker holds while it is consuming the queue.
+ *
+ * Two int4s, fixed. Advisory locks are scoped to one database, so a worker
+ * running against `assay` is correctly invisible to a web process pointed at
+ * `assay_test` -- which is the failure a heartbeat table shared by both would
+ * have had.
+ */
+export const WORKER_LOCK = { classId: 16723, objId: 1 } as const;
+
+/**
+ * Announce that this process is consuming the queue, until it stops being true.
+ *
+ * NOT a heartbeat row. A row records that a worker was alive at some timestamp,
+ * which leaves every reader to pick a staleness window and guess -- and for the
+ * width of that window a worker killed with SIGKILL still reads as present.
+ * Postgres drops an advisory lock the instant the holding connection goes away,
+ * so `workersUp()` is a fact about now rather than an inference from a clock.
+ * It needs no table, no migration, and nothing to clean up after a crash.
+ *
+ * SHARED, not exclusive: two workers are a supported shape here (the claim is
+ * `FOR UPDATE SKIP LOCKED`), so the second one must be able to say it is up
+ * too rather than being told the signal is taken. Both show in `pg_locks`.
+ *
+ * The client is taken OUT of the pool and not returned for the duration. A
+ * pooled connection is closed once it has been idle for `idleTimeoutMillis`,
+ * and closing it would drop the lock while the worker was still running --
+ * announcing a crash that had not happened. The release is returned rather
+ * than left implicit because `pool.end()` waits for checked-out clients, so it
+ * has to run before `closeDb()` or shutdown hangs.
+ */
+export async function holdWorkerLock(): Promise<() => void> {
+  getDb();
+  const client = await pool!.connect();
+  try {
+    await client.query('SELECT pg_advisory_lock_shared($1, $2)', [
+      WORKER_LOCK.classId, WORKER_LOCK.objId,
+    ]);
+  } catch (e) {
+    client.release(true);
+    throw e;
+  }
+  // `true` destroys the connection rather than returning it to the pool, which
+  // is what releases the lock. Returning it would leave the lock held by an
+  // idle pooled client and the worker would look alive after it had exited.
+  return () => client.release(true);
+}
+
+/**
+ * How many workers are consuming the queue on THIS database, right now.
+ *
+ * Zero is the answer the schedule screen exists to be able to say out loud: an
+ * enqueued run with nobody to claim it is a queued state that will never
+ * advance, and showing a spinner over that is the exact failure this product
+ * is an argument against.
+ */
+export async function workersUp(): Promise<number> {
+  const { rows } = await getDb().execute(sql`
+    SELECT count(*)::int AS n FROM pg_locks
+    WHERE locktype = 'advisory' AND granted
+      AND classid = ${WORKER_LOCK.classId} AND objid = ${WORKER_LOCK.objId}
+      AND database = (SELECT oid FROM pg_database WHERE datname = current_database())`);
+  return (rows as Row[])[0]?.n ?? 0;
+}
+
+/**
  * The most recent run for a target, or null.
  *
  * `page_sha` comes from field_runs.capture_sha256, not runs.capture_sha: a
