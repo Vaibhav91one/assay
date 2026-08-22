@@ -52,6 +52,7 @@ import { query, tool, createSdkMcpServer } from '@anthropic-ai/claude-agent-sdk'
 import { fingerprint, candidates } from '../fingerprint.js';
 import { digest, hasKey } from '../ai/model.js';
 import { listTargets, type FieldInput } from '../setup/index.js';
+import { fetchHtml } from '../skills/page.js';
 import { CADENCES, DEFAULT_MODEL as DEFAULT_MODEL_ID, isModel } from './models.js';
 
 export { hasKey } from '../ai/model.js';
@@ -387,9 +388,15 @@ function assayTools(
           let cands = fetched.get(page);
           if (!cands) {
             try {
-              const res = await fetch(url, { headers: { 'user-agent': 'assay/0.1 (+self-hosted)' } });
-              if (!res.ok) throw new Error(`fetch ${res.status}`);
-              cands = candidatesOn(await res.text());
+              // Through the one fetch seam, not a fourth copy of `fetch`. This
+              // was a bare request until 2026-08-23, which meant the chat --
+              // the product's front door -- was the one path where a url the
+              // operator pasted reached the network with no address check at
+              // all. `fetchHtml` is where the guard, the timeout and the size
+              // cap live, and going through it also means a page only an
+              // enabled connector can read is inspectable here, exactly as it
+              // already is on the describe-fields form.
+              cands = candidatesOn((await fetchHtml(url)).html);
             } catch (e) {
               // The failure is the operator's own URL failing, so they get to see
               // it. `fetch 404` is the whole of it -- no internal detail, and the

@@ -17,6 +17,16 @@ import { mkdtemp, rm, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+// `example.com` is answered here rather than by a real nameserver. The fetch
+// seam resolves a hostname before it opens anything (src/skills/page.ts), and
+// these tests are about which SOURCE supplied the bytes -- making them depend on
+// DNS would make them fail on a train. The address is the real one, and
+// test/ssrf.test.ts exercises the resolver itself with names that need no
+// network at all.
+vi.mock('node:dns/promises', () => ({
+  lookup: async () => [{ address: '93.184.216.34', family: 4 }],
+}));
+
 import { SKILLS, skillById, stateOf, statesOf } from '../src/skills/index.js';
 import { enabled, enable, disable, STORE_PATH } from '../src/skills/store.js';
 import { fetchHtml } from '../src/skills/page.js';
