@@ -11,7 +11,7 @@ flowchart TB
     web["web<br/>Next 16 · App Router<br/>serves screens, writes decisions"]
     worker["worker<br/>tools/worker.ts<br/>fetch → detect → heal → gate → publish"]
     pg[("postgres:17-alpine<br/>twelve tables<br/>volume: pgdata")]
-    caps[/"captures<br/>bind-mounted volume<br/>content-addressed by digest"/]
+    caps["captures<br/>bind-mounted volume<br/>content-addressed by digest"]
   end
 
   site["the site being watched"]

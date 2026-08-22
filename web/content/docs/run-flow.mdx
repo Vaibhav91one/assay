@@ -8,7 +8,7 @@ One pipeline, owned by `worker` and implemented in `src/runner.ts`.
 ```mermaid
 flowchart TB
   start(["a run begins"]) --> fetch["fetch<br/>src/runner.ts takes fetch as a parameter"]
-  fetch --> capture[/"store the capture<br/>content-addressed · deduped by digest"/]
+  fetch --> capture["store the capture<br/>content-addressed · deduped by digest"]
   capture --> detect["detect<br/>value shape · null rate z-score<br/>anchors resolve · anchors agree"]
 
   detect --> broke{"did anything break?"}
@@ -23,7 +23,7 @@ flowchart TB
   tie -->|"yes"| benign["publish healed<br/>reason: benign_tie"]
   tie -->|"no"| abstain["ABSTAIN<br/>hold the cell<br/>publish a labelled hole<br/>log the reason"]
 
-  live --> proof[/"one proof record per run<br/>results/events.jsonl"/]
+  live --> proof["one proof record per run<br/>results/events.jsonl"]
   healed --> proof
   benign --> proof
   abstain --> queue["the abstain queue<br/>one answerable question"]
