@@ -6,23 +6,29 @@
 import { requireKey } from './keys.js';
 import { rowByProof, heldCells, runsFor, openQueue, explain } from '../store/index.js';
 
-const notFound = (what) =>
+// The Next route-handler shape, named here rather than imported: `src/` is
+// engine-side and must not take a dependency on next just to describe two
+// parameters. Route files stay thin wrappers over these functions.
+type RouteCtx = { params: Promise<Record<string, string>> };
+type Handler = (request: Request, ctx: RouteCtx) => Promise<Response>;
+
+const notFound = (what: string): Response =>
   Response.json({ error: 'not_found', detail: `No ${what} with that id.` }, { status: 404 });
 
 /** Wrap a handler in the auth guard so no route can forget it. */
-const guarded = (fn) => async (request, ctx) => {
+const guarded = (fn: Handler): Handler => async (request, ctx) => {
   const denied = await requireKey(request);
   if (denied) return denied;
   try {
     return await fn(request, ctx);
   } catch (e) {
     // Never leak a driver error to a consumer; it can name tables and columns.
-    console.error('[api]', e.message);
+    console.error('[api]', (e as Error).message);
     return Response.json({ error: 'internal' }, { status: 500 });
   }
 };
 
-const intParam = (url, name, dflt, max) => {
+const intParam = (url: URL, name: string, dflt: number, max: number): number => {
   const raw = Number(url.searchParams.get(name));
   return Number.isInteger(raw) && raw > 0 ? Math.min(raw, max) : dflt;
 };

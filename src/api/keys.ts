@@ -9,10 +9,10 @@ import { getDb, apiKeys } from '../store/index.js';
 
 const PREFIX = 'ak_';
 
-export const hashKey = (key) => createHash('sha256').update(key).digest('hex');
+export const hashKey = (key: string): string => createHash('sha256').update(key).digest('hex');
 
 /** Mint a key. The plaintext is in the return value and nowhere else, ever. */
-export async function createKey(name) {
+export async function createKey(name: string) {
   const key = PREFIX + randomBytes(24).toString('hex');
   const [row] = await getDb().insert(apiKeys).values({
     name,
@@ -29,7 +29,7 @@ export async function createKey(name) {
  * is still constant-time against the stored hash. Never log `presented`: it is
  * the live credential.
  */
-export async function verifyKey(presented) {
+export async function verifyKey(presented: unknown) {
   if (typeof presented !== 'string' || !presented.startsWith(PREFIX)) return null;
   const hash = hashKey(presented);
   const [row] = await getDb().select().from(apiKeys)
@@ -52,14 +52,14 @@ export async function verifyKey(presented) {
  * Accepts `Authorization: Bearer <key>` only -- not a query parameter, which
  * would put the credential in access logs and browser history.
  */
-export function bearerFrom(request) {
+export function bearerFrom(request: Request): string | null {
   const h = request.headers.get('authorization') || '';
   const m = /^Bearer\s+(\S+)$/i.exec(h);
-  return m ? m[1] : null;
+  return m ? m[1]! : null;
 }
 
 /** Guard a route. Returns null when authorised, or the 401 Response to send. */
-export async function requireKey(request) {
+export async function requireKey(request: Request): Promise<Response | null> {
   const key = bearerFrom(request);
   if (!key || !(await verifyKey(key))) {
     return Response.json(

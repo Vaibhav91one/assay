@@ -10,7 +10,10 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { eq, and, isNull } from 'drizzle-orm';
 import { getDb, episodes } from '../store/index.js';
 
-export const EVENTS = ['field.held', 'episode.opened', 'brake.tripped'];
+/** The closed set of outbound events. A new one is a schema change, not a string. */
+export type WebhookEvent = 'field.held' | 'episode.opened' | 'brake.tripped';
+
+export const EVENTS: WebhookEvent[] = ['field.held', 'episode.opened', 'brake.tripped'];
 
 /**
  * `t=<unix>,v1=<hex>` over `<t>.<body>`.
@@ -18,7 +21,7 @@ export const EVENTS = ['field.held', 'episode.opened', 'brake.tripped'];
  * The timestamp is inside the signed string, not beside it, so a captured
  * request cannot be replayed later with a fresh timestamp.
  */
-export function sign(body, secret, at = Math.floor(Date.now() / 1000)) {
+export function sign(body: string, secret: string, at = Math.floor(Date.now() / 1000)): string {
   const mac = createHmac('sha256', secret).update(`${at}.${body}`).digest('hex');
   return `t=${at},v1=${mac}`;
 }
@@ -27,7 +30,13 @@ export function sign(body, secret, at = Math.floor(Date.now() / 1000)) {
  * Verify a signature. Constant-time, and rejects anything older than
  * `toleranceSec` so a stolen-but-valid request has a short life.
  */
-export function verify(body, header, secret, toleranceSec = 300, now = Date.now()) {
+export function verify(
+  body: string,
+  header: string | null | undefined,
+  secret: string,
+  toleranceSec = 300,
+  now = Date.now(),
+): boolean {
   const m = /^t=(\d+),v1=([0-9a-f]+)$/.exec(header || '');
   if (!m) return false;
   const [, ts, mac] = m;
@@ -45,7 +54,17 @@ export function verify(body, header, secret, toleranceSec = 300, now = Date.now(
  * This is the deduplication. Callers fire a webhook only when this returns an
  * episode; a break arriving inside an open episode is the same incident.
  */
-export async function openEpisode({ targetId, field, cause, runId }) {
+export async function openEpisode({
+  targetId,
+  field,
+  cause,
+  runId,
+}: {
+  targetId: string;
+  field: string;
+  cause?: string | null;
+  runId: number;
+}) {
   const d = getDb();
   const [existing] = await d.select().from(episodes)
     .where(and(
@@ -62,7 +81,15 @@ export async function openEpisode({ targetId, field, cause, runId }) {
 }
 
 /** Close the open episode for a field, if there is one. */
-export async function closeEpisode({ targetId, field, runId }) {
+export async function closeEpisode({
+  targetId,
+  field,
+  runId,
+}: {
+  targetId: string;
+  field: string;
+  runId: number;
+}) {
   const d = getDb();
   const [row] = await getDb().update(episodes).set({ closedRun: runId })
     .where(and(
@@ -77,7 +104,19 @@ export async function closeEpisode({ targetId, field, runId }) {
  * POST a signed event. Returns the delivery result rather than throwing: a
  * webhook a receiver cannot accept must not fail the run that produced it.
  */
-export async function deliver({ url, secret, event, data, fetchImpl = fetch }) {
+export async function deliver({
+  url,
+  secret,
+  event,
+  data,
+  fetchImpl = fetch,
+}: {
+  url: string;
+  secret: string;
+  event: WebhookEvent;
+  data: unknown;
+  fetchImpl?: typeof fetch;
+}): Promise<{ ok: boolean; status: number; error?: string }> {
   if (!EVENTS.includes(event)) throw new Error(`unknown event "${event}"`);
   const body = JSON.stringify({ event, data, sent_at: new Date().toISOString() });
   try {
@@ -92,6 +131,6 @@ export async function deliver({ url, secret, event, data, fetchImpl = fetch }) {
     });
     return { ok: res.ok, status: res.status };
   } catch (e) {
-    return { ok: false, status: 0, error: e.message };
+    return { ok: false, status: 0, error: (e as Error).message };
   }
 }
