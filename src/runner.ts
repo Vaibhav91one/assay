@@ -9,18 +9,51 @@
 // already parsed, so this runs anywhere the engine runs.
 
 import { createHash } from 'node:crypto';
-import { fingerprint, skeletonHash } from './fingerprint.js';
-import { healGated } from './heal.js';
-import { detect } from './detect.js';
-import { publishRow } from './envelope.js';
+import type { CheerioAPI } from 'cheerio';
+import { fingerprint, skeletonHash, type Fingerprint } from './fingerprint.js';
+import { healGated, type HealGateResult } from './heal.js';
+import { detect, type Expected, type HistoryPoint } from './detect.js';
+import { publishRow, type FieldVerdict } from './envelope.js';
 
-const clean = (s) => (s || '').replace(/\s+/g, ' ').trim();
+// TODO(types): elements arrive from fingerprint.ts, which may not import
+// cheerio's types. See that file's header.
+type El = any;
+
+/** What "working" looked like, captured once from a page known to be good. */
+export interface Baseline {
+  field: string;
+  target: Fingerprint;
+  selector: string;
+  expected?: Expected;
+  goldenSha?: string;
+  /** Independent ways of reading THE SAME field. Disagreement is drift. */
+  readAnchors: ($p: CheerioAPI) => Record<string, string | null>;
+  value: string | null;
+  skeleton: string;
+  anchors: Record<string, string | null>;
+}
+
+// TODO(types): the proof record's shape is defined by results/events.jsonl,
+// which is a committed byte-identical artifact -- pinning it as an interface is
+// a change to that contract, not a typing exercise, so it is left to wave 2.
+export type ProofEvent = Record<string, any>;
+
+export interface Evaluation {
+  sample: { nullRate: number; pageBytes: number };
+  gate: HealGateResult | null;
+  event: ProofEvent;
+  status: FieldVerdict;
+  publishedValue: string | null;
+}
+
+const clean = (s: string | null | undefined): string => (s || '').replace(/\s+/g, ' ').trim();
 
 /** Full sha256. Not truncated: a 16-hex prefix in a field named sha256 is a lie. */
-export const digest = (s) => createHash('sha256').update(s || '').digest('hex');
+export const digest = (s: string | null | undefined): string =>
+  createHash('sha256').update(s || '').digest('hex');
 
 /** A stable-ish selector for an element: id, else tag.firstClass, else tag. */
-export function selectorFor(el) {
+export function selectorFor(el: El): string {
   const a = el.attribs || {};
   if (a.id) return `#${a.id}`;
   const cls = (a.class || '').split(/\s+/).filter(Boolean);
@@ -34,14 +67,26 @@ export function selectorFor(el) {
  * an unverified heal is how a healer poisons its own baseline (what Scrapling
  * does with auto_save=True and INSERT OR REPLACE).
  */
-export function establishBaseline({ $, el, field, expected, goldenSha }) {
+export function establishBaseline({
+  $,
+  el,
+  field,
+  expected,
+  goldenSha,
+}: {
+  $: CheerioAPI;
+  el: El;
+  field: string;
+  expected?: Expected;
+  goldenSha?: string;
+}): Baseline {
   const target = fingerprint($, el);
   const selector = selectorFor(el);
 
   // Anchors are independent ways of reading THE SAME field, not unrelated page
   // furniture. If css and xpath stop agreeing, the field drifted even though
   // both still resolve -- which no null-rate alarm can see.
-  const readAnchors = ($p) => ({
+  const readAnchors = ($p: CheerioAPI): Record<string, string | null> => ({
     css: clean($p(selector).first().text()).slice(0, 200) || null,
     xpath: (() => {
       const css = target.abs_xpath
@@ -72,7 +117,19 @@ export function establishBaseline({ $, el, field, expected, goldenSha }) {
  * queue does, because assay_propose must score against the list the item is
  * about, not a re-fetch of a page that has since moved.
  */
-export function evaluate({ $, baseline, history = [], thresholds, meta = {} }) {
+export function evaluate({
+  $,
+  baseline,
+  history = [],
+  thresholds,
+  meta = {},
+}: {
+  $: CheerioAPI;
+  baseline: Baseline;
+  history?: HistoryPoint[];
+  thresholds: { tau: number; delta: number };
+  meta?: Record<string, any>;
+}): Evaluation {
   const { tau, delta } = thresholds;
   const skel = skeletonHash($).hash;
   const hit = $(baseline.selector).first();
@@ -155,7 +212,21 @@ export function evaluate({ $, baseline, history = [], thresholds, meta = {} }) {
  * The IO seam. `fetchPage` returns `{ $ }` however the caller likes -- read from
  * disk, hit the network, or accept a Bright Data webhook payload.
  */
-export async function runTarget({ fetchPage, baseline, history, thresholds, meta, proofId }) {
+export async function runTarget({
+  fetchPage,
+  baseline,
+  history,
+  thresholds,
+  meta,
+  proofId,
+}: {
+  fetchPage: () => Promise<{ $: CheerioAPI }> | { $: CheerioAPI };
+  baseline: Baseline;
+  history?: HistoryPoint[];
+  thresholds: { tau: number; delta: number };
+  meta: Record<string, any>;
+  proofId: unknown;
+}): Promise<Evaluation & { row: Record<string, unknown> }> {
   const { $ } = await fetchPage();
   const r = evaluate({ $, baseline, history, thresholds, meta });
   const row = publishRow({
