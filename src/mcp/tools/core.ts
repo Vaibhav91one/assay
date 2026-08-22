@@ -1,5 +1,7 @@
-// The MCP tool surface, as plain functions so they can be tested without a
-// transport. `server.js` wires these to stdio; nothing here knows about stdio.
+// The core MCP tool surface, as plain functions so they can be tested without a
+// transport. `server.ts` globs this directory and wires what it finds to stdio;
+// nothing here knows about stdio, and a feature adds tools by adding a FILE
+// next to this one -- never by editing this one.
 //
 // Two rules are the whole point of this server, and neither is negotiable:
 //
@@ -20,14 +22,15 @@ import { z } from 'zod';
 import {
   getDb, heldCells, runsFor, openQueue, explain, rowByProof,
   targets, queueItems, fieldRuns, eq, isNull,
-} from '../store/index.js';
+} from '../../store/index.js';
+import type { McpTool } from '../server.js';
 
 /** Assay's own vocabulary, returned verbatim so an agent reads our words. */
-export const TOOLS = {
+export const TOOLS: Record<string, McpTool> = {
   assay_status: {
     description: 'What is watching, what is held, and what is waiting on a human.',
     schema: { target: z.string().optional().describe('Limit to one target id.') },
-    async run({ target } = {}) {
+    async run({ target }: { target?: string } = {}) {
       const d = getDb();
       const all = await d.select().from(targets);
       const held = await heldCells();
@@ -44,7 +47,7 @@ export const TOOLS = {
   assay_held: {
     description: 'Every quarantined cell: null, labelled, and never filled.',
     schema: { field: z.string().optional(), limit: z.number().int().min(1).max(500).optional() },
-    async run({ field, limit = 50 } = {}) {
+    async run({ field, limit = 50 }: { field?: string; limit?: number } = {}) {
       const held = await heldCells();
       return {
         held: held
@@ -64,9 +67,9 @@ export const TOOLS = {
       'The queue: decisions the gate refused to make. Each item carries both '
       + 'answers, the evidence, and what it is holding.',
     schema: { limit: z.number().int().min(1).max(500).optional() },
-    async run({ limit = 50 } = {}) {
+    async run({ limit = 50 }: { limit?: number } = {}) {
       const items = await openQueue(limit);
-      const out = [];
+      const out: Record<string, unknown>[] = [];
       for (const it of items) {
         const x = await explain(it.proofId);
         if (!x) continue;
@@ -96,14 +99,22 @@ export const TOOLS = {
         .describe('Index into the candidates array. NOT a value.'),
       note: z.string().optional(),
     },
-    async run({ proof, candidate_index, note }) {
+    async run({
+      proof,
+      candidate_index,
+      note,
+    }: {
+      proof: string;
+      candidate_index: number;
+      note?: string;
+    }) {
       const x = await explain(proof);
       if (!x) return { error: 'not_found', detail: `No held cell for proof ${proof}.` };
       if (x.status !== 'quarantined') {
         return { error: 'not_held', detail: `That cell is ${x.status}, not held.` };
       }
 
-      const ranked = x.ranked ?? [];
+      const ranked = (x.ranked ?? []) as { selector: string | null; score: number }[];
       const pick = ranked[candidate_index];
       if (!pick) {
         return {
@@ -114,7 +125,7 @@ export const TOOLS = {
       }
 
       // Re-apply the gate to the PERSISTED list. Same thresholds, same page.
-      const best = ranked[0];
+      const best = ranked[0]!;
       const runnerUp = ranked[1];
       const margin = runnerUp ? Number((best.score - runnerUp.score).toFixed(4)) : 1;
       const TAU = 0.6;
@@ -142,7 +153,7 @@ export const TOOLS = {
   assay_runs: {
     description: 'Run history for a target, newest first.',
     schema: { target: z.string().optional(), limit: z.number().int().min(1).max(500).optional() },
-    async run({ target, limit = 50 } = {}) {
+    async run({ target, limit = 50 }: { target?: string; limit?: number } = {}) {
       const runs = await runsFor(target || null, limit);
       return {
         runs: runs.map((r) => ({
@@ -158,7 +169,7 @@ export const TOOLS = {
       'Which rows a break covers and how far back -- the boundary between the '
       + 'last clean run and detection.',
     schema: { field: z.string().describe('The field that broke.') },
-    async run({ field }) {
+    async run({ field }: { field: string }) {
       const d = getDb();
       const cells = await d.select().from(fieldRuns).where(eq(fieldRuns.field, field));
       const held = cells.filter((c) => c.status === 'quarantined');
@@ -179,7 +190,7 @@ export const TOOLS = {
   assay_explain: {
     description: 'Where a published value came from: run, capture, anchors, and whether it was healed.',
     schema: { proof: z.string() },
-    async run({ proof }) {
+    async run({ proof }: { proof: string }) {
       const x = await explain(proof);
       if (!x) return { error: 'not_found' };
       const row = await rowByProof(proof);
@@ -196,7 +207,7 @@ export const TOOLS = {
       fields: z.array(z.string()).min(1),
       cadence: z.string().optional(),
     },
-    async run({ url, fields, cadence = '6h' }) {
+    async run({ url, fields, cadence = '6h' }: { url: string; fields: string[]; cadence?: string }) {
       return {
         contract: {
           url,
@@ -211,5 +222,3 @@ export const TOOLS = {
   },
 };
 
-/** Deliberately absent, and asserted in the tests. */
-export const REFUSED_TOOLS = ['assay_resolve'];

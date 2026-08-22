@@ -21,7 +21,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "apikey": "tsx tools/apikey.js",
-    "mcp": "tsx src/mcp/server.js",
+    "mcp": "tsx src/mcp/server.ts",
     "test:app": "vitest run",
     "typecheck": "tsc --noEmit",
     "build:fingerprint": "tsc --ignoreConfig src/fingerprint.ts --outDir dist --target ES2022 --module esnext --moduleResolution bundler",
@@ -66,6 +66,6 @@
     "./mcp/*": "./src/mcp/*.js"
   },
   "bin": {
-    "assay-mcp": "./src/mcp/server.js"
+    "assay-mcp": "./src/mcp/server.ts"
   }
 }

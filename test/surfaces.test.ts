@@ -7,18 +7,23 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { z } from 'zod';
 import { sign, verify, EVENTS } from '../src/api/webhooks.js';
-import { TOOLS, REFUSED_TOOLS } from '../src/mcp/tools.js';
+import { loadTools, REFUSED_TOOLS, type McpTool } from '../src/mcp/server.js';
 import { getHeld, getRow } from '../src/api/handlers.js';
 import { HeldCell, Row, Status } from '../src/api/schemas.js';
 import { getDb, closeDb, heldCells } from '../src/store/index.js';
 
 let dbUp = false;
+// The whole merged surface, through the loader rather than one tool file:
+// the refusal below is only worth asserting if it covers every module that
+// registers tools, which after wave 1 is nine of them.
+let TOOLS: Record<string, McpTool> = {};
 beforeAll(async () => {
+  TOOLS = await loadTools();
   try { getDb(); await heldCells(); dbUp = true; } catch { dbUp = false; }
 });
 afterAll(async () => { await closeDb().catch(() => {}); });
 
-const req = (url, key) =>
+const req = (url: string, key?: string): Request =>
   new Request(url, { headers: key ? { authorization: `Bearer ${key}` } : {} });
 
 describe('webhook signing', () => {
@@ -50,7 +55,9 @@ describe('webhook signing', () => {
 
   it('refuses an unknown event name', async () => {
     const { deliver } = await import('../src/api/webhooks.js');
-    await expect(deliver({ url: 'http://x', secret, event: 'made.up', data: {} }))
+    // `as any` on purpose: the type already refuses this, and the point of the
+    // test is that the RUNTIME refuses it too, for a name arriving over JSON.
+    await expect(deliver({ url: 'http://x', secret, event: 'made.up' as any, data: {} }))
       .rejects.toThrow(/unknown event/);
     expect(EVENTS).toContain('field.held');
   });
@@ -80,15 +87,29 @@ describe('MCP tool surface', () => {
     }
   });
 
+  it('refuses to start if any tool module exports assay_resolve', async () => {
+    // The rule is enforced at the LOADER, not by nine feature agents each
+    // remembering it. A refused tool is a boot failure, not a quiet drop.
+    const dir = new URL('./fixtures/tools-refused/', import.meta.url);
+    await expect(loadTools(dir)).rejects.toThrow(/assay_resolve/);
+  });
+
+  it('refuses two modules that claim the same tool name', async () => {
+    // Last-file-wins across nine parallel branches is how one feature shadows
+    // another's tool and nobody finds out until production.
+    const dir = new URL('./fixtures/tools-duplicate/', import.meta.url);
+    await expect(loadTools(dir)).rejects.toThrow(/both export "assay_status"/);
+  });
+
   it('assay_propose takes an index, not a value', () => {
-    const shape = z.object(TOOLS.assay_propose.schema);
+    const shape = z.object(TOOLS.assay_propose!.schema);
     // A reference is accepted.
     expect(shape.safeParse({ proof: 'pr_x', candidate_index: 0 }).success).toBe(true);
     // A value in its place is rejected by the contract itself.
     expect(shape.safeParse({ proof: 'pr_x', candidate_index: 'burn, electric shock' }).success)
       .toBe(false);
     // And there is no field a value could arrive in.
-    expect(Object.keys(TOOLS.assay_propose.schema)).not.toContain('value');
+    expect(Object.keys(TOOLS.assay_propose!.schema)).not.toContain('value');
   });
 });
 
@@ -96,7 +117,7 @@ describe('REST', () => {
   it('rejects an unauthenticated call', async () => {
     const res = await getHeld(req('http://x/api/v1/held'));
     expect(res.status).toBe(401);
-    expect((await res.json()).error).toBe('unauthorized');
+    expect(((await res.json()) as { error: string }).error).toBe('unauthorized');
   });
 
   it('rejects a bogus bearer token', async () => {
@@ -109,7 +130,7 @@ describe('REST', () => {
     if (!dbUp) return;
     const held = await heldCells();
     if (!held.length) return;             // corpus produces none without a mutation
-    const cell = held[0];
+    const cell = held[0]!;
     expect(cell.value).toBeNull();        // never filled
     expect(cell.status).toBe('quarantined');
     expect(HeldCell.safeParse(cell).success).toBe(true);
@@ -120,9 +141,11 @@ describe('REST', () => {
     const held = await heldCells();
     if (!held.length) return;
     const { rowByProof } = await import('../src/store/index.js');
-    const row = await rowByProof(held[0].proofId);
+    // `any`: this test asserts the shape with Zod on the next line, which is a
+    // stronger check than anything the static type would give it here.
+    const row: any = await rowByProof(held[0]!.proofId);
     expect(Row.safeParse(row).success).toBe(true);
-    const field = held[0].field;
+    const field = held[0]!.field;
     // The two numbers that disagreed before the D2 run-id fix.
     expect(row._assay.run).toBe(row._assay.fields[field].held_since_run);
     expect(row[field]).toBeNull();
