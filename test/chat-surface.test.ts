@@ -1,73 +1,99 @@
-// The chat surface: the composer's keyboard model, the SSE reader, the trace
-// the agent emits, and the four constants the browser has to hold a copy of.
+// The chat surface: the composer's keyboard model, the SSE reader, and the
+// trace the agent emits.
 //
-// The drift tests are the load-bearing half. `web/lib/models.ts`,
-// `web/lib/contract-shape.ts` repeat ids, thresholds and reason wordings that
-// the engine owns, because importing the engine modules into a client component
-// would pull the Agent SDK -- and the Node built-ins it opens -- into the
-// browser bundle. Repetition is only acceptable while something fails when the
-// two disagree, which is what these assert.
+// WHAT USED TO BE HERE. Model ids, cadences, tier thresholds and held-cell
+// wordings were copied into `web/lib/`, because importing the engine modules
+// that own them into a client component would pull the Agent SDK -- and the
+// Node built-ins it opens -- into the browser bundle. Six drift tests asserted
+// the copies still matched.
+//
+// They are gone because the copies are gone. Those values now live in
+// `src/agent/models.ts`, `src/contracts/tiers.ts` and `src/reports/
+// vocabulary.ts` -- modules that declare values and import nothing -- and the
+// browser imports the same declarations the engine does. A test that two
+// expressions for the same constant are equal proves nothing.
+//
+// The one property those tests carried that is not structural is kept below:
+// the allowlist is membership, not sanitisation.
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { withoutCredentials } from './no-credentials.js';
 
-import { MODELS as ENGINE_MODELS, CADENCES, converse, type TraceEvent } from '../src/agent/index.js';
-import { TIER_THRESHOLDS as ENGINE_TIERS, DEFAULT_THRESHOLDS as ENGINE_DEFAULTS } from '../src/contracts/index.js';
-import { heldBecause } from '../src/reports/vocabulary.js';
+import { MODELS as ENGINE_MODELS, converse, type TraceEvent } from '../src/agent/index.js';
+import { MODELS, MODEL_LABEL, DEFAULT_MODEL } from '../src/agent/models.js';
+import { HELD_BECAUSE, heldBecause } from '../src/reports/vocabulary.js';
 
-import { MODELS, DEFAULT_MODEL, CADENCE_OPTIONS } from '../web/lib/models.js';
-import { TIER_THRESHOLDS, DEFAULT_THRESHOLDS, HELD_BECAUSE } from '../web/lib/contract-shape.js';
 import { menuAt, applyChoice } from '../web/lib/composer-menu.js';
 import { frames } from '../web/lib/chat-stream.js';
 
-// --- the constants the browser copies ----------------------------------------
+// --- the leaf modules the browser imports -------------------------------------
+
+describe('the modules a client component imports declare values and nothing else', () => {
+  // This is the guard the drift tests were standing in for, and it is worth
+  // more than they were: they detected two copies disagreeing AFTER it
+  // happened, this refuses the cause. Every one of these files is imported from
+  // a `'use client'` component, so the first `import` added to one of them
+  // reaches the browser bundle with everything it transitively opens -- `fs`,
+  // `dns`, `net`, `tls` -- and the Next build fails on `Can't resolve 'fs'`.
+  //
+  // Source text rather than a bundler: the property is "this file has no
+  // imports", which is exactly what is being read. Nothing here needs a build.
+  const LEAVES = [
+    'src/agent/models.ts',
+    'src/contracts/tiers.ts',
+    'src/reports/vocabulary.ts',
+  ];
+
+  for (const f of LEAVES) {
+    it(`${f} imports nothing`, async () => {
+      const { readFile } = await import('node:fs/promises');
+      const src = await readFile(new URL(`../${f}`, import.meta.url), 'utf8');
+      const found = src.split('\n').filter((l) => /^\s*(import|export)\s.*\sfrom\s/.test(l));
+      expect(found).toEqual([]);
+    });
+  }
+});
+
+// --- the allowlist ------------------------------------------------------------
 
 describe('the picker cannot offer a model the allowlist would reject', () => {
-  it('lists exactly the engine allowlist, in the same order', () => {
-    expect(MODELS.map((m) => m.id)).toEqual([...ENGINE_MODELS]);
+  it('is the engine\'s own list, not a copy of it', () => {
+    // Identity, not equality: `web/lib/models.ts` used to hold a second array
+    // and a test asserted the two agreed. There is one array now.
+    expect(MODELS).toBe(ENGINE_MODELS);
+  });
+
+  it('names every model it offers', () => {
+    // `MODEL_LABEL` is a `Record<Model, string>`, so a new id is a compile
+    // error until it is named. This catches the one thing the type cannot: a
+    // label left as an empty string.
+    for (const m of MODELS) expect(MODEL_LABEL[m]).toBeTruthy();
   });
 
   it('defaults to a model that is on the list', () => {
-    expect(ENGINE_MODELS).toContain(DEFAULT_MODEL as (typeof ENGINE_MODELS)[number]);
-  });
-
-  it('offers exactly the cadences the scheduler can act on', () => {
-    expect([...CADENCE_OPTIONS]).toEqual([...CADENCES]);
+    expect(MODELS).toContain(DEFAULT_MODEL);
   });
 });
 
-describe('the header popover shows the engine\'s own numbers', () => {
-  it('repeats every tier threshold exactly', () => {
-    expect(TIER_THRESHOLDS).toEqual(ENGINE_TIERS);
-  });
+// --- the held-cell wording -----------------------------------------------------
 
-  it('repeats the defaults a contract that says nothing means', () => {
-    expect(DEFAULT_THRESHOLDS.policy).toBe(ENGINE_DEFAULTS.policy);
-    expect(DEFAULT_THRESHOLDS.tau).toBe(ENGINE_DEFAULTS.tau);
-    expect(DEFAULT_THRESHOLDS.delta).toBe(ENGINE_DEFAULTS.delta);
-    expect(DEFAULT_THRESHOLDS.onAbstain).toBe(ENGINE_DEFAULTS.onAbstain);
-    expect(DEFAULT_THRESHOLDS.autoApproveAbove).toBe(ENGINE_DEFAULTS.autoApproveAbove);
-  });
-});
-
-describe('a held cell says what the engine means', () => {
-  it('uses the vocabulary\'s own wording for every code it knows', () => {
-    for (const [code, plain] of Object.entries(HELD_BECAUSE)) {
-      expect(heldBecause(code)?.plain).toBe(plain);
-    }
-  });
-
-  it('has no wording the engine does not also have', () => {
-    // The reverse direction: a phrase invented here would render as though the
-    // engine had said it. `heldBecause` returning a null `plain` is a miss.
-    for (const code of Object.keys(HELD_BECAUSE)) {
-      expect(heldBecause(code)?.plain).not.toBeNull();
-    }
-  });
-
+describe('a held cell never gets an adjective the engine did not say', () => {
+  // This one is NOT a drift test and stays: `HELD_BECAUSE` and `heldBecause`
+  // are one table and one reader now, but the rule they enforce together is a
+  // product rule -- APP-DESIGN 5b rule 5, a reason code never reaches the user
+  // raw, and a record whose whole value is that it does not fabricate cannot
+  // start by fabricating. `web/app/(app)/schema-table.tsx` reads the table
+  // directly and prints the code AS a code on a miss.
   it('leaves an unknown code untranslated rather than inventing one', () => {
     expect(HELD_BECAUSE.something_new).toBeUndefined();
     expect(heldBecause('something_new')?.plain).toBeNull();
+  });
+
+  it('translates every code it does know', () => {
+    for (const [code, plain] of Object.entries(HELD_BECAUSE)) {
+      expect(heldBecause(code)?.plain).toBe(plain);
+      expect(plain).toBeTruthy();
+    }
   });
 });
 

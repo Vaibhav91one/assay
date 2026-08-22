@@ -4,7 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Check, ChevronDown, CircleAlert, Hand } from 'lucide-react';
 import { Collapse } from '@/components/motion/collapse';
-import { TIER_THRESHOLDS, DEFAULT_THRESHOLDS, HELD_BECAUSE } from '@/lib/contract-shape';
+import { TIER_THRESHOLDS, DEFAULT_THRESHOLDS } from 'assay/engine/contracts/tiers';
+import { HELD_BECAUSE } from 'assay/engine/reports/vocabulary';
 import type { Proposal } from './watch-actions';
 
 /**

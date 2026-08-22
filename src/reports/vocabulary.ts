@@ -13,7 +13,12 @@ export interface Term {
 }
 
 // src/heal.ts: the four decisions the gate can record against a cell.
-const HELD_BECAUSE: Record<string, string> = {
+//
+// Exported because the browser renders these wordings too, and this file
+// imports nothing -- so a client component can read the table itself rather
+// than keeping a second copy of it. It stays a plain lookup: a code with no
+// wording here is printed AS a code, never given an invented one.
+export const HELD_BECAUSE: Record<string, string> = {
   thin_margin: 'two candidates on the page were too close to call',
   below_tau: 'nothing on the page looked enough like this field to be a candidate',
   no_candidates: 'the element is gone and nothing took its place',
