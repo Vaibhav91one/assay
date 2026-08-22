@@ -24,6 +24,9 @@ import {
   targets, queueItems, fieldRuns, eq, isNull,
 } from '../../store/index.js';
 import type { McpTool } from '../server.js';
+import { scoreNomination, type RankedCandidate } from '../../ai/index.js';
+import { thresholdsFor } from '../../contracts/index.js';
+import { latestContract } from '../../contracts/store.js';
 
 /** Assay's own vocabulary, returned verbatim so an agent reads our words. */
 export const TOOLS: Record<string, McpTool> = {
@@ -114,9 +117,8 @@ export const TOOLS: Record<string, McpTool> = {
         return { error: 'not_held', detail: `That cell is ${x.status}, not held.` };
       }
 
-      const ranked = (x.ranked ?? []) as { selector: string | null; score: number }[];
-      const pick = ranked[candidate_index];
-      if (!pick) {
+      const ranked = (x.ranked ?? []) as RankedCandidate[];
+      if (!ranked[candidate_index]) {
         return {
           error: 'no_such_candidate',
           detail: `Index ${candidate_index} is outside the ${ranked.length} candidates on record.`,
@@ -125,12 +127,24 @@ export const TOOLS: Record<string, McpTool> = {
       }
 
       // Re-apply the gate to the PERSISTED list. Same thresholds, same page.
-      const best = ranked[0]!;
-      const runnerUp = ranked[1];
-      const margin = runnerUp ? Number((best.score - runnerUp.score).toFixed(4)) : 1;
-      const TAU = 0.6;
-      const DELTA = 0.16;
-      const clears = pick.score > TAU && margin > DELTA && candidate_index === 0;
+      //
+      // The thresholds are the ones this FIELD is under, not two constants: a
+      // field the operator marked `strict` is gated at 0.70/0.20 by the runner,
+      // and telling its nominator it clears a 0.60 gate would be describing a
+      // gate that does not exist. No contract returns 0.60/0.16, which is what
+      // the two constants here used to say.
+      const { tau, delta } = thresholdsFor(
+        x.target ? (await latestContract(x.target))?.parsed : null,
+        x.field,
+      );
+
+      // scoreNomination, not arithmetic. It reaches two conclusions the
+      // arithmetic could not: a thin margin whose tied candidates carry the
+      // same VALUE is the benign tie healGated already forgives -- and the
+      // stored list has carried those values all along -- while a model pick
+      // pointing elsewhere is grounds to hold however good the score. Every
+      // input it takes can only ever ADD a reason to hold.
+      const s = scoreNomination(ranked, candidate_index, { tau, delta });
 
       await getDb().update(queueItems)
         .set({ resolvedBy: null, resolution: `model_nominated:${candidate_index}${note ? `:${note}` : ''}` })
@@ -138,11 +152,16 @@ export const TOOLS: Record<string, McpTool> = {
 
       return {
         proof,
-        nominated: { index: candidate_index, selector: pick.selector, score: pick.score },
-        gate: { tau: TAU, delta: DELTA, margin, score: pick.score },
+        nominated: s.nominated,
+        gate: { tau: s.tau, delta: s.delta, margin: s.margin, score: s.nominated?.score ?? null },
+        reason: s.reason,
+        // ALWAYS null. This tool scores and holds; it is never the thing that
+        // turns a nomination into a publish, and the field says so at the call
+        // site rather than only in the documentation.
+        decision: s.decision,
         // The honest answer is usually this one.
-        verdict: clears ? 'clears_gate' : 'still_holding',
-        detail: clears
+        verdict: s.verdict,
+        detail: s.verdict === 'clears_gate'
           ? 'The nomination is the clear winner and would publish.'
           : 'Recorded as a nomination. It does not clear the gate, so the cell stays held '
             + 'and a human still decides. A model can propose; it cannot resolve.',
