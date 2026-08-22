@@ -24,8 +24,14 @@ services:
       test: ["CMD-SHELL", "pg_isready -U assay"]
       interval: 5s
       retries: 10
+    # Loopback, like `web` below and for the same reason. Nothing outside this
+    # host needs the database -- `web` and `worker` reach it over the compose
+    # network by name, and `db:migrate` runs as a compose service. Binding it
+    # to the host's loopback keeps `DATABASE_URL=...@localhost:5432` working
+    # for tests run from the host, without publishing `assay/assay` to the
+    # network the host happens to sit on.
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
 
   web:
     build: .
@@ -40,8 +46,16 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    # LOOPBACK, DELIBERATELY. `AUTH_MODE` defaults to `none`, which is the
+    # documented self-host default and means this app authenticates nobody:
+    # every operator screen -- resolving held decisions, clearing a brake,
+    # editing a contract -- is reachable by anyone who can open the port.
+    # `"3000:3000"` binds 0.0.0.0, so the quickstart used to hand that to the
+    # whole network the host is on. It binds to this host only; putting it in
+    # front of other people is a deliberate act, not the default one. See
+    # "Exposing it on purpose" in README.md and /docs/self-host.
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
 
   # The worker owns fetch -> detect -> heal -> gate -> publish. It is a separate
   # service, not a route in `web`: a run would otherwise hold a request open and

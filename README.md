@@ -173,8 +173,26 @@ the same file and pruning is `rm`.
 ### Accounts
 
 Self-hosting is single-operator. `AUTH_MODE` defaults to `none`, so a clone
-boots with no account, no signup and no keys — you are already behind whatever
-access control fronts the box.
+boots with no account, no signup and no keys.
+
+**That means it authenticates nobody.** Not "one operator" — no operator check
+at all: every screen is served to whoever can open the port, including
+resolving held decisions, clearing a brake and editing a contract. Those are
+the actions that decide what gets published to your data.
+
+So `docker-compose.yml` publishes `web` on `127.0.0.1:3000`, and Postgres on
+`127.0.0.1:5432`. The host reaches them; the network the host is on does not.
+Assay cannot verify what is in front of it, so it assumes nothing is.
+
+To let other people in, do one of these two rather than widening the bind:
+
+- **Put a reverse proxy in front of it** and let the proxy authenticate.
+  Terminate TLS there, require auth there, forward to `127.0.0.1:3000`.
+- **Set `AUTH_MODE=clerk`**, which is what the hosted instance runs — the
+  sign-in screens and the guard in `web/lib/auth.ts` come on.
+
+Changing the binding back to `0.0.0.0:3000` without doing one of them puts an
+unauthenticated operator console on your network.
 
 The hosted instance sets `AUTH_MODE=clerk` and installs `@clerk/nextjs`, which
 is deliberately **not** a dependency here: a self-hoster should not download an
