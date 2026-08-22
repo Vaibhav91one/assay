@@ -4,6 +4,7 @@ import { notices, outstandingCount } from '@/lib/notifications';
 import { Notifications } from './notifications';
 import { Settings } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 /**
  * Screen chrome: what this screen is, and one plain fact about its state.
@@ -14,7 +15,13 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
  * `action` replaces the Settings link on screens that have a better right-hand
  * verb of their own (Explain copies a proof id). There is only ever one,
  * because the one-primary law does not stop at the page body. Pass `null` for
- * none -- Settings itself must not offer a button to Settings.
+ * none -- Settings itself must not offer a button to Settings. Both properties
+ * survive the control becoming a glyph: it is the same slot, drawn smaller.
+ *
+ * Settings gets no dot. The bell's dot means work is outstanding and the
+ * queue can say when that is true; nothing on Settings can, so a dot there
+ * would either be permanent or invented, and both teach the reader to stop
+ * seeing dots.
  */
 export async function TopBar({
   title,
@@ -38,7 +45,11 @@ export async function TopBar({
         {/* The collapse control the rail's header draws. It lives here because
             it has to stay reachable once the rail is collapsed to icons. */}
         <SidebarTrigger className="-ml-[4px] size-[28px] shrink-0 text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)]" />
-        <h1 className="nav-15 shrink-0 text-[var(--text-primary)]">{title}</h1>
+        {/* Truncating, not `shrink-0`. Every title used to be a word Home,
+            Runs, Schedule and could never outgrow the bar; a conversation's
+            title is the operator's own first sentence, and an unshrinkable one
+            pushed straight through Activity and Settings on a narrow window. */}
+        <h1 className="nav-15 min-w-0 truncate text-[var(--text-primary)]">{title}</h1>
         {status && <p className="meta-13 truncate text-[var(--text-secondary)]">{status}</p>}
       </div>
       <div className="flex shrink-0 items-center gap-[12px]">
@@ -49,10 +60,18 @@ export async function TopBar({
         {action !== undefined ? (
           action
         ) : (
-          <Link href="/settings" className={actionVariants({ variant: 'outline' })}>
-            <Settings size={16} strokeWidth={1.5} aria-hidden />
-            Settings
-          </Link>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger
+                render={<Link href="/settings" />}
+                className={actionVariants({ variant: 'icon' })}
+                aria-label="Settings"
+              >
+                <Settings size={16} strokeWidth={1.5} aria-hidden />
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Settings</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
       </div>
     </header>

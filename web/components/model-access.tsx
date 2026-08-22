@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { Check, KeyRound, RefreshCw, Terminal } from 'lucide-react';
-import { Button, actionVariants } from './button';
+import { Button, actionVariants, type ActionVariant } from './button';
 import { Collapse } from './motion/collapse';
 import { Copy } from './copy';
 import { Working } from './loading';
@@ -34,6 +34,17 @@ import { recheckModelAccess } from '@/app/(app)/settings/actions';
  * probe is cached because it costs seconds. So the panel that says "no model"
  * has to offer a way to be wrong about that.
  *
+ * WHERE THAT BUTTON IS LOUD AND WHERE IT IS NOT. It used to be the same boxed
+ * `outline` control in both states, and beside a line reading "Connected
+ * through Claude Code on this machine" that is a screen arguing with itself:
+ * a conspicuous action next to a settled fact is read as doubt about the
+ * fact. The doubt is real but small -- a CLI login can expire, and the person
+ * it expires on is looking at exactly this line -- so the answer is not to
+ * take the capability away, it is to stop shouting it. Connected gets `quiet`:
+ * same words, same handler, no box. Unconfigured keeps `outline`, because
+ * there the button is the point -- it is how the operator finds out whether
+ * what they just did in their terminal took.
+ *
  * The type is restated rather than imported. `src/ai/model.ts` pulls in the
  * Agent SDK and Node built-ins, and this file is a client component; the
  * server action is the only thing it imports from that side of the line.
@@ -64,8 +75,8 @@ export function ModelAccess({ auth: initial }: { auth: ModelAuth }) {
       setCheckedEmpty(next === 'none');
     });
 
-  const again = (
-    <Button onClick={check} loading={pending} icon={RefreshCw} iconSize={14}>
+  const again = (variant: ActionVariant) => (
+    <Button variant={variant} onClick={check} loading={pending} icon={RefreshCw} iconSize={14}>
       Check again
     </Button>
   );
@@ -83,7 +94,15 @@ export function ModelAccess({ auth: initial }: { auth: ModelAuth }) {
             <span className="meta-12_5 text-[var(--text-muted)]">{note}</span>
           </>
         )}
-        <div className="pl-[6px]">{again}</div>
+        {/* `quiet` here and `outline` below, and the difference is the whole
+            fix. A boxed control beside a line that already says "Connected"
+            is the screen contradicting itself: the box is what the eye reads
+            as "something is expected of you", and nothing is. The capability
+            does not go away -- a CLI login expires, and the person it expires
+            on is standing on this exact line -- so it stays, in the register
+            of the thing it does. `quiet` is the recipe's own name for that:
+            "a real choice that must not compete". */}
+        <div className="pl-[6px]">{again('quiet')}</div>
       </div>
     );
   }
@@ -101,7 +120,7 @@ export function ModelAccess({ auth: initial }: { auth: ModelAuth }) {
         <Button onClick={() => setOpen((v) => !v)} aria-expanded={open} icon={KeyRound}>
           Connect a model
         </Button>
-        {again}
+        {again('outline')}
       </div>
 
       {/*

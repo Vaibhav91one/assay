@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import {
-  CircleAlert, Download, Eye, Hammer, ListChecks, ChevronRight, PencilLine, Scissors,
+  CircleAlert, Download, Eye, Hammer, Split, ChevronRight, PencilLine, Scissors,
 } from 'lucide-react';
 import { turn, type TraceEvent } from '@/lib/chat-stream';
 import { DEFAULT_MODEL } from 'assay/engine/agent/models';
@@ -482,7 +482,7 @@ function StartFrom({ waiting }: { waiting: number }) {
       {waiting > 0 && (
         <Row
           href="/decisions"
-          icon={<ListChecks size={18} strokeWidth={1.5} className="text-[var(--text-primary)]" aria-hidden />}
+          icon={<Split size={18} strokeWidth={1.5} className="text-[var(--text-primary)]" aria-hidden />}
           badge={waiting}
           title={`Review ${waiting} decision${waiting === 1 ? '' : 's'} waiting on you`}
           sub="held rows, nothing published yet"
