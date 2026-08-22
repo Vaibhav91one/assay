@@ -7,8 +7,8 @@ CI asserts these, but run them locally first — it is faster than a red build.
 ```
 npm test          →   (expect: 34 assertions, all checks pass)
 npm run bench     →   (expect: 153 cases, gated arm 0.0% wrong)
-npm run replay    →   (expect: 74 runs, 24 heals, 0 abstentions)
-npx vitest run    →   (expect: 33 passing; set ASSAY_REQUIRE_DB=1 with Postgres up)
+npm run replay    →   (expect: 74 runs, 8 ok, 66 heals, 0 abstentions)
+npx vitest run    →   (expect: 540 passing; set ASSAY_REQUIRE_DB=1 with Postgres up)
 git diff results/events.jsonl   →   (expect: empty)
 ```
 
@@ -22,6 +22,6 @@ git diff results/events.jsonl   →   (expect: empty)
 
 ## Checklist
 
-- [ ] `src/fingerprint.js` still imports nothing
+- [ ] `src/fingerprint.ts` still imports nothing
 - [ ] The CLIs still run
 - [ ] Commits are `type(scope): sentence`, each revertable alone
