@@ -23,6 +23,7 @@ import {
   getDb, sql, reserveRunId, explain,
   runs, fieldRuns, targets, captures, retractions, healHistory,
 } from '../store/index.js';
+import { deliver } from '../api/webhooks.js';
 import { toCsv } from './csv.js';
 
 /** A refusal with a code the surfaces map to a status. Never a silent empty result. */
@@ -324,6 +325,8 @@ export async function reopenBlast(args: {
  */
 export async function recordRetraction(window: BlastWindow): Promise<{
   retraction_id: number; created: boolean; exported_at: Date | null;
+  /** null when no webhook is configured. An absence, not a failure. */
+  notified: string | null;
 }> {
   const d = getDb();
   const [existing] = await d.select().from(retractions).where(and(
@@ -333,7 +336,13 @@ export async function recordRetraction(window: BlastWindow): Promise<{
     eq(retractions.toRun, window.detected_run),
   )).limit(1);
   if (existing) {
-    return { retraction_id: existing.retractionId, created: false, exported_at: existing.exportedAt };
+    // No second announcement. A retraction is a statement about a RANGE, and
+    // the range has not changed just because somebody asked twice -- the same
+    // rule the episode dedupe applies to breaks.
+    return {
+      retraction_id: existing.retractionId, created: false,
+      exported_at: existing.exportedAt, notified: null,
+    };
   }
   const [row] = await d.insert(retractions).values({
     targetId: window.target,
@@ -342,7 +351,51 @@ export async function recordRetraction(window: BlastWindow): Promise<{
     toRun: window.detected_run,
     rowIds: window.rows.map((r) => r.proof),
   }).returning({ retractionId: retractions.retractionId });
-  return { retraction_id: row!.retractionId, created: true, exported_at: null };
+
+  return {
+    retraction_id: row!.retractionId, created: true, exported_at: null,
+    notified: await announce(row!.retractionId, window),
+  };
+}
+
+/**
+ * Tell the consumer that rows they already ingested are wrong (F9).
+ *
+ * The other three outbound events describe what Assay is WITHHOLDING. This one
+ * describes what it let out, which is the one thing a consumer cannot work out
+ * from their own copy of the data -- so it goes out on the wire rather than
+ * waiting for someone to read a table.
+ *
+ * Never fatal. The retraction is already committed; losing it because a
+ * consumer's endpoint is down would destroy the record of the very thing being
+ * announced. Not silent either: the outcome is returned and printed by
+ * `assay blast --record`.
+ */
+async function announce(retractionId: number, window: BlastWindow): Promise<string | null> {
+  const url = process.env.ASSAY_WEBHOOK_URL;
+  if (!url) return null;
+  try {
+    const res = await deliver({
+      url,
+      secret: process.env.ASSAY_WEBHOOK_SECRET || '',
+      event: 'retraction.filed',
+      data: {
+        retraction_id: retractionId,
+        target: window.target,
+        field: window.field,
+        from_run: window.first_suspect_run,
+        to_run: window.detected_run,
+        rows: window.rows.length,
+        // Whether the window has a floor or is open-ended at the bottom. A
+        // consumer purging rows needs to know which, and it survives here even
+        // though the table has no column for it.
+        bounded: window.bounded,
+      },
+    });
+    return res.ok ? 'sent' : `failed: ${res.error ?? `status ${res.status}`}`;
+  } catch (e) {
+    return `failed: ${(e as Error).message.split('\n')[0]}`;
+  }
 }
 
 /** Record that the operator actually took the list. */

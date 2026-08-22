@@ -11,9 +11,18 @@ import { eq, and, isNull } from 'drizzle-orm';
 import { getDb, episodes } from '../store/index.js';
 
 /** The closed set of outbound events. A new one is a schema change, not a string. */
-export type WebhookEvent = 'field.held' | 'episode.opened' | 'brake.tripped';
+export type WebhookEvent =
+  | 'field.held'
+  | 'episode.opened'
+  | 'brake.tripped'
+  // A retraction is the one event a consumer cannot reconstruct from its own
+  // data: it says rows they have already ingested are wrong. The other three
+  // describe what Assay is withholding; this one describes what it let out.
+  | 'retraction.filed';
 
-export const EVENTS: WebhookEvent[] = ['field.held', 'episode.opened', 'brake.tripped'];
+export const EVENTS: WebhookEvent[] = [
+  'field.held', 'episode.opened', 'brake.tripped', 'retraction.filed',
+];
 
 /**
  * `t=<unix>,v1=<hex>` over `<t>.<body>`.
