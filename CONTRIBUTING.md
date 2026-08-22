@@ -13,10 +13,9 @@ a change that moves them has broken the thing being built — not merely a test.
 |---|---|
 | `npm test` | 34 assertions, ending `all checks pass` |
 | `npm run bench` | 153 cases; gated arm at **0.0% wrong values** |
-| `npm run replay` | 74 runs, 24 heals, **0 abstentions** |
+| `npm run replay` | 74 runs, 8 ok, 66 heals, **0 abstentions** |
 | `git diff results/events.jsonl` | empty — proof records are byte-identical |
-| `npx vitest run` | 39 passing |
-
+| `ASSAY_REQUIRE_DB=1 npx vitest run` | 374 passing |
 | `npx tsc --noEmit` | clean, strict, whole repo |
 
 One more, load-bearing:
@@ -48,7 +47,7 @@ The engine needs no database. The store, API, MCP server and worker do:
 docker compose up -d postgres          # or: ./scripts/container-up.sh
 export DATABASE_URL=postgres://postgres:assay@localhost:5432/assay
 npm run db:migrate
-npx vitest run
+ASSAY_REQUIRE_DB=1 npx vitest run
 ```
 
 **Database-backed tests early-return when Postgres is absent, which vitest

@@ -87,9 +87,11 @@ not ship.
 
 The gated arm's 54 abstentions split 18 / 36. Eighteen are on `remove_field`,
 where the element is gone and refusing is the only correct answer. The other 36
-are on breaks where a correct answer existed, and on **24 of those 36 the ungated
-arm actually produced it** — 6 on `swap_tag`, 12 on `duplicate_similar`, 6 on
-`duplicate_longtail`.
+are on breaks where a correct answer existed, and on **18 of those 36 the ungated
+arm actually produced it** — 6 on `swap_tag` and 12 on `duplicate_similar`. On
+`duplicate_longtail` the ungated arm got none of the abstained 12 right: the six
+it got right are the same six the gated arm healed, and the twelve the gate
+refused are exactly the twelve the ungated arm published wrong.
 
 `duplicate_similar` is the worst of it. A near-identical decoy sits beside the
 real value; the ungated healer gets 12 of 18 right and 6 wrong; the gated healer
@@ -107,8 +109,8 @@ tool.
 
 ## The gate has never fired on real drift
 
-`results/events.jsonl` is the replay over the archived corpus: **74 records, 0
-abstentions.**
+`results/events.jsonl` is the replay over the archived corpus: **74 records, 8
+clean, 66 heals, 0 abstentions.**
 
 Two and a half years of genuine site changes across three sites never once
 produced a near-tie. When those pages moved, the right answer won by a wide
@@ -121,15 +123,6 @@ recorded comes from a manufactured near-tie: 54 from the benchmark's deliberate
 mutations, 4 from the deployed testbed. The claim "the gate prevents wrong
 values" is supported by constructed cases and by **no observed production
 incident**.
-
-<Callout type="warn" title="A discrepancy in the source document">
-  `docs/LIMITATIONS.md` describes this file as *"74 records, 50 clean, 24
-  heals"*, and `README.md` and `CONTRIBUTING.md` say the same. Running
-  `npm run replay` today reports **74 runs, 8 ok, 66 heals, 0 abstentions**, and
-  the committed `results/events.jsonl` agrees with the run: 66 `auto_approved`
-  records and 8 `no_action`. The record count and the zero abstentions — the two
-  figures this section's argument rests on — are unchanged either way.
-</Callout>
 
 ---
 

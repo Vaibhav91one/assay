@@ -212,7 +212,7 @@ version**, never an in-place rewrite, and the frame's own line
 there. Make it explicit in the confirmation copy.
 
 **`assay-runs` (`79:2`) — label the demo.** The header reads `74 runs · 24 healed ·
-2 held`. The real corpus produced 74 runs, 24 heals and **zero** abstentions, and the
+2 held`. The real corpus produced 74 runs, 66 heals and **zero** abstentions, and the
 README makes a point of that. Mock data that quietly contradicts the repo's own honesty
 claim is the one kind of polish this project cannot afford. Mark demo data as demo.
 

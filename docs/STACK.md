@@ -15,7 +15,7 @@ shadcn/ui · GSAP for motion · self-hosted first, open source.
 
 ## 0. Amendments — owner decisions, 2026-08-22
 
-Five decisions were revised after this document was first written. Where the sections
+Six decisions were revised after this document was first written. Where the sections
 below disagree with this block, **this block wins**; the original reasoning is kept
 because the trade-offs still hold, only the choice changed.
 
@@ -24,7 +24,7 @@ because the trade-offs still hold, only the choice changed.
 | SQLite only, Postgres a future port | **Postgres, committed** | "Zero ops" evaporates once compose is already running. Two processes sharing one SQLite file only works on a single host; WAL over a network filesystem can corrupt; the single-writer lock puts `worker` and `web` in contention. And since Drizzle cannot share a schema across dialects, hedging carried a port-one-file debt — committing removes it. Unlocks `pg-boss` and `pgvector` if ever needed. |
 | No auth in v1 | **Clerk on hosted, no-auth on self-host** | Hosted multi-user genuinely needs auth. Clerk cannot be self-hosted, so it is scoped to the hosted instance only; self-host runs single-operator behind the operator's own access control. |
 | No TanStack Query | **TanStack Query, for live surfaces** | Not because of auth — auth and client data-fetching are orthogonal, and Clerk's `auth()` works in Server Components. The real driver is `run-report · in progress`, where fields settle one at a time and the screen must update live. |
-| JavaScript throughout, no tsconfig | **TypeScript throughout, engine included** | Nobody had decided this, which meant nobody had ruled it out either — and nine features are about to be built in parallel by nine agents who will never read each other's code. A type is the cheapest contract between people who cannot talk. Migrated module by module under the invariant gate: 34 assertions, 153 bench cases at 0.0% wrong values, replay 74/24/0, `results/events.jsonl` byte-identical after every single step. `any` is permitted where a real type would mean refactoring, and each one carries a `// TODO(types)` saying which. |
+| JavaScript throughout, no tsconfig | **TypeScript throughout, engine included** | Nobody had decided this, which meant nobody had ruled it out either — and nine features are about to be built in parallel by nine agents who will never read each other's code. A type is the cheapest contract between people who cannot talk. Migrated module by module under the invariant gate: 34 assertions, 153 bench cases at 0.0% wrong values, replay 74 runs / 66 heals / 0 abstentions, `results/events.jsonl` byte-identical after every single step. `any` is permitted where a real type would mean refactoring, and each one carries a `// TODO(types)` saying which. |
 | `src/fingerprint.js` imports nothing | **`dist/fingerprint.js` imports nothing** | The rule could not survive as written: TypeScript source cannot be pasted into Bright Data's Cheerio worker, which has no module loader. So it moves to the artifact. `npm run build:fingerprint` emits the file that gets pasted, and a vitest case rebuilds it and asserts it contains no `import` and no `require`. The test rebuilds rather than reading a committed artifact — a checked-in one can go stale against its source and still pass. |
 | AI via the Agent SDK with OAuth / subscription login | **Agent SDK with `ANTHROPIC_API_KEY`, BYOK** | Not permitted otherwise. The Agent SDK overview (fetched 2026-08-22) states: *"Unless previously approved, Anthropic does not allow third party developers to offer claude.ai login or rate limits for their products, including agents built on the Claude Agent SDK. Use the API key authentication methods described in the Quickstart instead."* The Model connector panel already designs the API-key path, and the key stays optional and shown by presence only — "Assay runs with no model" stays true when it is absent. The injection-safety split below is unchanged: the same reference confirms `disallowedTools: ["Bash", "Write", "Edit"]` removes a built-in tool from the model's context entirely, and `outputFormat: { type: 'json_schema', schema }` gives the structured element *reference* the design depends on. |
 
@@ -143,7 +143,7 @@ replacement for RSC data loading, and adding it to static pages would be a regre
 | Email | Resend + React Email | 6.21.0 / 6.9.2 | MIT | Decided in APP-DESIGN §6b | BYO key |
 | MCP | `@modelcontextprotocol/sdk` | 1.30.0 | MIT | stdio + HTTP from one server | — |
 | Browser | Playwright | 1.62.1 | Apache-2.0 | Doubles as E2E runner | ~300MB if enabled |
-| Unit tests | `tools/selftest.js` + Vitest | 4.1.11 | MIT | Keep what works, add for app code | — |
+| Unit tests | `tools/selftest.ts` + Vitest | 4.1.11 | MIT | Keep what works, add for app code | — |
 | Charts | **none** — hand-rolled SVG | — | — | §8 | — |
 | Tables | **none** — TanStack Table only on demand | — | — | §8 | — |
 | Dates | **none** — `Intl.DateTimeFormat` | — | — | §8 | — |
@@ -473,7 +473,7 @@ loudly so, Resend key the user's own.
 
 ## 11. Testing
 
-Keep `tools/selftest.js` exactly as it is: assert-based, 34 checks, runs in seconds against
+Keep `tools/selftest.ts` exactly as it is: assert-based, 34 checks, runs in seconds against
 the real corpus. Migrating it to a framework would buy nothing.
 
 Add around it:
