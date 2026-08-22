@@ -1,82 +1,52 @@
 import type { Metadata } from 'next';
 import { workersUp } from 'assay/store';
 import { TopBar } from '@/components/top-bar';
-import { Empty } from '@/components/empty';
-import { TimelineLanes, type Lane } from '@/components/timeline-lanes';
-import { scheduleView, until } from '@/lib/schedule';
-import { stamp } from '@/lib/when';
-import { RunNow } from './run-now';
+import { CalendarView } from './calendar-view';
+import { calendarData } from './data';
+import { VIEWS, type ViewKind } from './calendar';
 
 export const metadata: Metadata = { title: 'Schedule · Assay' };
 export const dynamic = 'force-dynamic';
 
-export default async function SchedulePage() {
+export default async function SchedulePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string }>;
+}) {
   // Read together: a schedule drawn without saying whether anything is
   // consuming it is a picture of intentions.
-  const [v, workers] = await Promise.all([scheduleView(), workersUp()]);
-  const running = v.scrapers.filter((s) => !s.paused).length;
+  const now = new Date();
+  const workers = await workersUp();
+  const [data, { view }] = await Promise.all([calendarData(now, workers), searchParams]);
 
-  const lanes: Lane[] = v.scrapers.map((s) => ({
-    key: s.scraper,
-    label: s.scraper,
-    dim: s.paused,
-    ticks: [
-      ...s.ran.map((r) => ({
-        at: r.at,
-        kind: 'ran' as const,
-        title: r.runs === 1 ? `ran ${stamp(r.when)}` : `${r.runs} runs, ${stamp(r.when)}`,
-      })),
-      ...s.upcoming.map((u) => ({
-        at: u.at,
-        kind: 'upcoming' as const,
-        title: `due ${stamp(u.when)}`,
-      })),
-    ],
-    cadence: s.paused ? 'paused' : s.cadence,
-    next: s.paused ? '' : until(s.nextRunAt, v.now),
-  }));
+  // `?view=` seeds the calendar and nothing more -- switching views afterwards
+  // is client state, because the whole window is already loaded and a round
+  // trip per view would make paging feel like the page was reloading. Seeding
+  // it from the URL is what makes a particular month linkable at all.
+  const initialView = (VIEWS as readonly string[]).includes(view ?? '')
+    ? (view as ViewKind)
+    : 'list';
+
+  const running = data.clocks.filter((c) => !c.paused).length;
+  const ranToday = data.runs.filter((r) => sameLocalDay(new Date(r.at), now)).length;
 
   return (
     <>
-      <TopBar title="Schedule" status={headline(running, v.scrapers.length, v.runsToday)} />
-      {/* 1056 is the drawn content width: past it the cadence and next-run
-          cells drift a screen's width away from the lane they belong to. */}
-      <div className="flex w-full max-w-[1112px] flex-col items-start px-[56px] pt-[44px]">
-        <p className="body-14 w-full text-[var(--text-secondary)]">
-          How often Assay checks each page.
+      <TopBar title="Schedule" status={headline(running, data.clocks.length, ranToday)} />
+      {/* 1056 is the drawn content width: past it a month grid stretches into
+          seven columns nobody scans across. */}
+      <div className="flex w-full max-w-[1112px] flex-col items-start gap-[18px] px-[56px] pb-[64px] pt-[26px]">
+        <p className="body-14 w-full max-w-[820px] text-[var(--text-secondary)]">
+          What has run, and when the next one is due.
         </p>
-        {v.scrapers.length === 0 ? (
-          <div className="w-full pt-[22px]">
-            <Empty title="Nothing is scheduled.">
-              A scraper takes a cadence when it is created. Until one exists there is no clock to
-              draw.
-            </Empty>
-          </div>
-        ) : (
-          <>
-            <TimelineLanes
-              lanes={lanes}
-              axis={['midnight', 'now', 'midnight']}
-              nowAt={(v.now.getTime() - v.dayStart.getTime()) / (v.dayEnd.getTime() - v.dayStart.getTime())}
-              legend={`filled = ran · hollow = coming up · one mark per minute${
-                v.runsToday > marks(v) ? `, so ${v.runsToday} runs sit on ${marks(v)} marks` : ''
-              }`}
-            />
-            <RunNow
-              workers={workers}
-              scrapers={v.scrapers.map((s) => ({
-                slug: s.scraper, paused: s.paused, fields: s.targets.length,
-              }))}
-            />
-          </>
-        )}
+        <CalendarView data={data} initialView={initialView} />
       </div>
     </>
   );
 }
 
-const marks = (v: Awaited<ReturnType<typeof scheduleView>>) =>
-  v.scrapers.reduce((n, s) => n + s.ran.length, 0);
+const sameLocalDay = (a: Date, b: Date) =>
+  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
 /**
  * The one thing worth saying in the chrome: how much of this is actually
