@@ -8,14 +8,34 @@
 // Zero imports, same as fingerprint.js -- `$` is always a parameter, never a
 // dependency, so this runs in a Cheerio worker and a server runtime alike.
 
-const clean = (s) => (s || '').replace(/\s+/g, ' ').trim();
+// TODO(types): `$` is a CheerioAPI and the return an Element, but this file
+// keeps fingerprint.ts's zero-import rule -- `$` is a parameter, never a
+// dependency -- so neither type can be named here.
+type Cheerio = any;
+type El = any;
+
+/**
+ * A field contract as data: which tags could hold it, how long its text runs,
+ * what must appear in it and what disqualifies it. Patterns are strings, not
+ * RegExp literals -- see `compile` below.
+ */
+export interface FieldContract {
+  tags: string;
+  minLen: number;
+  maxLen: number;
+  include?: string | RegExp | null;
+  exclude?: string | RegExp | null;
+  flags?: string;
+}
+
+const clean = (s: string | null | undefined): string => (s || '').replace(/\s+/g, ' ').trim();
 
 /**
  * The recall-title contract the corpus is built around. A contract is data:
  * which tags could hold the field, how long its text runs, what must appear in
  * it and what disqualifies it.
  */
-export const RECALL_TITLE = {
+export const RECALL_TITLE: FieldContract = {
   tags: 'h2,h3,a,li',
   minLen: 20,
   maxLen: 140,
@@ -35,7 +55,7 @@ export const RECALL_TITLE = {
  *
  * A RegExp is still accepted so an in-process caller can pass one.
  */
-const compile = (p, flags = 'i') =>
+const compile = (p: string | RegExp | null | undefined, flags = 'i'): RegExp | null =>
   p == null ? null : (p instanceof RegExp ? p : new RegExp(p, flags));
 
 /**
@@ -45,12 +65,12 @@ const compile = (p, flags = 'i') =>
  * once from a page we know is good, so there is nothing to rank against yet.
  * Ranking is heal-time behaviour and lives in heal.js.
  */
-export function pickTarget($, contract = RECALL_TITLE) {
+export function pickTarget($: Cheerio, contract: FieldContract = RECALL_TITLE): El {
   const { tags, minLen, maxLen, flags } = contract;
   const include = compile(contract.include, flags);
   const exclude = compile(contract.exclude, flags);
-  let best = null;
-  $(tags).each((i, el) => {
+  let best: El = null;
+  $(tags).each((i: number, el: El) => {
     if (best) return;
     const t = clean($(el).text());
     if (t.length < minLen || t.length > maxLen) return;

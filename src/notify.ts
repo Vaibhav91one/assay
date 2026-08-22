@@ -11,21 +11,47 @@
 // The key is read from the environment and never logged. `transport` is a
 // parameter so tests prove the shape without sending live mail.
 
-const esc = (s) => String(s ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
-const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+/** One line of a digest or break table. */
+export interface Change {
+  target: string;
+  field: string;
+  what: string;
+}
+
+/** How a message actually leaves the process. A parameter so tests need no key. */
+export type Transport = (msg: {
+  apiKey: string;
+  from: string;
+  to: string | string[];
+  subject: string;
+  html: string;
+  fetchImpl?: typeof fetch;
+}) => Promise<unknown>;
+
+const esc = (s: unknown): string =>
+  String(s ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' } as Record<string, string>)[c]!);
+const plural = (n: number, w: string): string => `${n} ${w}${n === 1 ? '' : 's'}`;
 
 /** "2 changes, 1 withheld" -- never just "2 changes". */
-export function digestSubject({ changes, withheld }) {
+export function digestSubject({ changes, withheld }: { changes: number; withheld: number }): string {
   return `${plural(changes, 'change')}, ${withheld} withheld`;
 }
 
 /** A break names the field and the scraper, so triage happens in the inbox. */
-export function breakSubject({ target, field }) {
+export function breakSubject({ target, field }: { target: string; field: string }): string {
   return `${target}: ${field} is held`;
 }
 
-export function digestBody({ changes = [], withheld = [], unchanged = 0 }) {
-  const row = (c) => `<tr><td>${esc(c.target)}</td><td>${esc(c.field)}</td><td>${esc(c.what)}</td></tr>`;
+export function digestBody({
+  changes = [],
+  withheld = [],
+  unchanged = 0,
+}: {
+  changes?: Change[];
+  withheld?: Change[];
+  unchanged?: number;
+}): string {
+  const row = (c: Change): string => `<tr><td>${esc(c.target)}</td><td>${esc(c.field)}</td><td>${esc(c.what)}</td></tr>`;
   return `<h2>${esc(digestSubject({ changes: changes.length, withheld: withheld.length }))}</h2>
 ${changes.length ? `<h3>Changed</h3><table>${changes.map(row).join('')}</table>` : ''}
 ${withheld.length ? `<h3>Withheld</h3><table>${withheld.map(row).join('')}</table>
@@ -33,14 +59,26 @@ ${withheld.length ? `<h3>Withheld</h3><table>${withheld.map(row).join('')}</tabl
 <p>${unchanged} unchanged.</p>`;
 }
 
-export function breakBody({ target, field, diagnosis, rowsHeld = 0, since }) {
+export function breakBody({
+  target,
+  field,
+  diagnosis,
+  rowsHeld = 0,
+  since,
+}: {
+  target: string;
+  field: string;
+  diagnosis: string;
+  rowsHeld?: number;
+  since?: string | number | null;
+}): string {
   return `<h2>${esc(target)}: I stopped publishing ${esc(field)}.</h2>
 <p>${esc(diagnosis)}</p>
 <p>${plural(rowsHeld, 'row')} held${since ? ` since run ${esc(since)}` : ''}. Nothing wrong was published.</p>`;
 }
 
 /** POST to Resend. Replaced wholesale in tests; never called without a key. */
-async function resendTransport({ apiKey, from, to, subject, html, fetchImpl = fetch }) {
+const resendTransport: Transport = async ({ apiKey, from, to, subject, html, fetchImpl = fetch }) => {
   const res = await fetchImpl('https://api.resend.com/emails', {
     method: 'POST',
     headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
@@ -48,7 +86,7 @@ async function resendTransport({ apiKey, from, to, subject, html, fetchImpl = fe
   });
   if (!res.ok) throw new Error(`resend ${res.status}`);
   return res.json();
-}
+};
 
 /**
  * Send one message. Throws on failure -- the caller decides whether that is
@@ -60,7 +98,14 @@ export async function send({
   apiKey = process.env.ASSAY_RESEND_KEY,
   from = process.env.ASSAY_MAIL_FROM,
   transport = resendTransport,
-}) {
+}: {
+  to?: string | string[];
+  subject: string;
+  html: string;
+  apiKey?: string;
+  from?: string;
+  transport?: Transport;
+}): Promise<unknown> {
   if (!apiKey) throw new Error('ASSAY_RESEND_KEY is not set');
   if (!from) throw new Error('ASSAY_MAIL_FROM is not set');
   if (!to) throw new Error('no recipient');
