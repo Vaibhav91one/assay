@@ -4,6 +4,12 @@ What it takes to begin building, **excluding UI implementation**, which waits on
 design. Audited 2026-08-22 by reading the code, not the docs. Where code and doc
 disagree, the code wins and the disagreement is recorded.
 
+> **Read the extensions below as `.ts`.** The repo was JavaScript when this was written
+> and is TypeScript now — see `docs/STACK.md` §0. Every file named `src/x.js` here is
+> `src/x.ts` today; the reuse verdicts and the reasoning are unaffected, because the
+> migration changed no behaviour and the invariants are identical either side of it.
+> For the authoritative list of who may edit which path, see `docs/DEV-OWNERSHIP.md`.
+
 ---
 
 ## 1. Current state

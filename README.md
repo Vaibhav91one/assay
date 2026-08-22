@@ -55,7 +55,7 @@ lost and still be the wrong answer, if something else looks nearly as much like
 it. When two candidates are that close, picking one is a coin flip, and a coin
 flip is not a heal. Assay publishes nothing and asks.
 
-Both thresholds were calibrated, not chosen. `tools/sweep.js` scans 110 pairs
+Both thresholds were calibrated, not chosen. `tools/sweep.ts` scans 110 pairs
 across an 11 x 10 grid; 0.60 / 0.16 is what came out.
 
 ---
@@ -115,9 +115,11 @@ the flattering one would be cheating, so both are in `results/bench.json`.
 ## How Bright Data is used
 
 A Scraper Studio collector (`c_mt1nrjboski90goqc`, Code worker) scrapes IKEA's
-product-recall listing and its detail pages. `src/fingerprint.js` imports nothing
-specifically so it pastes verbatim into that collector's Cheerio parser and runs
-identically in both places.
+product-recall listing and its detail pages. `npm run build:fingerprint` emits
+`dist/fingerprint.js` from `src/fingerprint.ts`, importing nothing, specifically
+so it pastes verbatim into that collector's Cheerio parser -- a worker has no
+module loader -- and runs identically in both places. A test rebuilds that
+artifact and asserts it stays import-free.
 
 That collector produced this repo's most useful finding, by failing.
 
@@ -129,7 +131,7 @@ crawls. But three fields the approved schema promises, `recall_title`,
 A green run and empty columns. That is the same failure this whole project is
 about, arriving unprompted from production.
 
-`tools/audit.js` reads the raw API response off disk and reports the gap.
+`tools/audit.ts` reads the raw API response off disk and reports the gap.
 
 ---
 
@@ -245,10 +247,8 @@ Re-running is idempotent, and teardown keeps volumes unless asked otherwise.
 on the machine this was written on. The compose file is the D1 shape plus the
 `PGDATA` fix; treat it as reviewed, not tested.
 
-The `worker` service is commented out in `docker-compose.yml` and absent from
-the scripts: `tools/worker.js` does not exist yet (it arrives with scheduling).
-Shipping an `up` that crashes on a missing entrypoint would be worse than
-shipping one that starts what exists.
+`tools/worker.ts` is now the `worker` service's entrypoint in both
+`docker-compose.yml` and `scripts/container-up.sh`.
 
 ## Design
 
@@ -265,18 +265,22 @@ implementation path, and the engine), `docs/PLATFORM-GAPS.md`, and `docs/STATES.
 ## Layout
 
 ```
-src/fingerprint.js   describe an element well enough to find it again (zero imports)
-src/heal.js          weighted similarity, ranking, and the margin gate
-src/detect.js        notice the break before anyone reads the data
-src/mutate.js        ten deterministic mutations with exact ground truth
-src/sites.js         the three locked targets
+src/fingerprint.ts   describe an element well enough to find it again (imports nothing)
+src/heal.ts          weighted similarity, ranking, and the margin gate
+src/detect.ts        notice the break before anyone reads the data
+src/mutate.ts        ten deterministic mutations with exact ground truth
+src/runner.ts        the one pipeline: fetch -> detect -> heal -> gate -> publish
+src/store/           twelve tables, and the queries the runner needs
+src/api/  src/mcp/   the read-only REST surface, and the tool surface for agents
 
-tools/bench.js       the benchmark          tools/sweep.js     threshold calibration
-tools/replay.js      74 runs over the corpus tools/audit.js    the Bright Data gap
-tools/selftest.js    34 assertions          tools/fetch-corpus.js  Wayback fetcher
+tools/bench.ts       the benchmark          tools/sweep.ts     threshold calibration
+tools/replay.ts      74 runs over the corpus tools/audit.ts    the Bright Data gap
+tools/selftest.ts    34 assertions          tools/fetch-corpus.ts  Wayback fetcher
 
+web/                 Next 16, App Router -- REST routes today, screens next
 results/             every number this README claims, as data
 corpus/              77 archived captures
+dist/fingerprint.js  generated: the file pasted into Bright Data's worker
 ```
 
 ## Example output
