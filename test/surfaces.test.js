@@ -56,6 +56,16 @@ describe('webhook signing', () => {
   });
 });
 
+describe('database', () => {
+  // A DB-backed test that early-returns without Postgres reports PASSED, not
+  // skipped -- vitest cannot tell the difference, so the test count is identical
+  // either way. CI sets ASSAY_REQUIRE_DB=1 to turn that vacuous green into a
+  // failure. Without it, a clean clone still runs.
+  it('postgres is reachable (required when ASSAY_REQUIRE_DB is set)', () => {
+    if (process.env.ASSAY_REQUIRE_DB) expect(dbUp).toBe(true);
+  });
+});
+
 describe('MCP tool surface', () => {
   it('has no assay_resolve — a model proposes, it never decides', () => {
     const names = Object.keys(TOOLS);

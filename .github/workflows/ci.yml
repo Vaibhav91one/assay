@@ -1,0 +1,110 @@
+# The numbers ARE the argument.
+#
+# A workflow that only checks exit codes would let a refactor silently move the
+# benchmark, and the benchmark is the whole claim this project makes. So the
+# engine job parses output and fails on drift. Every number asserted below was
+# confirmed locally before it was written here.
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  engine:
+    name: engine — assertions, benchmark, replay
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: selftest — 34 assertions
+        run: |
+          out=$(npm test 2>&1)
+          echo "$out" | tail -3
+          ok=$(echo "$out" | grep -c '^  ok ' || true)
+          echo "$out" | grep -q 'all checks pass' || { echo "::error::selftest did not report 'all checks pass'"; exit 1; }
+          [ "$ok" -eq 34 ] || { echo "::error::expected 34 assertions, saw $ok"; exit 1; }
+          echo "34 assertions ✓"
+
+      - name: bench — gated arm publishes 0 wrong values across 153 cases
+        run: |
+          out=$(npm run bench 2>&1)
+          row=$(echo "$out" | grep 'margin gate') || { echo "::error::no 'margin gate' row in bench output"; exit 1; }
+          echo "$row"
+          n=$(echo "$row" | awk '{print $4}')
+          wrong=$(echo "$row" | awk '{print $7}')
+          [ "$n" = "153" ]     || { echo "::error::expected 153 cases, saw $n"; exit 1; }
+          [ "$wrong" = "0.0%" ] || { echo "::error::gated arm published $wrong wrong values, expected 0.0%"; exit 1; }
+          echo "153 cases, 0.0% wrong ✓"
+
+      - name: replay — 74 runs, 24 heals, 0 abstentions
+        run: |
+          out=$(npm run replay 2>&1)
+          echo "$out" | grep -E 'replayed|heal|abstain'
+          echo "$out" | grep -q 'replayed 74 runs' || { echo "::error::expected 74 runs"; exit 1; }
+          heals=$(echo "$out" | awk '/^  heal /{print $2}')
+          abst=$(echo  "$out" | awk '/^  abstain /{print $2}')
+          [ "$heals" = "24" ] || { echo "::error::expected 24 heals, saw $heals"; exit 1; }
+          [ "$abst"  = "0"  ] || { echo "::error::expected 0 abstentions, saw $abst"; exit 1; }
+          echo "74 / 24 / 0 ✓"
+
+      - name: proof records are byte-identical
+        run: |
+          git diff --exit-code -- results/events.jsonl \
+            || { echo "::error::replay changed results/events.jsonl — the proof records moved"; exit 1; }
+          echo "events.jsonl byte-identical ✓"
+
+  app:
+    name: app — vitest against a real postgres
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: assay
+          POSTGRES_DB: assay
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://postgres:assay@127.0.0.1:5432/assay
+      # A DB-backed test that early-returns without Postgres reports PASSED, not
+      # skipped -- the test count is identical either way, so counting cannot
+      # catch it. This flag turns that vacuous green into a hard failure.
+      ASSAY_REQUIRE_DB: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: apply migrations
+        # psql, not `drizzle-kit migrate`: the generated SQL is plain and applying
+        # it directly avoids a migrate step observed to hang outside a container.
+        run: |
+          for f in src/store/migrations/*.sql; do
+            echo "-> $f"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"
+          done
+
+      - run: npx vitest run
+
+  web:
+    name: web — build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build --workspace web
