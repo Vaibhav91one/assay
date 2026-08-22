@@ -44,7 +44,7 @@ describe('key panel', () => {
   // -- but the panel's other consumers do, and clearing it keeps this file
   // honest if that ever changes back.
   const NAMES = [
-    'ANTHROPIC_API_KEY', 'CLAUDE_CODE_OAUTH_TOKEN', 'BRIGHTDATA_API_TOKEN', 'ASSAY_RESEND_KEY',
+    'ANTHROPIC_API_KEY', 'CLAUDE_CODE_OAUTH_TOKEN', 'BRIGHTDATA_API_TOKEN', 'ASSAY_RESEND_KEY', 'FIRECRAWL_API_KEY',
   ];
 
   beforeEach(() => {
@@ -74,6 +74,14 @@ describe('key panel', () => {
         name: 'Bright Data',
         buys: expect.any(String),
         vars: ['BRIGHTDATA_API_TOKEN'],
+        set: false,
+        via: '',
+        doc: expect.any(String),
+      },
+      {
+        name: 'Firecrawl',
+        buys: expect.any(String),
+        vars: ['FIRECRAWL_API_KEY'],
         set: false,
         via: '',
         doc: expect.any(String),
@@ -158,7 +166,7 @@ describe('key panel', () => {
   it('never returns a key it can see', () => {
     // Every credential, one at a time -- the old version planted the canary in
     // ANTHROPIC_API_KEY only, and a leak of ASSAY_RESEND_KEY would have passed.
-    for (const name of ['BRIGHTDATA_API_TOKEN', 'ASSAY_RESEND_KEY']) {
+    for (const name of ['BRIGHTDATA_API_TOKEN', 'ASSAY_RESEND_KEY', 'FIRECRAWL_API_KEY']) {
       process.env[name] = SECRET;
       const keys = readKeys('none');
       expect(keys.find((k) => k.vars.includes(name))?.set).toBe(true);

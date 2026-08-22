@@ -131,6 +131,19 @@ export const readKeys = (auth: ModelAuth): KeyPresence[] => [
     doc: '/docs/credentials#bright-data',
   },
   {
+    name: 'Firecrawl',
+    // Optional in a stronger sense than the others, and the row says so:
+    // `src/skills/page.ts` is reached only after a direct fetch is refused, so
+    // an instance without the key loses nothing on pages that already work. A
+    // row that read "Reads pages" would make an operator go and find a key for
+    // a capability they may never need.
+    buys: 'Reads a page that refuses a direct request. Only tried after one is.',
+    vars: ['FIRECRAWL_API_KEY'],
+    set: Boolean(process.env.FIRECRAWL_API_KEY),
+    via: process.env.FIRECRAWL_API_KEY ? 'with a key set in this process’s environment' : '',
+    doc: '/docs/credentials#firecrawl',
+  },
+  {
     name: 'Email delivery',
     buys: 'Sends the break alert and the digest.',
     vars: ['ASSAY_RESEND_KEY'],
