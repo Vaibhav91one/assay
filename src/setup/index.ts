@@ -165,9 +165,14 @@ export interface TargetView {
 async function fetchPage(url: string): Promise<string> {
   if (url.startsWith('corpus://')) {
     const site = url.slice('corpus://'.length).split('/')[0]!;
-    const files = (await readdir(`corpus/${site}`)).filter((f) => f.endsWith('.html')).sort();
+    // Resolved against the PACKAGE, not the process. `tools/worker.ts` reads
+    // `corpus/<site>` relative to cwd, which is the repo root when it runs; a
+    // Next route's cwd is `web/`, so the same url would mean two different
+    // directories depending on who asked. A corpus url names one page.
+    const dir = new URL(`../../corpus/${site}/`, import.meta.url);
+    const files = (await readdir(dir)).filter((f) => f.endsWith('.html')).sort();
     if (!files.length) throw new Error(`corpus/${site} holds no captures`);
-    return readFile(`corpus/${site}/${files.at(-1)}`, 'utf8');
+    return readFile(new URL(files.at(-1)!, dir), 'utf8');
   }
   const res = await fetch(url, { headers: { 'user-agent': 'assay/0.1 (+self-hosted)' } });
   if (!res.ok) throw new Error(`fetch ${res.status}`);
