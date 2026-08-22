@@ -21,6 +21,7 @@ import { establishBaseline, runTarget, digest, type Evaluation } from '../runner
 import { pickTarget } from '../target.js';
 import { putCapture } from '../store/captures.js';
 import { openEpisode, closeEpisode } from '../api/webhooks.js';
+import { latestContract } from '../contracts/store.js';
 import {
   getDb, reserveRunId, recordRun, lastRunFor, historyFor, sql,
 } from '../store/index.js';
@@ -124,6 +125,12 @@ export async function ingestPage({
   });
 
   const history = await historyFor(target.targetId);
+  // The operator's field contract (F2), if this target has one. Null is "no
+  // contract" and leaves the target row's own thresholds in force -- which is
+  // every target until somebody writes one, and is why wiring this moved
+  // nothing. Read here rather than in each caller so a delivered run and a
+  // fetched run are governed by the same document.
+  const contract = await latestContract(target.targetId);
   // Per RUN, not per page: a page that reverts to an earlier state would
   // otherwise collide on the unique proof_id, and a proof is about a run.
   const proofId = `pr_${sha16(`${target.targetId}${runId}${baseline.field}`)}`;
@@ -135,6 +142,7 @@ export async function ingestPage({
     baseline,
     history,
     thresholds: c.thresholds ?? { tau: 0.6, delta: 0.16 },
+    contract: contract?.parsed ?? null,
     meta: { run: runId, site: target.targetId, via },
     proofId,
   });
