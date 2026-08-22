@@ -46,7 +46,13 @@ export default async function HomePage({
 
   return (
     <>
-      <TopBar title={conversation?.title ?? 'Home'} />
+      {/* A conversation that built a scraper names it, so the screen that made
+          the thing is also the screen you can run it from. Without one this
+          falls back to the instance's only scraper, or to nothing. */}
+      {/* `?? undefined` and not the raw column: a conversation with no scraper
+          yet is "I have not said", which falls back, and not `null`, which is
+          the contract's word for "this screen offers the control itself". */}
+      <TopBar title={conversation?.title ?? 'Home'} scraper={conversation?.scraperSlug ?? undefined} />
       <Watch
         waiting={queue.length}
         auth={auth}

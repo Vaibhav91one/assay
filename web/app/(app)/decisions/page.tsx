@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { TopBar } from '@/components/top-bar';
 import { Empty } from '@/components/empty';
 import { openDecisions } from '@/lib/queue';
@@ -20,7 +21,14 @@ export default async function DecisionsPage() {
           // justify -- which is the product working, so it says so.
           <Empty title="Nothing is waiting on you.">
             Every cell in the last run was either published or is still being watched. Held cells
-            arrive here the moment the gate refuses one.
+            arrive here the moment the gate refuses one.{' '}
+            {/* The one screen with no way out. Answering the last decision
+                emptied the list and left the reader on a card with nothing to
+                click; the question they have next is whether the answer landed,
+                and that is a run. */}
+            <Link href="/runs" className="text-[var(--semantic-link)] hover:underline">
+              See what the runs did ›
+            </Link>
           </Empty>
         ) : (
           <DecisionsList decisions={decisions} />

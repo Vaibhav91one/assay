@@ -37,6 +37,10 @@ export default async function RunPage({ params }: { params: Promise<{ run: strin
       <TopBar
         title={`Run ${d.runId}`}
         status={headline(d)}
+        // The scraper this run was of. "Run it again" is the commonest thing to
+        // want from a page showing what one run did, and it was not reachable
+        // from here at all.
+        scraper={d.scraper}
         action={
           <Link href="/runs" className={actionVariants({ variant: 'outline' })}>
             <ArrowLeft size={16} strokeWidth={1.5} aria-hidden />

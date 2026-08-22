@@ -1,0 +1,93 @@
+'use client';
+
+import Link from 'next/link';
+import { Play } from 'lucide-react';
+import { Button } from './button';
+import { RunNow } from '@/app/(app)/schedule/run-now';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+
+/**
+ * "Ask for a run", from wherever you are.
+ *
+ * Until this existed the control lived on one screen, behind one mark on a
+ * calendar: you had to be on Schedule, find the scraper's next-run dot, open
+ * its dialog, and the button was in there. From Runs, from a run detail, from
+ * the conversation that built the scraper, there was no way to trigger one at
+ * all -- and it is the thing an operator does more often than anything else on
+ * this product.
+ *
+ * WHAT IT DOES NOT DO is start a scrape. `RunNow` is imported whole rather
+ * than re-implemented, and that is the entire reason this file is a wrapper
+ * and not a button: that component carries the refusal on a paused scraper,
+ * the worker-liveness sentence read off a Postgres advisory lock, and the
+ * watch that reads the run RECORD instead of spinning on a timer. A second
+ * control that enqueued without any of it would be the spinner-over-a-promise
+ * this product exists to condemn, and the first thing to drift would be the
+ * wording of a refusal.
+ *
+ * The trigger says the same words as the section it opens. That repetition is
+ * deliberate: a button labelled `Run` would promise something neither it nor
+ * anything behind it can keep.
+ *
+ * The props are spelled out here rather than imported from `lib/scrapers.ts`
+ * because that module opens a Postgres pool. A type-only import would erase,
+ * but `web/components/chrome.ts` is the scar from the last time a client
+ * component's import of a server module dragged `net`/`tls`/`dns` into the
+ * browser bundle, and one line of duplicated shape is cheaper than the guard.
+ */
+export function RunAction({
+  slug,
+  fields,
+  paused,
+  workers,
+}: {
+  slug: string;
+  fields: number;
+  paused: boolean;
+  workers: number;
+}) {
+  return (
+    <Dialog>
+      {/* `asChild` so the trigger IS the product's Button -- press, focus ring
+          and the icon swap come from the one recipe rather than from a second
+          control hand-rolled to look like it. */}
+      <DialogTrigger asChild>
+        <Button variant="outline" icon={Play} iconSize={16}>
+          Ask for a run
+        </Button>
+      </DialogTrigger>
+
+      <DialogContent className="max-h-[85vh] gap-[18px] overflow-y-auto sm:max-w-[560px]">
+        <DialogHeader>
+          <DialogTitle className="title-20 text-[var(--text-primary)]">{slug}</DialogTitle>
+          <DialogDescription className="body-13_5 text-[var(--text-secondary)]">
+            Moves this page to the front of the queue. Assay&apos;s web process never scrapes — a
+            worker claims it.
+          </DialogDescription>
+        </DialogHeader>
+
+        <RunNow workers={workers} scrapers={[{ slug, paused, fields }]} />
+
+        {/* Where to go next, and the honest reason this is a link and not a
+            second button in the bar: Assay has no UI for changing a cadence, so
+            "schedule this scraper" is a screen to read, not an action to take.
+            The calendar is where the one stored next run lives. */}
+        <p className="pt-[18px]">
+          <DialogClose asChild>
+            <Link href="/schedule" className="meta-12_5 text-[var(--semantic-link)] hover:underline">
+              See when it is due next ›
+            </Link>
+          </DialogClose>
+        </p>
+      </DialogContent>
+    </Dialog>
+  );
+}
