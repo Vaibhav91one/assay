@@ -164,8 +164,28 @@ trade was taken deliberately and it has a measurable cost.
 
 ---
 
+## 7. Until 2026-08-22 the deployed path could not detect a break at all
+
+`ingestPage` — the single path the worker and a Bright Data delivery both take —
+called `establishBaseline` on the page it was about to evaluate, so every run
+compared a page against itself: the skeleton always matched, the stored selector
+always resolved, and the value always equalled the baseline value. The gate fired
+zero times in 74 recorded runs, and a site that moved would have been published
+as `live`.
+
+The corpus path (`tools/ingest.ts`) never had this bug — it takes the baseline
+from the first capture and evaluates every later one against it, which is what
+produced the numbers in sections 2 and 3. So the published 0.0% was a measurement
+of the engine and was never a measurement of the product. The baseline is now
+persisted per field (`field_state.baseline_golden_sha` / `baseline_selector`) and
+advances only on a published heal; the numbers in this document are unchanged,
+because none of them ran through the broken path.
+
+---
+
 ## What is not claimed
 
+- That the deployed path had ever detected a break before 2026-08-22. It had not.
 - That the gate improves outcomes on any corpus other than this one.
 - That 0.6 / 0.16 are correct for any field other than `recall_title`.
 - That zero wrong values is achievable without the abstention rate in section 2.
