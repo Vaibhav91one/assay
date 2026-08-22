@@ -16,6 +16,7 @@ import { load } from 'cheerio';
 import { readFile, readdir } from 'node:fs/promises';
 import { ingestPage } from '../src/connectors/ingest.js';
 import { recomputeField } from '../src/health/observe.js';
+import { dueDigests, markDigestSent } from '../src/reports/digest.js';
 import { deliver } from '../src/api/webhooks.js';
 import { send, breakSubject, breakBody } from '../src/notify.js';
 import { getDb, closeDb, claimDueTarget, markNotified } from '../src/store/index.js';
@@ -143,6 +144,37 @@ async function runOne(target: any) {
   return `${targetId}  run ${r.runId}  ${result.event.event}  ${result.status.status}${note}`;
 }
 
+/**
+ * Send every digest that has come due (F14). Returns a line per digest, or none.
+ *
+ * The claim and the send are two calls on purpose and are wired as two. dueDigests
+ * bumps next_run_at inside the same transaction as its FOR UPDATE SKIP LOCKED,
+ * which is what stops two workers sending the same digest twice; markDigestSent
+ * moves last_sent_at and runs ONLY after the send returns. A failed send moves
+ * neither window, so the next run composes over the period nobody received.
+ * Calling markDigestSent alongside the claim would turn a failed send into a
+ * silently skipped reporting period.
+ *
+ * Empty until an operator inserts a digests row, which is why wiring it moved
+ * nothing.
+ */
+async function sendDueDigests(): Promise<string[]> {
+  const out: string[] = [];
+  for (const d of await dueDigests()) {
+    try {
+      // Null recipients is "this install's address", the same one a break alert
+      // uses. If that is unset too, send() refuses rather than inventing one --
+      // and because markDigestSent is never reached, the period is re-covered.
+      await send({ to: d.recipients ?? process.env.ASSAY_MAIL_TO, subject: d.subject, html: d.html });
+      await markDigestSent(d.digestId);
+      out.push(`digest ${d.digestId} (${d.cadence}) sent`);
+    } catch (e) {
+      out.push(`digest ${d.digestId} (${d.cadence}) NOT sent: ${(e as Error).message.split('\n')[0]}`);
+    }
+  }
+  return out;
+}
+
 const main = async () => {
   getDb();
   console.log(`worker up — polling every ${POLL_MS / 1000}s${ONCE ? ' (once)' : ''}`);
@@ -157,6 +189,13 @@ const main = async () => {
       try { console.log(await runOne(target)); }
       catch (e) { console.error(`${target.targetId}  failed: ${(e as Error).message}`); }
     }
+
+    // After the runs, so a digest covers the cycle that just finished rather
+    // than the one before it. Never fatal to the loop: a mail outage must not
+    // stop the scrapes, which are the thing that has a deadline.
+    try { for (const line of await sendDueDigests()) console.log(line); }
+    catch (e) { console.error(`digests failed: ${(e as Error).message.split('\n')[0]}`); }
+
     if (ONCE || stopping) { if (!claimed) console.log('nothing due'); break; }
     await new Promise((r) => setTimeout(r, POLL_MS));
   } while (!stopping);
