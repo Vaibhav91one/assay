@@ -22,6 +22,21 @@
 //     standing state, not a fact about this run. `heal_history` IS per-run, so
 //     the move it recorded is shown on the search node instead.
 //
+// Two more are cut per RUN rather than always, on the same rule:
+//
+//   * the search, on a run that healed but left no `heal_history` row --
+//     `field_runs.ranked` is persisted only on an abstain, so such a run has
+//     nothing recording what was considered. The edge goes straight from
+//     `evaluate` to `gate`.
+//   * everything past the skip check, on a run with no `field_runs` row. Every
+//     later stage reads a cell, and building those nodes out of `runs.status`
+//     alone would be the fiction this file exists to refuse.
+//
+// None of this is said on the screen. The reasoning lives here, where the next
+// person changing the mapping will look; an operator opening a run twenty times
+// a day does not need the diagram to explain its own construction, and a screen
+// that does reads as talking down to them.
+//
 // Scores are the one derivation here, and only where the arithmetic is
 // checkable: `field_runs.ranked` is the list `healGated` ranked, so
 // `ranked[0].score` is its `score` and `ranked[0] - ranked[1]` is its `margin`
@@ -80,8 +95,6 @@ export interface FlowEdge {
 export interface Flow {
   nodes: FlowNode[];
   edges: FlowEdge[];
-  /** Stages the pipeline ran that left nothing readable. Rendered as a note. */
-  omitted: { stage: string; because: string }[];
 }
 
 /* ------------------------------------------------------------------ input */
@@ -210,7 +223,6 @@ const ROW_Y = 152;
 export function flowFor(run: RunRecord): Flow {
   const nodes: Omit<FlowNode, 'x' | 'y'>[] = [];
   const edges: FlowEdge[] = [];
-  const omitted: Flow['omitted'] = [];
   const cell = run.cell;
   const skipped = run.status === 'skipped';
   const broken = run.status === 'heal' || run.status === 'abstain';
@@ -266,19 +278,11 @@ export function flowFor(run: RunRecord): Flow {
   // A skipped run stops here, because that is where the engine stopped: it
   // returns before the contract is even parsed. Drawing the rest would be
   // drawing a pipeline that did not execute.
-  if (skipped) {
-    return { nodes: place(nodes), edges, omitted };
-  }
-
   // Every stage below reads a cell. Without one there is nothing recorded to
   // read, and inventing the remaining nodes from `runs.status` alone would be
   // the fiction this file exists to refuse.
-  if (!cell) {
-    omitted.push({
-      stage: 'evaluate, search, gate, publish',
-      because: 'this run has no field_runs row, so nothing about the cell was recorded',
-    });
-    return { nodes: place(nodes), edges, omitted };
+  if (skipped || !cell) {
+    return { nodes: place(nodes), edges };
   }
 
   /* ---- resolve the baseline. */
@@ -327,14 +331,9 @@ export function flowFor(run: RunRecord): Flow {
   });
   edges.push({ from: 'baseline', to: 'evaluate', label: 'baseline' });
 
-  // detect() ran here on every one of these runs. It left nothing to read.
-  omitted.push({
-    stage: 'detect',
-    because:
-      'diagnosis, attributed_cause and signals live on the proof event, and recordRun '
-      + 'persists no event — only broken/not-broken survives, as runs.status',
-  });
-
+  // detect() ran between `evaluate` and the branch below, and left nothing to
+  // read. See the file header: only broken/not-broken survives, as runs.status,
+  // which is the evaluate node's branch. No node.
   if (!broken) {
     edges.push({ from: 'evaluate', to: 'outcome', label: 'intact' });
   } else {
@@ -379,12 +378,9 @@ export function flowFor(run: RunRecord): Flow {
       edges.push({ from: 'evaluate', to: 'search', label: 'broken' });
       edges.push({ from: 'search', to: 'gate', label: n ? `best ${score(n.score)}` : 'candidate' });
     } else {
-      omitted.push({
-        stage: 'search',
-        because:
-          'the ranked list is persisted only on an abstain (field_runs.ranked), and this run '
-          + 'left no heal_history row either — nothing records what was considered',
-      });
+      // Nothing records what was considered: `ranked` is kept only on an
+      // abstain, and this run left no heal_history row either. Skip the node
+      // and join evaluate straight to the gate.
       edges.push({ from: 'evaluate', to: 'gate', label: 'broken' });
     }
 
@@ -500,7 +496,7 @@ export function flowFor(run: RunRecord): Flow {
     facts: outcomeFacts,
   });
 
-  return { nodes: place(nodes), edges, omitted };
+  return { nodes: place(nodes), edges };
 }
 
 /** The four decisions `healGated` itself can record. Anything else is a policy. */
