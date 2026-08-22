@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Menu } from '@base-ui/react/menu';
 import { ChevronDown, ListChecks } from 'lucide-react';
+import { actionVariants } from './button';
 
 /**
  * `Menu` on `06 · Components`, wired as a filter.
@@ -34,14 +35,14 @@ export function FilterMenu({
 
   return (
     <Menu.Root>
-      <Menu.Trigger className="flex items-center gap-[7px] rounded-[var(--radius-control)] border border-[var(--border-default)] bg-[var(--surface-card)] px-[12px] py-[9px] hover:bg-[var(--surface-subtle)]">
-        <ListChecks size={14} strokeWidth={1.5} className="text-[var(--text-primary)]" aria-hidden />
-        <span className="meta-12_5 text-[var(--text-primary)]">{active.label}</span>
-        <ChevronDown size={12} strokeWidth={1.5} className="text-[var(--text-primary)]" aria-hidden />
+      <Menu.Trigger className={actionVariants({ variant: 'outline' })}>
+        <ListChecks size={14} strokeWidth={1.5} aria-hidden />
+        {active.label}
+        <ChevronDown size={12} strokeWidth={1.5} aria-hidden />
       </Menu.Trigger>
       <Menu.Portal>
         <Menu.Positioner sideOffset={6} align="start" className="z-50">
-          <Menu.Popup className="w-[200px] rounded-[10px] border border-[var(--border-default)] bg-[var(--surface-card)] p-[3px] shadow-elevation-floating">
+          <Menu.Popup className="motion-pop-in w-[200px] origin-[var(--transform-origin)] rounded-[10px] border border-[var(--border-default)] bg-[var(--surface-card)] p-[3px] shadow-elevation-floating">
             {options.map((o) => (
               <Menu.LinkItem
                 key={o.value}

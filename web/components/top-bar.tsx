@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { TOP_BAR_ACTION } from './chrome';
+import { actionVariants } from './button';
 import { notices, outstandingCount } from '@/lib/notifications';
 import { Notifications } from './notifications';
 import { Settings } from 'lucide-react';
@@ -49,14 +49,12 @@ export async function TopBar({
         {action !== undefined ? (
           action
         ) : (
-          <Link href="/settings" className={TOP_BAR_ACTION}>
-            <Settings size={16} strokeWidth={1.5} className="text-[var(--text-primary)]" aria-hidden />
-            <span className="meta-12_5 text-[var(--text-primary)]">Settings</span>
+          <Link href="/settings" className={actionVariants({ variant: 'outline' })}>
+            <Settings size={16} strokeWidth={1.5} aria-hidden />
+            Settings
           </Link>
         )}
       </div>
     </header>
   );
 }
-
-export { TOP_BAR_ACTION };

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, CircleAlert } from 'lucide-react';
 import { TopBar } from '@/components/top-bar';
+import { actionVariants } from '@/components/button';
 import { RunStrip } from '@/components/run-strip';
 import { StatusLine } from '@/components/status-line';
 import { runsView, OUTCOMES, type Outcome, type RunRow } from '@/lib/runs';
@@ -81,14 +82,9 @@ function NeedsYou({ items }: { items: NonNullable<Awaited<ReturnType<typeof runs
           ))}
         </p>
       </div>
-      <Link
-        href="/decisions"
-        className="flex h-[40px] shrink-0 items-center gap-[10px] rounded-[var(--radius-control)] bg-[var(--semantic-link)] px-[18px] hover:bg-[var(--semantic-link-hover)]"
-      >
-        <ArrowRight size={16} strokeWidth={1.5} className="text-[var(--accent-on-primary)]" aria-hidden />
-        <span className="body-13_5 text-[var(--accent-on-primary)]">
-          Open the decision{items.length === 1 ? '' : 's'}
-        </span>
+      <Link href="/decisions" className={actionVariants({ variant: 'link' })}>
+        <ArrowRight size={16} strokeWidth={1.5} aria-hidden />
+        Open the decision{items.length === 1 ? '' : 's'}
       </Link>
     </div>
   );

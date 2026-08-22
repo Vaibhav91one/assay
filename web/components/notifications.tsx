@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Popover } from '@base-ui/react/popover';
 import { Bell, Check, CircleAlert, ListChecks, MailWarning } from 'lucide-react';
 import type { Notice, NoticeKind } from '@/lib/notifications';
-import { TOP_BAR_ACTION } from './chrome';
+import { actionVariants } from './button';
 
 /**
  * What is waiting on a person, next to the control they would reach for.
@@ -32,9 +32,12 @@ const TONE: Record<NoticeKind, string> = {
 export function Notifications({ items, count }: { items: Notice[]; count: number }) {
   return (
     <Popover.Root>
-      <Popover.Trigger className={`relative ${TOP_BAR_ACTION}`} aria-label={label(count)}>
-        <Bell size={16} strokeWidth={1.5} className="text-[var(--text-primary)]" aria-hidden />
-        <span className="meta-12_5 text-[var(--text-primary)]">Activity</span>
+      <Popover.Trigger
+        className={actionVariants({ variant: 'outline', className: 'relative' })}
+        aria-label={label(count)}
+      >
+        <Bell size={16} strokeWidth={1.5} aria-hidden />
+        <span className="meta-12_5">Activity</span>
         {count > 0 && (
           <span className="absolute -right-[5px] -top-[5px] flex size-[17px] items-center justify-center rounded-full bg-[var(--accent-brand)]">
             <span className="caption-11 text-[var(--accent-on-primary)]">{count}</span>
@@ -44,7 +47,10 @@ export function Notifications({ items, count }: { items: Notice[]; count: number
 
       <Popover.Portal>
         <Popover.Positioner side="bottom" align="end" sideOffset={8}>
-          <Popover.Popup className="z-50 w-[380px] outline-none overflow-hidden rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] shadow-elevation-floating">
+          {/* `motion-pop-in` rather than numbers of its own, and the origin Base
+              UI computed for the side it actually opened on, so the panel grows
+              out of the bell instead of out of its own middle. See docs/MOTION.md. */}
+          <Popover.Popup className="motion-pop-in z-50 w-[380px] origin-[var(--transform-origin)] overflow-hidden rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] outline-none shadow-elevation-floating">
             <p className="label-10 border-b border-[var(--border-hairline)] px-[16px] py-[12px] text-[var(--text-muted)]">
               {count > 0 ? `${count} WAITING ON YOU` : 'NOTHING WAITING ON YOU'}
             </p>
