@@ -8,6 +8,7 @@ import { StatusLine, type Tone } from '@/components/status-line';
 import { Bar } from '@/components/bar';
 import { FlowCanvas } from '@/components/flow-canvas';
 import { OutcomeDonut, PageSizeBars } from '@/components/run-charts';
+import { ProofSheet } from '@/components/proof-sheet';
 import { runDetail, type CellSummary, type RunDetail } from '@/lib/run-detail';
 import { heldBecause } from 'assay/engine/reports/vocabulary';
 import { stamp } from '@/lib/when';
@@ -172,12 +173,12 @@ function Fields({ cells }: { cells: CellSummary[] }) {
               </td>
               <td className="py-[12px] text-right">
                 <span className="flex justify-end gap-[16px]">
-                  <Link
-                    href={`/explain/${c.proofId}`}
-                    className="meta-13 text-[var(--semantic-link)]"
+                  <ProofSheet
+                    proof={c.proofId}
+                    className="focus-ring meta-13 rounded-[var(--radius-control)] text-[var(--semantic-link)]"
                   >
                     proof ›
-                  </Link>
+                  </ProofSheet>
                   {c.status === 'quarantined' && (
                     <Link href="/decisions" className="meta-13 text-[var(--semantic-link)]">
                       decide ›

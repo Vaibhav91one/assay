@@ -81,12 +81,16 @@ export function Notifications({ items, count }: { items: Notice[]; count: number
       </TooltipProvider>
 
       <Popover.Portal>
-        <Popover.Positioner side="bottom" align="end" sideOffset={8}>
+        {/* z-50 on the positioner, which is the only one of the two that is
+            positioned -- see the note in ui/tooltip.tsx. This panel opens from
+            the top bar and never reached back under the rail, so it never
+            showed the fault the tooltip did; it had it all the same. */}
+        <Popover.Positioner side="bottom" align="end" sideOffset={8} className="z-50">
           {/* `motion-popup` rather than numbers of its own: it grows out of the
               origin Base UI computed for the side it actually opened on, so the
               panel arrives out of the bell instead of out of its own middle,
               and collapses back into it faster than it came. See docs/MOTION.md. */}
-          <Popover.Popup className="motion-popup z-50 w-[380px] overflow-hidden rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] outline-none shadow-elevation-floating">
+          <Popover.Popup className="motion-popup w-[380px] overflow-hidden rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] outline-none shadow-elevation-floating">
             <p className="label-10 border-b border-[var(--border-hairline)] px-[16px] py-[12px] text-[var(--text-muted)]">
               {count > 0 ? `${count} WAITING ON YOU` : 'NOTHING WAITING ON YOU'}
             </p>

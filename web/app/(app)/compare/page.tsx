@@ -4,6 +4,7 @@ import { CircleAlert, Split } from 'lucide-react';
 import { TopBar } from '@/components/top-bar';
 import { actionVariants } from '@/components/button';
 import { Empty } from '@/components/empty';
+import { ProofSheet } from '@/components/proof-sheet';
 import { compareView, summary, rows, type CompareView, type Withheld } from '@/lib/compare';
 import { t } from '@/lib/copy';
 import { when } from '@/lib/when';
@@ -169,12 +170,12 @@ function WithheldCard({ w }: { w: Withheld }) {
           {t('compare.decide')}
         </Link>
       ) : (
-        <Link
-          href={`/explain/${w.proof}`}
-          className="meta-12_5 shrink-0 text-[var(--semantic-link)] hover:underline"
+        <ProofSheet
+          proof={w.proof}
+          className="focus-ring meta-12_5 shrink-0 rounded-[var(--radius-control)] text-[var(--semantic-link)] hover:underline"
         >
           {t('compare.alreadyAnswered')}
-        </Link>
+        </ProofSheet>
       )}
     </article>
   );
