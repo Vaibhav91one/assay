@@ -107,3 +107,124 @@ Chrome definitions (2026-08-21 walk):
 - runs table depth — `earlier runs ›` appended to the runs table (drawn on 79:2).
 - user block chevron — opens `UserMenu` (Docs · GitHub · Sign out); drawn in `sidebar · user menu`.
 - sign-in `Continue` — resolved by `sign-in · link sent` and `sign-in · unknown email` in flow 1.1.
+
+---
+
+## 7. Affordance resolution log (2026-08-22)
+
+Every interactive node on `04 · Screens` is now accounted for. **170 interactive nodes:
+128 wired to a destination, 42 resolved as one of the four non-navigational categories
+below.** Nothing is undefined; "nothing is a placeholder" is provable by walking this
+table against the file.
+
+The rule from §1 stands: an undefined click is a bug. A click that *acts* rather than
+navigates is not undefined — it has a defined function response, recorded here.
+
+### Self-referential (7) — correctly inert
+
+The active tab on its own screen: `tab/Claude Code` on `connect`, `tab/Codex` on
+`connect · codex`, `tab/claude.ai`, `tab/Bright Data`, `tab/Email`, `tab/Model`, `tab/API`
+each on their own panel. Also `button/edit-fields` on `agent-fields · editing`, which is
+already the editing state. Clicking the state you are in does nothing, by definition.
+
+### Filter-in-place (6) — no navigation, no new frame
+
+| Affordance | Frame | Behaviour |
+|---|---|---|
+| `tab/all` · `tab/healed` · `tab/held` · `tab/clean` | `runs` | Filters the run table in place; the count in the header updates |
+| `chip/all` · `chip/held` | `fields` | Filters the field table in place |
+
+A filtered-state frame is **not** wanted: the table is the same component with a
+predicate applied, and drawing four near-identical frames would be the "50 frames that
+differ by one fill" the state-coverage decision already refused.
+
+### Disclosure-in-place (8) — expands within the frame via `Popover`
+
+| Affordance | Frame | Reveals |
+|---|---|---|
+| `the page I read ›` | `agent-fields`, `agent-fields · editing` | The captured page, in a `Popover` anchored to the link |
+| `link/served` · `link/raw` (`what came back ›`) | `blocked` | Status line, page title, byte size, skeleton verdict |
+| `link/structure` (`show page structure ›`) | `page-map` | The before/after DOM outline the map abstracts |
+| `link/why` | `decision · proposers` | Why two-of-three is not a majority — the shared-blind-spot argument |
+| `link/solid` (`3 fields are solid ›`) | `fragility` | The three fields not at risk |
+| `link/docs` | `envelope` | The full output format, linking to docs |
+
+All use the `Popover` component on `04 · Components`. They expand and collapse in place;
+none navigates.
+
+### Action-with-feedback (10) — acts, then surfaces a `Toast`
+
+A defined function response, not a dead end. Toast copy is the specification:
+
+| Affordance | Frame | Toast |
+|---|---|---|
+| `button/export-retraction-csv` | `blast-radius` | *"4,113 rows exported · results/blast/…csv"* |
+| `link/copy-cli` | `explain` | *"Copied `assay explain pr_9f21c4`"* |
+| `button/send-a-test` | `digest` | *"Test digest sent to data-oncall@yourdomain.com"* |
+| `button/create-key` | `connect · api` | *"Key created. Copy it now — it is not shown again."* |
+| `export as YAML ›` | `settings`, `sidebar · user menu` | *"Field contracts copied as YAML"* |
+| `one command, JSON + CSV ›` | `settings`, `sidebar · user menu` | *"Export started · JSON + CSV"* |
+| `button/attach` | `home` | Opens the OS file picker; no toast |
+| `chip/app` | `digest` | Switches the preview channel in place |
+
+### Genuine design gaps (3) — no destination frame exists
+
+Left unwired deliberately rather than inventing a screen. Each is a product decision, not
+a wiring oversight:
+
+| Affordance | Frame | What is missing |
+|---|---|---|
+| `btn-request-access` | `sign-in · unknown email` | A "request sent" confirmation state |
+| `button/choose-myself` | `discovery` | A manual page-selection screen |
+| `button/choose-which` | `drift-proposal` | A per-field accept/reject screen |
+
+All three are on the hosted/onboarding path. None blocks development of what is drawn.
+
+### Not reproducible
+
+The 8 duplicate `settings` / `sidebar · user menu` shadow nodes reported after the wiring
+pass **no longer exist** — a scan of all 54 frames finds zero duplicate-named interactive
+nodes. They were most likely removed when group 08 was rebuilt. Recorded rather than
+claimed as fixed.
+
+## 8. Flow completeness (2026-08-22)
+
+58 frames, 18 flows, walked by following `NODE` reactions from each flow's starting frame.
+
+### Dead ends (2) — both already accounted for
+
+| Flow | Frame | Why |
+|---|---|---|
+| 1.1 First run | `sign-in · unknown email` | Its only affordance is `btn-request-access`, one of the three genuine design gaps in §7 |
+| 8.3 Public pages | `conduct` | A public page with no app chrome. It is reached from a footer link outside the prototype, and by design has nowhere to go back to |
+
+### Frames with no inbound click (13) — event-driven states, not missing wiring
+
+These are alternate states of a frame that already traverses. They are entered when a
+condition occurs, not when someone clicks, so a prototype edge into them would misrepresent
+how the product works:
+
+`runs · store unreachable` · `alert · delivery degraded` · `blocked` · `brake` ·
+`drift-proposal` · `decisions · loading` · `decisions · empty` · `connect · form errors` ·
+`incident-record` · `envelope` · `page-map` · `compare` · `decisions · frozen page`*
+
+\* `decisions · frozen page` is now reachable — see below.
+
+The last four are reachable in the product from surfaces not drawn as buttons (an alert
+link, a nav entry for Compare). They are entry points, not orphans.
+
+### Wired during this pass (6)
+
+Frames that *should* have been click-reachable and now are:
+
+| From | Affordance | To |
+|---|---|---|
+| `decisions` | See it on the page | `decisions · frozen page` |
+| `decisions` | Review | `decision · disagreement` |
+| `decision · disagreement` | See it on the page | `decision · proposers` |
+| `decision · proposers` | See it on the page | `decision · model proposed` |
+| `connect · email` | Preview both templates › | `email` |
+
+`decisions · resolved → decide-once` was **not** wired: the frame's only affordance is
+`button/leave-it-empty`, and `decide-once` is what the undo toast leads to, not a button.
+Wiring it to the receipt row was tried and reverted rather than left as a false edge.
