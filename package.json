@@ -11,7 +11,6 @@
     "sweep": "tsx tools/sweep.ts",
     "replay": "tsx tools/replay.ts",
     "audit": "tsx tools/audit.ts",
-    "docs": "tsx tools/build-docs.ts",
     "headtohead": "tsx tools/headtohead.ts",
     "bd:heal": "tsx tools/bd-heal.ts",
     "demo": "tsx tools/demo.ts",
