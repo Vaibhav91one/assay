@@ -31,6 +31,7 @@
     "fragility": "tsx tools/cli/fragility.ts",
     "incident": "tsx tools/cli/incident.ts",
     "bench:model": "tsx tools/bench-model.ts",
+    "bench:consensus": "tsx tools/bench-consensus.ts",
     "cli": "tsx bin/assay.ts"
   },
   "dependencies": {
