@@ -9,6 +9,7 @@ import { createTarget, CreateInput, listTargets } from 'assay/engine/setup/index
 import {
   appendTurns, attachScraper, startConversation, type Turn,
 } from 'assay/engine/store/conversations';
+import { fetchHtml } from 'assay/engine/skills/page';
 
 export type { ChatResult, Proposal };
 export type { Turn };
@@ -199,9 +200,10 @@ export async function describeFields(input: {
 
   let html: string;
   try {
-    const res = await fetch(url, { headers: { 'user-agent': 'assay/0.1 (+self-hosted)' } });
-    if (!res.ok) throw new Error(`fetch ${res.status}`);
-    html = await res.text();
+    // The same seam `createTarget` and the worker read through, so a page only
+    // an enabled connector can reach is describable here too -- rather than
+    // being refused on this screen and then fetchable on the next one.
+    ({ html } = await fetchHtml(url));
   } catch (e) {
     return { ok: false, detail: `Could not read ${url}: ${(e as Error).message}` };
   }
