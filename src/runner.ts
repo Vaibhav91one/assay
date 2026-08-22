@@ -128,6 +128,7 @@ export function evaluate({
   history = [],
   thresholds,
   contract,
+  healBlock = null,
   meta = {},
 }: {
   $: CheerioAPI;
@@ -144,6 +145,17 @@ export function evaluate({
    * tier vocabulary's default rather than whatever the caller happened to pass.
    */
   contract?: Contract | null;
+  /**
+   * Why this field may not heal on this run, or null. Resolved by the caller,
+   * because the answer lives in Postgres and this file reaches no database --
+   * `tools/worker.ts` and a Bright Data delivery both get it from D's
+   * `shouldHeal` via `ingestPage`, and `npm run replay` supplies nothing.
+   *
+   * A string, not a boolean: a withheld heal has to say what withheld it, or
+   * the operator who set the brake reads back the gate's reason instead of
+   * their own.
+   */
+  healBlock?: string | null;
   meta?: Record<string, any>;
 }): Evaluation {
   const policy = contract ? thresholdsFor(contract, baseline.field) : null;
@@ -202,10 +214,18 @@ export function evaluate({
   // A heal the GATE allowed and a POLICY withheld. Two different facts, and the
   // proof record has to say which, or an operator reading `thin_margin` on a
   // field they set to `auto_approve: never` is being told the wrong reason.
+  //
+  // The brake is checked before the floor: an operator saying "stop healing this
+  // field" outranks an arithmetic threshold, and reporting the threshold when a
+  // brake is what stopped it would send them to tune the wrong number.
   const withheld: string | null =
-    g.decision === 'heal' && policy && g.score <= policy.autoApproveAbove
-      ? `auto_approve_floor:${policy.autoApproveAbove}`
-      : null;
+    g.decision !== 'heal'
+      ? null
+      : healBlock
+        ? healBlock
+        : policy && g.score <= policy.autoApproveAbove
+          ? `auto_approve_floor:${policy.autoApproveAbove}`
+          : null;
 
   const healed = g.decision === 'heal' && withheld === null;
   const reason = withheld ?? g.reason;
@@ -248,6 +268,7 @@ export async function runTarget({
   history,
   thresholds,
   contract,
+  healBlock,
   meta,
   proofId,
 }: {
@@ -256,11 +277,12 @@ export async function runTarget({
   history?: HistoryPoint[];
   thresholds: { tau: number; delta: number };
   contract?: Contract | null;
+  healBlock?: string | null;
   meta: Record<string, any>;
   proofId: unknown;
 }): Promise<Evaluation & { row: Record<string, unknown> }> {
   const { $ } = await fetchPage();
-  const r = evaluate({ $, baseline, history, thresholds, contract, meta });
+  const r = evaluate({ $, baseline, history, thresholds, contract, healBlock, meta });
   const row = publishRow({
     values: { [baseline.field]: r.publishedValue },
     statuses: { [baseline.field]: r.status },

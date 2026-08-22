@@ -22,6 +22,7 @@ import { pickTarget } from '../target.js';
 import { putCapture } from '../store/captures.js';
 import { openEpisode, closeEpisode } from '../api/webhooks.js';
 import { latestContract } from '../contracts/store.js';
+import { shouldHeal } from '../brake/index.js';
 import {
   getDb, reserveRunId, recordRun, lastRunFor, historyFor, sql,
 } from '../store/index.js';
@@ -63,6 +64,39 @@ function normalise(html: string) {
 
 /** The digest recorded as `runs.page_sha` for a given page. */
 export const pageDigest = (html: string): string => digest(normalise(html).html());
+
+/**
+ * Why this field may not heal on this run, or null.
+ *
+ * `shouldHeal` deliberately does not catch a database error: a brake that
+ * cannot be READ is not a brake that is not SET, and answering "yes, heal" on a
+ * failed query would be a silent fallback in the one place this product refuses
+ * one. It left the decision to the caller. This is the caller, and the decision
+ * is to fail CLOSED -- an unreadable brake withholds the heal.
+ *
+ * The alternatives were worse. Healing anyway is the fallback D refused, and it
+ * fails in the expensive direction: a wrong value is a refund, a hole is a
+ * ticket. Letting the error abort the run is worse still -- it loses the run
+ * RECORD, and detect() guards on history.length >= 3 with robustZ over an
+ * unbroken series, so an unreachable brake table would quietly disarm the
+ * detector for every field on the target. One outage would become two.
+ *
+ * Failing closed costs an abstention, which is the product's own designed
+ * answer to "I cannot justify this". It is not silent: the reason lands on the
+ * proof record and opens an episode, so the operator is told the brake is
+ * unreadable rather than discovering it when a bad heal ships.
+ */
+async function healBlockFor(targetId: string, field: string): Promise<string | null> {
+  try {
+    return (await shouldHeal(targetId, field)) ? null : 'brake_engaged';
+  } catch (e) {
+    // First line only: a reason is read back in a table cell and an alert
+    // subject, and drizzle's message carries the whole query and its params
+    // across several lines. The full error is not swallowed -- it is the thing
+    // that produced this line, and the run it stopped is in the proof record.
+    return `brake_unreadable:${(e as Error).message.split('\n')[0]}`;
+  }
+}
 
 export interface IngestResult {
   runId: number;
@@ -131,6 +165,7 @@ export async function ingestPage({
   // nothing. Read here rather than in each caller so a delivered run and a
   // fetched run are governed by the same document.
   const contract = await latestContract(target.targetId);
+  const healBlock = await healBlockFor(target.targetId, c.field);
   // Per RUN, not per page: a page that reverts to an earlier state would
   // otherwise collide on the unique proof_id, and a proof is about a run.
   const proofId = `pr_${sha16(`${target.targetId}${runId}${baseline.field}`)}`;
@@ -143,6 +178,7 @@ export async function ingestPage({
     history,
     thresholds: c.thresholds ?? { tau: 0.6, delta: 0.16 },
     contract: contract?.parsed ?? null,
+    healBlock,
     meta: { run: runId, site: target.targetId, via },
     proofId,
   });
