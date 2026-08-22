@@ -16,6 +16,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   TRACKERS, GROUPS, RULED_OUT, trackerById, evidenceOf, thresholdsOf, NOT_MEASURED,
+  CHANGE_NOT_CONDITION,
 } from '../src/library/index.js';
 import { analyse } from '../src/library/analyse.js';
 import { contractFor } from '../src/library/contract.js';
@@ -129,6 +130,7 @@ describe('a prior finds the value a person would point at', () => {
     // the tax; the `avoid` on zero amounts and document order fixed it.
     { fixture: 'books-product', tracker: 'price', field: 'price', value: '£51.77' },
     { fixture: 'books-product', tracker: 'price', field: 'availability', value: 'In stock (22 available)' },
+    { fixture: 'books-product', tracker: 'restock', field: 'availability', value: 'In stock (22 available)' },
     // The first element matching the price prior here is the whole product
     // card, "$24.99 Nokia 123 7 day battery". The containment filter in
     // ./analyse.ts is what leaves the span behind.
@@ -311,6 +313,15 @@ describe('no tracker claims evidence it does not have', () => {
     expect(ev.claim).toContain('healed 66');
     // And the sentence that stops it being read as a claim about your page.
     expect(ev.claim).toContain('not a claim about your page');
+  });
+
+  it('does not promise an alert on a condition, because nothing reads one', () => {
+    // `FieldPolicy.alert` is written and resolved and never consumed, and an
+    // episode is opened by a BREAK. So there is no threshold input anywhere in
+    // this feature, and this pins that: if somebody adds one, the sentence the
+    // screens print becomes a lie and they have to change it here first.
+    expect(CHANGE_NOT_CONDITION).toContain('does not yet fire');
+    expect(CHANGE_NOT_CONDITION).toContain('no box here');
   });
 
   it('says the same thing about every unmeasured field, from one place', () => {

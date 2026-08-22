@@ -3,7 +3,9 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { CircleSlash } from 'lucide-react';
 import { TopBar } from '@/components/top-bar';
-import { trackerById, thresholdsOf, NOT_MEASURED, type TrackerField } from 'assay/engine/library/index';
+import {
+  trackerById, thresholdsOf, NOT_MEASURED, CHANGE_NOT_CONDITION, type TrackerField,
+} from 'assay/engine/library/index';
 import { Apply } from '../apply';
 
 // The tracker is static data, but `TopBar` reads the notification queue, so
@@ -66,6 +68,12 @@ export default async function TrackerPage({ params }: { params: Promise<{ entry:
         </Section>
 
         <Section title="POINT IT AT A PAGE">
+          {/* The form is a URL and a cadence, and that is not an oversight: the
+              premise is that anything discoverable from the page is not a form
+              field. The one input people ask for that ISN'T discoverable is a
+              threshold, and nothing in the engine reads a condition — so rather
+              than a box that does nothing, the absence is stated. */}
+          <p className="caption-12 text-[var(--text-muted)]">{CHANGE_NOT_CONDITION}</p>
           <Apply tracker={t} />
           {t.examples.length > 0 && (
             // Naming a URL in a public MIT repository is a claim that somebody

@@ -178,6 +178,37 @@ const RECALL_TITLE_MEASURED: Measurement = {
 };
 
 /**
+ * WHAT A TRACKER IS NOT, AND WHY THERE IS NO "TELL ME WHEN IT DROPS BELOW" BOX.
+ *
+ * The most-cited thing people want from a price watcher is a threshold, and the
+ * most-cited thing they want from a restock watcher is an alert the moment the
+ * word changes. Neither is something this engine can do today, and the fastest
+ * way to find that out is to look for the code that would do it:
+ *
+ *   - `FieldPolicy.alert` exists in `src/contracts/index.ts` and survives into
+ *     `FieldThresholds.alert`. Nothing reads it. Grep the engine: it is written
+ *     and resolved and never consumed.
+ *   - An episode -- the thing `src/notify.ts` actually sends about -- is opened
+ *     when a field BREAKS. `src/store/schema.ts` calls it "a break, from first
+ *     detection to recovery". There is no path in which a value that resolved
+ *     perfectly well and merely became smaller produces anything at all.
+ *
+ * So a threshold input would be a number the operator types into a box that
+ * nothing reads, and a restock tracker that promised an alert would be
+ * promising a message this build cannot send. Both are refused. What every
+ * tracker here really does is record each reading and show the change, and the
+ * screens say that in these words rather than implying more.
+ *
+ * The upgrade path is a predicate on a published value evaluated in
+ * `ingestPage` beside the gate, reusing the episode row and the transport that
+ * already exist. That is a feature, not a form field, and it is not this one.
+ */
+export const CHANGE_NOT_CONDITION =
+  'Assay records every reading and shows you when it changed. It does not yet fire when a '
+  + 'value crosses a number you choose — nothing in the engine reads a condition, so there '
+  + 'is no box here to type one into.';
+
+/**
  * The sentence every unmeasured field prints.
  *
  * One string, used everywhere, so an absence cannot be phrased more softly on
@@ -254,6 +285,55 @@ export const TRACKERS: readonly Tracker[] = [
           // Bare "available" is not here on purpose: it matched "AVAILABLE
           // ADD-ONS" on GitHub, "now available on AI Gateway" on a changelog and
           // "Available-Dictionary" on MDN. Every alternative below carries stock
+          // context of its own.
+          pattern: String.raw`\b(?:in stock|out of stock|sold out|unavailable|back ?ordered?|pre-?order|discontinued|currently unavailable|ships? (?:in|within))\b`,
+          minLen: 3,
+          maxLen: 70,
+        },
+        evidence: null,
+      },
+    ],
+    examples: [
+      {
+        label: 'books.toscrape.com — a sandbox published for scraping practice',
+        url: 'http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html',
+        permission:
+          'A sandbox published expressly so people can practise scraping against it. The host '
+          + 'serves no robots.txt at all (404), so nothing is disallowed.',
+        checked: '2026-08-23',
+      },
+    ],
+  },
+  {
+    id: 'restock',
+    group: 'commerce',
+    // Its own tracker rather than a field of Price, because it is the job
+    // people name most often and it is a different job: the value you want is
+    // the transition, the cadence is tighter, and the price is noise. One
+    // field, one input, nothing to configure.
+    name: 'Back in stock',
+    summary: 'Whether one thing is buyable, checked often.',
+    needs:
+      'A page for a single item, with the stock line written in the page as text — "In '
+      + 'stock", "Sold out", "Currently unavailable".',
+    mismatch:
+      'Stock is the value most often written in by script after the page loads, and on a '
+      + 'page like that there is nothing in the HTML to find. Assay says so before anything '
+      + 'is created rather than watching an element that will never change.',
+    cadence: 'hourly',
+    fields: [
+      {
+        name: 'availability',
+        means: 'The stock line.',
+        policy: 'strict',
+        why:
+          'Two or three words, and the opposite answer is two or three words that look much '
+          + 'the same to a text scorer. This is the entire tracker: getting it wrong is '
+          + 'getting the only thing you asked for wrong.',
+        match: {
+          // Bare "available" is deliberately absent: it matched "AVAILABLE
+          // ADD-ONS" on GitHub, "now available on AI Gateway" on a changelog and
+          // "Available-Dictionary" on MDN. Every alternative here carries stock
           // context of its own.
           pattern: String.raw`\b(?:in stock|out of stock|sold out|unavailable|back ?ordered?|pre-?order|discontinued|currently unavailable|ships? (?:in|within))\b`,
           minLen: 3,
