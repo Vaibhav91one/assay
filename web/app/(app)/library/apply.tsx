@@ -2,123 +2,186 @@
 
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
-import { CircleAlert, Hammer } from 'lucide-react';
+import { CircleAlert, Hammer, Search } from 'lucide-react';
 import { CADENCES } from 'assay/engine/agent/models';
-import { thresholdsOf, type Template } from 'assay/engine/library/index';
+import { thresholdsOf, type Tracker } from 'assay/engine/library/index';
 import { Button } from '@/components/button';
-import { applyTemplate, type ApplyResult } from './actions';
+import { approve, inspect, type ApproveResult, type InspectResult } from './actions';
 
 /**
- * Applying a template: your URL, your values, one button.
+ * Paste a URL, see what Assay found, approve.
  *
- * WHY IT ASKS FOR AN EXAMPLE AND NOT A SELECTOR. The template knows the field
- * NAMES for this shape and the tier each one deserves. It cannot know where the
- * value sits, because a shape is true of markup this repository has never seen
- * -- and FEATURES.md F7 forbids a text box a CSS selector could go into anyway.
- * So the operator pastes the value as they can read it on their own page and
- * the server derives the resolver from where that text actually lands in the
- * DOM. Same derivation as a model-made proposal, same refusal when it is not
- * there.
+ * WHY THE MIDDLE STEP EXISTS. The whole point of a tracker is that the operator
+ * does not have to say what to watch -- but "does not have to say" must not
+ * become "does not get to see". So the fields arrive filled in with values read
+ * off their own page, and the operator ticks, unticks and presses. That is the
+ * same shape as the model's proposal on Home and the same shape as the review
+ * on /skills: state it, then confirm it.
  *
- * The placeholder is the template's own `looks` sentence rather than a made-up
- * value. A prefilled real example is what makes an entry usable in thirty
- * seconds on the catalogue this borrowed from -- but theirs is a real handle on
- * a real site they operate against, and inventing one here would be a value
- * that is not on the operator's page and cannot be. A description of the shape
- * of the value is the honest version of the same affordance.
+ * A FIELD WITH NOTHING BEHIND IT COMES BACK UNTICKED, not hidden. "No price on
+ * this page" is a real answer about their page and worth seeing -- hiding the
+ * row would leave them wondering whether Assay looked. It is unticked because
+ * `createTarget` refuses the whole watch if any kept field resolves to nothing.
  *
- * BLANK IS ALLOWED AND MEANS "not this one". A page of this shape that carries
- * no reference number is still a page of this shape, and a template that
- * refused to apply without every field would be a template that fits nothing.
+ * AMBIGUITY IS SHOWN RATHER THAN RESOLVED. When a prior matched several
+ * elements the count is printed. Assay takes the first in document order --
+ * which is what `pickTarget` will do on every run from here -- and says that it
+ * was not the only one, because a quiet choice among several is the kind of
+ * thing this product is supposed to surface.
  */
-export function Apply({ template: t }: { template: Template }) {
+export function Apply({ tracker: t }: { tracker: Tracker }) {
   const [url, setUrl] = useState('');
   const [cadence, setCadence] = useState(t.cadence);
-  const [values, setValues] = useState<Record<string, string>>({});
-  const [result, setResult] = useState<ApplyResult | null>(null);
-  const [pending, start] = useTransition();
+  const [read, setRead] = useState<InspectResult | null>(null);
+  const [keep, setKeep] = useState<string[]>([]);
+  const [result, setResult] = useState<ApproveResult | null>(null);
+  const [reading, startRead] = useTransition();
+  const [saving, startSave] = useTransition();
 
-  const filled = t.fields.filter((f) => (values[f.name] ?? '').trim().length > 0);
-  const usable = url.trim().length > 0 && filled.length > 0;
+  if (result?.build.ok) return <Watching result={result} tracker={t} />;
 
-  if (result?.build.ok) return <Applied result={result} template={t} />;
+  const look = (target: string) =>
+    startRead(async () => {
+      setResult(null);
+      const r = await inspect(t.id, target);
+      setRead(r);
+      if (r.ok) setKeep(r.fields.filter((f) => f.value !== null).map((f) => f.name));
+    });
 
   return (
-    <div className="flex flex-col gap-[16px] rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] px-[18px] py-[16px]">
-      <p className="caption-12_5 text-[var(--text-secondary)]">
-        Paste each value as it reads on your page. Leave a field blank to skip it. Assay reads
-        the page once, finds where each value sits, and establishes a baseline — that first
-        read is what every later run is compared against.
-      </p>
-
+    <div className="flex flex-col gap-[14px] rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] px-[18px] py-[16px]">
       <label className="flex flex-col gap-[5px]">
         <span className="label-10 text-[var(--text-muted)]">YOUR PAGE</span>
         <input
           type="url"
           value={url}
           onChange={(e) => setUrl(e.currentTarget.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && url.trim()) { e.preventDefault(); look(url); }
+          }}
           placeholder="https://example.com/the-page"
           className="body-13_5 w-full rounded-[var(--radius-control)] border border-[var(--border-default)] bg-[var(--surface-card)] px-[12px] py-[9px] outline-none transition-colors duration-[var(--duration-tint)] placeholder:text-[var(--text-muted)] focus:border-[var(--semantic-link)]"
         />
       </label>
 
-      <div className="flex flex-col gap-[8px]">
-        <span className="label-10 text-[var(--text-muted)]">WHAT EACH VALUE READS AS</span>
-        {t.fields.map((f) => {
-          const { tau, delta } = thresholdsOf(f);
-          return (
-            <div key={f.name} className="flex flex-wrap items-center gap-[8px]">
-              <span className="flex w-[168px] shrink-0 flex-col">
-                <code className="mono-value-12_5 text-[var(--text-primary)]">{f.name}</code>
-                <span className="caption-11 text-[var(--text-muted)]">
-                  {f.policy} · τ {tau.toFixed(2)} · δ {delta.toFixed(2)}
-                </span>
-              </span>
-              <input
-                value={values[f.name] ?? ''}
-                onChange={(e) =>
-                  setValues((p) => ({ ...p, [f.name]: e.target.value }))}
-                placeholder={f.looks}
-                aria-label={`${f.name} — ${f.means}`}
-                className="body-13_5 min-w-[200px] flex-1 rounded-[var(--radius-control)] border border-[var(--border-default)] px-[10px] py-[8px] outline-none transition-colors duration-[var(--duration-tint)] placeholder:text-[var(--text-muted)] focus:border-[var(--semantic-link)]"
-              />
-            </div>
-          );
-        })}
-      </div>
+      {/* For somebody with no page in mind. One click fills the box and reads
+          it, so the feature can be seen working before it is trusted. */}
+      {!read && t.examples.length > 0 && (
+        <div className="flex flex-col gap-[4px]">
+          {t.examples.map((x) => (
+            <button
+              key={x.url}
+              type="button"
+              onClick={() => { setUrl(x.url); look(x.url); }}
+              className="caption-12 self-start text-left text-[var(--semantic-link)] hover:underline"
+            >
+              Try it on {x.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {read?.ok && (
+        <div className="flex flex-col gap-[9px]">
+          <p className="caption-12_5 text-[var(--text-secondary)]">
+            What Assay found on that page. Untick anything you do not want watched.
+          </p>
+          <ul className="flex flex-col gap-[9px]">
+            {t.fields.map((f) => {
+              const hit = read.fields.find((x) => x.name === f.name);
+              const { tau, delta } = thresholdsOf(f);
+              const missing = hit?.value == null;
+              return (
+                <li key={f.name} className="flex items-start gap-[10px]">
+                  <input
+                    type="checkbox"
+                    id={`keep-${f.name}`}
+                    checked={keep.includes(f.name)}
+                    disabled={missing}
+                    onChange={(e) =>
+                      setKeep((p) =>
+                        e.target.checked ? [...p, f.name] : p.filter((n) => n !== f.name))}
+                    className="mt-[3px] size-[14px] shrink-0 accent-[var(--accent-brand)] disabled:opacity-40"
+                  />
+                  <label htmlFor={`keep-${f.name}`} className="flex min-w-0 flex-1 flex-col gap-[2px]">
+                    <span className="flex flex-wrap items-baseline gap-x-[10px]">
+                      <code className="mono-value-12_5 text-[var(--text-primary)]">{f.name}</code>
+                      <span className="caption-11 text-[var(--text-muted)]">
+                        {f.policy} · τ {tau.toFixed(2)} · δ {delta.toFixed(2)}
+                      </span>
+                      {!missing && hit!.matches > 1 && (
+                        <span className="caption-11 text-[var(--text-muted)]">
+                          first of {hit!.matches} that matched
+                        </span>
+                      )}
+                    </span>
+                    {missing ? (
+                      <span className="caption-12 text-[var(--text-secondary)]">
+                        nothing on this page looks like {f.means.toLowerCase().replace(/\.$/, '')}
+                      </span>
+                    ) : (
+                      <span className="body-13_5 line-clamp-3 break-words text-[var(--text-primary)]">
+                        {hit!.value}
+                      </span>
+                    )}
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
+      {read && !read.ok && (
+        <p role="alert" className="flex items-start gap-[8px]">
+          <CircleAlert size={14} strokeWidth={1.5} className="mt-[2px] shrink-0 text-[var(--semantic-danger)]" aria-hidden />
+          <span className="meta-12_5 text-[var(--semantic-danger)]">{read.detail}</span>
+        </p>
+      )}
 
       <div className="flex flex-wrap items-center gap-[14px]">
-        <label className="flex items-center gap-[8px]">
-          <span className="caption-12 text-[var(--text-secondary)]">check every</span>
-          <select
-            value={cadence}
-            onChange={(e) => setCadence(e.currentTarget.value)}
-            className="meta-12_5 rounded-[var(--radius-control)] border border-[var(--border-default)] bg-[var(--surface-card)] px-[8px] py-[6px] outline-none"
+        {read?.ok ? (
+          <>
+            <label className="flex items-center gap-[8px]">
+              <span className="caption-12 text-[var(--text-secondary)]">check every</span>
+              <select
+                value={cadence}
+                onChange={(e) => setCadence(e.currentTarget.value)}
+                className="meta-12_5 rounded-[var(--radius-control)] border border-[var(--border-default)] bg-[var(--surface-card)] px-[8px] py-[6px] outline-none"
+              >
+                {CADENCES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </label>
+            <Button
+              variant="primary"
+              icon={Hammer}
+              loading={saving}
+              disabled={keep.length === 0}
+              onClick={() =>
+                startSave(async () =>
+                  setResult(await approve({ trackerId: t.id, url: read.url, keep, cadence })))}
+            >
+              {saving ? 'Establishing a baseline' : 'Start watching'}
+            </Button>
+            <button
+              type="button"
+              onClick={() => { setRead(null); setKeep([]); }}
+              className="meta-13 text-[var(--text-secondary)] hover:underline"
+            >
+              Try another page
+            </button>
+          </>
+        ) : (
+          <Button
+            variant="primary"
+            icon={Search}
+            loading={reading}
+            disabled={url.trim().length === 0}
+            onClick={() => look(url)}
           >
-            {CADENCES.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </label>
-
-        <Button
-          variant="primary"
-          icon={Hammer}
-          loading={pending}
-          disabled={!usable}
-          onClick={() =>
-            start(async () =>
-              setResult(await applyTemplate({
-                templateId: t.id,
-                url: url.trim(),
-                cadence,
-                examples: t.fields.map((f) => ({ name: f.name, example: values[f.name] ?? '' })),
-              })))}
-        >
-          {pending ? 'Reading the page for a baseline' : 'Start watching these fields'}
-        </Button>
-
-        <span className="meta-12_5 text-[var(--text-secondary)]">
-          {filled.length} of {t.fields.length} field{t.fields.length === 1 ? '' : 's'}
-        </span>
+            {reading ? 'Reading the page' : 'Read the page'}
+          </Button>
+        )}
       </div>
 
       {result && !result.build.ok && (
@@ -135,12 +198,11 @@ export function Apply({ template: t }: { template: Template }) {
  * After the baseline run.
  *
  * Two facts, kept apart because they fail apart: what the page said at baseline,
- * and whether the tier the template promised was actually written. A contract
+ * and whether the tier the tracker promised was actually written. A contract
  * that failed to save leaves the target on the engine's own defaults, which is a
- * different configuration from the one this screen described a moment ago -- so
- * it is reported rather than absorbed.
+ * different configuration from the one this screen described a moment ago.
  */
-function Applied({ result, template: t }: { result: ApplyResult; template: Template }) {
+function Watching({ result, tracker: t }: { result: ApproveResult; tracker: Tracker }) {
   const built = result.build;
   if (!built.ok) return null;
 
@@ -152,8 +214,8 @@ function Applied({ result, template: t }: { result: ApplyResult; template: Templ
       <p className="body-14 text-[var(--text-primary)]">Watching {built.id}.</p>
       <p className="caption-12_5 text-[var(--text-secondary)]">
         {held.length === 0
-          ? 'The first run is done and the baseline is what the page said just now. Every run from here is compared against it.'
-          : `The first run is done. ${held.length} field${held.length === 1 ? '' : 's'} came back held — Assay published nothing there rather than guess.`}
+          ? 'The baseline is what the page said just now. Every run from here is compared against it.'
+          : `${held.length} field${held.length === 1 ? '' : 's'} came back held — Assay published nothing there rather than guess.`}
       </p>
 
       <ul className="flex flex-col gap-[7px]">
@@ -162,7 +224,7 @@ function Applied({ result, template: t }: { result: ApplyResult; template: Templ
           const contract = result.contracts.find((c) => c.field === f.field);
           return (
             <li key={f.field} className="flex flex-wrap items-baseline gap-x-[12px] gap-y-[2px]">
-              <code className="mono-value-12_5 w-[150px] shrink-0 text-[var(--text-primary)]">
+              <code className="mono-value-12_5 w-[130px] shrink-0 text-[var(--text-primary)]">
                 {f.field}
               </code>
               <span className="body-13_5 min-w-0 flex-1 truncate text-[var(--text-secondary)]">
@@ -182,9 +244,9 @@ function Applied({ result, template: t }: { result: ApplyResult; template: Templ
         <p role="alert" className="flex items-start gap-[8px]">
           <CircleAlert size={14} strokeWidth={1.5} className="mt-[2px] shrink-0 text-[var(--semantic-warning)]" aria-hidden />
           <span className="meta-12_5 text-[var(--semantic-warning)]">
-            The watch exists, but the tier this template promised was not written for{' '}
-            {failed.map((c) => c.field).join(', ')}. Those fields are running on the engine&rsquo;s
-            defaults — τ 0.60, δ 0.16. {failed[0]!.detail}
+            The watch exists, but the tier this tracker promised was not written for{' '}
+            {failed.map((c) => c.field).join(', ')} — those fields are on the engine defaults,
+            τ 0.60 and δ 0.16. {failed[0]!.detail}
           </span>
         </p>
       )}

@@ -40,8 +40,7 @@ export default async function SkillsPage() {
           <Link href="/library" className="text-[var(--semantic-link)] hover:underline">
             Library
           </Link>{' '}
-          holds field contracts for page shapes — a set of fields and a tier for each, to
-          point at a URL of yours.
+          holds trackers — pick one, paste a page of yours, and Assay proposes what to watch on it.
         </p>
         <SkillsList initial={skills} />
       </div>

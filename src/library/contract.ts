@@ -8,10 +8,10 @@
 // nothing else; this file is server-side and holds the one dependency.
 
 import { stringify } from 'yaml';
-import type { TemplateField } from './index.js';
+import type { TrackerField } from './index.js';
 
 /**
- * The contract document for ONE field of a template, as YAML.
+ * The contract document for ONE field of a tracker, as YAML.
  *
  * One document per field because that is the granularity the store has: the
  * engine watches one field per target row, `targetIdFor` is `slug__field`, and
@@ -28,6 +28,6 @@ import type { TemplateField } from './index.js';
  * in would freeze this corpus's fitted values into every page anyone applies it
  * to, which docs/LIMITATIONS.md 5 says there is no evidence for.
  */
-export function contractFor(field: TemplateField, targetId: string): string {
+export function contractFor(field: TrackerField, targetId: string): string {
   return stringify({ target: targetId, fields: { [field.name]: { policy: field.policy } } });
 }
