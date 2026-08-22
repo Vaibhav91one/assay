@@ -2,7 +2,7 @@
 
 import { notFound } from 'next/navigation';
 import { useState } from 'react';
-import { KeyRound, Plus, RefreshCw, Scale, Trash2 } from 'lucide-react';
+import { Check, EyeOff, KeyRound, Plus, RefreshCw, Split, Trash2 } from 'lucide-react';
 
 import { Collapse } from '@/components/motion/collapse';
 import { useGlide } from '@/components/motion/glide';
@@ -18,7 +18,7 @@ import { Empty } from '@/components/empty';
 import { Working } from '@/components/loading';
 import { FilterMenu } from '@/components/filter-menu';
 import { Notifications } from '@/components/notifications';
-import { RunStrip } from '@/components/run-strip';
+import { RunStrip, type Bar as RunBar } from '@/components/run-strip';
 import { StatusLine } from '@/components/status-line';
 import { Toast, TOAST_BUTTON } from '@/components/toast';
 import type { Notice } from '@/lib/notifications';
@@ -256,25 +256,97 @@ export default function MotionPage() {
               New scrape
             </Button>
           </div>
+
+          <Labelled
+            label="The icon swap — point at any of these"
+            note="A button with a glyph on the left clips its own contents. On hover the row slides one icon-slot left, the glyph leaves through the left edge as it fades, and a second copy of the same glyph arrives from beyond the right edge into the space the label vacated. Nothing changes width: the arriving copy cancels its own footprint, so the button measures the same hovered as not. Sweep in and out quickly — these are transitions, so each piece reverses from wherever it had got to rather than replaying forward, and there is no way to strand a glyph half way."
+          >
+            <div className="flex flex-wrap items-center gap-[12px]">
+              <Sample variant="outline" />
+              <Sample variant="primary" />
+              <Sample variant="link" />
+              <Sample variant="success" />
+              <Sample variant="quiet" icon={Plus} />
+            </div>
+          </Labelled>
+
+          <Labelled
+            label="…and the three it deliberately skips"
+            note="No left glyph to send anywhere, a glyph that IS the whole button, and a glyph that is currently saying something. The swap is a condition on the render — a left icon, a label, and not loading — rather than a list of variants, because whether a button carries a glyph is a fact about the call site and not about the family."
+          >
+            <div className="flex flex-wrap items-center gap-[12px]">
+              <Sample variant="chip" />
+              <Sample variant="icon" />
+              <Sample variant="outline" loading />
+            </div>
+          </Labelled>
+
+          <Labelled
+            label="Focus — Tab into these"
+            note="Not the browser's outline. A hairline in the surface colour so the ring never touches the control, then the brand ring outside it, following the control's own radius. Orange rather than link blue for a measured reason: #2563eb clears 3:1 on the white card and only 2.4:1 on the near-black rail, and a ring legible on one of two surfaces is not a ring. #ff4d00 clears it on both. :focus-visible only, so clicking one of these with a mouse draws nothing."
+          >
+            <div className="flex flex-wrap items-center gap-[12px]">
+              <Sample variant="outline" />
+              <Sample variant="primary" />
+              <Sample variant="quiet" />
+              <Sample variant="icon" />
+              <span className="rounded-[var(--radius-control)] bg-[var(--bg-sidebar)] p-[10px]">
+                <Sample variant="primary" />
+              </span>
+            </div>
+          </Labelled>
+
+          <Labelled
+            label="The edge light — one button in the product wears this"
+            note="The real `New scrape` from the rail, on its real dark surface. A 90° wedge travelling around a 1.5px rim: one registered @property angle and one pseudo-element, where the MagicUI original nests five divs and a container query to draw the same picture. It is pointer-events: none, so press, focus, disabled and loading underneath are the ordinary primary button they always were — and under reduced motion it is not drawn at all, leaving exactly that. Dial it with --duration-orbit, --shimmer-spread and --shimmer-cut."
+          >
+            <div className="flex flex-wrap items-center gap-[16px]">
+              <span className="rounded-[var(--radius-card)] bg-[var(--bg-sidebar)] p-[20px]">
+                <button
+                  type="button"
+                  className={actionVariants({
+                    variant: 'primary',
+                    className: 'shimmer-edge relative w-[196px] justify-center',
+                  })}
+                >
+                  <Plus size={16} strokeWidth={2} className="shrink-0" aria-hidden />
+                  New scrape
+                </button>
+              </span>
+              <span className="rounded-[var(--radius-card)] bg-[var(--bg-sidebar)] p-[20px]">
+                <button
+                  type="button"
+                  disabled
+                  className={actionVariants({
+                    variant: 'primary',
+                    className: 'shimmer-edge relative w-[196px] justify-center',
+                  })}
+                >
+                  <Plus size={16} strokeWidth={2} className="shrink-0" aria-hidden />
+                  New scrape
+                </button>
+              </span>
+            </div>
+          </Labelled>
         </div>
       </Section>
 
       <Section
         id="overlays"
         title="Overlays"
-        note="The family that is hardest to get right and easiest to break. Each one opens on --duration-pop out of the corner it grew from, and each is the real component."
+        note="The family that is hardest to get right and easiest to break. Each one opens on --duration-pop out of the corner it grew from and closes back into it on --duration-dismiss, quicker than it came — open one and press Escape to watch it go. They share one class, `motion-popup`, so a popover, a menu and a tooltip cannot end up leaving the screen three different ways."
       >
         <div className="flex flex-col gap-[24px]">
           <Labelled
-            label="Notifications — populated"
-            note="The real dropdown, fed four fixture rows. The badge counts what is outstanding, which is three of the four."
+            label="Notifications — three waiting"
+            note="The real dropdown, fed four fixture rows, and the trigger is now the bell alone with a dot at its corner. The dot means OUTSTANDING and nothing else: it goes when the work is done, never because someone opened the panel. Losing the word costs a screen reader nothing — the aria-label still reads `Activity, 3 waiting on you`, in full, and the tooltip fires on keyboard focus as well as on hover."
           >
             <Notifications items={SAMPLE} count={SAMPLE.filter((n) => n.outstanding).length} />
           </Labelled>
 
           <Labelled
-            label="Notifications — empty"
-            note="Not a failure and not a spinner: the query ran and the answer is none."
+            label="Notifications — nothing waiting, so no dot"
+            note="Not a failure and not a spinner: the query ran and the answer is none. No dot, and the label reads `Activity, nothing waiting on you`."
           >
             <Notifications items={[]} count={0} />
           </Labelled>
@@ -332,7 +404,7 @@ export default function MotionPage() {
                 <DialogFooter>
                   <DialogClose className={actionVariants({ variant: 'quiet' })}>Cancel</DialogClose>
                   <DialogClose className={actionVariants({ variant: 'success' })}>
-                    <Scale size={16} strokeWidth={1.5} aria-hidden />
+                    <EyeOff size={16} strokeWidth={1.5} aria-hidden />
                     Stop watching
                   </DialogClose>
                 </DialogFooter>
@@ -424,12 +496,41 @@ export default function MotionPage() {
             </div>
           </Labelled>
 
-          <Labelled label="RunStrip" note="One bar per run, oldest left. A run that held something is taller and amber, so it is findable in a row of sixty.">
+          <Labelled
+            label="RunStrip"
+            note="One bar per run, oldest left. A run that held something is taller and amber, so it is findable in a row of sixty. Point at one, then Tab through them: every bar is a real link to its own run, its accessible name is the whole sentence so a screen reader never needs the hover, and the hit target is 8px wide against a 3px bar — which is the pitch the gaps already made, so the strip lands on the same pixels it always did."
+          >
             <RunStrip
-              bars={Array.from({ length: 24 }, (_, i) => ({ runId: 100 + i, held: i === 7 || i === 18 }))}
+              bars={Array.from(
+                { length: 24 },
+                (_, i): RunBar => ({
+                  runId: 100 + i,
+                  held: i === 7 || i === 18,
+                  // A fixture, and shaped like the real row rather than like a
+                  // convenient one: `runsView` supplies all four of these, so
+                  // the strip here says what it says on /runs.
+                  at: new Date(Date.now() - (23 - i) * 3 * 3_600_000),
+                  scraper: 'shop.example',
+                  outcome: i === 7 || i === 18 ? 'held' : i === 3 ? 'healed' : 'clean',
+                  heldField: i === 7 ? 'price' : i === 18 ? 'availability' : null,
+                }),
+              )}
               label="LAST 24 RUNS"
               from="run 100"
               to="run 123"
+            />
+          </Labelled>
+
+          <Labelled
+            label="RunStrip — the thinner row home has"
+            note="`homeStats` knows the run, when it happened and whether anything was held, and does not compute a three-way outcome. So a quiet bar here says `nothing held` rather than `clean`: a run with no quarantined cell may still have healed a selector, and the strip says only what was measured."
+          >
+            <RunStrip
+              bars={Array.from({ length: 12 }, (_, i) => ({
+                runId: 200 + i,
+                held: i === 9,
+                at: new Date(Date.now() - (11 - i) * 6 * 3_600_000),
+              }))}
             />
           </Labelled>
         </div>
@@ -582,9 +683,13 @@ function Sample({
     case 'primary':
       return <Button variant="primary" icon={Plus} {...props}>New scrape</Button>;
     case 'link':
-      return <Button variant="link" icon={Scale} {...props}>Open the decisions</Button>;
+      return <Button variant="link" icon={Split} {...props}>Open the decisions</Button>;
     case 'success':
-      return <Button variant="success" icon={Scale} iconSize={16} {...props}>Use this</Button>;
+      // `Check`, which is what decision-card.tsx really draws on Use this. It
+      // was `Scale` here and nowhere else -- a gallery that invents a glyph is
+      // a gallery that has started lying, which is the one thing this page
+      // cannot do.
+      return <Button variant="success" icon={Check} iconSize={16} {...props}>Use this</Button>;
     case 'chip':
       return <Button variant="chip" {...props}>claude setup-token</Button>;
     case 'quiet':
