@@ -13,10 +13,17 @@ import {
 const NAV = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/decisions', label: 'Decisions', icon: ListChecks },
-  { href: '/runs', label: 'Runs', icon: Activity },
-  { href: '/fields', label: 'Fields', icon: Columns3 },
+  // Routes with no rail entry of their own still belong under one. A proof
+  // opened from the runs table must not leave the rail pointing at nothing.
+  { href: '/runs', label: 'Runs', icon: Activity, also: ['/explain'] },
+  { href: '/fields', label: 'Fields', icon: Columns3, also: ['/compare'] },
   { href: '/schedule', label: 'Schedule', icon: Clock },
-] as const;
+] as const satisfies readonly {
+  href: string;
+  label: string;
+  icon: typeof Home;
+  also?: readonly string[];
+}[];
 
 /**
  * Client, because which item is active is a fact about the URL while the rest
@@ -31,8 +38,13 @@ export function SidebarNav({ waiting }: { waiting: number }) {
 
   return (
     <SidebarMenu className="gap-[18px] px-[20px] pb-[32px] group-data-[collapsible=icon]:px-[12px]">
-      {NAV.map(({ href, label, icon: Icon }) => {
-        const on = href === '/' ? path === '/' : path.startsWith(href);
+      {NAV.map((item) => {
+        const { href, label, icon: Icon } = item;
+        const also = 'also' in item ? item.also : [];
+        const on =
+          href === '/'
+            ? path === '/'
+            : path.startsWith(href) || also.some((p) => path.startsWith(p));
         return (
           <SidebarMenuItem key={href}>
             {/* `render`, not `asChild`: this is the Base UI build, which
