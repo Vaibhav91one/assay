@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
-import { ModelAccess } from '@/components/model-access';
-import { modelAuth } from 'assay/engine/ai/model';
+import { Suspense } from 'react';
+import { ModelAccess, type ModelAuth } from '@/components/model-access';
+import { Working } from '@/components/loading';
 import { TopBar } from '@/components/top-bar';
 import { StatusLine } from '@/components/status-line';
 import { Empty } from '@/components/empty';
@@ -169,8 +170,18 @@ function Connections({ v }: { v: SettingsView }) {
         <Section label="MODEL ACCESS" id="model-access" />
         <DocLink href={MODEL_DOC} name="model access" />
       </div>
+      {/* The probe is behind a boundary because it can now cost seconds again.
+          `cliLoggedIn()` caches for CLI_CACHE_MS rather than for the life of
+          the process -- a login that expired must not go on being reported as
+          live -- so roughly one Settings render a minute pays 3-5s for
+          `claude auth status`. Called inline, that render blocks the whole
+          screen. Called from an async child under Suspense, everything else
+          paints and this row streams in behind it. Same shape as the model row
+          on `web/app/sign-in/key-panel.tsx`, for the same reason. */}
       <div className="w-full pt-[24px]">
-        <ModelAccess auth={modelAuth()} />
+        <Suspense fallback={<ModelAccessPending />}>
+          <ModelAccessRow />
+        </Suspense>
       </div>
 
       <Section label="CONNECTIONS" id="connections" top={52} />
@@ -179,6 +190,25 @@ function Connections({ v }: { v: SettingsView }) {
       </div>
     </>
   );
+}
+
+/**
+ * The model row, resolved off the render path.
+ *
+ * The dynamic import is what makes this an async component, and it is also the
+ * rule `web/components/chrome.ts` records: `assay/engine/ai/model` pulls the
+ * Agent SDK and Node built-ins, so it is reached from a server component and
+ * never from anything the browser bundles.
+ */
+async function ModelAccessRow() {
+  const { modelAuth } = await import('assay/engine/ai/model');
+  return <ModelAccess auth={modelAuth() as ModelAuth} />;
+}
+
+/** What the row says while the probe is out. Not a spinner over the whole
+ *  section: only this line is unknown, and only this line waits. */
+function ModelAccessPending() {
+  return <Working>Checking</Working>;
 }
 
 /* ------------------------------------------------------------------ pieces */
