@@ -132,16 +132,22 @@
 
 /* The "something is running" label. A gradient clipped to the glyphs, swept
    on a linear loop -- linear because an eased loop reads as a stutter.
-   `currentColor` at both ends means the caller still owns the text colour and
-   only the bright band is ours. */
+
+   Not `currentColor`: clipping to text requires a transparent text fill, and
+   `currentColor` inside `background-image` resolves against that same
+   transparent colour, so the label disappears and only the travelling band is
+   left. Two overridable properties instead -- set --motion-shimmer-base to
+   recolour the label and keep the caller in charge of it. */
 .motion-shimmer {
+  --motion-shimmer-base: var(--text-secondary);
+  --motion-shimmer-glow: var(--text-primary);
   background: linear-gradient(
     100deg,
-    currentColor 0%,
-    currentColor 35%,
-    var(--text-muted) 50%,
-    currentColor 65%,
-    currentColor 100%
+    var(--motion-shimmer-base) 0%,
+    var(--motion-shimmer-base) 35%,
+    var(--motion-shimmer-glow) 50%,
+    var(--motion-shimmer-base) 65%,
+    var(--motion-shimmer-base) 100%
   );
   background-size: 200% 100%;
   background-clip: text;
@@ -213,8 +219,8 @@
      the role="status" still announces, only the sweep is gone. */
   .motion-shimmer {
     background: none;
-    color: inherit;
-    -webkit-text-fill-color: currentColor;
+    color: var(--motion-shimmer-base);
+    -webkit-text-fill-color: var(--motion-shimmer-base);
   }
 
   /* The equaliser stops mid-stride wherever the 0.01ms run left it, which for
