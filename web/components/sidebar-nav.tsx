@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Split, Activity, Columns3, Clock } from 'lucide-react';
+import { Home, Split, Activity, Columns3, Clock, Blocks } from 'lucide-react';
 import {
   SidebarMenu,
   SidebarMenuBadge,
@@ -29,6 +29,11 @@ const NAV = [
   { href: '/runs', label: 'Runs', icon: Activity, also: ['/explain'] },
   { href: '/fields', label: 'Fields', icon: Columns3, also: ['/compare'] },
   { href: '/schedule', label: 'Schedule', icon: Clock },
+  // `Blocks` rather than a plug or a sparkle: what this screen lists is things
+  // that slot into a seam the engine already has, and a plug reads as "wire up
+  // an integration" while a sparkle reads as "AI happens here". Neither is what
+  // is on the page.
+  { href: '/skills', label: 'Skills', icon: Blocks },
 ] as const satisfies readonly {
   href: string;
   label: string;
