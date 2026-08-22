@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { TopBar } from '@/components/top-bar';
 import { list } from './actions';
 import { SkillsList } from './skills-list';
@@ -28,6 +29,19 @@ export default async function SkillsPage() {
           say yes. A page is read with a direct request first; a source you enable here
           is tried only when that request is refused, and the bytes it returns go through
           the same gate as every other page.
+        </p>
+        {/* The second half of the same shelf. This screen is a registry of what
+            may be given to Assay; the Library is a registry of what to point it
+            at. Same idiom -- real entries, each stating what it wants before you
+            say yes -- and a different noun, which is why they are two screens
+            and not one list with a divider in it. */}
+        <p className="caption-12_5 text-[var(--text-muted)]">
+          Looking for something to watch rather than a way to read it? The{' '}
+          <Link href="/library" className="text-[var(--semantic-link)] hover:underline">
+            Library
+          </Link>{' '}
+          holds field contracts for page shapes — a set of fields and a tier for each, to
+          point at a URL of yours.
         </p>
         <SkillsList initial={skills} />
       </div>
