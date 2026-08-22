@@ -19,7 +19,7 @@ import { slackPayload, discordPayload, announce, summarise, breakMessage, testMe
 import { getConnectors, putConnector, deleteConnector, postDelivery } from '../src/connectors/handlers.js';
 import { ingestPage, pageDigest } from '../src/connectors/ingest.js';
 import { loadTools } from '../src/mcp/server.js';
-import { getDb, closeDb, heldCells, sql } from '../src/store/index.js';
+import { getDb, closeDb, heldCells, sql, targets } from '../src/store/index.js';
 
 // A real Slack webhook URL is a bearer credential. This is a syntactically
 // valid one pointed at a host that exists, so the host allow-list is exercised
@@ -332,8 +332,13 @@ suite('delivery degrades honestly', () => {
 suite('the seam', () => {
   it('runs the delivered page down the same pipeline a local fetch takes', async () => {
     if (!dbUp) return;
+    // Its own target row, created here. This used to name 'ikea' and create
+    // nothing: 'ikea' exists in the `assay` template database and in nothing
+    // else, so against `createdb` + `db:migrate` the `runs.target_id` foreign
+    // key rejected the insert and this case failed. The page is still the ikea
+    // corpus -- only the row this run belongs to is the test's own.
     const target = {
-      targetId: 'ikea',
+      targetId: 'test_connectors',
       url: 'corpus://ikea',
       contract: {
         field: 'recall_title',
@@ -350,6 +355,10 @@ suite('the seam', () => {
     const files = (await readdir('corpus/ikea')).filter((f) => f.endsWith('.html')).sort();
     const html = await readFile(`corpus/ikea/${files.at(-1)}`, 'utf8');
 
+    await getDb().insert(targets).values({
+      targetId: target.targetId, url: target.url, cadence: '6h', contract: target.contract,
+    }).onConflictDoNothing();
+
     const r = await ingestPage({ target, html, via: 'brightdata' });
 
     // The proof record carries provenance and nothing else that a local fetch
@@ -357,7 +366,7 @@ suite('the seam', () => {
     // the seam is wrong.
     if (!r.skipped) {
       expect(r.result!.event.via).toBe('brightdata');
-      expect(r.result!.event.site).toBe('ikea');
+      expect(r.result!.event.site).toBe(target.targetId);
       expect(['ok', 'heal', 'abstain']).toContain(r.result!.event.event);
       expect(r.result!.event.thresholds).toEqual({ tau: 0.6, delta: 0.16 });
       // A held cell is null. The webhook path cannot fill one either.
@@ -372,7 +381,8 @@ suite('the seam', () => {
     // the last one.
     await getDb().execute(sql`DELETE FROM field_runs WHERE run_id = ${r.runId}`);
     await getDb().execute(sql`DELETE FROM runs WHERE run_id = ${r.runId}`);
-    await getDb().execute(sql`DELETE FROM field_state WHERE target_id = 'ikea'`);
+    await getDb().execute(sql`DELETE FROM field_state WHERE target_id = ${target.targetId}`);
+    await getDb().execute(sql`DELETE FROM targets WHERE target_id = ${target.targetId}`);
   });
 
   it('refuses a contract with no resolver instead of guessing one', async () => {
