@@ -30,10 +30,11 @@
 
 import { z } from 'zod';
 import { load } from 'cheerio';
+import { inArray } from 'drizzle-orm';
 import { readFile, readdir } from 'node:fs/promises';
 import { ingestPage, type TargetRow } from '../connectors/ingest.js';
 import { nextRunAt, cadenceMs } from '../schedule.js';
-import { getDb, targets, runs, fieldRuns, eq, sql } from '../store/index.js';
+import { getDb, targets, eq, sql } from '../store/index.js';
 
 // --- the boundary ------------------------------------------------------------
 
@@ -223,7 +224,7 @@ export async function createTarget(input: CreateInput): Promise<Created | Failur
 
   const d = getDb();
   const clash = await d.select({ id: targets.targetId }).from(targets)
-    .where(sql`${targets.targetId} = ANY(${ids})`);
+    .where(inArray(targets.targetId, ids));
   if (clash.length) {
     return fail(
       'already_exists',
@@ -291,7 +292,7 @@ export async function createTarget(input: CreateInput): Promise<Created | Failur
   }
 
   const due = nextRunAt(cadence);
-  await d.update(targets).set({ nextRunAt: due }).where(sql`${targets.targetId} = ANY(${ids})`);
+  await d.update(targets).set({ nextRunAt: due }).where(inArray(targets.targetId, ids));
   const dueIso = iso(due);
 
   return {
@@ -444,7 +445,7 @@ export async function resumeTarget(id: string): Promise<Paused | Failure> {
 // --- delete ------------------------------------------------------------------
 
 async function removeRows(ids: string[]): Promise<void> {
-  await getDb().delete(targets).where(sql`${targets.targetId} = ANY(${ids})`);
+  await getDb().delete(targets).where(inArray(targets.targetId, ids));
 }
 
 export type Deleted = { ok: true; id: string; deleted: true };
