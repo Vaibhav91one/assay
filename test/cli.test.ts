@@ -161,6 +161,9 @@ describe('loadCommands groups what it loads', () => {
   });
 });
 
+// Each case here spawns a fresh node+tsx and pays a full cold transpile of the
+// binary's import graph. That costs about six seconds on the merged tree; the
+// bound lives in vitest.config.ts, which explains why.
 describe('the binary', () => {
   const assay = (...args: string[]) =>
     spawnSync(process.execPath, ['--import', 'tsx', 'bin/assay.ts', ...args], {
