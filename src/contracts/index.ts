@@ -12,57 +12,21 @@
 
 import { LineCounter, parseDocument, isMap, type Document } from 'yaml';
 import { z } from 'zod';
+import {
+  TIERS, TIER_THRESHOLDS, ON_ABSTAIN, DEFAULT_THRESHOLDS, type FieldThresholds,
+} from './tiers.js';
 
 // ---------------------------------------------------------------------------
 // Tiers
 // ---------------------------------------------------------------------------
 
-export const TIERS = ['strict', 'normal', 'loose'] as const;
-export type Tier = (typeof TIERS)[number];
-
-/**
- * Three tiers, and the numbers are read off `results/sweep.json` -- the
- * 110-pair calibration -- not chosen for how they look.
- *
- *   tier    tau   delta   correct  wrong        abstained
- *   strict  0.70  0.20    84/135   0  (0.0%)    37.8%
- *   normal  0.60  0.16    93/135   0  (0.0%)    31.1%
- *   loose   0.60  0.12   105/135   6  (4.4%)    17.8%
- *
- * `normal` is the sweep's own `best` entry: the least-abstaining pair on the
- * grid that still reaches zero wrong values, and the pair `healGated` already
- * defaults to. A contract that says nothing gets it, unchanged.
- *
- * `strict` is the cheapest point on the wrong-zero frontier that is strictly
- * more sceptical than `normal`: (0.70, 0.20) and (0.75, 0.25) score
- * identically on the corpus, so the lower pair is taken. Honestly: on THIS
- * corpus strict buys nothing measurable, because normal is already at 0.0%
- * wrong. What it buys is headroom against mutations the corpus does not
- * contain, and the price of that headroom is measured -- 9 fewer correct
- * values and 6.7 more points of abstention. A field marked strict interrupts
- * a human more often, on purpose.
- *
- * `loose` lowers the margin and NOT the floor, which looks asymmetric and is
- * the finding rather than an oversight. Below tau 0.60 the sweep buys 4.5
- * points of abstention and doubles the wrong values (6 -> 12) for it, so the
- * floor stays. tau guards "the right element is gone" -- nothing on the page
- * is good enough -- and prose cannot tolerate grabbing a nav link because the
- * field vanished any more than a price can. delta guards "two things look
- * equally right", and picking either of two near-identical blurbs is exactly
- * the risk a description field is willing to take.
- *
- * Choosing `loose` forfeits the product's 0.0% claim for that field. On the
- * benchmark it publishes a wrong value in 4.4% of breaks. That is the trade,
- * stated in numbers, and it is why the tier is opt-in per field.
- */
-export const TIER_THRESHOLDS: Record<Tier, { tau: number; delta: number }> = {
-  strict: { tau: 0.70, delta: 0.20 },
-  normal: { tau: 0.60, delta: 0.16 },
-  loose: { tau: 0.60, delta: 0.12 },
-};
-
-export const ON_ABSTAIN = ['quarantine', 'publish_last_good'] as const;
-export type OnAbstain = (typeof ON_ABSTAIN)[number];
+// Declared in `./tiers.js`, which imports nothing, so the browser can read the
+// same numbers without acquiring this file's YAML parser. Re-exported because
+// this is where every existing caller reads them from.
+export {
+  TIERS, TIER_THRESHOLDS, ON_ABSTAIN, DEFAULT_THRESHOLDS,
+  type Tier, type OnAbstain, type FieldThresholds,
+} from './tiers.js';
 
 // ---------------------------------------------------------------------------
 // The schema
@@ -122,32 +86,6 @@ const FIELD_KEYS = Object.keys(FieldPolicy.shape).sort();
 // ---------------------------------------------------------------------------
 // thresholdsFor -- the hook wave 2 wires into src/runner.ts
 // ---------------------------------------------------------------------------
-
-export interface FieldThresholds {
-  policy: Tier;
-  tau: number;
-  delta: number;
-  /** Gated heals scoring at or below this are held anyway. See `AutoApprove`. */
-  autoApproveAbove: number;
-  onAbstain: OnAbstain;
-  /** Where an abstention goes. Null is "nowhere", never a default channel. */
-  alert: string | null;
-}
-
-/**
- * What a contract that says nothing means: exactly what the engine does today.
- * These two numbers are `healGated`'s own defaults in `src/heal.ts`, repeated
- * here because that file is frozen and cannot export them. `test/contracts.test.ts`
- * reads heal.ts and fails if the two ever drift apart.
- */
-export const DEFAULT_THRESHOLDS: FieldThresholds = Object.freeze({
-  policy: 'normal',
-  tau: 0.60,
-  delta: 0.16,
-  autoApproveAbove: 0.60,
-  onAbstain: 'quarantine',
-  alert: null,
-});
 
 const floorFor = (v: FieldPolicy['auto_approve'], tau: number): number => {
   if (v === 'never') return 1;

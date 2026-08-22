@@ -52,61 +52,23 @@ import { query, tool, createSdkMcpServer } from '@anthropic-ai/claude-agent-sdk'
 import { fingerprint, candidates } from '../fingerprint.js';
 import { digest, hasKey } from '../ai/model.js';
 import { listTargets, type FieldInput } from '../setup/index.js';
+import { CADENCES, DEFAULT_MODEL as DEFAULT_MODEL_ID, isModel } from './models.js';
 
 export { hasKey } from '../ai/model.js';
+
+// The closed vocabularies live in `./models.js` -- a file with no imports at
+// all -- so the browser can hold the same values without this module's Agent
+// SDK and `pg` coming with them. Re-exported here because this is where the
+// engine's own callers have always read them from.
+export {
+  CADENCES, MODELS, MODEL_LABEL, DEFAULT_MODEL, isModel, type Cadence, type Model,
+} from './models.js';
 
 // TODO(types): elements come from fingerprint.ts, which deliberately hands them
 // back untyped. Same compromise as src/ai/index.ts and src/heal.ts.
 type El = any;
 
 const clean = (s: string | null | undefined): string => (s || '').replace(/\s+/g, ' ').trim();
-
-/**
- * The model. Opus tier per docs/STACK.md, which assigns this surface the
- * strongest model because it is the one doing open-ended interpretation.
- *
- * `claude-opus-5` carries NO date suffix and that is not an omission: from the
- * 4.6 generation on, a dateless id IS the pinned snapshot rather than an
- * evergreen pointer, so appending a date would name a model that does not
- * exist. (Contrast `claude-haiku-4-5-20251001` in src/ai/model.ts, which is
- * pre-4.6 and genuinely an alias, so pinning the dated form there is stricter.)
- *
- * Overridable because this is the expensive surface and the trade is the
- * operator's to make: a per-turn Opus call is a very different operating profile
- * from the per-field Haiku call `src/ai` makes, and docs/AI-AND-AGENTS.md 7
- * lists cost as unestimated.
- */
-const DEFAULT_MODEL = process.env.ASSAY_CHAT_MODEL || 'claude-opus-5';
-
-/** Cadences the scheduler can act on. A closed set, so the reply cannot invent one. */
-export const CADENCES = ['hourly', '6h', '12h', 'daily', 'weekly'] as const;
-
-/**
- * The models a browser may ask for, as a closed set.
- *
- * A model id arriving from the browser is untrusted input on its way into
- * `query({ model })`. An allowlist is the whole guard: an unrecognised string is
- * not passed through and not corrected, it simply loses to the default. There is
- * no branch here that can reach the SDK with a name this file does not contain.
- *
- * `ASSAY_CHAT_MODEL` still wins where it is set, because an operator's
- * environment outranks a browser control -- and `src/ai/model.ts` reads
- * `ASSAY_MODEL` for the per-field path, which a browser cannot set and this does
- * not touch.
- *
- * Ids read off platform.claude.com/docs/en/about-claude/models/overview on
- * 2026-08-22, not from memory. Dateless ids from the 4.6 generation on ARE the
- * pinned snapshot -- see the DEFAULT_MODEL note below.
- */
-export const MODELS = [
-  'claude-opus-5',
-  'claude-sonnet-5',
-  'claude-fable-5',
-  'claude-haiku-4-5-20251001',
-] as const;
-export type Model = (typeof MODELS)[number];
-
-const isModel = (m: unknown): m is Model => MODELS.includes(m as Model);
 
 /**
  * A cadence as it reads in a sentence.
@@ -499,7 +461,12 @@ export async function converse(
   // The browser's choice loses to the environment, and an unrecognised name
   // loses to the default. `isModel` is the only way a caller-supplied string
   // reaches `query` at all.
-  const chosen: string = process.env.ASSAY_CHAT_MODEL || (isModel(model) ? model : DEFAULT_MODEL);
+  //
+  // `ASSAY_CHAT_MODEL` is read here rather than baked into `DEFAULT_MODEL_ID`
+  // because that constant is also what the composer starts on, and the browser
+  // has no environment to read. Same precedence either way: the operator's
+  // environment outranks the browser control.
+  const chosen: string = process.env.ASSAY_CHAT_MODEL || (isModel(model) ? model : DEFAULT_MODEL_ID);
 
   if (!hasKey()) {
     // No model means no steps, and the trace says exactly that rather than
