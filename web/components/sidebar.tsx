@@ -57,11 +57,22 @@ export async function Sidebar({
 
       <SidebarContent className="gap-0 overflow-x-hidden">
         <div className="px-[20px] pb-[32px] group-data-[collapsible=icon]:px-[12px]">
+          {/*
+            `shimmer-edge` is the light that travels around this button's rim,
+            and this is the only button in the product that wears it. It is a
+            layer on top of an ordinary primary control -- press, focus and the
+            disabled state are untouched, because the effect is one
+            pointer-events: none pseudo-element and nothing else. Under
+            prefers-reduced-motion it is not drawn at all and what is left is a
+            plain solid orange button. See docs/MOTION.md, which records both
+            the numbers and the argument against having it.
+          */}
           <Link
             href="/?new=1"
             className={actionVariants({
               variant: 'primary',
-              className: 'w-full justify-center group-data-[collapsible=icon]:px-0',
+              className:
+                'shimmer-edge relative w-full justify-center group-data-[collapsible=icon]:px-0',
             })}
           >
             <Plus size={16} strokeWidth={2} className="shrink-0" aria-hidden />
