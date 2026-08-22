@@ -71,16 +71,58 @@ export async function Sidebar({
             plain solid orange button. See docs/MOTION.md, which records both
             the numbers and the argument against having it.
           */}
+          {/*
+            The icon swap, on a `<Link>`. `Button` applies `icon-swap` itself
+            when a variant has a left glyph and a label, and this is a link
+            rather than a button -- a destination you can middle-click, and an
+            entry in a screen reader's link list -- so it was the one control
+            with both that never got the effect.
+
+            WHY THE CLIP IS ON AN INNER SPAN AND NOT ON THE LINK. The swap
+            parks the arriving copy past the RIGHT EDGE OF THE CONTENT BOX:
+            `margin-inline-start: -(slot + gap)` puts its box flush with that
+            edge and `translateX(200%)` carries it out beyond. On a `Button`
+            that shrink-wraps its label, the content edge and the visible edge
+            are the same place, so the clip catches it. This link is
+            `w-full justify-center`, so its content box is the whole rail and
+            "flush with the content edge" is the MIDDLE of the button -- the
+            parked copy landed in plain sight next to the label, two plus signs
+            at rest. Putting `icon-swap` on a shrink-wrapped span around the
+            three pieces restores the geometry the effect was written against,
+            and does it without the link giving up `w-full`.
+
+            IT COEXISTS WITH THE SHIMMER, and this is the arrangement that
+            makes that true rather than a coincidence: `overflow: hidden` now
+            lives on the inner span, so the rim light -- an `inset: 0`
+            pseudo-element on the link, `border-radius: inherit`, `pointer-
+            events: none` -- is not inside anything that clips it. The white
+            bleed under the button was that clip cutting the rim, and it goes
+            with the clip.
+
+            COLLAPSED TO ICONS the label is `display: none` and the span is
+            16px wide, and the swap still reads correctly: measured in the
+            browser, the leaving copy ends at -2px and the arriving one lands
+            exactly on the 16px slot, so the rail shows one glyph throughout
+            rather than the two the full-width version was showing at rest.
+            The `aria-label` is for that state and is not decoration -- with the
+            label hidden this link had no accessible name at all.
+          */}
           <Link
             href="/?new=1"
+            aria-label="New scrape"
             className={actionVariants({
               variant: 'primary',
-              className:
-                'shimmer-edge relative w-full justify-center group-data-[collapsible=icon]:px-0',
+              className: 'shimmer-edge relative w-full justify-center group-data-[collapsible=icon]:px-0',
             })}
           >
-            <Plus size={16} strokeWidth={2} className="shrink-0" aria-hidden />
-            <span className="group-data-[collapsible=icon]:hidden">New scrape</span>
+            <span
+              className="icon-swap inline-flex items-center gap-[var(--action-gap)]"
+              style={{ '--swap-slot': '16px' } as React.CSSProperties}
+            >
+              <Plus size={16} strokeWidth={2} className="swap-lead shrink-0" aria-hidden />
+              <span className="swap-label group-data-[collapsible=icon]:hidden">New scrape</span>
+              <Plus size={16} strokeWidth={2} className="swap-trail shrink-0" aria-hidden />
+            </span>
           </Link>
         </div>
 
