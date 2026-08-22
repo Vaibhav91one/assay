@@ -5,12 +5,16 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import {
-  CircleAlert, Download, Eye, Hammer, Split, ChevronRight, PencilLine, Scissors,
+  CircleAlert, Eye, Hammer, Split, ChevronRight, PencilLine, RotateCw, Scissors,
 } from 'lucide-react';
 import { turn, type TraceEvent } from '@/lib/chat-stream';
+import { Button } from '@/components/button';
 import { DEFAULT_MODEL } from 'assay/engine/agent/models';
-import { historyFor, HISTORY_TURNS, type Turn } from 'assay/engine/store/conversation-log';
+import {
+  historyFor, tail, turnFailed, HISTORY_TURNS, type Turn,
+} from 'assay/engine/store/conversation-log';
 import { Composer } from './composer';
+import { ExportMenu } from './export-menu';
 import { Trace, ToolChips } from './trace';
 import { SchemaTable, HeldCell, tierFor } from './schema-table';
 import { ManualFields } from './manual-fields';
@@ -91,14 +95,27 @@ export function Watch({
    * the `router.refresh()` this component fires the moment it creates a
    * conversation, which would tear down a turn that is still streaming. So
    * instead: the client says which conversation it is showing, and only a
-   * server prop that DISAGREES with that is a navigation worth resetting for.
-   * Clicking another conversation in the rail, or "New scrape", is such a
-   * navigation. Our own refresh is not.
+   * navigation AWAY from it is worth resetting for. Clicking another
+   * conversation in the rail, or "New scrape", is such a navigation. Our own
+   * refresh is not.
+   *
+   * THE ADDRESS BAR IS THE AUTHORITY ON WHICH CONVERSATION IS OPEN, and the
+   * second condition below is the whole reason this comment is long. A server
+   * payload arrives whenever the render behind it finishes, which under load is
+   * hundreds of milliseconds after the action that asked for it -- and it can
+   * carry a conversation this screen has already left. Treating that as a
+   * navigation aborted the turn that was streaming at the time, cleared
+   * `running`, and left the operator looking at their own message with no
+   * spinner, no reply and no error: reproduced on a throttled browser three
+   * times out of three, and matching the live transcript where two `operator`
+   * turns sit back to back. A payload that disagrees with `?c=` is a late
+   * render, not a navigation, and is ignored until the two agree.
    */
   const shown = useRef<number | null>(conversation?.id ?? null);
   const incoming = conversation?.id ?? null;
   useEffect(() => {
     if (incoming === shown.current) return;
+    if (incoming !== openedInUrl()) return;
     shown.current = incoming;
     abort.current?.abort();
     setTurns(conversation?.turns ?? []);
@@ -159,6 +176,21 @@ export function Watch({
       id = convId;
     }
 
+    /**
+     * A turn that did not land, recorded rather than swallowed.
+     *
+     * Persisted whenever there is a row to persist to -- including when the
+     * turn was aborted, because the abandoned question is still in the
+     * transcript and would otherwise read as merely unanswered forever. Only
+     * rendered when this turn still owns the screen: a newer turn, or another
+     * conversation, must not have someone else's failure appear underneath it.
+     */
+    const failed = (detail: string) => {
+      const ev = turnFailed(detail);
+      if (abort.current === ctl && !ctl.signal.aborted) setTurns((t) => [...t, ev]);
+      if (id != null) recordTurns(id, [ev]).catch(() => {});
+    };
+
     const collected: TraceEvent[] = [];
     try {
       const r = await turn(
@@ -187,13 +219,36 @@ export function Watch({
         };
         setTurns((t) => [...t, replied]);
         if (id != null) recordTurns(id, [replied]).catch(() => {});
+      } else if (ctl.signal.aborted) {
+        failed('This message was not answered — the turn was stopped before a reply arrived.');
+      } else {
+        // `/api/chat` always ends a turn with a result frame, even when the
+        // agent itself threw, so reaching here means the request never got
+        // there or the connection went before the end of the stream.
+        failed('Assay did not answer this message — the connection ended before a reply arrived.');
       }
-    } catch {
-      if (!ctl.signal.aborted) setResult(null);
+    } catch (e) {
+      if (ctl.signal.aborted) {
+        failed('This message was not answered — the turn was stopped before a reply arrived.');
+      } else {
+        setResult(null);
+        // The message is the browser's own ("Failed to fetch", "NetworkError"),
+        // which names the transport rather than being invented here.
+        failed(`Assay could not answer this message: ${(e as Error).message}.`);
+      }
     } finally {
-      if (!ctl.signal.aborted) setRunning(false);
+      // Whether the spinner stops is a question about THIS turn, not about the
+      // signal: an aborted turn that leaves `running` true disables the
+      // composer forever, which is the state the operator could not type out of.
+      if (abort.current === ctl) setRunning(false);
     }
   }, [model, convId, turns, router]);
+
+  /** Ask the newest question again. Only offered when the last one is recorded as failed. */
+  const retry = useCallback(() => {
+    const last = lastAsked(turns);
+    if (last) submit(last);
+  }, [turns, submit]);
 
   const started = turns.length > 0;
 
@@ -260,6 +315,14 @@ export function Watch({
       result={result}
       composer={composer}
       manualPath={manualPath}
+      // Offered from the transcript, so it survives a reload: a conversation
+      // whose newest question is recorded as failed opens with the question,
+      // the reason, and the way to ask it again.
+      onRetry={!running && tail(turns) === 'failed' ? retry : undefined}
+      // Withheld while a turn is running: `submit` aborts whatever is in flight
+      // before it starts, so offering a second ask mid-turn is offering to
+      // cancel the first one without saying so.
+      onAsk={running ? undefined : submit}
       onBuilt={(builtSlug) => setSlug(builtSlug)}
     />
   );
@@ -273,7 +336,7 @@ export function Watch({
  * composer under the fold. The scroller is the only thing that scrolls.
  */
 function Conversation({
-  id, slug, turns, running, events, startedAt, result, composer, manualPath, onBuilt,
+  id, slug, turns, running, events, startedAt, result, composer, manualPath, onRetry, onAsk, onBuilt,
 }: {
   id: number | null;
   slug: string | null;
@@ -284,6 +347,10 @@ function Conversation({
   result: ChatResult | null;
   composer: React.ReactNode;
   manualPath: React.ReactNode;
+  /** Set only when the newest question is recorded as failed. */
+  onRetry?: () => void;
+  /** Ask something again. Absent while a turn is running, so a re-ask cannot queue behind one. */
+  onAsk?: (message: string) => void;
   onBuilt: (slug: string) => void;
 }) {
   const scroller = useRef<HTMLDivElement>(null);
@@ -332,7 +399,14 @@ function Conversation({
             {turns.map((t, i) => (
               <div key={i} className="flex flex-col gap-[12px]">
                 {i === firstSent && <ContextWindow dropped={windowed} />}
-                <TurnView turn={t} />
+                <TurnView
+                  turn={t}
+                  // The confirm button below belongs to exactly one turn: the
+                  // newest, and only while a live `propose` result is in hand.
+                  // Every other proposal in the transcript is a record.
+                  live={i === turns.length - 1 && result?.kind === 'propose'}
+                  onAsk={onAsk && askedBefore(turns, i) ? () => onAsk(askedBefore(turns, i)!) : undefined}
+                />
               </div>
             ))}
           </div>
@@ -349,6 +423,18 @@ function Conversation({
               Nothing about how Assay decides what to publish changes either way.
             </p>
           )}
+          {onRetry && (
+            <div className="flex flex-wrap items-center gap-[12px]">
+              <Button variant="outline" icon={RotateCw} onClick={onRetry}>
+                Ask again
+              </Button>
+              <span className="meta-12_5 text-[var(--text-secondary)]">
+                Nothing was created, and nothing was published — the question was recorded and the
+                answer never arrived.
+              </span>
+            </div>
+          )}
+
           {!running && result?.kind !== 'propose' && manualPath}
         </div>
       </div>
@@ -371,15 +457,9 @@ function ConversationHeader({ id, slug }: { id: number; slug: string | null }) {
       ) : (
         <span className="meta-13 text-[var(--text-muted)]">No scraper from this conversation yet</span>
       )}
-      {/* A plain link, not a fetch-and-blob: the route sets the filename in a
-          header and the browser does the rest. */}
-      <a
-        href={`/api/conversations/${id}/export`}
-        className="meta-13 ml-auto flex items-center gap-[6px] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-      >
-        <Download size={13} strokeWidth={1.5} aria-hidden />
-        Export as Markdown
-      </a>
+      {/* Two ways out of a conversation, both reading the one export route.
+          See `export-menu.tsx` for why the download stopped being a bare link. */}
+      <ExportMenu id={id} className="ml-auto text-[var(--text-secondary)]" />
     </div>
   );
 }
@@ -411,8 +491,20 @@ function ContextWindow({ dropped }: { dropped: number }) {
   );
 }
 
-/** One stored turn. The operator's own words are the only thing in blue. */
-function TurnView({ turn: t }: { turn: Turn }) {
+/**
+ * One stored turn. The operator's own words are the only thing in blue.
+ *
+ * `live` says whether the proposal on this turn is the one the confirm button
+ * below the transcript is showing. When it is not -- which is every proposal
+ * after a reload or a walk through the rail -- the turn says why the button is
+ * not there. See `StaleProposal`.
+ */
+function TurnView({ turn: t, live = false, onAsk }: {
+  turn: Turn;
+  live?: boolean;
+  /** Re-ask the question that produced this proposal. Absent on a stored turn with no question before it. */
+  onAsk?: () => void;
+}) {
   if (t.role === 'operator') {
     return (
       <p className="max-w-[85%] self-end rounded-[var(--radius-card)] bg-[var(--semantic-link)] px-[16px] py-[10px]">
@@ -427,6 +519,30 @@ function TurnView({ turn: t }: { turn: Turn }) {
   }
 
   if (t.role === 'event') {
+    // A failure is the one event that is not a neutral rule across the
+    // transcript. It is the difference between "no answer yet" and "no answer,
+    // ever", so it is stated in words, in red, with a glyph -- colour is never
+    // the only signal -- and announced as an alert rather than as a log line.
+    if (t.kind === 'failed') {
+      return (
+        <p
+          role="alert"
+          className="flex items-start gap-[8px] rounded-[var(--radius-control)] border border-[var(--semantic-danger)] bg-[var(--semantic-danger-subtle)] px-[12px] py-[9px]"
+        >
+          <CircleAlert
+            size={14}
+            strokeWidth={1.5}
+            className="mt-[1px] shrink-0 text-[var(--semantic-danger)]"
+            aria-hidden
+          />
+          {/* The sentence is `text/secondary`, not the red: #6b6b6b on the red
+              subtle is 4.87:1 where the red itself is 4.41:1, and this is body
+              text. The red is spent on the glyph and the rim, where 3:1 is the
+              bar it has to clear -- the same division `HeldCell` makes. */}
+          <span className="caption-12 leading-[1.45] text-[var(--text-secondary)]">{t.text}</span>
+        </p>
+      );
+    }
     return (
       <p className="flex items-center gap-[10px] py-[2px]">
         <span className="h-px flex-1 bg-[var(--border-hairline)]" />
@@ -439,12 +555,17 @@ function TurnView({ turn: t }: { turn: Turn }) {
   return (
     <div className="flex flex-col gap-[8px]">
       <p className="body-13_5 whitespace-pre-wrap break-words text-[var(--text-primary)]">{t.text}</p>
+      {/* The record of what was offered. It stays whether or not the offer can
+          still be taken -- it is the only place the fact that a proposal was
+          made AND NOT TAKEN survives once the tab is closed, and the export
+          reads it. */}
       {t.proposed && (
         <p className="caption-12 text-[var(--text-secondary)]">
           Proposed {t.proposed.fields.length} field{t.proposed.fields.length === 1 ? '' : 's'} on{' '}
           {t.proposed.url}: {t.proposed.fields.join(', ')}.
         </p>
       )}
+      {t.proposed && !live && <StaleProposal at={t.at} onAsk={onAsk} />}
       {/* Real calls that really ran, replayed from the record -- not a
           reconstruction. Absent on a turn that called no tool. */}
       {t.events?.length ? <ToolChips events={t.events} /> : null}
@@ -452,10 +573,64 @@ function TurnView({ turn: t }: { turn: Turn }) {
   );
 }
 
+/**
+ * Why a proposal you have come back to has no confirm button.
+ *
+ * NOTHING FAILED HERE, and the wording is the whole job. `ProposalView` is
+ * built only for the live turn, because `proposal.create` carries selectors
+ * derived from the page AS IT WAS when the agent read it, and offering a button
+ * hours later that builds a scraper from a stale reading is the quiet wrongness
+ * the gate exists to refuse. That is right, and it was invisible: the operator
+ * walked away from a conversation, came back, found the field list gone, and
+ * asked whether the product was broken. It was not -- it simply never said.
+ *
+ * So this is grey and it is a sentence, not amber and not red. It is the same
+ * shape as the failed-turn affordance and deliberately a quieter volume of it,
+ * because the two facts are different: one is "the answer never came", this one
+ * is "the answer is old". `Button`'s `quiet` variant is the recipe's own word
+ * for a real choice that must not compete.
+ *
+ * `suppressHydrationWarning` on the time, and only on the time: this renders on
+ * the server too, where the timezone is the host's rather than the reader's, so
+ * the two passes legitimately print different clock faces. The alternative --
+ * holding the time back until after mount -- would flash the sentence in
+ * without it.
+ */
+function StaleProposal({ at, onAsk }: { at: string; onAsk?: () => void }) {
+  return (
+    <p className="flex flex-wrap items-center gap-x-[10px] gap-y-[4px] pt-[2px]">
+      <span className="caption-12 text-[var(--text-muted)]">
+        Read from the page at{' '}
+        <span suppressHydrationWarning>{CLOCK.format(new Date(at))}</span>, so it is no longer
+        current. Nothing was created from it.
+      </span>
+      {onAsk && (
+        <Button variant="quiet" icon={RotateCw} iconSize={13} onClick={onAsk}>
+          Ask again to re-read the page
+        </Button>
+      )}
+    </p>
+  );
+}
+
+const CLOCK = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+/** Which conversation the address bar says is open. `null` on a bare Home. */
+function openedInUrl(): number | null {
+  const c = new URLSearchParams(window.location.search).get('c');
+  return c && /^\d+$/.test(c) ? Number(c) : null;
+}
+
 /** The first URL the operator typed, so the manual form does not ask twice. */
 function urlIn(text: string | null): string {
   const m = text ? /https?:\/\/[^\s<>"'`)\]}]+/i.exec(text) : null;
   return m ? m[0].replace(/[.,;:]+$/, '') : '';
+}
+
+/** The question that produced the turn at `i`, so re-asking asks the same thing again. */
+function askedBefore(turns: Turn[], i: number): string | null {
+  for (let j = i - 1; j >= 0; j--) if (turns[j]!.role === 'operator') return turns[j]!.text;
+  return null;
 }
 
 /** The newest thing the operator said, which is what the manual form should seed from. */
