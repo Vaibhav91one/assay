@@ -83,11 +83,26 @@ export type ModelAuth = 'api-key' | 'subscription' | 'cli' | 'none';
  * only check that stays true when the store moves.
  *
  * CACHED, BECAUSE IT IS SLOW. Measured on this machine: 2.9-4.8s per call,
- * cold. That is far too slow for a page render to pay twice, so the first
- * answer is kept for the life of the process and `recheck` is the only way
- * past it -- which is what the Check again button in the settings panel is
- * for. It is only ever reached when neither variable is set, so a deployment
- * with an API key never spawns anything.
+ * cold. That is far too slow for a page render to pay twice, so the answer is
+ * kept -- but for a while, not forever.
+ *
+ * WHY A TTL AND NOT THE LIFE OF THE PROCESS. A CLI login expires. Cached
+ * forever, this returns `true` for a login that died hours ago, and Settings
+ * goes on saying "Connected through Claude Code on this machine" until someone
+ * restarts the server. A confidently wrong claim about a credential is the one
+ * shape of wrongness this repo exists to refuse, and it would be shipping it on
+ * its own settings screen. The Check again button used to be the escape hatch;
+ * it is gone from the connected state, so the staleness has to close by itself.
+ *
+ * Sixty seconds is the trade: long enough that a page render and its
+ * revalidation never pay twice, short enough that a dead login is noticed in
+ * the time it takes to look at the screen and look again. Settings renders the
+ * panel inside a Suspense boundary, so the one render per minute that does pay
+ * streams in after paint rather than blocking it.
+ *
+ * `recheck` still bypasses it outright -- that is the Check again button in the
+ * unconfigured state. It is only ever reached when neither variable is set, so
+ * a deployment with an API key never spawns anything.
  *
  * A missing binary is not an error to report. A self-hosted container has no
  * `claude` in it; `execFileSync` throws ENOENT, and the honest reading of that
@@ -100,9 +115,18 @@ const askTheCli = (): boolean => {
 
 let cliProbe = askTheCli;
 let cliCache: boolean | undefined;
+let cliCachedAt = 0;
+
+/** How long a probe's answer is allowed to stand. See the note above. */
+export const CLI_CACHE_MS = 60_000;
+
+/** Injectable clock, so the TTL can be tested without waiting a real minute. */
+let cliNow = () => Date.now();
 
 export function cliLoggedIn(recheck = false): boolean {
-  if (recheck) cliCache = undefined;
+  if (recheck || (cliCache !== undefined && cliNow() - cliCachedAt >= CLI_CACHE_MS)) {
+    cliCache = undefined;
+  }
   if (cliCache === undefined) {
     // The catch is here rather than inside the probe so that it is the same
     // catch a stubbed probe goes through: exit 1, ENOENT and a timeout all
@@ -113,6 +137,7 @@ export function cliLoggedIn(recheck = false): boolean {
     } catch {
       cliCache = false;
     }
+    cliCachedAt = cliNow();
   }
   return cliCache;
 }
@@ -125,6 +150,16 @@ export function cliLoggedIn(recheck = false): boolean {
 export function stubCliProbe(fn: (() => boolean) | null): void {
   cliProbe = fn ?? askTheCli;
   cliCache = undefined;
+  cliCachedAt = 0;
+}
+
+/**
+ * Stand in for the TTL's clock; `null` puts the real one back. The alternative
+ * is a test that sleeps a minute to prove a cache expires, which is a minute
+ * added to every CI run to assert one comparison.
+ */
+export function stubCliClock(fn: (() => number) | null): void {
+  cliNow = fn ?? (() => Date.now());
 }
 
 export const modelAuth = (recheck = false): ModelAuth =>

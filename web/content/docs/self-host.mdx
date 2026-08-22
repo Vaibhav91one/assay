@@ -7,8 +7,38 @@ Self-hosting Assay is **three services and one volume**: `web`, `worker`, and
 Postgres. `web` and `worker` are the same image with different commands.
 
 Self-hosting is single-operator. `AUTH_MODE` defaults to `none`, so a clone
-boots with no account, no signup and no keys — you are already behind whatever
-access control fronts the box.
+boots with no account, no signup and no keys.
+
+<Callout type="error" title="Self-hosted mode authenticates nobody">
+  `AUTH_MODE=none` does not mean "one operator". It means there is no operator
+  check at all: every screen is served to whoever opens the port. That includes
+  resolving held decisions, clearing a brake and editing a contract — the
+  actions that decide what gets published to your data.
+
+  The compose file therefore publishes `web` on `127.0.0.1:3000`, not
+  `0.0.0.0:3000`. Reaching it means being on the host, or forwarding a port to
+  it deliberately (`ssh -L 3000:127.0.0.1:3000 you@host`).
+
+  This is an assumption the software cannot verify, so it is stated rather than
+  relied on: **Assay does not know what is in front of it.**
+</Callout>
+
+### Exposing it on purpose
+
+If other people need to reach it, one of these two — not a wider bind:
+
+- **Put a reverse proxy in front of it** and make the proxy do the
+  authenticating. Terminate TLS there, require auth there, and forward to
+  `127.0.0.1:3000`. Assay still authenticates nobody; the proxy is the
+  boundary, and it is a boundary you configured on purpose.
+- **Set `AUTH_MODE=clerk`**, which is what the hosted instance runs. That turns
+  on the sign-in screens and the per-request guard in `web/lib/auth.ts`. It
+  needs `@clerk/nextjs`, which is deliberately not a dependency of this repo: a
+  self-hoster should not download an auth SDK they will never load, so you
+  install it in the deployment that uses it.
+
+Changing the published port back to `0.0.0.0:3000` without doing one of the two
+puts an unauthenticated operator console on whatever network the host sits on.
 
 ## Before anything else
 
@@ -26,7 +56,8 @@ docker compose up -d
 docker compose run --rm web npm run db:migrate
 ```
 
-That is the path a Linux VPS should run. `web` comes up on port 3000.
+That is the path a Linux VPS should run. `web` comes up on `127.0.0.1:3000` —
+the host itself, and nothing else, until you put something in front of it.
 
 <Callout type="warn" title="Migrate before you use it">
   The compose file's own comment is *"Schema first"*. `web` starts without a
@@ -108,7 +139,7 @@ The store, API, MCP server and worker do need one:
 
 ```bash
 docker compose up -d postgres          # or: ./scripts/container-up.sh
-export DATABASE_URL=postgres://postgres:assay@localhost:5432/assay
+export DATABASE_URL=postgres://assay:assay@localhost:5432/assay
 npm run db:migrate
 npx vitest run
 ```
@@ -128,7 +159,7 @@ npx vitest run
 |---|---|---|
 | Command | `npm --workspace web run start` | `npx tsx tools/worker.ts` |
 | Owns | serving, and writing decisions | fetch → detect → heal → gate → publish |
-| Ports | 3000 | none |
+| Ports | `127.0.0.1:3000` | none |
 | Restart | — | `unless-stopped` |
 
 They are one image. A scrape holds a request open and competes with page loads,
@@ -146,7 +177,7 @@ a test.
 | `npm test` | 34 assertions, ending `all checks pass` |
 | `npm run bench` | 153 cases; gated arm at **0.0% wrong values** |
 | `npm run replay` | 74 runs, 8 ok, 66 heals, **0 abstentions**, `results/events.jsonl` byte-identical |
-| `ASSAY_REQUIRE_DB=1 npx vitest run` | 374 passing |
+| `ASSAY_REQUIRE_DB=1 npx vitest run` | 534 passing |
 | `npx tsc --noEmit` | clean, strict, whole repo |
 
 Two more, load-bearing:

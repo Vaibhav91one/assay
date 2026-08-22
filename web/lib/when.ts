@@ -53,13 +53,15 @@ export function stamp(d: Stamp): string {
   return at ? DATE_TIME.format(at).replace(',', '') : 'unknown time';
 }
 
-/** `just now` / `12 minutes ago` / `3 hours ago` / `2 days ago`. */
+/** `just now` / `1 minute ago` / `12 minutes ago` / `3 hours ago` / `2 days ago`. */
 export function ago(d: Stamp): string {
   const at = asDate(d);
   if (!at) return 'at an unknown time';
   const mins = Math.round((Date.now() - at.getTime()) / 60_000);
   if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins} minutes ago`;
+  // Pluralised like the hours and days below it, which always were. A cell held
+  // for sixty-one seconds read "1 minutes ago".
+  if (mins < 60) return `${mins} minute${mins === 1 ? '' : 's'} ago`;
   const hours = Math.round(mins / 60);
   if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
   const days = Math.round(hours / 24);

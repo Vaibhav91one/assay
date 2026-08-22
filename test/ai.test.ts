@@ -16,7 +16,7 @@ import {
   hasKey, inferFields, pickElement, rankDiscovery, scoreNomination,
   type RankedCandidate,
 } from '../src/ai/index.js';
-import { modelAuth, stubCliProbe } from '../src/ai/model.js';
+import { modelAuth, stubCliProbe, stubCliClock, CLI_CACHE_MS } from '../src/ai/model.js';
 import { withoutCredentials } from './no-credentials.js';
 import { loadTools } from '../src/mcp/server.js';
 
@@ -145,6 +145,35 @@ describe('which credential the model path found', () => {
     // the operator created after the server started.
     expect(modelAuth(true)).toBe('cli');
     expect(asked).toBe(2);
+  });
+
+  it('stops trusting its own answer after the TTL, so an expired login is noticed', () => {
+    // The reason this TTL exists: Settings no longer offers Check again on a
+    // connected panel, so nothing but the clock can retire a stale `true`. A
+    // cache kept for the life of the process would report a login that died
+    // hours ago as live until someone restarted the server.
+    let asked = 0;
+    let logged = true;
+    let clock = 1_000_000;
+    stubCliClock(() => clock);
+    stubCliProbe(() => { asked++; return logged; });
+
+    expect(modelAuth()).toBe('cli');
+    expect(asked).toBe(1);
+
+    // Inside the window the answer stands -- a render still does not pay twice.
+    clock += CLI_CACHE_MS - 1;
+    expect(modelAuth()).toBe('cli');
+    expect(asked).toBe(1);
+
+    // The login expires, and the clock crosses the TTL. The next read asks
+    // again and reports what is now true, with nobody having pressed anything.
+    logged = false;
+    clock += 1;
+    expect(modelAuth()).toBe('none');
+    expect(asked).toBe(2);
+
+    stubCliClock(null);
   });
 
   it('treats a binary that is not there as a route that is not available', () => {

@@ -71,7 +71,7 @@ export default async function RunPage({ params }: { params: Promise<{ run: strin
         )}
 
         <section className="flex flex-col gap-[24px]">
-          <Heading note={`${d.scraper} · ${d.history.length} runs`}>History</Heading>
+          <Heading note={`${d.scraper} · ${d.history.length} run${d.history.length === 1 ? '' : 's'}`}>History</Heading>
           <OutcomeDonut history={d.history} scraper={d.scraper} />
           <PageSizeBars history={d.history} runId={d.runId} scraper={d.scraper} />
         </section>
@@ -144,7 +144,13 @@ function Fields({ cells }: { cells: CellSummary[] }) {
               </td>
               <td className="body-13_5 py-[12px] text-[var(--text-primary)]">
                 {/* A held cell is null AND labelled, never an empty string and
-                    never a dash that could be mistaken for one. */}
+                    never a dash that could be mistaken for one.
+
+                    `held`, matching the status column two cells to the left,
+                    which says `held` for the same cell. This said `withheld`,
+                    so one row of one table gave the same cell two names.
+                    `withheld` is the /compare word for a diff that will not
+                    render; a cell is held. */}
                 {c.value === null ? (
                   <span
                     className="rounded-[6px] px-[6px] py-[1px]"
@@ -153,7 +159,7 @@ function Fields({ cells }: { cells: CellSummary[] }) {
                       background: 'var(--semantic-warning-subtle)',
                     }}
                   >
-                    withheld
+                    held
                   </span>
                 ) : (
                   c.value

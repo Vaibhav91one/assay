@@ -9,6 +9,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { t } from '@/lib/copy';
 
 /**
  * `Split` is the Decisions glyph, everywhere the concept is drawn: here, the
@@ -22,18 +23,18 @@ import {
  * something waiting, and a checklist, which reads as tasks to tick off.
  */
 const NAV = [
-  { href: '/', label: 'Home', icon: Home },
-  { href: '/decisions', label: 'Decisions', icon: Split },
+  { href: '/', label: t('nav.home'), icon: Home },
+  { href: '/decisions', label: t('nav.decisions'), icon: Split },
   // Routes with no rail entry of their own still belong under one. A proof
   // opened from the runs table must not leave the rail pointing at nothing.
-  { href: '/runs', label: 'Runs', icon: Activity, also: ['/explain'] },
-  { href: '/fields', label: 'Fields', icon: Columns3, also: ['/compare'] },
-  { href: '/schedule', label: 'Schedule', icon: Clock },
+  { href: '/runs', label: t('nav.runs'), icon: Activity, also: ['/explain'] },
+  { href: '/fields', label: t('nav.fields'), icon: Columns3, also: ['/compare'] },
+  { href: '/schedule', label: t('nav.schedule'), icon: Clock },
   // `Blocks` rather than a plug or a sparkle: what this screen lists is things
   // that slot into a seam the engine already has, and a plug reads as "wire up
   // an integration" while a sparkle reads as "AI happens here". Neither is what
   // is on the page.
-  { href: '/skills', label: 'Skills', icon: Blocks },
+  { href: '/skills', label: t('nav.skills'), icon: Blocks },
 ] as const satisfies readonly {
   href: string;
   label: string;
@@ -90,7 +91,12 @@ export function SidebarNav({ waiting }: { waiting: number }) {
                 {label}
               </span>
             </SidebarMenuButton>
-            {label === 'Decisions' && waiting > 0 && (
+            {/* Keyed off the ROUTE, not the label. It was `label ===
+                'Decisions'`, which made the waiting badge a function of the
+                English word: the day that label is translated -- or merely
+                reworded -- the badge silently stops rendering, with nothing to
+                fail. The href is the identity; the label is presentation. */}
+            {href === '/decisions' && waiting > 0 && (
               <SidebarMenuBadge className="top-[-1px] size-[18px] justify-center rounded-full bg-[var(--accent-brand)] p-0 group-data-[collapsible=icon]:hidden">
                 <span className="caption-12 text-[var(--accent-on-primary)]">{waiting}</span>
               </SidebarMenuBadge>
@@ -115,9 +121,19 @@ export function ScraperList({ scrapers }: { scrapers: { id: string; url: string;
           </li>
         ))}
       </ul>
+      {/* A COUNT, NOT A CONTROL. This read "Show all {scrapers.length}" in a
+          bare span -- no href, no handler, nothing bound to it -- so it offered
+          an action that did not exist, and there is no route that lists every
+          scraper for it to have gone to. `docs/STATES.md` 1 #11 is the rule it
+          broke: everything clickable has a defined consequence, or it does not
+          exist. The number was wrong as well: `scrapers.length` is the total,
+          so nine scrapers with seven drawn read "Show all 9" beside seven rows.
+          What is true and useful is how many are not shown. */}
       {scrapers.length > shown.length && (
         <div className="pl-[48px] pt-[22px]">
-          <span className="meta-13 text-[#65676d]">Show all {scrapers.length}</span>
+          <span className="meta-13 text-[#65676d]">
+            {scrapers.length - shown.length} more
+          </span>
         </div>
       )}
     </>

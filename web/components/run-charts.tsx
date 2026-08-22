@@ -69,9 +69,11 @@ export function OutcomeDonut({ history, scraper }: { history: HistoryPoint[]; sc
   if (counts.length < 2) {
     return (
       <p className="body-13_5 text-[var(--text-secondary)]">
+        {/* "Nothing to chart until that changes." came off: it narrated this
+            component's own rendering decision to a reader who can see there is
+            no chart. The sentence that remains is the fact. */}
         All {total} recorded run{total === 1 ? '' : 's'} of {scraper} came back{' '}
-        <span className="text-[var(--text-primary)]">{LABEL[counts[0]!.outcome]}</span>. Nothing to
-        chart until that changes.
+        <span className="text-[var(--text-primary)]">{LABEL[counts[0]!.outcome]}</span>.
       </p>
     );
   }
@@ -91,7 +93,7 @@ export function OutcomeDonut({ history, scraper }: { history: HistoryPoint[]; sc
         height={2 * (R + STROKE / 2)}
         viewBox={`0 0 ${2 * (R + STROKE / 2)} ${2 * (R + STROKE / 2)}`}
         role="img"
-        aria-label={`${total} runs of ${scraper}: ${counts.map((s) => `${s.n} ${LABEL[s.outcome]}`).join(', ')}`}
+        aria-label={`${total} run${total === 1 ? '' : 's'} of ${scraper}: ${counts.map((s) => `${s.n} ${LABEL[s.outcome]}`).join(', ')}`}
         className="shrink-0"
       >
         <g transform={`rotate(-90 ${R + STROKE / 2} ${R + STROKE / 2})`}>
@@ -126,7 +128,7 @@ export function OutcomeDonut({ history, scraper }: { history: HistoryPoint[]; sc
           of coloured words: the numbers are readable with the colours ignored. */}
       <table className="border-collapse">
         <caption className="sr-only">
-          Outcomes across {total} recorded runs of {scraper}
+          Outcomes across {total} recorded run{total === 1 ? '' : 's'} of {scraper}
         </caption>
         <tbody>
           {counts.map((s) => (
@@ -185,7 +187,7 @@ export function PageSizeBars({
         // outside the bar's box and is clipped away when it is the last one.
         className="flex items-end gap-[2px] overflow-x-auto px-[3px]"
         role="img"
-        aria-label={`Page size across ${points.length} runs of ${scraper}, from ${kb(min)} to ${kb(max)}.${
+        aria-label={`Page size across ${points.length} run${points.length === 1 ? '' : 's'} of ${scraper}, from ${kb(min)} to ${kb(max)}.${
           here ? ` Run ${runId} was ${kb(here.pageBytes)}.` : ''
         }`}
         style={{ height: H }}
@@ -214,14 +216,19 @@ export function PageSizeBars({
         })}
       </div>
       <p className="meta-12_5 text-[var(--text-muted)]">
-        {points.length} runs · {kb(min)} to {kb(max)}
+        {points.length} run{points.length === 1 ? '' : 's'} · {kb(min)} to {kb(max)}
         {here && (
           <>
             {' '}
             · this run <span className="mono-value-12_5 text-[var(--text-primary)]">{kb(here.pageBytes)}</span>
           </>
         )}
-        {' '}· bar colour is the outcome, ringed bar is this run
+        {/* The legend that was here -- "bar colour is the outcome, ringed bar
+            is this run" -- explained a picture, and half of it was false
+            whenever `here` is undefined: no bar is ringed on a run that is not
+            in this series, and it said one was regardless. Every bar already
+            carries `run N — size — outcome` as its title, and the row has an
+            aria-label saying the same. */}
       </p>
     </div>
   );

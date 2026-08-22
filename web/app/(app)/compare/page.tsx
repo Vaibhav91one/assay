@@ -5,9 +5,10 @@ import { TopBar } from '@/components/top-bar';
 import { actionVariants } from '@/components/button';
 import { Empty } from '@/components/empty';
 import { compareView, summary, rows, type CompareView, type Withheld } from '@/lib/compare';
+import { t } from '@/lib/copy';
 import { when } from '@/lib/when';
 
-export const metadata: Metadata = { title: 'Compare · Assay' };
+export const metadata: Metadata = { title: t('title.compare') };
 export const dynamic = 'force-dynamic';
 
 export default async function ComparePage() {
@@ -15,52 +16,60 @@ export default async function ComparePage() {
 
   return (
     <>
-      <TopBar title="Compare" status={headline(v)} />
+      <TopBar title={t('compare.heading')} status={headline(v)} />
       <div className="flex w-full max-w-[1168px] flex-col items-start px-[56px] pb-[64px] pt-[40px]">
-        <p className="body-13_5 max-w-[900px] text-[var(--text-secondary)]">
-          What changed on the pages you watch, and what I could not read well enough to tell you.
-        </p>
+        {/* TWO THINGS CAME OFF HERE.
 
-        <section className="mt-[24px] flex w-full flex-col items-start rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] p-[24px]">
-          <p className="label-10 text-[var(--text-muted)]">THIS WEEK</p>
-          <p className="heading-18 mt-[8px] text-[var(--text-primary)]">{headline(v)}</p>
+            A subtitle -- "What changed on the pages you watch, and what I could
+            not read well enough to tell you." -- which described the screen to
+            someone already looking at its three headings.
+
+            And `headline(v)` a second time. The top bar already carries it, and
+            it was rendered again as this card's heading: the same counted fact
+            twice on one screen, which is P2 in docs/APP-DESIGN.md 5b. The card
+            keeps the summary sentence, which is the thing the headline does not
+            say. */}
+        <section className="flex w-full flex-col items-start rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] p-[24px]">
+          <p className="label-10 text-[var(--text-muted)]">{t('compare.thisWeek')}</p>
           <p className="body-13_5 mt-[12px] max-w-[990px] text-[var(--text-secondary)]">
             {summary(v)}
           </p>
         </section>
 
-        <p className="label-10 mt-[28px] text-[var(--text-muted)]">CHANGED</p>
+        <p className="label-10 mt-[28px] text-[var(--text-muted)]">{t('compare.changed')}</p>
         <div className="mt-[12px] w-full">
           {rows(v).length === 0 ? (
             <p className="meta-13 text-[var(--text-muted)]">
-              No field published a different value this week.
+              {t('compare.noChanges')}
             </p>
           ) : (
             <ChangedTable v={v} />
           )}
         </div>
 
-        <p className="label-10 mt-[28px] text-[var(--text-muted)]">WITHHELD</p>
+        <p className="label-10 mt-[28px] text-[var(--text-muted)]">{t('compare.withheld')}</p>
         <div className="mt-[12px] flex w-full flex-col gap-[16px]">
           {v.withheld.length === 0 ? (
             <p className="meta-13 text-[var(--text-muted)]">
-              Nothing was held. Every field the gate looked at cleared it.
+              {/* Under a heading that reads WITHHELD, this said "Nothing was
+                  held" -- the cell word, in the one place the product means the
+                  diff word. */}
+              {t('compare.nothingWithheld')}
             </p>
           ) : (
             v.withheld.map((w) => <WithheldCard key={w.proof} w={w} />)
           )}
         </div>
 
-        <p className="label-10 mt-[28px] text-[var(--text-muted)]">UNCHANGED</p>
+        <p className="label-10 mt-[28px] text-[var(--text-muted)]">{t('compare.unchanged')}</p>
         <div className="mt-[10px] w-full">
           {v.scrapers === 0 ? (
-            <Empty title="Nothing ran this week.">
-              Compare reads the last seven days. A scraper that has not run in that window has
-              nothing to compare against.
+            <Empty title={t('compare.empty.title')}>
+              {t('compare.empty.body')}
             </Empty>
           ) : (
             <p className="meta-13 text-[var(--text-secondary)]">
-              {count(v.unchangedFields, 'field')} across {count(v.scrapers, 'page')} read exactly as
+              {count(v.unchangedFields, 'field')} across {count(v.scrapers, 'scraper')} read exactly as
               before.
             </p>
           )}
@@ -70,7 +79,15 @@ export default async function ComparePage() {
   );
 }
 
-const HEAD = ['competitor', 'field', 'what changed', 'when'] as const;
+// `scraper`, not `competitor`. The cell under it renders `c.scraper`, the rest
+// of the app calls the thing a scraper, and /compare is not competitors-only --
+// it diffs whatever is under watch.
+const HEAD = [
+  t('compare.table.head.scraper'),
+  t('compare.table.head.field'),
+  t('compare.table.head.what'),
+  t('compare.table.head.when'),
+] as const;
 
 function ChangedTable({ v }: { v: CompareView }) {
   return (
@@ -138,7 +155,7 @@ function WithheldCard({ w }: { w: Withheld }) {
           </span>
         </div>
         <p className="heading-16 mt-[10px] text-[var(--text-primary)]">
-          I cannot tell you whether this changed.
+          {t('compare.cannotTell')}
         </p>
         <p className="meta-13 mt-[10px] max-w-[820px] text-[var(--text-secondary)]">
           {w.why?.plain
@@ -149,14 +166,14 @@ function WithheldCard({ w }: { w: Withheld }) {
       {w.waiting ? (
         <Link href="/decisions" className={actionVariants({ variant: 'success' })}>
           <Split size={16} strokeWidth={1.5} aria-hidden />
-          Decide
+          {t('compare.decide')}
         </Link>
       ) : (
         <Link
           href={`/explain/${w.proof}`}
           className="meta-12_5 shrink-0 text-[var(--semantic-link)] hover:underline"
         >
-          already answered ›
+          {t('compare.alreadyAnswered')}
         </Link>
       )}
     </article>

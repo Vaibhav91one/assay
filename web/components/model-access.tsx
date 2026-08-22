@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { Check, KeyRound, RefreshCw, Terminal } from 'lucide-react';
-import { Button, actionVariants, type ActionVariant } from './button';
+import { Button, actionVariants } from './button';
 import { Collapse } from './motion/collapse';
 import { Copy } from './copy';
 import { Working } from './loading';
@@ -28,22 +28,25 @@ import { recheckModelAccess } from '@/app/(app)/settings/actions';
  *
  * A browser button cannot drive the operator's terminal, so "connect" is the
  * command, copyable, rather than a link that could not work. What the browser
- * CAN do is ask again, which is what Check again is for -- and it is not
- * decoration. Two of the three routes need it: a variable exported in a shell
- * after the server started is invisible to the running process, and the CLI
- * probe is cached because it costs seconds. So the panel that says "no model"
- * has to offer a way to be wrong about that.
+ * CAN do is ask again, which is what Check again is for.
  *
- * WHERE THAT BUTTON IS LOUD AND WHERE IT IS NOT. It used to be the same boxed
- * `outline` control in both states, and beside a line reading "Connected
- * through Claude Code on this machine" that is a screen arguing with itself:
- * a conspicuous action next to a settled fact is read as doubt about the
- * fact. The doubt is real but small -- a CLI login can expire, and the person
- * it expires on is looking at exactly this line -- so the answer is not to
- * take the capability away, it is to stop shouting it. Connected gets `quiet`:
- * same words, same handler, no box. Unconfigured keeps `outline`, because
- * there the button is the point -- it is how the operator finds out whether
- * what they just did in their terminal took.
+ * CHECK AGAIN EXISTS ONLY WHERE IT IS USEFUL, which is the unconfigured state.
+ * There, the operator has just been told what to do and wants to know whether
+ * it took: a variable exported in a shell after the server started is invisible
+ * to the running process, and the CLI login is not. The button answers that.
+ *
+ * Beside a line that already reads "Connected", it answered nothing and cost
+ * something -- a control next to a settled fact reads as doubt about the fact.
+ * It is gone from that branch entirely, not merely quietened.
+ *
+ * WHAT THE BUTTON WAS COVERING, now handled where it belongs. A CLI login can
+ * expire, and `cliLoggedIn()` caches the probe because it costs 3-5 seconds.
+ * With no button, a cache that never expired would leave this panel saying
+ * "Connected" until someone restarted the server -- a confidently wrong claim,
+ * which is the one thing this product refuses everywhere else. So the cache in
+ * `src/ai/model.ts` now has a TTL, and Settings renders this panel inside a
+ * Suspense boundary so a re-probe streams in after paint instead of blocking
+ * the page. The staleness window is the TTL, and it closes by itself.
  *
  * The type is restated rather than imported. `src/ai/model.ts` pulls in the
  * Agent SDK and Node built-ins, and this file is a client component; the
@@ -75,34 +78,22 @@ export function ModelAccess({ auth: initial }: { auth: ModelAuth }) {
       setCheckedEmpty(next === 'none');
     });
 
-  const again = (variant: ActionVariant) => (
-    <Button variant={variant} onClick={check} loading={pending} icon={RefreshCw} iconSize={14}>
+  const again = (
+    <Button variant="outline" onClick={check} loading={pending} icon={RefreshCw} iconSize={14}>
       Check again
     </Button>
   );
 
+  // Connected: the line is the whole panel. No control -- there is nothing here
+  // for the operator to do, and the freshness of this claim is the TTL's job
+  // now, not a button's. See the header.
   if (auth !== 'none') {
     const [line, note] = CONNECTED[auth];
     return (
       <div className="flex items-center gap-[10px]">
-        {pending ? (
-          <Working>Checking</Working>
-        ) : (
-          <>
-            <Check size={15} strokeWidth={1.5} className="text-[var(--semantic-success)]" aria-hidden />
-            <span className="body-13_5 text-[var(--text-primary)]">{line}</span>
-            <span className="meta-12_5 text-[var(--text-muted)]">{note}</span>
-          </>
-        )}
-        {/* `quiet` here and `outline` below, and the difference is the whole
-            fix. A boxed control beside a line that already says "Connected"
-            is the screen contradicting itself: the box is what the eye reads
-            as "something is expected of you", and nothing is. The capability
-            does not go away -- a CLI login expires, and the person it expires
-            on is standing on this exact line -- so it stays, in the register
-            of the thing it does. `quiet` is the recipe's own name for that:
-            "a real choice that must not compete". */}
-        <div className="pl-[6px]">{again('quiet')}</div>
+        <Check size={15} strokeWidth={1.5} className="text-[var(--semantic-success)]" aria-hidden />
+        <span className="body-13_5 text-[var(--text-primary)]">{line}</span>
+        <span className="meta-12_5 text-[var(--text-muted)]">{note}</span>
       </div>
     );
   }
@@ -120,7 +111,7 @@ export function ModelAccess({ auth: initial }: { auth: ModelAuth }) {
         <Button onClick={() => setOpen((v) => !v)} aria-expanded={open} icon={KeyRound}>
           Connect a model
         </Button>
-        {again('outline')}
+        {again}
       </div>
 
       {/*

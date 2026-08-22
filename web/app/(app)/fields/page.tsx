@@ -5,9 +5,10 @@ import { Bar } from '@/components/bar';
 import { Empty } from '@/components/empty';
 import { FilterMenu } from '@/components/filter-menu';
 import { fieldsView, FIELD_FILTERS, type FieldFilter, type FieldRow, type FieldsView } from '@/lib/fields';
+import { t } from '@/lib/copy';
 import { ago } from '@/lib/when';
 
-export const metadata: Metadata = { title: 'Fields · Assay' };
+export const metadata: Metadata = { title: t('title.fields') };
 export const dynamic = 'force-dynamic';
 
 export default async function FieldsPage({
@@ -23,17 +24,17 @@ export default async function FieldsPage({
 
   return (
     <>
-      <TopBar title="Fields" status={headline(v)} />
+      <TopBar title={t('nav.fields')} status={headline(v)} />
+      {/* The subtitle came off: "What each field looks like when it is right,
+          and how reliably it has been there." The columns are `field`,
+          `seen in`, `how it is found` and `last change` -- the sentence was a
+          reading of the table header, above the table header. */}
       <div className="flex w-full flex-col items-start px-[56px] pt-[44px]">
-        <p className="body-14 w-full text-[var(--text-secondary)]">
-          What each field looks like when it is right, and how reliably it has been there.
-        </p>
-
         <div className="pt-[22px]">
           <FilterMenu
             current={filter}
             options={[
-              { value: 'all', href: '/fields', label: 'all fields' },
+              { value: 'all', href: '/fields', label: t('fields.filter.all') },
               { value: 'held', href: '/fields?show=held', label: `held (${v.heldTotal})` },
               {
                 value: 'fragile',
@@ -59,7 +60,12 @@ export default async function FieldsPage({
   );
 }
 
-const HEADINGS = ['field', 'seen in', 'how it is found', 'last change'] as const;
+const HEADINGS = [
+  t('fields.table.head.field'),
+  t('fields.table.head.seen'),
+  t('fields.table.head.how'),
+  t('fields.table.head.lastChange'),
+] as const;
 
 function FieldsTable({ rows }: { rows: FieldRow[] }) {
   return (
@@ -90,7 +96,7 @@ function FieldsTable({ rows }: { rows: FieldRow[] }) {
                       size={14}
                       strokeWidth={1.5}
                       className="text-[var(--semantic-warning)]"
-                      aria-label="fragile"
+                      aria-label={t('fields.fragile')}
                     />
                   )}
                 </span>
@@ -112,7 +118,7 @@ function FieldsTable({ rows }: { rows: FieldRow[] }) {
               </span>
             </td>
             <td className="body-13_5 py-[9px] pr-[16px] text-[var(--text-secondary)]">
-              {r.how ?? <span className="text-[var(--text-muted)]">not assessed on this store</span>}
+              {r.how ?? <span className="text-[var(--text-muted)]">{t('fields.notAssessed')}</span>}
             </td>
             <td className="py-[9px]">
               <LastChange row={r} />
@@ -134,10 +140,10 @@ function FieldsTable({ rows }: { rows: FieldRow[] }) {
  */
 function LastChange({ row }: { row: FieldRow }) {
   if (row.runs > 0 && row.seen === 0) {
-    return <span className="body-13_5 text-[var(--semantic-danger)]">never delivered</span>;
+    return <span className="body-13_5 text-[var(--semantic-danger)]">{t('fields.neverDelivered')}</span>;
   }
   if (row.lastChange === null) {
-    return <span className="body-13_5 text-[var(--text-muted)]">never</span>;
+    return <span className="body-13_5 text-[var(--text-muted)]">{t('fields.never')}</span>;
   }
   return <span className="body-13_5 text-[var(--text-secondary)]">{ago(row.lastChange)}</span>;
 }
@@ -174,7 +180,7 @@ function Callout({ v }: { v: FieldsView }) {
 }
 
 function headline(v: FieldsView): string {
-  if (v.tracked === 0) return 'nothing tracked yet';
+  if (v.tracked === 0) return t('fields.headline.none');
   const parts = [`${v.tracked} tracked`];
   if (v.missing > 0) parts.push(`${v.missing} never delivered`);
   if (v.fragile > 0) parts.push(`${v.fragile} fragile`);
@@ -183,17 +189,21 @@ function headline(v: FieldsView): string {
 
 const emptyTitle = (f: FieldFilter) =>
   f === 'held'
-    ? 'No field is waiting on you.'
+    ? t('fields.empty.held')
     : f === 'fragile'
-      ? 'No field is graded fragile.'
-      : 'No fields are being watched yet.';
+      ? t('fields.empty.fragile')
+      : t('fields.empty.all');
 
 function emptyBody(f: FieldFilter, v: FieldsView) {
   if (f === 'held') {
-    return 'Every cell the gate looked at was either published or is still being watched.';
+    return t('fields.empty.held.body');
   }
   if (f === 'fragile') {
-    return `All ${v.tracked} watched field${v.tracked === 1 ? ' is' : 's are'} held up by something that has not moved. Fragility is about how a field is identified, not whether it is working right now.`;
+    // The second sentence -- "Fragility is about how a field is identified, not
+    // whether it is working right now." -- is in the voice bank as copy already
+    // removed from `assay-fragility` for being an essay on an operational
+    // screen. It came off here too.
+    return `All ${v.tracked} watched field${v.tracked === 1 ? ' is' : 's are'} held up by something that has not moved.`;
   }
-  return 'A field appears here once a scraper has run against it at least once.';
+  return t('fields.empty.all.body');
 }
