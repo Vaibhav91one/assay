@@ -120,7 +120,7 @@ async function fetchPage(url: string): Promise<string | null> {
     try {
       const res = await fetch(url, {
         signal: AbortSignal.timeout(30_000),
-        headers: { 'user-agent': 'assay-selfheal (+https://github.com/assay)' },
+        headers: { 'user-agent': 'assay-selfheal (+https://github.com/Vaibhav91one/assay)' },
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.text();

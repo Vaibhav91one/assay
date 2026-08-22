@@ -1,7 +1,15 @@
 # Assay
 
+[![ci](https://github.com/Vaibhav91one/assay/actions/workflows/ci.yml/badge.svg)](https://github.com/Vaibhav91one/assay/actions/workflows/ci.yml)
+
 A self-healing scraper that abstains when it is not sure, and measures how often
 its heals are wrong.
+
+That badge is not decoration. The workflow behind it asserts the numbers rather
+than the exit codes -- 34 assertions, 153 benchmark cases at 0.0% wrong, 74
+replayed runs against byte-identical proof records -- and once a day it points
+the deployed path at a live page that has been changed underneath it and checks
+that Assay healed to the right element or published nothing at all.
 
 Built for the **Into the Scrape-Verse** hackathon (WeMakeDevs x Bright Data,
 17-23 Aug 2026).
