@@ -134,11 +134,26 @@ export async function openDecisions(limit = 50): Promise<Decision[]> {
   }));
 }
 
-/** The sidebar's scraper list. */
-export async function scrapers(): Promise<{ id: string; url: string }[]> {
+/**
+ * The sidebar's scraper list.
+ *
+ * A target row is one *field*, and `src/setup` ids them `{slug}__{field}` --
+ * so selecting target ids straight out puts `chicco__recall_title` in a rail
+ * that means to say "chicco". One scraper is the set of fields watched on one
+ * page, so the list is by slug, with how many fields each carries.
+ */
+export async function scrapers(): Promise<{ id: string; url: string; fields: number }[]> {
   const rows = await getDb()
     .select({ id: schema.targets.targetId, url: schema.targets.url })
     .from(schema.targets)
     .orderBy(schema.targets.targetId);
-  return rows;
+
+  const bySlug = new Map<string, { id: string; url: string; fields: number }>();
+  for (const r of rows) {
+    const slug = r.id.split('__')[0];
+    const seen = bySlug.get(slug);
+    if (seen) seen.fields += 1;
+    else bySlug.set(slug, { id: slug, url: r.url, fields: 1 });
+  }
+  return [...bySlug.values()];
 }

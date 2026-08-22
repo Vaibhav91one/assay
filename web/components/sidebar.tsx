@@ -33,7 +33,7 @@ export async function Sidebar({
   scrapers = [],
 }: {
   waiting?: number;
-  scrapers?: { id: string; url: string }[];
+  scrapers?: { id: string; url: string; fields: number }[];
 }) {
   // Not decoration: on a self-hosted instance there are no accounts, so this
   // reports what lib/auth.ts actually knows. The Figma frame shows a personal

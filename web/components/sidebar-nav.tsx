@@ -35,30 +35,32 @@ export function SidebarNav({ waiting }: { waiting: number }) {
         const on = href === '/' ? path === '/' : path.startsWith(href);
         return (
           <SidebarMenuItem key={href}>
+            {/* `render`, not `asChild`: this is the Base UI build, which
+                composes with useRender rather than a Radix Slot. */}
             <SidebarMenuButton
-              asChild
               isActive={on}
               tooltip={label}
-              className="h-auto gap-[12px] p-0 hover:bg-transparent active:bg-transparent data-[active=true]:bg-transparent group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:justify-center"
+              className="h-auto gap-[12px] p-0 hover:bg-transparent active:bg-transparent data-active:bg-transparent group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:justify-center"
+              render={<Link href={href} aria-current={on ? 'page' : undefined} />}
             >
-              <Link href={href} aria-current={on ? 'page' : undefined}>
-                <Icon
-                  size={16}
-                  strokeWidth={1.5}
-                  className={on ? 'text-[var(--accent-brand)]' : 'text-[#a3a5a9]'}
-                  aria-hidden
-                />
-                {/* Hidden, not truncated. shadcn's collapsed rail relies on
-                    overflow to clip the label, which left the first letter of
-                    each one bleeding past the icon rail -- "H", "F", "S". */}
-                <span
-                  className={`nav-15 group-data-[collapsible=icon]:hidden ${
-                    on ? 'text-[var(--accent-brand)]' : 'text-[#a3a5a9]'
-                  }`}
-                >
-                  {label}
-                </span>
-              </Link>
+              <Icon
+                size={16}
+                strokeWidth={1.5}
+                className={on ? 'text-[var(--accent-brand)]' : 'text-[#a3a5a9]'}
+                aria-hidden
+              />
+              {/* sr-only when collapsed, not hidden. Overflow-clipping left
+                  the first letter of each label bleeding past the icon rail
+                  ("H", "F", "S"), but `hidden` took the label out of the
+                  accessibility tree too -- every nav link became an anchor
+                  with no name, and a tooltip is not an accessible name. */}
+              <span
+                className={`nav-15 group-data-[collapsible=icon]:sr-only ${
+                  on ? 'text-[var(--accent-brand)]' : 'text-[#a3a5a9]'
+                }`}
+              >
+                {label}
+              </span>
             </SidebarMenuButton>
             {label === 'Decisions' && waiting > 0 && (
               <SidebarMenuBadge className="top-[-1px] size-[18px] justify-center rounded-full bg-[var(--accent-brand)] p-0 group-data-[collapsible=icon]:hidden">
@@ -73,7 +75,7 @@ export function SidebarNav({ waiting }: { waiting: number }) {
 }
 
 /** The scraper list. Client only so it can mark the one in context later. */
-export function ScraperList({ scrapers }: { scrapers: { id: string; url: string }[] }) {
+export function ScraperList({ scrapers }: { scrapers: { id: string; url: string; fields: number }[] }) {
   const shown = scrapers.slice(0, 7);
   return (
     <>
