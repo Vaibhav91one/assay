@@ -6,7 +6,7 @@ import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { eq, and, isNull, sql } from 'drizzle-orm';
 import * as schema from './schema.js';
 import { nextRunAt } from '../schedule.js';
-import type { Evaluation } from '../runner.js';
+import { selectorFor, type Evaluation } from '../runner.js';
 import type { StoredCapture } from './captures.js';
 
 // TODO(types): drizzle's `execute` hands back `Record<string, unknown>` rows,
@@ -107,8 +107,16 @@ export async function recordRun({
       captureSha: result.event.capture_sha256 ?? null,
       // Only an abstain needs the ranked list kept -- it is what a later
       // nomination must be scored against.
+      //
+      // `selectorFor(r.el)`, not `r.fp.tag`: the column is named `selector` and
+      // a tag name is not one. Every reader treats it as an element reference --
+      // the explain screen labels it "the element the value was read off", and
+      // assay_propose scores a nomination against it -- so storing "h2" told
+      // each of them the value came off some h2 somewhere on the page, which is
+      // not an answer to the question any of them asked. This is the same call
+      // the proof record's `candidates` list has always made.
       ranked: result.status.status === 'quarantined' ? (result.gate?.ranked ?? []).map((r) => ({
-        selector: r.fp?.tag ?? null,
+        selector: selectorFor(r.el),
         score: Number(r.score.toFixed(4)),
         value: (r.fp?.text || '').slice(0, 200),
       })) : null,
