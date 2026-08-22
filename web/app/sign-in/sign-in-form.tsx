@@ -75,8 +75,14 @@ export function SignInForm() {
             Assay is self-hosted &mdash; ask whoever runs your instance, or request access.
           </p>
 
+          {/* Off this instance entirely, and pressed by someone who is part
+              way through signing in -- so it opens beside the form rather than
+              over it. `noopener` is not optional on a cross-origin `_blank`:
+              without it the opened page gets a handle on this one. */}
           <a
             href="https://github.com/assay-dev/assay/issues/new?template=feature.md&title=Request+access"
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex h-[48px] items-center justify-center gap-[8px] rounded-[var(--radius-control)] bg-[var(--semantic-link)] hover:bg-[var(--semantic-link-hover)]"
           >
             <IconAlign size={14}>
@@ -88,6 +94,7 @@ export function SignInForm() {
               />
             </IconAlign>
             <span className="body-14 text-[var(--accent-on-primary)]">Request access</span>
+            <span className="sr-only">(opens in a new tab)</span>
           </a>
         </>
       ) : (
@@ -146,9 +153,12 @@ export function SignInForm() {
             Don&rsquo;t have an account?{' '}
             <a
               href="https://github.com/assay-dev/assay/issues/new?template=feature.md&title=Request+access"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-[var(--semantic-link)] hover:text-[var(--semantic-link-hover)]"
             >
               Request access
+              <span className="sr-only"> (opens in a new tab)</span>
             </a>
           </p>
         </>

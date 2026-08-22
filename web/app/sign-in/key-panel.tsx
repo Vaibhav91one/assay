@@ -48,10 +48,15 @@ function Presence({ set, doc, name }: Pick<KeyPresence, 'set' | 'doc' | 'name'>)
   return (
     <a
       href={doc}
+      // A new tab, for the same reason as `settings/doc-link.tsx`: this panel
+      // is what someone reads while setting credentials up, and following a
+      // link out of it in place loses the list of what is still missing.
+      target="_blank"
+      rel="noopener noreferrer"
       // The accessible name has to say which credential. Four links all reading
       // "See documentation" is four identical entries in a screen reader's link
       // list, and the visible text is the same for all of them by design.
-      aria-label={`See documentation for ${name}`}
+      aria-label={`See documentation for ${name} (opens in a new tab)`}
       className="press-row mt-[-2px] flex shrink-0 items-center gap-[6px] rounded-[var(--radius-control)] border border-[var(--border-default)] bg-[var(--surface-card)] py-[6px] pl-[10px] pr-[8px] transition-colors duration-[var(--duration-tint)] hover:bg-[var(--surface-subtle)]"
     >
       <span className="meta-12_5 text-[var(--text-primary)]">See documentation</span>
