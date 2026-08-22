@@ -33,6 +33,11 @@
   --duration-settle: 500ms; /* the slowest thing allowed; use rarely */
   --duration-stagger: 90ms; /* the gap between one child and the next */
 
+  /* A popup leaving. Deliberately shorter than --duration-pop: arriving is an
+     event worth watching land, leaving is not, and a popup that takes as long
+     to go as it took to come feels stuck to the cursor. Roughly two thirds. */
+  --duration-dismiss: 110ms;
+
   /* Thresholds, not motion. These two say when a route loader is allowed to
      start and how long it must then stay -- the only numbers here that
      describe waiting rather than moving.
@@ -53,6 +58,68 @@
   --duration-shimmer: 1400ms;
   --duration-spin: 700ms;
   --duration-eq: 900ms;
+  /* One lap of the light around the primary button's edge. The slowest loop
+     here on purpose: it runs forever behind the one control the product wants
+     looked at, and anything quicker stops being a highlight and becomes a
+     thing to get away from. */
+  --duration-orbit: 3000ms;
+
+  /* Geometry for that same edge light, declared here rather than in Figma
+     because it exists only as motion. Two numbers so it can be dialled down
+     without hunting through JSX: how wide the bright wedge is, and how thick
+     the rim it travels along. */
+  --shimmer-spread: 90deg;
+  --shimmer-cut: 1.5px;
+}
+
+/* -- focus --------------------------------------------------------------- */
+
+/* Not the browser's outline. The same job -- say where the keyboard is -- drawn
+   in the app's own palette so it reads as part of the design system rather than
+   as the user agent's default: a hairline in the surface colour so the ring
+   never touches the control, then the brand ring outside it. It follows the
+   control's own border-radius for free, because box-shadow does.
+
+   Brand orange rather than link blue, and the reason is measured rather than
+   aesthetic. #2563eb clears 3:1 against the white card (5.2:1) but manages only
+   2.4:1 against the #0e0e0f rail, and a focus ring legible on one of two
+   surfaces is not a focus ring. #ff4d00 clears it on both -- 3.3:1 on white,
+   5.8:1 on the rail.
+
+   :focus-visible only, so a mouse click never draws it. Not transitioned: a
+   keyboard user wants to know where they are on the frame they arrive, and
+   --duration-tint spent fading a ring in is 100ms of not knowing. */
+.focus-ring {
+  outline: none;
+}
+
+.focus-ring:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--surface-card),
+    0 0 0 4px var(--accent-brand);
+}
+
+/* The same ring, turned inwards, for a full-bleed row inside something that
+   clips -- a notification line in a popup with `overflow: hidden`, where an
+   outer ring would simply be cut off by the panel that contains it. Same
+   colour, same promise, drawn on the inside edge because that is the only
+   edge there is. */
+.focus-ring-inset {
+  outline: none;
+}
+
+.focus-ring-inset:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--accent-brand);
+}
+
+/* Forced-colours drops box-shadow entirely, so the rings above would vanish for
+   exactly the users least able to afford losing them. Hand the outline back. */
+@media (forced-colors: active) {
+  .focus-ring:focus-visible,
+  .focus-ring-inset:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
 }
 
 /* -- keyframes ----------------------------------------------------------- */
@@ -131,6 +198,33 @@
   }
 }
 
+/* A bar growing to the width it was always going to have. No `to`: the end
+   state is whatever width the component computed, so this animates to the real
+   measurement rather than to a number written here. */
+@keyframes bar-fill {
+  from {
+    width: 0;
+  }
+}
+
+/* The angle of the edge light. A conic-gradient's `from` angle is not
+   animatable on its own, so it is registered as a real custom property with a
+   type -- which is what lets the browser interpolate it. MagicUI's original
+   rotates a 3x-oversized div inside two more divs to get the same picture; one
+   registered angle and one pseudo-element is the same effect with none of the
+   DOM. */
+@property --shimmer-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes shimmer-orbit {
+  to {
+    --shimmer-angle: 360deg;
+  }
+}
+
 /* -- classes ------------------------------------------------------------- */
 
 .motion-pop-in {
@@ -191,6 +285,161 @@
   animation: pixel-on var(--duration-settle) var(--ease-glide) infinite;
 }
 
+/* A bar arriving. Deliberately a CSS animation and not a React effect, because
+   a CSS animation runs once per element MOUNT: re-rendering the same bar with
+   the same value does not replay it, which is the rule docs/MOTION.md §5 asks
+   for and the reason no state, ref or "have I animated yet" flag is needed
+   here. A new bar on a newly rendered screen is a new element, and it fills.
+   The number beside a bar is never animated -- see components/bar.tsx. */
+.motion-bar-fill {
+  animation: bar-fill var(--duration-reveal) var(--ease-glide) both;
+}
+
+/* The Base UI popup idiom: one class for every Popover.Popup and Menu.Popup in
+   the app, so the way a popup arrives and the way it leaves are decided once.
+   Before this, three popups shared `motion-pop-in` for the entry and had no
+   exit at all -- they were cut, not closed.
+
+   A transition rather than a keyframe animation, which is Base UI's own
+   recommendation and not a preference: a transition can be cancelled midway, so
+   a popup dismissed before it has finished opening animates smoothly back down
+   instead of snapping. Base UI puts `data-starting-style` on the popup for one
+   frame as it opens and `data-ending-style` on it for the whole of the close,
+   and it holds the element mounted until `getAnimations()` reports the
+   transition finished -- so no `keepMounted` is needed and nothing here has to
+   own an unmount timer.
+
+   Leaving is quicker than arriving, and scales back toward the same
+   `--transform-origin` it grew out of, so the popup collapses into the control
+   that opened it rather than shrinking into its own middle. */
+.motion-popup {
+  transform-origin: var(--transform-origin);
+  transition:
+    opacity var(--duration-pop) var(--ease-pop),
+    transform var(--duration-pop) var(--ease-pop);
+}
+
+.motion-popup[data-starting-style],
+.motion-popup[data-ending-style] {
+  opacity: 0;
+  transform: scale(0.94);
+}
+
+.motion-popup[data-ending-style] {
+  transition-duration: var(--duration-dismiss);
+}
+
+/* Base UI sets `data-instant` when it has decided a particular open or close
+   should not be watched -- a tooltip handed straight from one trigger to the
+   next inside the provider's skip window, a dismiss. Honour it, EXCEPT for
+   `click`.
+
+   That exception is measured, not guessed. Base UI stamps `data-instant="click"`
+   on every popover opened by clicking its trigger, which is how every popover in
+   this app opens -- so honouring the attribute unconditionally computed
+   `transition-property: none` on the popup and removed the entry and exit
+   animations completely. The version that shipped that rule looked exactly like
+   the version that had no rule at all, which is the kind of bug a screenshot
+   cannot catch and a computed style can. */
+.motion-popup[data-instant]:not([data-instant='click']) {
+  transition: none;
+}
+
+/* The icon swap. On a button with a glyph on the left, hovering slides the
+   whole row one icon-slot to the left -- the glyph leaves through the left
+   edge as it fades -- while a second copy of the same glyph arrives from
+   beyond the right edge into the space the label just vacated. The button
+   clips, so both journeys happen behind a mask and the icon reads as one
+   object that travelled through and out the other side.
+
+   The label moves, deliberately and by exactly one slot, rather than being
+   left to snap sideways when the glyph disappears. Nothing changes width: the
+   trailing copy cancels its own footprint with a negative start margin, so the
+   button measures the same hovered as not.
+
+   --swap-slot is the icon's size, set inline from the component's own
+   iconSize. --action-gap is the variant's gap, declared once per variant in
+   button.tsx and used both by the flex gap and by the distance below, so the
+   two cannot drift.
+
+   --ease-pop and --duration-pop, because this is motion attached to the
+   cursor. Transitions rather than animations again, for the same reason: a
+   pointer crossing the button twice in 200ms reverses from wherever each
+   piece had got to, so there is no way to strand a glyph mid-slide or leave
+   two of them on screen. */
+.icon-swap {
+  --swap-shift: calc(var(--swap-slot) + var(--action-gap));
+  position: relative;
+  overflow: hidden;
+}
+
+.icon-swap .swap-lead,
+.icon-swap .swap-label,
+.icon-swap .swap-trail {
+  transition:
+    opacity var(--duration-pop) var(--ease-pop),
+    transform var(--duration-pop) var(--ease-pop);
+}
+
+/* Parked outside the right edge, and contributing no width: the negative start
+   margin cancels its own box and the gap in front of it, so its resting place
+   is flush with the content box's right edge and the translate below is the
+   only thing that moves it. */
+.icon-swap .swap-trail {
+  margin-inline-start: calc(-1 * var(--swap-shift));
+  transform: translateX(200%);
+}
+
+.icon-swap:hover .swap-lead {
+  opacity: 0;
+  transform: translateX(calc(-1 * var(--swap-shift)));
+}
+
+.icon-swap:hover .swap-label {
+  transform: translateX(calc(-1 * var(--swap-shift)));
+}
+
+.icon-swap:hover .swap-trail {
+  transform: translateX(0);
+}
+
+/* The edge light on the one primary call to action.
+
+   A wedge of --shimmer-spread degrees travelling around the rim. The rim is
+   cut with a two-layer mask -- the whole box minus its own content box, which
+   leaves a --shimmer-cut band at the edge -- so this needs no backdrop element
+   painted over a rotating div and no container queries. It is drawn on top and
+   is pointer-events: none, so the button underneath is untouched: press,
+   disabled, loading and focus all behave exactly as they do on any other
+   primary button.
+
+   Deliberately not applied by the `primary` variant. One button in the product
+   wears this; a shimmer on every primary button is noise, and the moment it is
+   on two of them it has stopped meaning "this one". */
+.shimmer-edge::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  padding: var(--shimmer-cut);
+  border-radius: inherit;
+  pointer-events: none;
+  background: conic-gradient(
+    from calc(var(--shimmer-angle) - var(--shimmer-spread) * 0.5),
+    transparent 0deg,
+    var(--accent-on-primary) var(--shimmer-spread),
+    transparent var(--shimmer-spread)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  animation: shimmer-orbit var(--duration-orbit) linear infinite;
+}
+
 /* Tactile press. Three sizes because the same scale on a 24px icon and a
    320px button are not the same gesture -- the smaller the target, the more
    it has to move before the finger believes it. */
@@ -247,4 +496,33 @@
   .motion-eq > * {
     transform: scaleY(0.7) !important;
   }
+
+  /* The icon swap carries nothing. Removing it loses no information, which by
+     §5 makes it decoration, and §4 lets decoration be dropped outright -- so
+     it is dropped rather than compressed into 0.01ms. A swap that completes
+     before the frame is painted is not a subtler swap, it is a flicker, and
+     the flicker is worse than the effect it replaced. The glyph stays on the
+     left, the label stays where it is, and the second copy is never drawn. */
+  .icon-swap .swap-lead,
+  .icon-swap .swap-label {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .icon-swap .swap-trail {
+    display: none !important;
+  }
+
+  /* Same argument, and the stronger case for it: the edge light is a
+     perpetual loop with nothing behind it. Held at 0.01ms it would freeze as a
+     bright wedge stuck at one corner, which reads as a rendering fault rather
+     than as a highlight. Not drawn at all: what is left is an ordinary solid
+     primary button, which is what it always was underneath. */
+  .shimmer-edge::before {
+    display: none !important;
+  }
+
+  /* A bar needs no rule of its own. The information IS the width, the global
+     0.01ms above completes the fill before the frame is painted, and what
+     lands is the real measurement drawn instantly -- which is the requirement,
+     not a concession to it. */
 }
