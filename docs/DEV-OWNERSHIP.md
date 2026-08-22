@@ -22,7 +22,7 @@ machine answers on the built-in default, which is what `src/store/index.ts` fall
 when `DATABASE_URL` is unset — so the database-backed tests work with no setup at all:
 
 ```bash
-ASSAY_REQUIRE_DB=1 npx vitest run      # 540 passing, and actually touching Postgres
+ASSAY_REQUIRE_DB=1 npx vitest run      # 570 passing, and actually touching Postgres
 ```
 
 `ASSAY_REQUIRE_DB=1` is not optional advice. Without it a test that cannot reach the
@@ -143,7 +143,7 @@ npm test                          # 34 assertions, "all checks pass"
 npm run bench                     # 153 cases, `margin gate` row field 7 = 0.0%
 npm run replay                    # replayed 74 runs · ok 8 · heal 66 · abstain 0
 git diff --quiet -- results/events.jsonl   # byte-identical
-npx vitest run                    # 540 + your own
+npx vitest run                    # 570 + your own
 npm run build --workspace web     # passes
 
 git diff --stat main -- . ':!package-lock.json'   # only your own paths
