@@ -9,6 +9,7 @@ import { z } from 'zod';
 import {
   listBrakes, brakeState, clearBrake, checkBrake, healsFor, unheal, detectPingPong,
 } from '../../src/brake/index.js';
+import { reopenBlast } from '../../src/blast/index.js';
 import { closeDb } from '../../src/store/index.js';
 
 /**
@@ -120,10 +121,17 @@ export const unhealCommand = new Command('unheal')
       runId = n.data;
     }
 
-    // reopenBlast is left at its default here. Feature C exports the real one
-    // and wave 2 passes it; until then the result says `reopened: false` and
-    // carries the window, rather than claiming a re-open that did not happen.
-    const result = await unheal({ targetId, field, runId });
+    // C's real reopenBlast, passed directly: it was built to exactly the
+    // ReopenBlast shape D declared, so there is nothing to adapt. It is safe to
+    // call twice and safe on an already-reverted field, because it derives the
+    // window rather than reading current state.
+    //
+    // The DEFAULT stays the honest no-op, and test/brake.test.ts still proves
+    // that an unwired seam reports `reopened: false` rather than claiming a
+    // re-open that did not happen. Wiring it here is what a person running
+    // `assay unheal` needs; leaving the default alone is what keeps the seam
+    // from lying when nobody has wired it.
+    const result = await unheal({ targetId, field, runId, reopenBlast });
     out(result);
     return result.unhealed ? 0 : 1;
   }));
