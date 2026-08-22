@@ -48,10 +48,14 @@ function TooltipContent({
   return (
     <Base.Portal>
       <Base.Positioner side={side} align={align} sideOffset={sideOffset}>
+        {/* `motion-popup` is the same class every Popover.Popup and Menu.Popup
+            in the app wears -- Base UI gives all three families the same
+            open/close data attributes, so a tooltip now arrives and leaves the
+            way a popover does instead of being the one overlay that blinks. */}
         <Base.Popup
           data-slot="tooltip-content"
           className={cn(
-            'z-50 w-fit rounded-[6px] bg-[var(--bg-sidebar)] px-[10px] py-[5px] text-[var(--text-inverse)] shadow-elevation-control',
+            'motion-popup z-50 w-fit rounded-[6px] bg-[var(--bg-sidebar)] px-[10px] py-[5px] text-[var(--text-inverse)] shadow-elevation-control',
             className,
           )}
           {...props}
