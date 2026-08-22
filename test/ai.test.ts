@@ -8,7 +8,7 @@
 //
 // These run with or without ANTHROPIC_API_KEY and with or without Postgres.
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 import { z } from 'zod';
 import { load } from 'cheerio';
 import {
@@ -16,6 +16,8 @@ import {
   hasKey, inferFields, pickElement, rankDiscovery, scoreNomination,
   type RankedCandidate,
 } from '../src/ai/index.js';
+import { modelAuth, stubCliProbe } from '../src/ai/model.js';
+import { withoutCredentials } from './no-credentials.js';
 import { loadTools } from '../src/mcp/server.js';
 
 // A page that tells the model what to say. This is the attack.
@@ -94,15 +96,81 @@ describe('the model never gets a shell or a filesystem', () => {
   });
 });
 
+// The probe is stubbed throughout. Nothing here spawns the real binary: the
+// answer it gives is a fact about the developer's own laptop, and a test that
+// asserted it would pass or fail by who ran it.
+describe('which credential the model path found', () => {
+  const creds = withoutCredentials();
+  beforeEach(creds.enter);
+  afterEach(creds.leave);
+
+  it('names the routes in the order the SDK resolves them', () => {
+    stubCliProbe(() => true);
+    // A machine can have all three. The SDK documents the precedence, so the
+    // panel has to report the one that will actually be used, not the first
+    // one this file happens to test for.
+    process.env.ANTHROPIC_API_KEY = 'x';
+    process.env.CLAUDE_CODE_OAUTH_TOKEN = 'x';
+    expect(modelAuth()).toBe('api-key');
+
+    delete process.env.ANTHROPIC_API_KEY;
+    expect(modelAuth()).toBe('subscription');
+
+    delete process.env.CLAUDE_CODE_OAUTH_TOKEN;
+    expect(modelAuth()).toBe('cli');
+  });
+
+  it('is none only when the CLI has no login either', () => {
+    stubCliProbe(() => false);
+    expect(modelAuth()).toBe('none');
+    expect(hasKey()).toBe(false);
+  });
+
+  it('counts a CLI login as a model, because the SDK does', () => {
+    // The bug this closes: `hasKey()` false while the SDK would have answered
+    // switches off a model that works.
+    stubCliProbe(() => true);
+    expect(hasKey()).toBe(true);
+  });
+
+  it('asks once, and again only when told to', () => {
+    // The real probe costs seconds, so a page render must not pay for it twice.
+    let asked = 0;
+    stubCliProbe(() => { asked++; return true; });
+    expect(modelAuth()).toBe('cli');
+    expect(modelAuth()).toBe('cli');
+    expect(asked).toBe(1);
+
+    // What Check again does. Without this the panel could never report a login
+    // the operator created after the server started.
+    expect(modelAuth(true)).toBe('cli');
+    expect(asked).toBe(2);
+  });
+
+  it('treats a binary that is not there as a route that is not available', () => {
+    // A self-hosted container has no `claude` in it, and `claude auth status`
+    // exits 1 when logged out. Both arrive as a throw from execFileSync, and
+    // neither is allowed to take the settings page down with it.
+    stubCliProbe(() => { throw new Error('spawn claude ENOENT'); });
+    expect(modelAuth()).toBe('none');
+    expect(hasKey()).toBe(false);
+  });
+});
+
 describe('no key: every path degrades, none throws', () => {
-  const noKey = !hasKey();
+  // Imposed, not observed -- see test/no-credentials.ts. These used to skip
+  // themselves on any machine that had a credential, which is every machine
+  // that could also run the model.
+  const creds = withoutCredentials();
+  beforeAll(creds.enter);
+  afterAll(creds.leave);
   const $ = load(INJECTED);
 
-  it.skipIf(!noKey)('inferFields returns null, not an empty field set', async () => {
+  it('inferFields returns null, not an empty field set', async () => {
     expect(await inferFields($)).toBeNull();
   });
 
-  it.skipIf(!noKey)('pickElement returns null, not "none found"', async () => {
+  it('pickElement returns null, not "none found"', async () => {
     expect(await pickElement({ tag: 'h2', text: 'x', neighbor_text: null }, [{ tag: 'h2', text: 'x' }]))
       .toBeNull();
   });

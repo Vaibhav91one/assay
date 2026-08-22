@@ -31,6 +31,7 @@
 // No API key means no model: `ask` returns null. Null is not zero and it is not
 // an empty result; every caller degrades to the non-AI path.
 
+import { execFileSync } from 'node:child_process';
 import { query } from '@anthropic-ai/claude-agent-sdk';
 import { z } from 'zod';
 
@@ -38,30 +39,108 @@ import { z } from 'zod';
  * Which credential the model path has, if any. Presence only -- no value is
  * ever returned, logged or echoed.
  *
- * Two are accepted because the SDK accepts two, and gating on only the API key
- * made Assay stricter than the thing it calls: an operator whose machine had a
- * subscription token was told "no model is configured" while the SDK would have
- * worked. That is the same class of bug as the draft-07 one -- a working path
- * reported as an absent one.
+ * Three are accepted because the SDK accepts three, and gating on fewer made
+ * Assay stricter than the thing it calls. That is the same class of bug as the
+ * draft-07 one -- a working path reported as an absent one -- and it has now
+ * been the same bug twice, first for the subscription token and then for the
+ * CLI's own stored login.
+ *
+ * The order is the SDK's own, documented at
+ * code.claude.com/docs/en/agent-sdk/typescript: ANTHROPIC_API_KEY, then
+ * CLAUDE_CODE_OAUTH_TOKEN, then "the CLI login credentials that were previously
+ * stored". Reporting it in a different order to the one the SDK resolves it in
+ * would name the wrong route on a machine that has two.
  *
  * Assay implements no login. `CLAUDE_CODE_OAUTH_TOKEN` is produced by
  * Anthropic's own CLI (`claude setup-token`, which requires a Claude
- * subscription) and read from the environment exactly as the API key is. There
- * is no client id here, no redirect, no token exchange, and nothing stored.
+ * subscription) and read from the environment exactly as the API key is; `cli`
+ * is that same CLI's own credential store, which Assay asks about and never
+ * opens. There is no client id here, no redirect, no token exchange, and
+ * nothing stored.
  *
  * The API key remains the documented path for any deployment other people use;
  * the SDK quickstart is explicit that third-party products must not offer
  * claude.ai login. A single operator's own machine, authenticated with
  * Anthropic's own tool, is not Assay offering anyone a login.
  */
-export type ModelAuth = 'api-key' | 'subscription' | 'none';
+export type ModelAuth = 'api-key' | 'subscription' | 'cli' | 'none';
 
-export const modelAuth = (): ModelAuth =>
+/**
+ * Does the `claude` CLI on this machine have a login of its own?
+ *
+ * ONE BIT, AND THE BIT IS AN EXIT CODE. `claude auth status` is documented to
+ * exit 0 when logged in and 1 when not
+ * (code.claude.com/docs/en/cli-reference), so the answer is the status and
+ * `stdio: 'ignore'` throws the output away unread. That is deliberate: the
+ * command's JSON body carries an email address, an org id and a plan name, and
+ * a probe that never opens the pipe cannot leak any of them -- the same rule
+ * `web/app/sign-in/keys.ts` holds to, held here by having nothing to read.
+ *
+ * Nor does it go looking for the store itself. Where the credential lives is
+ * documented (the macOS keychain; `~/.claude/.credentials.json` on Linux) but
+ * the keychain item's name is not, and a file test would answer for one
+ * platform and guess at the other. Asking the tool that owns the store is the
+ * only check that stays true when the store moves.
+ *
+ * CACHED, BECAUSE IT IS SLOW. Measured on this machine: 2.9-4.8s per call,
+ * cold. That is far too slow for a page render to pay twice, so the first
+ * answer is kept for the life of the process and `recheck` is the only way
+ * past it -- which is what the Check again button in the settings panel is
+ * for. It is only ever reached when neither variable is set, so a deployment
+ * with an API key never spawns anything.
+ *
+ * A missing binary is not an error to report. A self-hosted container has no
+ * `claude` in it; `execFileSync` throws ENOENT, and the honest reading of that
+ * is that this route is simply not available here.
+ */
+const askTheCli = (): boolean => {
+  execFileSync('claude', ['auth', 'status'], { stdio: 'ignore', timeout: 10_000 });
+  return true;
+};
+
+let cliProbe = askTheCli;
+let cliCache: boolean | undefined;
+
+export function cliLoggedIn(recheck = false): boolean {
+  if (recheck) cliCache = undefined;
+  if (cliCache === undefined) {
+    // The catch is here rather than inside the probe so that it is the same
+    // catch a stubbed probe goes through: exit 1, ENOENT and a timeout all
+    // arrive as a throw, all three mean "not through the CLI", and a test can
+    // reach every one of them without spawning anything.
+    try {
+      cliCache = cliProbe();
+    } catch {
+      cliCache = false;
+    }
+  }
+  return cliCache;
+}
+
+/**
+ * Stand in for the spawn; `null` puts the real one back. A test that ran the
+ * real probe would assert whichever way the machine running it happens to be
+ * logged in, which is the one thing this detection must not be tested by.
+ */
+export function stubCliProbe(fn: (() => boolean) | null): void {
+  cliProbe = fn ?? askTheCli;
+  cliCache = undefined;
+}
+
+export const modelAuth = (recheck = false): ModelAuth =>
   process.env.ANTHROPIC_API_KEY ? 'api-key'
   : process.env.CLAUDE_CODE_OAUTH_TOKEN ? 'subscription'
+  : cliLoggedIn(recheck) ? 'cli'
   : 'none';
 
-/** Presence only. The credential is never returned, logged or echoed. */
+/**
+ * Presence only. The credential is never returned, logged or echoed.
+ *
+ * `cli` counts. This gates every model call, and the SDK authenticates through
+ * the CLI's store on its own -- verified by call, not by reading the docs: with
+ * neither variable set, a `Shapes.pick` prompt came back `{"index":0,
+ * "confidence":"high"}`. Excluding it here would switch off a model that works.
+ */
 export const hasKey = (): boolean => modelAuth() !== 'none';
 
 // ID read off platform.claude.com/docs/en/about-claude/models/overview on
