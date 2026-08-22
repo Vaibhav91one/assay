@@ -6,9 +6,10 @@ import { actionVariants } from '@/components/button';
 import { RunStrip } from '@/components/run-strip';
 import { StatusLine } from '@/components/status-line';
 import { runsView, OUTCOMES, type Outcome, type RunRow } from '@/lib/runs';
+import { t } from '@/lib/copy';
 import { when } from '@/lib/when';
 
-export const metadata: Metadata = { title: 'Runs · Assay' };
+export const metadata: Metadata = { title: t('title.runs') };
 export const dynamic = 'force-dynamic';
 
 export default async function RunsPage({
@@ -24,7 +25,7 @@ export default async function RunsPage({
 
   return (
     <>
-      <TopBar title="Runs" status={summary(v.total, v.healed, v.held)} />
+      <TopBar title={t('nav.runs')} status={summary(v.total, v.healed, v.held)} />
       <div className="flex w-full flex-col gap-[20px] pl-[56px] pr-[32px] pt-[18px]">
         <nav className="flex items-center gap-[28px]">
           {OUTCOMES.map((o) => (
@@ -52,9 +53,7 @@ export default async function RunsPage({
 
         {v.rows.length === 0 ? (
           <p className="body-13_5 text-[var(--text-secondary)]">
-            {filter === 'all'
-              ? 'No runs yet. The first one happens when a scraper is due.'
-              : `No ${filter} runs in the last ${v.total}.`}
+            {filter === 'all' ? t('runs.none') : `No ${filter} runs in the last ${v.total}.`}
           </p>
         ) : (
           <RunsTable rows={v.rows} />
@@ -95,7 +94,13 @@ function RunsTable({ rows }: { rows: RunRow[] }) {
     <table className="w-full border-collapse">
       <thead>
         <tr className="border-b border-[var(--border-hairline)] text-left">
-          {['run', 'when', 'scraper', 'what happened', ''].map((h, i) => (
+          {[
+            t('runs.table.head.run'),
+            t('runs.table.head.when'),
+            t('runs.table.head.scraper'),
+            t('runs.table.head.what'),
+            '',
+          ].map((h, i) => (
             <th key={h + i} className="caption-12 pb-[8px] font-normal text-[var(--text-muted)]">
               {h}
             </th>
@@ -120,7 +125,7 @@ function RunsTable({ rows }: { rows: RunRow[] }) {
                   a reader to the provenance of one value when what they clicked
                   was a run. */}
               <Link href={`/runs/${r.runId}`} className="meta-13 text-[var(--semantic-link)]">
-                what happened ›
+                {t('runs.table.open')}
               </Link>
             </td>
           </tr>
@@ -149,16 +154,16 @@ function Happened({ row }: { row: RunRow }) {
   if (row.outcome === 'healed') {
     return (
       <StatusLine tone="success">
-        <span className="text-[var(--text-primary)]">moved, found it again</span>
+        <span className="text-[var(--text-primary)]">{t('runs.outcome.healed')}</span>
       </StatusLine>
     );
   }
   return (
     <StatusLine tone="success" muted>
-      clean
+      {t('runs.outcome.clean')}
     </StatusLine>
   );
 }
 
 const summary = (total: number, healed: number, held: number) =>
-  total === 0 ? 'no runs yet' : `${total} runs · ${healed} healed · ${held} held`;
+  total === 0 ? t('runs.summary.none') : `${total} runs · ${healed} healed · ${held} held`;

@@ -344,11 +344,14 @@ function Conversation({
           {!running && result?.kind === 'propose' && (
             <ProposalView result={result} conversationId={id} onBuilt={onBuilt} />
           )}
-          {!running && result && result.kind !== 'propose' && !result.model_configured && (
-            <p className="meta-12_5 text-[var(--text-secondary)]">
-              Nothing about how Assay decides what to publish changes either way.
-            </p>
-          )}
+          {/* "Nothing about how Assay decides what to publish changes either
+              way." came off. It is the model-is-optional claim, which belongs
+              on the key panel and the model picker -- both of which carry it,
+              in a place the reader is asking the question. Landing under a
+              reply, with no antecedent for "either way", it read as a
+              non-sequitur reassurance nobody had asked for, which is exactly
+              what the second voice-bank pass took off 30 frames. The row below
+              it is the actionable half and stays. */}
           {!running && result?.kind !== 'propose' && manualPath}
         </div>
       </div>

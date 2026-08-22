@@ -427,13 +427,25 @@ export function flowFor(run: RunRecord): Flow {
       id: 'gate',
       kind: 'decision',
       title: 'The gate',
+      // THE REASON CODE IS NOT IN THIS SENTENCE, and used to be: "Refused:
+      // below_tau. Score ..." put raw engine vocabulary in the user's face,
+      // which docs/APP-DESIGN.md 5b rule 5 forbids and which the decisions card
+      // and `HeldCell` both route through `HELD_BECAUSE` to avoid.
+      //
+      // It is not translated here either, because this file is pure by
+      // contract -- the note at the top -- and `HELD_BECAUSE` lives on the
+      // engine side of a specifier the root test runner cannot resolve. It does
+      // not need to be: `gateFacts` already carries `reason` as a fact, in the
+      // machine-token column, sourced to `field_runs.reason`. So the code was
+      // being rendered twice, once as a fact and once as English. One fact, one
+      // rendering: the prose keeps the decision, the fact keeps the code.
       summary: !held
         ? 'The replacement cleared both thresholds, so it was published.'
         : withheld
-          ? `A policy withheld the heal: ${cell.reason}.`
+          ? 'A policy withheld the heal.'
           : n
-            ? `Refused: ${cell.reason}. Score ${score(n.score)}, margin ${score(n.margin)}.`
-            : `Refused: ${cell.reason || 'no reason recorded'}.`,
+            ? `Refused. Score ${score(n.score)}, margin ${score(n.margin)}.`
+            : 'Refused.',
       tone: held ? 'warning' : 'success',
       branch: held
         ? { taken: 'refused — hold the cell', notTaken: 'cleared — publish the replacement' }
@@ -501,6 +513,7 @@ export function flowFor(run: RunRecord): Flow {
 
 /** The four decisions `healGated` itself can record. Anything else is a policy. */
 const GATE_REASONS = ['below_tau', 'thin_margin', 'no_candidates', 'benign_tie', 'clear_margin'];
+
 
 /** Starting positions: one column, dragged from there. Deterministic, so a test
  *  can assert the shape without a layout engine. */

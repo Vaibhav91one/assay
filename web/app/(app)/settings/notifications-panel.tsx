@@ -100,13 +100,17 @@ export function NotificationsPanel({ view }: { view: AlertsView }) {
         }`}
       />
 
-      <p className="caption-12 mt-[24px] rounded-[var(--radius-control)] border border-[var(--border-hairline)] bg-[var(--surface-subtle)] px-[14px] py-[12px] text-[var(--text-secondary)]">
-        Not offered here because nothing behind this screen would read it: a cooldown between
-        repeat alerts, subscriptions per target or field, routing to an owner, retrying a failed
-        send, and a delivery log. Each one needs a column and a consumer before it can be a
-        switch. Until then the record of a send is `episodes.notified`, and a failed one appears
-        in Activity as its own item rather than a line in a log nobody opens.
-      </p>
+      {/* A design note explaining which switches were not built and why, on
+          the screen itself. It is a good note and it is addressed to a reader
+          of the repository, not to an operator deciding whether to turn the
+          digest on -- docs/APP-DESIGN.md 5b P5, the pattern the 34-frame audit
+          found on twelve frames. It also printed its own backticks around
+          `episodes.notified`, and called this surface "Activity" while the tab
+          above it says Notifications.
+
+          Removed rather than reworded: the three rows above already state what
+          each setting does and what is environment rather than store. Nothing
+          on this screen now claims a capability it does not have. */}
     </div>
   );
 }

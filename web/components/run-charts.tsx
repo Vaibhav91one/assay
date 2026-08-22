@@ -69,9 +69,11 @@ export function OutcomeDonut({ history, scraper }: { history: HistoryPoint[]; sc
   if (counts.length < 2) {
     return (
       <p className="body-13_5 text-[var(--text-secondary)]">
+        {/* "Nothing to chart until that changes." came off: it narrated this
+            component's own rendering decision to a reader who can see there is
+            no chart. The sentence that remains is the fact. */}
         All {total} recorded run{total === 1 ? '' : 's'} of {scraper} came back{' '}
-        <span className="text-[var(--text-primary)]">{LABEL[counts[0]!.outcome]}</span>. Nothing to
-        chart until that changes.
+        <span className="text-[var(--text-primary)]">{LABEL[counts[0]!.outcome]}</span>.
       </p>
     );
   }
@@ -221,7 +223,12 @@ export function PageSizeBars({
             · this run <span className="mono-value-12_5 text-[var(--text-primary)]">{kb(here.pageBytes)}</span>
           </>
         )}
-        {' '}· bar colour is the outcome, ringed bar is this run
+        {/* The legend that was here -- "bar colour is the outcome, ringed bar
+            is this run" -- explained a picture, and half of it was false
+            whenever `here` is undefined: no bar is ringed on a run that is not
+            in this series, and it said one was regardless. Every bar already
+            carries `run N — size — outcome` as its title, and the row has an
+            aria-label saying the same. */}
       </p>
     </div>
   );

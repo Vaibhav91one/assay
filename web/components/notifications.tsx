@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Popover } from '@base-ui/react/popover';
 import { Bell, Check, CircleAlert, MailWarning, Split } from 'lucide-react';
 import type { Notice, NoticeKind } from '@/lib/notifications';
+import { ago } from '@/lib/when';
 import { actionVariants } from './button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -92,7 +93,14 @@ export function Notifications({ items, count }: { items: Notice[]; count: number
 
             {items.length === 0 ? (
               <p className="body-13_5 px-[16px] py-[16px] text-[var(--text-secondary)]">
-                Nothing has happened yet. Runs, breaks and held cells land here.
+                {/* The four things that actually become a notice, in
+                    `NoticeKind` order: a held cell, a break, an alert that did
+                    not go out, a field that moved and was found again. It used
+                    to say "Runs, breaks and held cells", and a run is not a
+                    notice kind -- a clean run puts nothing here at all, which
+                    is the behaviour this panel is for. */}
+                Nothing has happened yet. Held cells, breaks, alerts that did not go out, and
+                fields that moved and were found again all land here.
               </p>
             ) : (
               <div className="max-h-[380px] overflow-y-auto">
@@ -167,12 +175,6 @@ function Group({ items, label }: { items: Notice[]; label?: string }) {
 const label = (n: number) =>
   n === 0 ? 'Activity, nothing waiting on you' : `Activity, ${n} waiting on you`;
 
-function ago(d: Date): string {
-  const mins = Math.round((Date.now() - new Date(d).getTime()) / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins} minutes ago`;
-  const hours = Math.round(mins / 60);
-  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
-  const days = Math.round(hours / 24);
-  return `${days} day${days === 1 ? '' : 's'} ago`;
-}
+// `ago` was a second copy of `web/lib/when.ts`'s, identical down to the missing
+// singular on minutes. Two copies means a fix lands on one panel and not the
+// other, which is how "1 minutes ago" survived being fixed. One function now.

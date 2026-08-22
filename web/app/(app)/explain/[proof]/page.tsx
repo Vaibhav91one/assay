@@ -38,11 +38,11 @@ export default async function ExplainPage({ params }: { params: Promise<{ proof:
         }
       />
 
+      {/* "Any published value, months later, traced back to the page it came
+          off." came off. The top bar already asks "Where did this number come
+          from?" and the two cards below answer it; the sentence between them
+          restated the question as a feature description. */}
       <div className="flex w-full flex-col items-start px-[56px] pt-[48px]">
-        <p className="body-13_5 max-w-[900px] text-[var(--text-secondary)]">
-          Any published value, months later, traced back to the page it came off.
-        </p>
-
         <div className="mt-[28px] flex w-full max-w-[1056px] items-start gap-[24px]">
           <ValueCard p={p} />
           <StandingCard p={p} />
@@ -104,7 +104,7 @@ function Hole({ p }: { p: Provenance }) {
         className="heading-18 rounded-[6px] px-[8px] py-[2px]"
         style={{ color: 'var(--semantic-warning)', background: 'var(--semantic-warning-subtle)' }}
       >
-        withheld
+        held
       </span>
       <span className="meta-12_5 text-[var(--text-muted)]">nothing was written here</span>
     </span>
@@ -114,7 +114,7 @@ function Hole({ p }: { p: Provenance }) {
 const STANDING_TONE: Record<Standing, Tone> = {
   live: 'success',
   healed: 'success',
-  withheld: 'warning',
+  held: 'warning',
   stale: 'info',
   degraded: 'danger',
 };
@@ -236,7 +236,7 @@ function standing(p: Provenance): string {
       return 'Not healed, not stale, not held. The plainest possible provenance: it came off the page where it was expected to be.';
     case 'healed':
       return 'The element moved and was found again. It was published because the replacement cleared the same gate as the original, on the same page.';
-    case 'withheld':
+    case 'held':
       return p.why?.plain
         ? `Nothing was written to your data for this cell — ${p.why.plain}.`
         : `Nothing was written to your data for this cell. The gate recorded ${p.why?.code ?? 'no reason'}.`;

@@ -15,13 +15,30 @@ import { and, desc, eq, lte } from 'drizzle-orm';
  * what was written and nothing else.
  */
 
-/** The screen's word for a cell, not the store's. `quarantined` is jargon. */
-export type Standing = 'live' | 'healed' | 'withheld' | 'stale' | 'degraded';
+/**
+ * The screen's word for a cell, not the store's. `quarantined` is jargon.
+ *
+ * `held`, and not `withheld`, which is what this said. The two are different
+ * words for different things in this product and the difference is load-bearing:
+ *
+ *   held      a CELL the gate refused. The decisions queue, `HeldCell`, the
+ *             Fields filter, and `runOutcome` all say held -- asserted in
+ *             test/run-flow.test.ts, which expects an abstain to read `held`.
+ *   withheld  a DIFF that will not render, on /compare and in the digest --
+ *             asserted in test/reports.test.ts, and the reason the digest
+ *             subject is "12 changes, 2 withheld".
+ *
+ * Explain is a cell surface, so it says held. It used to render `withheld` in
+ * the status card while the run-detail screen next door rendered `held` for the
+ * same cell, and the run-detail screen said both at once: `held` in its status
+ * column and `withheld` in the value column of the same row.
+ */
+export type Standing = 'live' | 'healed' | 'held' | 'stale' | 'degraded';
 
 const STANDING: Record<string, Standing> = {
   live: 'live',
   healed: 'healed',
-  quarantined: 'withheld',
+  quarantined: 'held',
   stale: 'stale',
   degraded: 'degraded',
 };
@@ -139,7 +156,7 @@ export async function provenance(proofId: string): Promise<Provenance | null> {
     targetId,
     url: target?.url ?? null,
     value: e.value,
-    standing: STANDING[e.status] ?? 'withheld',
+    standing: STANDING[e.status] ?? 'held',
     // `|| null`, not `?? null`: a healed row carries reason `''`, and an empty
     // code is an absence of a reason, not a reason with no wording.
     why: heldBecause(e.reason || null),

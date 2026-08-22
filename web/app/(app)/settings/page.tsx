@@ -146,11 +146,9 @@ function Output({ v }: { v: SettingsView }) {
             b="Leave empty"
             c="never filled, always labelled"
           />
-          <SpecRow
-            a="Proof"
-            b="one proof id per cell, on the published row"
-            c="not optional"
-          />
+          {/* `c` was "not optional", which added nothing to a row already
+              stating that every cell carries one. */}
+          <SpecRow a="Proof" b="one proof id per cell, on the published row" />
         </SpecTable>
       </div>
     </>
@@ -263,7 +261,8 @@ function SpecRow({
 }: {
   a: React.ReactNode;
   b: React.ReactNode;
-  c: React.ReactNode;
+  /** Optional: a row whose third column would only restate the second omits it. */
+  c?: React.ReactNode;
 }) {
   return (
     <tr className="border-t border-[var(--border-hairline)]">

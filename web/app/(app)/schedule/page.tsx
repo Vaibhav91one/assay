@@ -43,10 +43,11 @@ export default async function SchedulePage({
       />
       {/* 1056 is the drawn content width: past it a month grid stretches into
           seven columns nobody scans across. */}
+      {/* The subtitle -- "What has run, and when the next one is due." -- came
+          off. The screen is titled Schedule, the top bar counts what is running
+          and what ran today, and the calendar draws both halves of that
+          sentence directly below it. */}
       <div className="flex w-full max-w-[1112px] flex-col items-start gap-[18px] px-[56px] pb-[64px] pt-[26px]">
-        <p className="body-14 w-full max-w-[820px] text-[var(--text-secondary)]">
-          What has run, and when the next one is due.
-        </p>
         <CalendarView data={data} initialView={initialView} />
       </div>
     </>
