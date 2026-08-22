@@ -136,15 +136,15 @@ export async function resetTarget(targetId: string): Promise<number> {
   return d.transaction(async (tx) => {
     // FK order: queue_items -> field_runs -> runs.
     await tx.execute(
-      `DELETE FROM queue_items WHERE proof_id IN (
+      sql`DELETE FROM queue_items WHERE proof_id IN (
          SELECT fr.proof_id FROM field_runs fr
-         JOIN runs r ON r.run_id = fr.run_id WHERE r.target_id = '${targetId}')`,
+         JOIN runs r ON r.run_id = fr.run_id WHERE r.target_id = ${targetId})`,
     );
     await tx.execute(
-      `DELETE FROM field_runs WHERE run_id IN (
-         SELECT run_id FROM runs WHERE target_id = '${targetId}')`,
+      sql`DELETE FROM field_runs WHERE run_id IN (
+         SELECT run_id FROM runs WHERE target_id = ${targetId})`,
     );
-    const res = await tx.execute(`DELETE FROM runs WHERE target_id = '${targetId}'`);
+    const res = await tx.execute(sql`DELETE FROM runs WHERE target_id = ${targetId}`);
     return res.rowCount ?? 0;
   });
 }
