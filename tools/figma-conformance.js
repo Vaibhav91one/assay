@@ -23,6 +23,10 @@
 //   devNotes         no spec:/TODO/CRITIQUE commentary on a product surface
 //   hover            disclosure affordances actually carry an ON_HOVER reaction
 //   selfNarration    the product explaining or reassuring instead of informing
+//   filledButtonIcon a glyph on a filled button reads accent/on-primary
+//   greyBlockBordered  a content block takes surface/subtle OR a border, never both
+//   unequalPeers     peer cards standing side by side share a height
+//   boundLiteralDrift  a paint's literal colour still agrees with the token it claims
 //
 // Two detector bugs were found and fixed while writing this; both had made a
 // clean file look dirty. Kept as a warning: a failing rule is a claim about the
@@ -40,6 +44,43 @@
 // slips through, rather than trusting a 0 here to mean the screens are clean.
 // Exempt: `conduct` is a public policy page where prose IS the content, and
 // tooltip frames are hover bodies.
+// The last four rules came out of a review that found three *systemic* classes --
+// each flagged on one screen, each really present on several. All three were
+// audited across the board BEFORE anything was fixed, and two of the three
+// audits changed shape once measured. That is why each carries an exemption:
+//
+// filledButtonIcon -- fallout from the semantic recolour that moved buttons to
+// green/blue/red without recolouring the glyphs inside them. Only *filled*
+// buttons are in scope (fill bound to brand/success/danger/warning/sidebar-ink);
+// secondary and ghost buttons sit on white and their ink glyph is correct there.
+// Scoped to button|action|tab so a filled card does not drag its content in.
+//
+// greyBlockBordered -- 24 nodes on the board take a surface/subtle fill and that
+// is a legitimate, distinct treatment: chat bubbles, code blocks, sidebar
+// callouts. Grey fill is NOT the defect. Doing BOTH is: fill *and* border double
+// the container and read as a disabled field. Exempt inline pills -- a keycap or
+// status chip is grey-with-border by design -- via name and via size, since a
+// block is >=120x40 and a pill is not. Do not "simplify" this to a fill test;
+// that was the first draft and it flagged 24 nodes, 22 of them correct.
+//
+// unequalPeers -- 14 rows on the board have children of unequal height and 12 of
+// them are right: a main+aside layout SHOULD be lopsided. Peerhood is the test,
+// and width ratio measures it -- real peers came in at 1.0 and 1.26, main+aside
+// at 2.43, so 1.5 separates them cleanly. Children must also be substantial
+// blocks (>=200x60), which is what keeps table cells, nav items and button
+// clusters out. Deliberately NOT matched on child names: the three real peer
+// rows are named col/*, card/*, and one chart/* + card/* pair, so any name list
+// would have missed two of the three.
+//
+// boundLiteralDrift -- not from the review; found while fixing it. A Figma paint
+// carries a literal RGB *and* an optional variable binding, and the renderer
+// draws the literal. So a paint can claim a token and paint a different colour,
+// and every by-token audit above will read it as correct. This was hiding a real
+// bug: the sidebar's home icon was bound to accent/brand in all six variants
+// (a copy-paste from Active=Home) and only looked right because its literal was
+// still grey. Fix the binding when they disagree, not the literal -- the literal
+// is what you can see, so if it looks right the binding is usually what is wrong.
+//
 // Do not widen 'nothing ... written' to sent/published/lost. Each of those three
 // occurs exactly once on the board and each carries a fact the user is owed:
 // where a pasted key goes (connect), that the undo window is still open
@@ -198,6 +239,64 @@ async function run() {
       });
     });
   }
+
+  const NAME = {}; for (const k in V) NAME[V[k]] = k;
+  const RES = {};
+  for (const c of await figma.variables.getLocalVariableCollectionsAsync())
+    for (const id of c.variableIds) { const v = await figma.variables.getVariableByIdAsync(id);
+      if (v.resolvedType === 'COLOR') RES[v.id] = v.valuesByMode[c.defaultModeId]; }
+  const bid = p => p && p.boundVariables && p.boundVariables.color ? p.boundVariables.color.id : null;
+  const fillVar = n => { const f = Array.isArray(n.fills) && n.fills[0]; return f && f.type === 'SOLID' ? bid(f) : null; };
+
+  const FILLED = ['accent/brand', 'semantic/success', 'semantic/danger', 'semantic/warning', 'bg/sidebar'].map(k => V[k]);
+  R.filledButtonIcon = [];
+  frames.forEach(({ loc, fr }) => fr.findAll(n => /^(button|action|tab)\//.test(n.name) && n.type === 'FRAME').forEach(b => {
+    if (!FILLED.includes(fillVar(b))) return;
+    for (const inst of b.findAll(x => x.type === 'INSTANCE'))
+      for (const p of inst.findAll(x => ['VECTOR', 'ELLIPSE', 'RECTANGLE'].includes(x.type)))
+        for (const key of ['strokes', 'fills']) {
+          if (!Array.isArray(p[key])) continue;
+          for (const paint of p[key]) {
+            if (!paint || paint.type !== 'SOLID' || paint.visible === false) continue;
+            const v = bid(paint);
+            if (v !== V['accent/on-primary'])
+              R.filledButtonIcon.push(`${loc}/${b.name} ${p.name}.${key} ${v ? NAME[v] : hex(paint.color)}`);
+          }
+        }
+  }));
+
+  const INLINE = /^(chip|badge|KeyHint|kbd|tag|pill|dot)/i;
+  R.greyBlockBordered = [];
+  frames.forEach(({ loc, fr }) => fr.findAll(n => fillVar(n) === V['surface/subtle']).forEach(n => {
+    if (INLINE.test(n.name) || n.width < 120 || n.height < 40) return;
+    if (Array.isArray(n.strokes) && n.strokes.some(s => s && s.visible !== false))
+      R.greyBlockBordered.push(`${loc}/${n.name} ${Math.round(n.width)}x${Math.round(n.height)}`);
+  }));
+
+  R.unequalPeers = [];
+  frames.forEach(({ loc, fr }) => fr.findAll(n => n.type === 'FRAME' && n.layoutMode === 'HORIZONTAL').forEach(row => {
+    const kids = row.children.filter(c => c.visible && c.layoutPositioning !== 'ABSOLUTE');
+    if (kids.length < 2) return;
+    if (!kids.every(c => (c.type === 'FRAME' || c.type === 'INSTANCE') && c.absoluteBoundingBox &&
+      c.absoluteBoundingBox.width >= 200 && c.absoluteBoundingBox.height >= 60)) return;
+    const w = kids.map(k => k.absoluteBoundingBox.width), h = kids.map(k => k.absoluteBoundingBox.height);
+    if (Math.max(...w) / Math.min(...w) >= 1.5) return;
+    if (Math.max(...h) - Math.min(...h) > 1)
+      R.unequalPeers.push(`${loc}/${row.name} h[${h.map(Math.round)}] w[${w.map(Math.round)}]`);
+  }));
+
+  const near = (a, b) => Math.abs(a.r - b.r) < 0.004 && Math.abs(a.g - b.g) < 0.004 && Math.abs(a.b - b.b) < 0.004;
+  R.boundLiteralDrift = [];
+  frames.forEach(({ loc, fr }) => fr.findAll(() => true).forEach(n => {
+    for (const key of ['fills', 'strokes']) {
+      if (!Array.isArray(n[key])) continue;
+      for (const p of n[key]) {
+        if (!p || p.type !== 'SOLID') continue;
+        const v = bid(p); if (!v || !RES[v]) continue;
+        if (!near(p.color, RES[v])) R.boundLiteralDrift.push(`${loc}/${n.name}.${key} ${hex(p.color)}!=${NAME[v]}`);
+      }
+    }
+  }));
 
   const summary = {}; for (const k of Object.keys(R)) summary[k] = R[k].length;
   return { frames: frames.length, summary, detail: Object.fromEntries(Object.entries(R).filter(([, v]) => v.length).map(([k, v]) => [k, v.slice(0, 10)])) };
