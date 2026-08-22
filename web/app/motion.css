@@ -33,6 +33,21 @@
   --duration-settle: 500ms; /* the slowest thing allowed; use rarely */
   --duration-stagger: 90ms; /* the gap between one child and the next */
 
+  /* Thresholds, not motion. These two say when a route loader is allowed to
+     start and how long it must then stay -- the only numbers here that
+     describe waiting rather than moving.
+
+     220ms before anything is drawn: a warm navigation resolves inside that and
+     shows no loader at all, which is the point. Below ~150ms the delay stops
+     catching the fast cases; above ~250ms a genuinely slow route sits blank
+     long enough to feel broken.
+
+     500ms minimum once it has appeared, so it cannot strobe. A spinner that
+     comes and goes in 80ms is read as a rendering fault, not as work. The pair
+     is tuned against each other and so is declared together. */
+  --duration-loader-delay: 220ms;
+  --duration-loader-min: 500ms;
+
   /* Loops. These run until something stops them, so they are slower than
      anything one-shot -- a fast loop reads as an alarm. */
   --duration-shimmer: 1400ms;

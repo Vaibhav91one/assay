@@ -22,6 +22,8 @@ export const DURATION = {
   expand: 360,
   settle: 500,
   stagger: 90,
+  loaderDelay: 220,
+  loaderMin: 500,
   shimmer: 1400,
   spin: 700,
   eq: 900,
