@@ -7,13 +7,54 @@
 // runtimes, zero drift -- an offline harness that extracts differently from
 // production silently invalidates the whole benchmark.
 //
+// The zero-import rule now lives on the ARTIFACT, not on this source file:
+// `npm run build:fingerprint` emits `dist/fingerprint.js`, and that is what gets
+// pasted into Scraper Studio. `test/fingerprint-artifact.test.ts` asserts the
+// emitted file contains neither `import` nor `require`. Keeping the rule here
+// too is free -- there is nothing this file needs to import -- so it is kept,
+// and the types below are declared locally rather than pulled from cheerio.
+//
 // Geometry (position, dimensions) is absent on purpose. Cheerio has no layout
 // engine, so getBoundingClientRect does not exist here. PLAN.md 5 chose to drop
 // those two properties (1.7 + 1.1 of ~21 weight) rather than take a browser
 // dependency. The stronger claim falls out of it: no visual features, and here is
 // the accuracy anyway.
 
-const clean = (s) => (s || '').replace(/\s+/g, ' ').trim();
+// TODO(types): `$` is a CheerioAPI and `el` a domhandler Element, but naming
+// either would mean importing from cheerio, and this file's whole contract is
+// that it imports nothing. The shape is documented by every call site below.
+type Cheerio = any;
+type El = any;
+
+/** One element, described well enough to find it again on a page that has changed. */
+export interface Fingerprint {
+  tag: string | null;
+  id: string | null;
+  id_volatile: boolean;
+  classes: string[] | null;
+  classes_stable: string[] | null;
+  classes_dropped: number;
+  text: string | null;
+  neighbor_text: string | null;
+  aria_label: string | null;
+  name: string | null;
+  type: string | null;
+  href: string | null;
+  alt: string | null;
+  testid: string | null;
+  role: string | null;
+  heading_path: string[];
+  parent_tag: string | null;
+  depth: number;
+  sibling_index: number;
+  id_xpath: string | null;
+  abs_xpath: string;
+}
+
+/** A fingerprint plus the selector it was reached by. */
+export type SelectorFingerprint = Fingerprint & { selector: string };
+
+const clean = (s: string | null | undefined): string => (s || '').replace(/\s+/g, ' ').trim();
 
 // --- volatility -------------------------------------------------------------
 // Found on the real corpus, day 1: IKEA ships CSS-module classes like `s1gshh7t`
@@ -40,7 +81,7 @@ const HEX_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-/i;
  * Rule: split on separators; a segment that mixes letters and digits and is long
  * enough to be a hash is generated. Short segments like "v2" or "h1" are not.
  */
-export function isVolatileClass(c) {
+export function isVolatileClass(c: string | null | undefined): boolean {
   if (!c || c.length < 4) return false;
   const segs = c.split(/[-_]+/).filter(Boolean);
   if (!segs.length) return false;
@@ -51,14 +92,14 @@ export function isVolatileClass(c) {
   );
 }
 
-export function isVolatileId(id) {
+export function isVolatileId(id: string | null | undefined): boolean {
   if (!id) return false;
   return HEX_ID.test(id) || (id.length >= 16 && (id.match(/\d/g) || []).length >= 4);
 }
 
 /** Absolute XPath with positional predicates. Cheap, and weighted 0.3 for a reason. */
-function absXPath($, el) {
-  const parts = [];
+function absXPath($: Cheerio, el: El): string {
+  const parts: string[] = [];
   let node = el;
   while (node && node.type === 'tag') {
     const tag = node.name;
@@ -75,8 +116,8 @@ function absXPath($, el) {
 }
 
 /** XPath anchored on the nearest id ancestor. Survives wrapper-div churn above it. */
-function idXPath($, el) {
-  const parts = [];
+function idXPath($: Cheerio, el: El): string | null {
+  const parts: string[] = [];
   let node = el;
   while (node && node.type === 'tag') {
     const id = node.attribs && node.attribs.id;
@@ -91,7 +132,7 @@ function idXPath($, el) {
 }
 
 /** Text of the immediately preceding and following siblings -- the label signal. */
-function neighborText($, el) {
+function neighborText($: Cheerio, el: El): string {
   const $el = $(el);
   const before = clean($el.prev().text()).slice(0, 120);
   const after = clean($el.next().text()).slice(0, 120);
@@ -99,7 +140,7 @@ function neighborText($, el) {
     $el
       .parent()
       .contents()
-      .filter(function () {
+      .filter(function (this: El) {
         return this.type === 'text';
       })
       .text()
@@ -108,8 +149,8 @@ function neighborText($, el) {
 }
 
 /** Nearest enclosing headings, outermost first. Sections are stabler than classes. */
-function headingPath($, el) {
-  const seen = [];
+function headingPath($: Cheerio, el: El): string[] {
+  const seen: string[] = [];
   let node = el;
   while (node && node.type === 'tag') {
     const $n = $(node);
@@ -127,7 +168,7 @@ function headingPath($, el) {
  * Describe one element well enough to find it again on a page that has changed.
  * Returns a flat object of primitives -- JSON-serialisable, diffable, storable.
  */
-export function fingerprint($, el) {
+export function fingerprint($: Cheerio, el: El): Fingerprint {
   const $el = $(el);
   const a = el.attribs || {};
 
@@ -147,7 +188,7 @@ export function fingerprint($, el) {
     classes: allClasses,
     // what the scorer should actually compare -- see isVolatileClass
     classes_stable: stable,
-    classes_dropped: allClasses ? allClasses.length - stable.length : 0,
+    classes_dropped: allClasses ? allClasses.length - stable!.length : 0,
     text: clean($el.text()).slice(0, 200) || null,
     neighbor_text: neighborText($, el) || null,
     aria_label: a['aria-label'] || null,
@@ -167,17 +208,17 @@ export function fingerprint($, el) {
 }
 
 /** Fingerprint the first match of a selector. Null when it does not resolve. */
-export function fingerprintSelector($, selector) {
+export function fingerprintSelector($: Cheerio, selector: string): SelectorFingerprint | null {
   const el = $(selector).get(0);
   return el ? { selector, ...fingerprint($, el) } : null;
 }
 
 /** Every element worth considering as a relocation candidate. */
-export function candidates($, root) {
-  const out = [];
+export function candidates($: Cheerio, root?: string | null): El[] {
+  const out: El[] = [];
   $(root || 'body')
     .find('*')
-    .each((i, el) => {
+    .each((i: number, el: El) => {
       if (el.type !== 'tag') return;
       if (el.name === 'script' || el.name === 'style' || el.name === 'noscript') return;
       out.push(el);
@@ -196,9 +237,12 @@ export function candidates($, root) {
  *   depthCap              -- stops deep leaf noise dominating the hash
  *   text excluded         -- this is what makes it a skeleton, not a page hash
  */
-export function skeletonHash($, { depthCap = 12 } = {}) {
-  const parts = [];
-  const walk = (el, d) => {
+export function skeletonHash(
+  $: Cheerio,
+  { depthCap = 12 }: { depthCap?: number } = {},
+): { hash: string; nodes: number } {
+  const parts: string[] = [];
+  const walk = (el: El, d: number): void => {
     if (!el || el.type !== 'tag' || d > depthCap) return;
     if (el.name === 'script' || el.name === 'style' || el.name === 'noscript') return;
     const a = el.attribs || {};

@@ -56,3 +56,6 @@ captures/
 # Next build output and its turbopack cache.
 web/.next/
 web/out/
+
+# Generated: `npm run build:fingerprint` emits the Bright Data paste target.
+dist/

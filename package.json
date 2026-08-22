@@ -24,7 +24,7 @@
     "mcp": "tsx src/mcp/server.js",
     "test:app": "vitest run",
     "typecheck": "tsc --noEmit",
-    "build:fingerprint": "tsc src/fingerprint.ts --outDir dist --target ES2022 --module esnext --moduleResolution bundler --removeComments false",
+    "build:fingerprint": "tsc --ignoreConfig src/fingerprint.ts --outDir dist --target ES2022 --module esnext --moduleResolution bundler",
     "contracts:validate": "tsx tools/cli/contracts.ts validate",
     "blast": "tsx tools/cli/blast.ts",
     "fragility": "tsx tools/cli/fragility.ts",
