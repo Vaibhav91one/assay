@@ -200,14 +200,15 @@ function story(p: Provenance): string {
   // read. A run with no `ranked` still has a selector if it healed.
   const element = p.selector ?? p.heal?.to ?? null;
   const at = `on run ${p.run}, ${stamp(p.startedAt)}`;
-  const ranked = p.considered
-    ? `${p.considered} element${p.considered === 1 ? '' : 's'} on the page ${p.considered === 1 ? 'was' : 'were'} ranked`
-    : null;
+  const n = p.considered;
+  const ranked = n ? `${n} element${n === 1 ? '' : 's'} ${n === 1 ? 'was' : 'were'} ranked` : null;
 
   const read =
     p.value === null
       ? // Nothing was read, so the sentence must not open as though something was.
-        `${ranked ? `${ranked} on the ${p.scraper} page, ${at}, and none of them was published.` : `Nothing was published for this cell on the ${p.scraper} page, ${at}.`}`
+        ranked
+        ? `${n} element${n === 1 ? '' : 's'} on the ${p.scraper} page ${n === 1 ? 'was' : 'were'} ranked ${at}, and ${n === 1 ? 'it was not' : 'none of them was'} published.`
+        : `Nothing was published for this cell on the ${p.scraper} page, ${at}.`
       : `${element ? `I read it off ${element}` : 'I read this cell'} on the ${p.scraper} page, ${at}.${
           ranked ? ` ${ranked}; this is the one that came through.` : ' No candidate list was kept for this run.'
         }`;
