@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { TopBar } from '@/components/top-bar';
+import { RunStrip } from '@/components/run-strip';
 import { homeStats } from '@/lib/home';
 import { openDecisions } from '@/lib/queue';
 import { Watch } from './watch';
@@ -39,7 +40,7 @@ function StatsBand({ stats }: { stats: Awaited<ReturnType<typeof homeStats>> }) 
           <p className="title-20 text-[var(--text-primary)]">
             {stats.runs} run{stats.runs === 1 ? '' : 's'} {sinceLabel(stats.since)}
           </p>
-          <RunStrip bars={stats.bars} />
+          <RunStrip bars={stats.bars} from={dayLabel(stats.bars[0].at)} to={dayLabel(stats.bars[stats.bars.length - 1].at)} />
         </div>
 
         <div className="flex flex-col gap-[10px] pt-[4px]">
@@ -63,35 +64,6 @@ function Stat({ dot, n, label }: { dot: string; n: number; label: string }) {
       <span className="title-20 text-[var(--text-primary)]">{n}</span>
       <span className="meta-13 text-[var(--text-secondary)]">{label}</span>
     </p>
-  );
-}
-
-/** One bar per run, oldest left. Amber where a run held something. */
-function RunStrip({ bars }: { bars: { runId: number; at: Date; held: boolean }[] }) {
-  if (bars.length === 0) return null;
-  const first = bars[0];
-  const last = bars[bars.length - 1];
-
-  return (
-    <div className="flex flex-col gap-[6px]">
-      <div className="flex items-end gap-[5px]">
-        {bars.map((b) => (
-          <span
-            key={b.runId}
-            title={`run ${b.runId}`}
-            className="w-[3px] rounded-[1px]"
-            style={{
-              height: b.held ? 26 : 18,
-              background: b.held ? 'var(--semantic-warning)' : 'var(--accent-brand)',
-            }}
-          />
-        ))}
-      </div>
-      <div className="flex justify-between">
-        <span className="caption-11 text-[var(--text-muted)]">{dayLabel(first.at)}</span>
-        <span className="caption-11 text-[var(--text-muted)]">{dayLabel(last.at)}</span>
-      </div>
-    </div>
   );
 }
 
