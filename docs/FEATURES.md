@@ -100,7 +100,18 @@ proof record.
 | **Job** | 3 — *"tell me before my customer does"* |
 | **What the user does** | Nothing, until an amber notice arrives: *"ikea/product: the label anchor and the CSS anchor stopped agreeing on 6% of pages. Nothing has broken. The skeleton hash moved on those pages only."* They now have days, not minutes. |
 | **Why it beats status quo** | This catches the gradual rollout — 5% of pages get the new template, null rate creeps too slowly to trip anything, and one Tuesday everything is broken at once. Null-rate alarms cannot see it by construction. Multi-anchor disagreement can, because on the new pages two anchors return *different non-null things*. |
-| **Engine** | **✓** — `detect()` already evaluates all anchors every run and emits `anchors_died`; `skeletonHash()` already separates template change from content change. New: treating disagreement-without-breakage as a standing warning state rather than a discarded signal. |
+| **Engine** | **✓ (only since wave 2)** — `detect()` evaluates all anchors every run and emits `anchors_died`; `skeletonHash()` separates template change from content change. New: treating disagreement-without-breakage as a standing warning state rather than a discarded signal. |
+
+> **This row read `✓` for the whole of wave 1 and was not true.** The second
+> anchor is an `abs_xpath` converted to CSS, and the conversion left the `/`
+> separators in place — `html:nth-of-type(1)/body:nth-of-type(1)/…` is not a CSS
+> selector. css-select does not throw on it, it matches nothing, so the xpath
+> anchor read `null` on every page and `anchors_disagree` had **never once
+> fired**. Measured on the committed corpus: **0 of 77 pages** resolved a second
+> anchor. Fixed in wave 2 (`/` → child combinator); the same measurement now
+> resolves **15 of 77**, of which 5 disagree with the CSS anchor. Two anchors
+> are the whole mechanism of this feature, and until wave 2 there was only ever
+> one.
 
 Drift is a **state on a field**, not an event. It clears itself when the anchors re-agree, which
 happens often (a partial rollout that gets reverted). It never pages. If drift could page, people

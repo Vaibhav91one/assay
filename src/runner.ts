@@ -94,9 +94,18 @@ export function establishBaseline({
   const readAnchors = ($p: CheerioAPI): Record<string, string | null> => ({
     css: clean($p(selector).first().text()).slice(0, 200) || null,
     xpath: (() => {
+      // `/` is a CHILD COMBINATOR, not a separator to leave lying around.
+      // abs_xpath is `/html[1]/body[1]/...`; replacing only the predicates left
+      // `html:nth-of-type(1)/body:nth-of-type(1)/...`, which is not a CSS
+      // selector. css-select does not throw on it, it simply matches nothing --
+      // so this anchor read null on every page since the file was written, and
+      // `anchors_disagree` in detect() had never once fired.
       const css = target.abs_xpath
         .replace(/^\//, '')
-        .replace(/\[(\d+)\]/g, ':nth-of-type($1)');
+        .replace(/\[(\d+)\]/g, ':nth-of-type($1)')
+        .replace(/\//g, ' > ');
+      // An unparseable selector is an anchor that did not resolve, which is an
+      // absence. It must not become an empty string that agrees with nothing.
       try { return clean($p(css).first().text()).slice(0, 200) || null; } catch { return null; }
     })(),
   });
