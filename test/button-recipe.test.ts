@@ -74,7 +74,7 @@ describe('no variant can ship without its motion', () => {
 
   it('finds every variant the recipe declares', () => {
     expect(variants.sort()).toEqual(
-      ['chip', 'icon', 'link', 'outline', 'primary', 'quiet', 'success'].sort(),
+      ['chip', 'icon', 'link', 'outline', 'primary', 'quiet', 'start', 'success'].sort(),
     );
   });
 
