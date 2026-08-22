@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Check, ChevronRight, CircleSlash, Search, Eye } from 'lucide-react';
+import { Check, ChevronRight, CircleAlert, CircleSlash, ExternalLink, Search, Eye } from 'lucide-react';
 import { Collapse } from '@/components/motion/collapse';
 import { Shimmer } from '@/components/motion/shimmer';
 import { Stagger } from '@/components/motion/stagger';
@@ -110,25 +110,97 @@ function PixelGrid() {
   );
 }
 
+/**
+ * How a tool call came back, as three states the record actually distinguishes.
+ *
+ * `ok` and `found` are what the tool handlers emit (`Step` in
+ * `src/agent/index.ts`), so these three are read off the call and not guessed
+ * at: a call that answered, a call that answered with nothing, and a call that
+ * did not answer. `assay_inspect` on a 404 sets `ok: false`; `assay_inspect` on
+ * a page with no candidates sets `ok: true, found: 0`. They used to be drawn
+ * identically -- the same glyph in the same amber -- which put a broken URL and
+ * a thin page in the same box.
+ */
+function outcomeOf(event: Extract<TraceEvent, { kind: 'tool_result' }>) {
+  if (!event.ok) return 'failed' as const;
+  return event.found === 0 ? 'empty' as const : 'found' as const;
+}
+
+const OUTCOME = {
+  found: { colour: 'var(--semantic-success)', Icon: Check },
+  empty: { colour: 'var(--semantic-warning)', Icon: CircleSlash },
+  failed: { colour: 'var(--semantic-danger)', Icon: CircleAlert },
+} as const;
+
 /** One completed tool call. The words come from the event, never from a table here. */
 function Row({ event }: { event: Extract<TraceEvent, { kind: 'tool_result' }> }) {
-  const empty = event.ok && event.found === 0;
-  const Icon = !event.ok ? CircleSlash : empty ? CircleSlash : event.tool === 'assay_inspect' ? Search : Eye;
-  // Amber for "ran and found nothing" and for a failed read: both are absences a
-  // person may need to act on, and neither is an error in red.
-  const colour = event.ok && !empty ? 'var(--text-muted)' : 'var(--semantic-warning)';
+  const outcome = outcomeOf(event);
+  // The glyph carries the outcome as a SHAPE as well as a colour -- a tick, a
+  // barred circle, an alert -- so the three are told apart with the colour off.
+  // On a found call the glyph names the tool instead, which is the more useful
+  // thing to say when nothing went wrong.
+  const Icon = outcome === 'found'
+    ? (event.tool === 'assay_inspect' ? Search : Eye)
+    : OUTCOME[outcome].Icon;
+
+  // Measured on --bg-page: `text/secondary` is 5.33:1, `semantic/danger` 4.83:1
+  // and `semantic/warning` 2.94:1. The warning is the one that does not reach
+  // 4.5:1, and it is the colour this row already carried for an empty result --
+  // kept because it is the palette's word for "held", and the glyph beside it
+  // says the same thing at 3:1. A found call's detail is `text/secondary`, not
+  // the green: green on 12px prose is 3.30:1 and reads worse than the grey it
+  // replaced, and "it worked" is not the sentence that needs the colour.
+  const detail = outcome === 'found' ? 'var(--text-secondary)' : OUTCOME[outcome].colour;
 
   return (
     <div className="flex items-baseline gap-[10px] py-[3px]">
-      <Icon size={13} strokeWidth={1.5} className="shrink-0 translate-y-[2px]" style={{ color: colour }} aria-hidden />
+      <Icon
+        size={13}
+        strokeWidth={1.5}
+        className="shrink-0 translate-y-[2px]"
+        style={{ color: OUTCOME[outcome].colour }}
+        aria-hidden
+      />
       <span className="mono-value-12_5 shrink-0 text-[var(--text-secondary)]">{event.tool}</span>
-      <span className="caption-12 min-w-0 flex-1 truncate" style={{ color: colour }}>
+      <span className="caption-12 min-w-0 flex-1 truncate" style={{ color: detail }}>
         {event.detail}
       </span>
-      {event.url && (
-        <span className="caption-11 max-w-[220px] shrink-0 truncate text-[var(--text-muted)]">{event.url}</span>
-      )}
+      {event.url && <PageLink url={event.url} />}
     </div>
+  );
+}
+
+/**
+ * The page a call read, as a page you can go and look at.
+ *
+ * It was grey text. It is the operator's own URL -- `assay_inspect` can only
+ * read a page the operator named, never one the model chose -- so the honest
+ * thing is a link to it, and the thing they wanted from a trace row that says
+ * `fetch 404` is to click the URL and see the 404 themselves.
+ *
+ * `http`/`https` only, checked here rather than trusted: this is the one string
+ * in the row that becomes an `href`, and a scheme test is what stops it ever
+ * becoming a `javascript:` one. A URL that fails the test renders as the text
+ * it always was.
+ */
+function PageLink({ url }: { url: string }) {
+  if (!/^https?:\/\//i.test(url)) {
+    return <span className="caption-11 max-w-[220px] shrink-0 truncate text-[var(--text-muted)]">{url}</span>;
+  }
+
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="focus-ring caption-11 flex max-w-[220px] shrink-0 items-baseline gap-[4px] rounded-[var(--radius-control)] text-[var(--semantic-link)] hover:underline"
+    >
+      <span className="min-w-0 truncate">{url}</span>
+      <ExternalLink size={11} strokeWidth={1.5} className="shrink-0 translate-y-[1px]" aria-hidden />
+      {/* The glyph says "new tab" to the eye; this says it to a screen reader.
+          Without it the two are not told the same thing. */}
+      <span className="sr-only">(opens in a new tab)</span>
+    </a>
   );
 }
 
@@ -155,6 +227,10 @@ export function ToolChips({ events }: { events: TraceEvent[] }) {
   const found = results
     .filter((r) => r.tool === 'assay_inspect' && r.found != null)
     .reduce((n, r) => n + (r.found ?? 0), 0);
+  // A turn where a call failed says so on the closed summary, in words, rather
+  // than hiding the one row worth reading behind the disclosure. Counted off
+  // the same records the rows are drawn from, so the two cannot disagree.
+  const failed = results.filter((r) => !r.ok).length;
 
   return (
     <div className="flex w-full flex-col">
@@ -164,11 +240,16 @@ export function ToolChips({ events }: { events: TraceEvent[] }) {
         aria-expanded={open}
         className="flex items-center gap-[8px] self-start rounded-[var(--radius-control)] px-[8px] py-[5px] transition-colors duration-[var(--duration-tint)] hover:bg-[var(--surface-subtle)]"
       >
-        <Check size={13} strokeWidth={1.5} className="text-[var(--text-muted)]" aria-hidden />
+        {failed > 0 ? (
+          <CircleAlert size={13} strokeWidth={1.5} className="text-[var(--semantic-danger)]" aria-hidden />
+        ) : (
+          <Check size={13} strokeWidth={1.5} className="text-[var(--semantic-success)]" aria-hidden />
+        )}
         <span className="caption-12 text-[var(--text-secondary)]">
           {results.length} call{results.length === 1 ? '' : 's'}
           {pages.size > 0 && ` · ${pages.size} page${pages.size === 1 ? '' : 's'} read`}
           {found > 0 && ` · ${found} element${found === 1 ? '' : 's'} examined`}
+          {failed > 0 && ` · ${failed} did not answer`}
         </span>
         <ChevronRight
           size={13}
