@@ -1,0 +1,29 @@
+{
+  // Node-side only. `web/` has its own config because Next owns that toolchain.
+  //
+  // `noEmit` is the default posture: nothing here is compiled to disk. The one
+  // exception is `src/fingerprint.ts`, which `npm run build:fingerprint` emits
+  // to `dist/fingerprint.js` so it can be pasted verbatim into Bright Data's
+  // Cheerio worker. See docs/STACK.md 0.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noEmit": true,
+    // The migration runs module by module under the invariant gate, so JS and
+    // TS coexist while it is in flight. `checkJs` stays off: the JS files are
+    // on their way out, not a second thing to type.
+    "allowJs": true,
+    "checkJs": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "verbatimModuleSyntax": false,
+    "types": ["node"]
+  },
+  "include": ["src/**/*", "tools/**/*", "test/**/*", "bin/**/*"],
+  "exclude": ["node_modules", "web", "dist", "app", "corpus", "captures"]
+}
