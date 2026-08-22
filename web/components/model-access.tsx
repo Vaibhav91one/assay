@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from 'react';
 import { Check, KeyRound, RefreshCw, Terminal } from 'lucide-react';
+import { Button, actionVariants } from './button';
+import { Collapse } from './motion/collapse';
 import { Copy } from './copy';
 import { Working } from './loading';
 import { recheckModelAccess } from '@/app/(app)/settings/actions';
@@ -63,15 +65,9 @@ export function ModelAccess({ auth: initial }: { auth: ModelAuth }) {
     });
 
   const again = (
-    <button
-      type="button"
-      onClick={check}
-      disabled={pending}
-      className="flex shrink-0 items-center gap-[7px] rounded-[var(--radius-control)] border border-[var(--border-default)] bg-[var(--surface-card)] py-[7px] pl-[11px] pr-[13px] hover:bg-[var(--surface-subtle)] disabled:opacity-50"
-    >
-      <RefreshCw size={14} strokeWidth={1.5} className="text-[var(--text-primary)]" aria-hidden />
-      <span className="meta-12_5 text-[var(--text-primary)]">Check again</span>
-    </button>
+    <Button onClick={check} loading={pending} icon={RefreshCw} iconSize={14}>
+      Check again
+    </Button>
   );
 
   if (auth !== 'none') {
@@ -102,15 +98,9 @@ export function ModelAccess({ auth: initial }: { auth: ModelAuth }) {
             No model configured. Assay runs without one; field discovery is off.
           </span>
         )}
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          className="flex items-center gap-[8px] rounded-[var(--radius-control)] border border-[var(--border-default)] bg-[var(--surface-card)] py-[7px] pl-[12px] pr-[14px] hover:bg-[var(--surface-subtle)]"
-        >
-          <KeyRound size={15} strokeWidth={1.5} className="text-[var(--text-primary)]" aria-hidden />
-          <span className="meta-12_5 text-[var(--text-primary)]">Connect a model</span>
-        </button>
+        <Button onClick={() => setOpen((v) => !v)} aria-expanded={open} icon={KeyRound}>
+          Connect a model
+        </Button>
         {again}
       </div>
 
@@ -131,10 +121,13 @@ export function ModelAccess({ auth: initial }: { auth: ModelAuth }) {
         </p>
       )}
 
-      {/* 0fr -> 1fr so the panel animates without a measured height. */}
-      <div className={`grid transition-[grid-template-rows] duration-200 ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-        <div className="overflow-hidden">
-          <div className="flex flex-col gap-[16px] rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-subtle)] p-[16px]">
+      {/* Was a hand-rolled 0fr -> 1fr grid with a `duration-200` of its own, which
+          is the drift `docs/MOTION.md` was written to end. `Collapse` is the same
+          trick on `--duration-expand`, and it marks closed content `inert` -- so a
+          keyboard user can no longer tab into the two copy buttons in a panel
+          nobody can see. */}
+      <Collapse open={open}>
+        <div className="flex flex-col gap-[16px] rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-subtle)] p-[16px]">
             <div className="flex flex-col gap-[6px]">
               <p className="flex items-center gap-[8px]">
                 <Terminal size={14} strokeWidth={1.5} className="text-[var(--text-primary)]" aria-hidden />
@@ -146,8 +139,12 @@ export function ModelAccess({ auth: initial }: { auth: ModelAuth }) {
                 restart Assay. If you are already signed in to Claude Code here, there is nothing to
                 paste and nothing to restart: press Check again.
               </p>
-              <Copy text={SETUP} receipt="Command copied" className="mt-[4px] self-start rounded-[var(--radius-control)] border border-[var(--border-default)] bg-[var(--surface-card)] px-[12px] py-[7px] text-left hover:bg-[var(--surface-subtle)]">
-                <span className="mono-value-12_5 text-[var(--text-primary)]">{SETUP}</span>
+              <Copy
+                text={SETUP}
+                receipt="Command copied"
+                className={actionVariants({ variant: 'chip', className: 'mt-[4px] self-start' })}
+              >
+                {SETUP}
               </Copy>
             </div>
 
@@ -162,13 +159,16 @@ export function ModelAccess({ auth: initial }: { auth: ModelAuth }) {
                 Use an API key from the Claude Console. The Agent SDK is explicit that a
                 subscription login is not for products other people sign in to.
               </p>
-              <Copy text="ANTHROPIC_API_KEY=" receipt="Line copied" className="mt-[4px] self-start rounded-[var(--radius-control)] border border-[var(--border-default)] bg-[var(--surface-card)] px-[12px] py-[7px] text-left hover:bg-[var(--surface-subtle)]">
-                <span className="mono-value-12_5 text-[var(--text-primary)]">ANTHROPIC_API_KEY=</span>
+              <Copy
+                text="ANTHROPIC_API_KEY="
+                receipt="Line copied"
+                className={actionVariants({ variant: 'chip', className: 'mt-[4px] self-start' })}
+              >
+                ANTHROPIC_API_KEY=
               </Copy>
             </div>
-          </div>
         </div>
-      </div>
+      </Collapse>
     </div>
   );
 }

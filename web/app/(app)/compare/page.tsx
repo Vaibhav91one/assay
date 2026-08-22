@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CircleAlert, Scale } from 'lucide-react';
 import { TopBar } from '@/components/top-bar';
+import { actionVariants } from '@/components/button';
 import { Empty } from '@/components/empty';
 import { compareView, summary, rows, type CompareView, type Withheld } from '@/lib/compare';
 import { when } from '@/lib/when';
@@ -146,12 +147,9 @@ function WithheldCard({ w }: { w: Withheld }) {
         </p>
       </div>
       {w.waiting ? (
-        <Link
-          href="/decisions"
-          className="flex shrink-0 items-center gap-[8px] rounded-[var(--radius-control)] bg-[var(--semantic-success)] px-[15px] py-[9px]"
-        >
-          <Scale size={16} strokeWidth={1.5} className="text-[var(--accent-on-primary)]" aria-hidden />
-          <span className="meta-12_5 text-[var(--accent-on-primary)]">Decide</span>
+        <Link href="/decisions" className={actionVariants({ variant: 'success' })}>
+          <Scale size={16} strokeWidth={1.5} aria-hidden />
+          Decide
         </Link>
       ) : (
         <Link
