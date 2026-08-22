@@ -16,6 +16,14 @@ import type { AlertsView } from '@/lib/alerts';
  * reads would cost nothing to build and would break the only promise this
  * product makes.
  *
+ * A row is a title and an info icon. What each setting does sits behind the
+ * icon; what makes a row unavailable does not, and `switch.tsx` says why. The
+ * two sentences under "Break alerts by email" and "Webhook fallback" are the
+ * only writing on this screen that answers a question somebody is asking at
+ * the moment they read it -- they have just found a switch that will not move
+ * -- and an answer you have to go looking for is an answer half of them will
+ * not find.
+ *
  * The things an alerting screen usually offers next -- a cooldown between
  * repeat alerts, per-target subscriptions, routing to an owner, retries, a
  * delivery log -- have no column, no code and no consumer here. They are named

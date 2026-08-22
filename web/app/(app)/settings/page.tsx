@@ -16,6 +16,8 @@ import { alertsView } from '@/lib/alerts';
 import { SettingsTabs } from './settings-tabs';
 import { isTabId, type TabId } from './tabs';
 import { NotificationsPanel } from './notifications-panel';
+import { DocLink } from './doc-link';
+import { CONNECTOR_DOC, MODEL_DOC } from './docs';
 
 export const metadata: Metadata = { title: 'Settings · Assay' };
 
@@ -157,7 +159,16 @@ function Output({ v }: { v: SettingsView }) {
 function Connections({ v }: { v: SettingsView }) {
   return (
     <>
-      <Section label="MODEL ACCESS" id="model-access" />
+      {/* The section heading carries the model's documentation link rather than
+          the row below it. `model-access.tsx` reports which of three routes is
+          live and, when none is, hands over a command to run; the page that
+          explains all three belongs to the section, not to whichever branch
+          happens to be rendering. The Publishing tab puts `export as YAML ›` in
+          the same place for the same reason. */}
+      <div className="flex w-full items-center justify-between gap-[16px]">
+        <Section label="MODEL ACCESS" id="model-access" />
+        <DocLink href={MODEL_DOC} name="model access" />
+      </div>
       <div className="w-full pt-[24px]">
         <ModelAccess auth={modelAuth()} />
       </div>
@@ -288,7 +299,20 @@ function Connectors({ v }: { v: SettingsView }) {
               {c.configured ? 'configured' : 'not configured'}
             </StatusLine>
           }
-          c={c.configured && c.updated_at ? `set ${c.updated_at.slice(0, 10)}` : 'set it in the environment or over the API'}
+          c={
+            <span className="flex items-baseline justify-between gap-[16px]">
+              <span>
+                {c.configured && c.updated_at
+                  ? `set ${c.updated_at.slice(0, 10)}`
+                  : 'set it in the environment or over the API'}
+              </span>
+              {/* Per connector, not one link for the table. A row that says
+                  "not configured" and offers no way to find out what would
+                  configure it is a dead end, and the row that says
+                  "configured" is where someone goes to check what it means. */}
+              <DocLink href={CONNECTOR_DOC[c.kind]} name={c.kind} />
+            </span>
+          }
         />
       ))}
     </SpecTable>
