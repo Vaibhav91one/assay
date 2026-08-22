@@ -9,9 +9,9 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
  * you" is actionable where "2" is a number someone has to interpret.
  *
  * `action` replaces the Settings link on screens that have a better right-hand
- * verb of their own (Explain copies a proof id; Fields exports contracts).
- * There is only ever one, because the one-primary law does not stop at the
- * page body.
+ * verb of their own (Explain copies a proof id). There is only ever one,
+ * because the one-primary law does not stop at the page body. Pass `null` for
+ * none -- Settings itself must not offer a button to Settings.
  */
 export function TopBar({
   title,
@@ -31,7 +31,9 @@ export function TopBar({
         <h1 className="nav-15 shrink-0 text-[var(--text-primary)]">{title}</h1>
         {status && <p className="meta-13 truncate text-[var(--text-secondary)]">{status}</p>}
       </div>
-      {action ?? (
+      {action !== undefined ? (
+        action
+      ) : (
         <Link href="/settings" className={TOP_BAR_ACTION}>
           <Settings size={16} strokeWidth={1.5} className="text-[var(--text-primary)]" aria-hidden />
           <span className="meta-12_5 text-[var(--text-primary)]">Settings</span>
