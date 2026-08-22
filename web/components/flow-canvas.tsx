@@ -54,7 +54,7 @@ const KIND: Record<StageKind, string> = {
 
 type Pos = { x: number; y: number };
 
-export function FlowCanvas({ flow, caption }: { flow: Flow; caption: string }) {
+export function FlowCanvas({ flow }: { flow: Flow }) {
   const [pos, setPos] = useState<Record<string, Pos>>(() =>
     Object.fromEntries(flow.nodes.map((n) => [n.id, { x: n.x, y: n.y }])),
   );
@@ -167,7 +167,7 @@ export function FlowCanvas({ flow, caption }: { flow: Flow; caption: string }) {
     Math.max(CARD_W + PAD, ...flow.nodes.map((n) => (pos[n.id]?.x ?? n.x) + CARD_W)) + PAD;
 
   return (
-    <figure className="m-0 flex flex-col gap-[10px]">
+    <div className="flex flex-col">
       <div
         className="relative w-full overflow-auto rounded-[var(--radius-card)] border border-[var(--border-default)]"
         style={{
@@ -198,8 +198,7 @@ export function FlowCanvas({ flow, caption }: { flow: Flow; caption: string }) {
           ))}
         </div>
       </div>
-      <figcaption className="meta-12_5 text-[var(--text-muted)]">{caption}</figcaption>
-    </figure>
+    </div>
   );
 }
 

@@ -46,42 +46,34 @@ export default async function RunPage({ params }: { params: Promise<{ run: strin
       />
 
       <div className="flex w-full max-w-[1100px] flex-col gap-[32px] pb-[64px] pl-[56px] pr-[32px] pt-[18px]">
-        <section className="flex flex-col gap-[12px]">
-          <h2 className="label-10 text-[var(--text-muted)]">WHAT HAPPENED</h2>
-          <FlowCanvas
-            flow={d.flow}
-            caption="Drag a card to move it. Click one to light the connectors that touch it. Every number on a card is a stored column — the table below names which."
-          />
-          {d.flow.omitted.length > 0 && <Omitted omitted={d.flow.omitted} />}
-        </section>
+        {/* The diagram opens the page with no heading and no caption. It is the
+            first thing under a top bar that already says which run this is, and
+            a card that can be dragged should look draggable rather than carry a
+            sentence saying so. */}
+        <FlowCanvas flow={d.flow} />
 
         {d.cells.length > 0 && (
           <section className="flex flex-col gap-[12px]">
-            <h2 className="label-10 text-[var(--text-muted)]">THE FIELDS THIS RUN EVALUATED</h2>
+            <Heading>Fields</Heading>
             <Fields cells={d.cells} />
           </section>
         )}
 
         {d.gate && (
           <section className="flex flex-col gap-[12px]">
-            <h2 className="label-10 text-[var(--text-muted)]">
-              WHAT THE GATE WEIGHED · {d.gate.field}
-            </h2>
+            <Heading note={d.gate.field}>The gate</Heading>
             <Candidates gate={d.gate} />
           </section>
         )}
 
         <section className="flex flex-col gap-[24px]">
-          <h2 className="label-10 text-[var(--text-muted)]">
-            {d.scraper.toUpperCase()} OVER ITS {d.history.length} RECORDED RUN
-            {d.history.length === 1 ? '' : 'S'}
-          </h2>
+          <Heading note={`${d.scraper} · ${d.history.length} runs`}>History</Heading>
           <OutcomeDonut history={d.history} scraper={d.scraper} />
           <PageSizeBars history={d.history} runId={d.runId} scraper={d.scraper} />
         </section>
 
         <section className="flex flex-col gap-[12px]">
-          <h2 className="label-10 text-[var(--text-muted)]">WHERE EVERY NUMBER ABOVE CAME FROM</h2>
+          <Heading>Sources</Heading>
           <Evidence d={d} />
         </section>
       </div>
@@ -90,6 +82,28 @@ export default async function RunPage({ params }: { params: Promise<{ run: strin
 }
 
 /* ----------------------------------------------------------------- pieces */
+
+/**
+ * A section heading: a noun, at `title-20`, with the qualifier beside it.
+ *
+ * Not the `label-10` all-caps eyebrow the dense tabular screens use. This page
+ * is read top to bottom rather than scanned, and four eyebrows down it read as
+ * captions on the tables rather than as the structure of the page. `title-20`
+ * is what `(app)/page.tsx` already sets a prominent line at, so this is a step
+ * up the existing scale rather than a size invented for one screen.
+ *
+ * `note` is the qualifier the eyebrow used to swallow -- `recall_title`, the
+ * scraper and its run count. It is information, so it stays; it is not the
+ * name of the section, so it sits beside the heading and not inside it.
+ */
+function Heading({ children, note }: { children: React.ReactNode; note?: string }) {
+  return (
+    <h2 className="flex items-baseline gap-[10px]">
+      <span className="title-20 text-[var(--text-primary)]">{children}</span>
+      {note && <span className="mono-value-12_5 text-[var(--text-muted)]">{note}</span>}
+    </h2>
+  );
+}
 
 const TONE: Record<string, Tone> = {
   live: 'success',
@@ -237,31 +251,6 @@ function Candidates({ gate }: { gate: NonNullable<RunDetail['gate']> }) {
           </>
         )}
       </p>
-    </div>
-  );
-}
-
-/**
- * The stages that ran and left nothing behind.
- *
- * Said out loud rather than papered over with a node. A diagram that draws a
- * step it cannot evidence is the dishonesty this product exists to condemn, and
- * a diagram that silently omits one is only slightly better.
- */
-function Omitted({ omitted }: { omitted: RunDetail['flow']['omitted'] }) {
-  return (
-    <div className="rounded-[var(--radius-card)] border border-[var(--border-hairline)] bg-[var(--surface-subtle)] p-[14px]">
-      <p className="meta-12_5 text-[var(--text-secondary)]">
-        Not drawn, because the run left nothing to read:
-      </p>
-      <ul className="mt-[6px] flex flex-col gap-[4px]">
-        {omitted.map((o) => (
-          <li key={o.stage} className="meta-12_5 text-[var(--text-muted)]">
-            <span className="mono-value-12_5 text-[var(--text-secondary)]">{o.stage}</span> —{' '}
-            {o.because}
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }

@@ -81,10 +81,6 @@ describe('a skipped run stops where the engine stopped', () => {
     expect(node.branch?.notTaken).toContain('evaluate');
   });
 
-  it('reports no omitted stages, because none of them ran', () => {
-    expect(flowFor(skipped).omitted).toEqual([]);
-  });
-
   it('claims no cause when the digest matches but the run was evaluated anyway', () => {
     // `assay_ui` has these: run 34's page_sha equals run 33's, and run 34 is
     // recorded `ok`, not `skipped`. "The page differs, so it was evaluated"
@@ -114,10 +110,6 @@ describe('a clean run', () => {
   it('joins evaluate straight to the outcome', () => {
     expect(flowFor(clean).edges).toContainEqual({ from: 'evaluate', to: 'outcome', label: 'intact' });
     expect(flowFor(clean).edges.map((e) => e.to)).not.toContain('gate');
-  });
-
-  it('names detect as a stage that ran and left nothing readable', () => {
-    expect(flowFor(clean).omitted.map((o) => o.stage)).toContain('detect');
   });
 
   it('quotes no score anywhere, because none was persisted', () => {
@@ -158,7 +150,6 @@ describe('a healed run', () => {
   it('cuts the search node entirely when neither ranked nor heal_history exists', () => {
     const bare = { ...healed, cell: cell({ status: 'healed', heal: null, ranked: null }) };
     expect(ids(bare)).not.toContain('search');
-    expect(flowFor(bare).omitted.map((o) => o.stage)).toContain('search');
     expect(flowFor(bare).edges).toContainEqual({ from: 'evaluate', to: 'gate', label: 'broken' });
   });
 });
@@ -256,10 +247,12 @@ describe('the baseline node does not guess', () => {
 });
 
 describe('a run with no cell', () => {
-  it('draws nothing past the comparison and says why', () => {
+  it('draws nothing past the comparison', () => {
+    // Every stage after the skip check reads a cell. With no field_runs row
+    // there is nothing recorded to read, so there is nothing to draw.
     const orphan: RunRecord = { ...base, status: 'ok', cell: null };
     expect(ids(orphan)).toEqual(['fetch', 'unchanged']);
-    expect(flowFor(orphan).omitted[0]!.because).toMatch(/no field_runs row/);
+    expect(flowFor(orphan).edges).toEqual([{ from: 'fetch', to: 'unchanged', label: 'bytes' }]);
   });
 });
 
