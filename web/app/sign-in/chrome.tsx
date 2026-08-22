@@ -26,11 +26,18 @@ export function IconAlign({
 export function Headline() {
   return (
     <div className="hidden lg:flex flex-1 items-center justify-center px-[80px]">
-      {/* The space before the mark is non-breaking on purpose: a plain space
+      {/* The headline is the product's own first sentence -- the same one in
+          README.md, web/content/docs/index.mdx and this app's own
+          `<meta name="description">` in web/app/layout.tsx. It states a
+          behaviour as a fact, which is the only register this repo writes the
+          claim in; it replaced a borrowed tagline that named no behaviour at
+          all.
+
+          The space before the mark is non-breaking on purpose: a plain space
           either side of an image is trimmed out of the accessible name, and
-          the heading reads "Inyour hands." to a screen reader. */}
+          the heading reads "thatabstains" to a screen reader. */}
       <h1 className="display-96 text-[var(--text-primary)]">
-        Frontier AI. In&nbsp;
+        A scraper that&nbsp;
         <Image
           src="/brand/hero-mark.svg"
           alt=""
@@ -42,7 +49,7 @@ export function Headline() {
           // line box top and lift it, rather than to a baseline it never sat on.
           className="inline-block align-top -translate-y-[2.83px]"
         />{' '}
-        your hands.
+        abstains when it is not sure.
       </h1>
     </div>
   );
