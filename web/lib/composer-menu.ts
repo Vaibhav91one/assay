@@ -34,6 +34,45 @@ export function menuAt(value: string, caret: number | null): Menu | null {
 }
 
 /**
+ * What the `@` and `/` buttons do: open that menu at the caret.
+ *
+ * Opening a menu means putting its sigil in the text, because the text is where
+ * `menuAt` reads the state from -- there is no separate mode flag, and there
+ * should not be one. The consequence is that the button both opens a menu AND
+ * types a character, and that is the whole of the bug this function fixes:
+ * clicking `@` three times while looking for a source left `@ @ @` in the
+ * message. The operator asked to open the menu three times, not to type three
+ * sigils.
+ *
+ * So a click while that menu is already open at the caret returns the value
+ * untouched. The caller still focuses the box and re-reads the menu, which is
+ * what the operator wanted -- pressing the button blurs the textarea and closes
+ * the menu, so a second press has to be able to bring it back.
+ *
+ * NOT a debounce. A debounce on a text-insert control makes fast legitimate
+ * typing feel broken and leaves the state bug in place: two deliberate clicks a
+ * minute apart with the caret still after the sigil are the same mistake as two
+ * a moment apart, and are refused for the same reason.
+ *
+ * The pad keeps the sigil at the start of a word, which is where `menuAt` will
+ * look for it: inserting into `foo` has to give `foo @` or the menu it just
+ * opened would not be open.
+ */
+export function insertSigil(
+  value: string,
+  caret: number,
+  sigil: '@' | '/',
+): { value: string; caret: number } {
+  const open = menuAt(value, caret);
+  if (open?.sigil === sigil) return { value, caret };
+  const pad = caret > 0 && !/\s$/.test(value.slice(0, caret)) ? ' ' : '';
+  return {
+    value: `${value.slice(0, caret)}${pad}${sigil}${value.slice(caret)}`,
+    caret: caret + pad.length + 1,
+  };
+}
+
+/**
  * Replace an open menu's sigil and query with a chosen id.
  *
  * Returns the new value and where the caret belongs, so the caller does not

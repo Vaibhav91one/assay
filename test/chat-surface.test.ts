@@ -23,7 +23,7 @@ import { MODELS as ENGINE_MODELS, converse, type TraceEvent } from '../src/agent
 import { MODELS, MODEL_LABEL, DEFAULT_MODEL } from '../src/agent/models.js';
 import { HELD_BECAUSE, heldBecause } from '../src/reports/vocabulary.js';
 
-import { menuAt, applyChoice } from '../web/lib/composer-menu.js';
+import { menuAt, applyChoice, insertSigil } from '../web/lib/composer-menu.js';
 import { frames } from '../web/lib/chat-stream.js';
 
 // --- the leaf modules the browser imports -------------------------------------
@@ -144,6 +144,63 @@ describe('applyChoice', () => {
   it('keeps text that sits after the caret', () => {
     const menu = menuAt('@pri tail', 4)!;
     expect(applyChoice('@pri tail', menu, 'x__y').value).toBe('@x__y  tail');
+  });
+});
+
+// The owner, from live use: "whenever you click on @ and /, it enters the
+// prompt bar multiple times." Reproduced on the running instance -- three
+// deliberate clicks on `@` left `@ @ @` in the message, and the same for `/`.
+// One character per click, so nothing was firing twice; the button opens the
+// menu by TYPING the sigil, and it typed another one every time whether a menu
+// was open or not.
+describe('insertSigil', () => {
+  it('opens the menu on an empty box', () => {
+    expect(insertSigil('', 0, '@')).toEqual({ value: '@', caret: 1 });
+    expect(insertSigil('', 0, '/')).toEqual({ value: '/', caret: 1 });
+  });
+
+  it('does not type a second sigil when that menu is already open', () => {
+    // The reported bug, at the size it actually is.
+    let v = insertSigil('', 0, '@');
+    for (let i = 0; i < 5; i++) v = insertSigil(v.value, v.caret, '@');
+    expect(v).toEqual({ value: '@', caret: 1 });
+
+    // With a query typed into the open menu, the query survives untouched --
+    // re-opening a menu must not throw away what was typed into it.
+    expect(insertSigil('@ike', 4, '@')).toEqual({ value: '@ike', caret: 4 });
+    expect(insertSigil('/dec', 4, '/')).toEqual({ value: '/dec', caret: 4 });
+  });
+
+  it('opens the other menu even when one is open, because that is a different ask', () => {
+    expect(insertSigil('@ike', 4, '/').value).toBe('@ike /');
+    expect(insertSigil('/dec', 4, '@').value).toBe('/dec @');
+  });
+
+  it('starts a word, because that is where menuAt looks for a sigil', () => {
+    const r = insertSigil('watch', 5, '@');
+    expect(r.value).toBe('watch @');
+    expect(r.caret).toBe(7);
+    // The proof that the pad is not cosmetic: without it there is no menu.
+    expect(menuAt(r.value, r.caret)).toMatchObject({ sigil: '@', query: '' });
+    expect(menuAt('watch@', 6)).toBeNull();
+  });
+
+  it('adds no pad after whitespace or at the start', () => {
+    expect(insertSigil('watch ', 6, '@')).toEqual({ value: 'watch @', caret: 7 });
+    expect(insertSigil('a\n', 2, '/')).toEqual({ value: 'a\n/', caret: 3 });
+  });
+
+  it('inserts at the caret and keeps what follows it', () => {
+    // Measured against the running instance: "hello world" with the caret after
+    // "hello" gives "hello @ world" and a caret at 7.
+    expect(insertSigil('hello world', 5, '@')).toEqual({ value: 'hello @ world', caret: 7 });
+  });
+
+  it('closes a menu the caret has left, rather than treating it as open', () => {
+    // `@ike ` with a trailing space is no longer a menu -- `menuAt` says so --
+    // so the operator asking for one again gets one.
+    expect(menuAt('@ike ', 5)).toBeNull();
+    expect(insertSigil('@ike ', 5, '@')).toEqual({ value: '@ike @', caret: 6 });
   });
 });
 
