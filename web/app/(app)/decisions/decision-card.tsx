@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Check, CircleAlert, Eye, Undo2 } from 'lucide-react';
+import { Check, CircleAlert, Eye } from 'lucide-react';
 import type { Decision } from '@/lib/queue';
+import { StatusLine } from '@/components/status-line';
+import { stamp, ago } from '@/lib/when';
 import { resolveCell, type Outcome } from './actions';
 
 const OPTION_LABELS = ['BEST MATCH', 'CLOSE SECOND'] as const;
@@ -15,14 +17,15 @@ function Evidence({ e }: { e: Decision['candidates'][number]['evidence'] }) {
       <p className="caption-12 text-[var(--text-muted)]">No earlier runs to compare against</p>
     );
   }
-  const steady = e.kind === 'steady';
-  const Icon = steady ? Check : CircleAlert;
-  const tone = steady ? 'var(--semantic-success)' : 'var(--semantic-warning)';
   return (
-    <p className="flex items-center gap-[6px]">
-      <Icon size={13} strokeWidth={1.5} style={{ color: tone }} aria-hidden />
-      <span className="caption-12" style={{ color: tone }}>{e.text}</span>
-    </p>
+    <StatusLine
+      tone={e.kind === 'steady' ? 'success' : 'warning'}
+      size={13}
+      type="caption-12"
+      className="gap-[6px]"
+    >
+      {e.text}
+    </StatusLine>
   );
 }
 
@@ -43,7 +46,7 @@ export function DecisionCard({
       <div className="flex items-center gap-[12px]">
         <span className="body-14 text-[var(--text-primary)]">{d.target}</span>
         <span className="meta-12_5 flex-1 text-[var(--text-muted)]">
-          run {d.run} · {when(d.startedAt)} · field {d.field}
+          run {d.run} · {stamp(d.startedAt)} · field {d.field}
         </span>
         <span className="meta-12_5 text-[var(--text-muted)]">held {ago(d.heldAt)}</span>
       </div>
@@ -148,19 +151,4 @@ function reasonSentence(d: Decision): string {
     default:
       return `${d.reason ?? 'The gate refused'}. Nothing was published for this cell.${held}${stakes}`;
   }
-}
-
-
-const when = (d: Date | null) =>
-  d ? new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(d)) : 'unknown time';
-
-function ago(d: Date | null): string {
-  if (!d) return 'at an unknown time';
-  const mins = Math.round((Date.now() - new Date(d).getTime()) / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins} minutes ago`;
-  const hours = Math.round(mins / 60);
-  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
-  const days = Math.round(hours / 24);
-  return `${days} day${days === 1 ? '' : 's'} ago`;
 }

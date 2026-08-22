@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, Check, CircleAlert } from 'lucide-react';
+import { ArrowRight, CircleAlert } from 'lucide-react';
 import { TopBar } from '@/components/top-bar';
 import { RunStrip } from '@/components/run-strip';
+import { StatusLine } from '@/components/status-line';
 import { runsView, OUTCOMES, type Outcome, type RunRow } from '@/lib/runs';
+import { when } from '@/lib/when';
 
 export const metadata: Metadata = { title: 'Runs · Assay' };
 export const dynamic = 'force-dynamic';
@@ -134,44 +136,26 @@ function RunsTable({ rows }: { rows: RunRow[] }) {
 function Happened({ row }: { row: RunRow }) {
   if (row.outcome === 'held') {
     return (
-      <span className="flex items-center gap-[8px]">
-        <CircleAlert size={15} strokeWidth={1.5} className="text-[var(--semantic-warning)]" aria-hidden />
-        <span className="body-13_5 text-[var(--text-primary)]">
+      <StatusLine tone="warning">
+        <span className="text-[var(--text-primary)]">
           held <span className="mono-value-13">{row.heldField}</span> for review
         </span>
-      </span>
+      </StatusLine>
     );
   }
   if (row.outcome === 'healed') {
     return (
-      <span className="flex items-center gap-[8px]">
-        <Check size={15} strokeWidth={1.5} className="text-[var(--semantic-success)]" aria-hidden />
-        <span className="body-13_5 text-[var(--text-primary)]">moved, found it again</span>
-      </span>
+      <StatusLine tone="success">
+        <span className="text-[var(--text-primary)]">moved, found it again</span>
+      </StatusLine>
     );
   }
   return (
-    <span className="flex items-center gap-[8px]">
-      <Check size={15} strokeWidth={1.5} className="text-[var(--semantic-success)]" aria-hidden />
-      <span className="body-13_5 text-[var(--text-muted)]">clean</span>
-    </span>
+    <StatusLine tone="success" muted>
+      clean
+    </StatusLine>
   );
 }
 
 const summary = (total: number, healed: number, held: number) =>
   total === 0 ? 'no runs yet' : `${total} runs · ${healed} healed · ${held} held`;
-
-const TIME = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' });
-const DAY = new Intl.DateTimeFormat('en-GB', { weekday: 'short' });
-
-function when(d: Date): string {
-  const at = new Date(d);
-  const now = new Date();
-  const days = Math.floor((startOfDay(now) - startOfDay(at)) / 86_400_000);
-  if (days === 0) return `today ${TIME.format(at)}`;
-  if (days === 1) return `yesterday ${TIME.format(at)}`;
-  if (days < 7) return `${DAY.format(at)} ${TIME.format(at)}`;
-  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }).format(at);
-}
-
-const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();

@@ -1,4 +1,17 @@
+import { resolve } from 'node:path';
 import type { NextConfig } from 'next';
+
+// Page captures are addressed relative to the process's working directory
+// (`ASSAY_CAPTURES`, default `captures`), and every other consumer -- the
+// worker, the CLIs, vitest -- runs from the repo root. Next runs from `web/`,
+// where that path does not exist.
+//
+// Nothing throws when it is wrong. `hasCapture` simply answers false, so
+// `src/health` grades every run as unobserved and the Fields screen reports
+// "0 observations of this field" for a field with twenty-eight of them --
+// a false statement, rendered confidently, from a missing directory. This
+// config runs before any route module, which is where CAPTURE_DIR is read.
+process.env.ASSAY_CAPTURES ||= resolve(process.cwd(), '..', 'captures');
 
 const config: NextConfig = {
   // The root `exports` map makes `assay/engine/*` and `assay/store` real

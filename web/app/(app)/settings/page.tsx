@@ -1,0 +1,232 @@
+import type { Metadata } from 'next';
+import { TopBar } from '@/components/top-bar';
+import { StatusLine } from '@/components/status-line';
+import { Empty } from '@/components/empty';
+import { Copy } from '@/components/copy';
+import {
+  settingsView,
+  policiesAsYaml,
+  ON_ABSTAIN_PLAIN,
+  type Policy,
+  type SettingsView,
+} from '@/lib/settings';
+
+export const metadata: Metadata = { title: 'Settings · Assay' };
+
+// Reads the environment (the capture directory, the connector file path) as
+// well as the store. Static would bake one machine's environment into a build
+// another machine runs.
+export const dynamic = 'force-dynamic';
+
+export default async function SettingsPage() {
+  const v = await settingsView();
+
+  return (
+    <>
+      <TopBar
+        title="Settings"
+        status={`${v.policies.length} field${v.policies.length === 1 ? '' : 's'} governed`}
+        action={null}
+      />
+      <div className="flex w-full max-w-[1112px] flex-col items-start px-[56px] pb-[64px] pt-[26px]">
+        <Section label="WHAT ASSAY MAY PUBLISH" />
+        <div className="flex w-full items-center pt-[32px]">
+          <p className="body-13_5 flex-1 text-[var(--text-primary)]">
+            Calibrated: publishes only a clear winner ({v.defaults.tau.toFixed(2)} floor,{' '}
+            {v.defaults.delta.toFixed(2)} lead). Change per-field policy in a contract.
+          </p>
+          <Copy
+            text={policiesAsYaml(v.policies)}
+            receipt="Field contracts copied as YAML"
+            className="meta-12_5 shrink-0 text-[var(--semantic-link)] hover:underline"
+          >
+            export as YAML ›
+          </Copy>
+        </div>
+
+        <Section label="PER-FIELD POLICY" top={43} />
+        <div className="w-full pt-[32px]">
+          {v.policies.length === 0 ? (
+            <Empty title="No field has a policy yet.">
+              A field takes a policy the moment a scraper watches it. Until then there is nothing to
+              govern.
+            </Empty>
+          ) : (
+            <SpecTable head={['field', 'tier', 'on hold']}>
+              {v.policies.map((p) => (
+                <SpecRow
+                  key={p.targetId + p.field}
+                  a={
+                    <span>
+                      <span className="meta-12_5 text-[var(--text-muted)]">{p.scraper} · </span>
+                      <span className="mono-value-12_5 text-[var(--text-primary)]">{p.field}</span>
+                    </span>
+                  }
+                  b={<Tier p={p} />}
+                  c={ON_ABSTAIN_PLAIN[p.thresholds.onAbstain] ?? p.thresholds.onAbstain}
+                />
+              ))}
+            </SpecTable>
+          )}
+        </div>
+
+        <Section label="WHERE THE DATA GOES" top={52} />
+        <div className="w-full pt-[32px]">
+          <SpecTable>
+            <SpecRow
+              a="Output"
+              b="Postgres"
+              c={
+                <StatusLine tone={v.store.reachable ? 'success' : 'danger'} size={13} type="caption-12">
+                  {v.store.detail}
+                </StatusLine>
+              }
+            />
+            <SpecRow
+              a="Page captures"
+              b={<span className="mono-value-12_5">{v.captures.dir}</span>}
+              c={`${v.captures.kept} kept · ${v.captures.pruned} pruned`}
+            />
+            <SpecRow
+              a="On a held field"
+              b="Leave empty"
+              c="never filled, always labelled"
+            />
+            <SpecRow
+              a="Proof"
+              b="one proof id per cell, on the published row"
+              c="not optional"
+            />
+          </SpecTable>
+        </div>
+
+        <Section label="CONNECTIONS" top={52} />
+        <div className="w-full pt-[32px]">
+          <Connectors v={v} />
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------ pieces */
+
+const Section = ({ label, top = 0 }: { label: string; top?: number }) => (
+  <p className="label-10 text-[var(--text-muted)]" style={{ marginTop: top }}>
+    {label}
+  </p>
+);
+
+/**
+ * Three columns, fixed at 312 / 360 / rest.
+ *
+ * Both tables on this screen are the same object -- a name, what it is set to,
+ * and one quiet note about it -- so they are the same component. The header row
+ * is optional because the second table's left column is already the heading.
+ */
+function SpecTable({ head, children }: { head?: [string, string, string]; children: React.ReactNode }) {
+  return (
+    <table className="w-full table-fixed border-collapse">
+      <colgroup>
+        <col style={{ width: 312 }} />
+        <col style={{ width: 360 }} />
+        <col />
+      </colgroup>
+      {head && (
+        <thead>
+          <tr>
+            {head.map((h) => (
+              <th
+                key={h}
+                className="meta-12_5 pb-[8px] text-left font-normal text-[var(--text-muted)]"
+              >
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+      )}
+      <tbody>{children}</tbody>
+    </table>
+  );
+}
+
+function SpecRow({
+  a,
+  b,
+  c,
+}: {
+  a: React.ReactNode;
+  b: React.ReactNode;
+  c: React.ReactNode;
+}) {
+  return (
+    <tr className="border-t border-[var(--border-hairline)]">
+      <td className="body-13_5 py-[11px] pr-[16px] align-top text-[var(--text-primary)]">{a}</td>
+      <td className="meta-13 py-[11px] pr-[16px] align-top text-[var(--text-primary)]">{b}</td>
+      <td className="caption-12 py-[11px] align-top text-[var(--text-muted)]">{c}</td>
+    </tr>
+  );
+}
+
+/**
+ * The tier, and the numbers only when they are not the calibrated ones.
+ *
+ * Printing 0.60/0.16 against every row when the line above already says
+ * "0.60 floor, 0.16 lead" is the same fact rendered twice. A row that differs
+ * is the only one worth the space.
+ */
+function Tier({ p }: { p: Policy }) {
+  return (
+    <span className="flex flex-col gap-[3px]">
+      <span>{p.thresholds.policy}</span>
+      {p.custom && (
+        <span className="mono-label-12 text-[var(--text-secondary)]">
+          {p.thresholds.tau.toFixed(2)} floor · {p.thresholds.delta.toFixed(2)} lead
+        </span>
+      )}
+      {p.source !== 'calibrated' && (
+        <span className="caption-12 text-[var(--text-muted)]">
+          {p.source === 'contract' ? 'from a saved contract' : 'set on the target'}
+        </span>
+      )}
+    </span>
+  );
+}
+
+/**
+ * Presence, never a secret. `describe()` is the only public read path into the
+ * connector file, and it is built that way so a screen cannot leak a token by
+ * accident.
+ */
+function Connectors({ v }: { v: SettingsView }) {
+  if (v.connectors.length === 0) {
+    return (
+      <Empty title="Nothing is connected.">
+        Assay runs with no connectors: it fetches pages itself and writes to its own store. A
+        connector adds a delivery path, never a decision.
+      </Empty>
+    );
+  }
+  return (
+    <SpecTable>
+      {v.connectors.map((c) => (
+        <SpecRow
+          key={c.kind}
+          a={c.kind}
+          b={
+            <StatusLine
+              tone={c.configured ? 'success' : 'info'}
+              icon={c.configured ? undefined : null}
+              size={13}
+              type="meta-13"
+            >
+              {c.configured ? 'configured' : 'not configured'}
+            </StatusLine>
+          }
+          c={c.configured && c.updated_at ? `set ${c.updated_at.slice(0, 10)}` : 'set it in the environment or over the API'}
+        />
+      ))}
+    </SpecTable>
+  );
+}
