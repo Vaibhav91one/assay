@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { TopBar } from '@/components/top-bar';
+import { BrandMark } from '@/components/brand-mark';
 import { trackerById } from 'assay/engine/library/index';
 import { Apply } from '../apply';
 
@@ -24,7 +25,19 @@ export default async function TrackerPage({ params }: { params: Promise<{ entry:
     <>
       <TopBar title={t.name} scraper={null} />
       <div className="flex w-full max-w-[620px] flex-col gap-[16px] pl-[56px] pr-[32px] pb-[64px] pt-[18px]">
-        <p className="body-14 text-[var(--text-secondary)]">{t.subheading}</p>
+        {/* The mark, and the site it belongs to, as a link out. GitHub's and
+            Wikimedia's permissions are both written around a logo that links
+            to them, and this is where that link lives -- a card on the
+            catalogue is already a link to this page, and anchors do not nest. */}
+        <a
+          href={new URL(t.placeholder).origin}
+          target="_blank"
+          rel="noreferrer noopener"
+          className="flex w-fit items-center gap-[12px]"
+        >
+          <BrandMark id={t.id} size={28} />
+          <span className="body-14 text-[var(--text-secondary)]">{t.subheading}</span>
+        </a>
         <Apply tracker={t} />
       </div>
     </>

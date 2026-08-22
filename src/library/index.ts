@@ -71,8 +71,18 @@ export interface TrackerField {
   match: Prior;
 }
 
+/** The shelves, in the order the catalogue draws them. */
+export const GROUPS = [
+  { id: 'shops', label: 'Shops' },
+  { id: 'code', label: 'Code' },
+  { id: 'reference', label: 'Reference' },
+  { id: 'other', label: 'Anything else' },
+] as const;
+
 export interface Tracker {
   id: string;
+  /** Which shelf. Must be a `GROUPS` id or the card renders nowhere. */
+  group: string;
   /** The site. */
   name: string;
   /** One short line under the title. */
@@ -111,6 +121,7 @@ const NOT_VERSION = String.raw`[$£€¥₹]|\bUSD\b|\bEUR\b|\bGBP\b|%|\b(?:MB|K
 export const TRACKERS: readonly Tracker[] = [
   {
     id: 'amazon',
+    group: 'shops',
     name: 'Amazon',
     subheading: 'Price and stock on one product page.',
     placeholder: 'https://www.amazon.in/dp/0143448706',
@@ -147,6 +158,7 @@ export const TRACKERS: readonly Tracker[] = [
   },
   {
     id: 'github',
+    group: 'code',
     name: 'GitHub',
     subheading: 'The newest release on a repository.',
     placeholder: 'https://github.com/nodejs/node/releases',
@@ -180,7 +192,85 @@ export const TRACKERS: readonly Tracker[] = [
     ],
   },
   {
+    id: 'pypi',
+    group: 'code',
+    name: 'PyPI',
+    subheading: 'The current version of a Python package.',
+    placeholder: 'https://pypi.org/project/Django/',
+    cadence: '12h',
+    fields: [
+      {
+        name: 'version',
+        label: 'Version',
+        policy: 'strict',
+        // PyPI's h1 is "Django 6.1" -- the name and the version together, which
+        // is the whole fact. Reading the number alone would need it split out
+        // of a heading it does not own.
+        match: { pattern: String.raw`\S`, select: 'project-header__name', minLen: 3, maxLen: 120 },
+      },
+      {
+        name: 'released_on',
+        label: 'Released',
+        policy: 'strict',
+        // The sidebar carries several dates; `time` is the element PyPI renders
+        // the release date into and the first one is the current release.
+        match: { pattern: DATE, tags: ['time'], minLen: 6, maxLen: 60 },
+      },
+    ],
+  },
+  {
+    id: 'arxiv',
+    group: 'reference',
+    name: 'arXiv',
+    subheading: 'The newest preprint in a category.',
+    placeholder: 'https://arxiv.org/list/cs.CL/recent',
+    cadence: '12h',
+    fields: [
+      {
+        name: 'newest_paper',
+        label: 'Newest paper',
+        policy: 'strict',
+        // The identifier rather than the title: the title sits in a div whose
+        // text begins "Title:" from a descriptor span, and watching a value
+        // with a label baked into it is watching the label too.
+        match: { pattern: String.raw`arXiv:`, tags: ['a'], minLen: 8, maxLen: 40 },
+      },
+      {
+        name: 'announcement',
+        label: 'Batch',
+        policy: 'normal',
+        // "Fri, 21 Aug 2026 (showing first 50 of 76 entries)" -- the date and
+        // the size of the batch in one sentence, and the only h3 near the top.
+        match: { pattern: String.raw`\S`, tags: ['h3'], minLen: 10, maxLen: 120 },
+      },
+    ],
+  },
+  {
+    id: 'mdn',
+    group: 'reference',
+    name: 'MDN Web Docs',
+    subheading: 'When a reference page was last revised.',
+    placeholder: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404',
+    cadence: 'daily',
+    fields: [
+      {
+        name: 'last_modified',
+        label: 'Last modified',
+        policy: 'strict',
+        // The whole footer sentence rather than the date inside it, because the
+        // sentence is the only thing on the page that says which date this is.
+        match: {
+          pattern: String.raw`\S`,
+          select: 'article-footer__last-modified',
+          minLen: 10,
+          maxLen: 200,
+        },
+      },
+    ],
+  },
+  {
     id: 'wikipedia',
+    group: 'reference',
     name: 'Wikipedia',
     subheading: 'When an article was last edited.',
     placeholder: 'https://en.wikipedia.org/wiki/Web_scraping',
@@ -198,6 +288,7 @@ export const TRACKERS: readonly Tracker[] = [
   },
   {
     id: 'any',
+    group: 'other',
     name: 'Any site',
     subheading: 'Assay looks for a price, stock, a version and a date.',
     placeholder: 'https://example.com/the-page',
