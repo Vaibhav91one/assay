@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { Check, CircleAlert, Eye } from 'lucide-react';
 import type { Decision } from '@/lib/queue';
 import { StatusLine } from '@/components/status-line';
+import { ProofSheet } from '@/components/proof-sheet';
 import { heldBecause } from 'assay/engine/reports/vocabulary';
 import { stamp, ago } from '@/lib/when';
 import { resolveCell, type Outcome } from './actions';
@@ -121,13 +122,16 @@ export function DecisionCard({
         >
           Neither is right
         </button>
-        <a
-          href={`/explain/${d.proof}`}
-          className="flex items-center gap-[8px] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+        {/* A sheet, not the route. Answering a queue is the one place where
+            leaving the screen costs the most: the card you were reading is
+            item nine of fifty, and coming back puts you at the top. */}
+        <ProofSheet
+          proof={d.proof}
+          className="focus-ring flex items-center gap-[8px] rounded-[var(--radius-control)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
         >
           <Eye size={14} strokeWidth={1.5} aria-hidden />
           <span className="meta-13">See it on the page</span>
-        </a>
+        </ProofSheet>
       </div>
 
     </article>
