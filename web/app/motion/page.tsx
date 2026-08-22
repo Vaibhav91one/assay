@@ -15,6 +15,7 @@ import { Bar } from '@/components/bar';
 import { Copy } from '@/components/copy';
 import { Disclosure } from '@/components/disclosure';
 import { Empty } from '@/components/empty';
+import { Working } from '@/components/loading';
 import { FilterMenu } from '@/components/filter-menu';
 import { Notifications } from '@/components/notifications';
 import { RunStrip } from '@/components/run-strip';
@@ -145,7 +146,7 @@ export default function MotionPage() {
   if (process.env.NODE_ENV === 'production') notFound();
 
   return (
-    <main className="mx-auto flex max-w-[860px] flex-col gap-[40px] p-[48px]">
+    <main className="mx-auto flex max-w-[1080px] flex-col gap-[40px] p-[48px]">
       {/*
         Hover and focus cannot be photographed and cannot be reached without a
         pointer and a Tab key, so the states row below forces them. Only two
@@ -207,10 +208,13 @@ export default function MotionPage() {
       >
         <div className="flex flex-col gap-[18px]">
           {(['outline', 'primary', 'quiet', 'icon'] as ActionVariant[]).map((variant) => (
-            <div key={variant} className="flex flex-wrap items-center gap-[18px]">
-              <span className="mono-value-12_5 w-[70px] shrink-0 text-[var(--text-muted)]">
-                {variant}
-              </span>
+            // A grid rather than flex-wrap, so the six state labels line up into
+            // columns down the whole table instead of re-flowing per row.
+            <div
+              key={variant}
+              className="grid grid-cols-[76px_repeat(6,minmax(0,1fr))] items-start gap-[12px]"
+            >
+              <span className="mono-value-12_5 pt-[18px] text-[var(--text-muted)]">{variant}</span>
               <State label="default">
                 <Sample variant={variant} />
               </State>
@@ -342,14 +346,18 @@ export default function MotionPage() {
           >
             {/*
               `Toast` is `position: fixed` to the viewport bottom, which is right
-              in the product and useless in a gallery: two of them would stack on
-              each other over the footer. A transform on an ancestor makes a
-              fixed child resolve against that ancestor instead, so the real
-              component lands here with nothing about the component changed.
+              in the product and useless in a gallery -- both specimens would
+              land on the same spot over the footer. A transform on an ancestor
+              makes a fixed descendant resolve against that ancestor instead, so
+              each one gets its OWN transformed box: nesting them in a single box
+              stacks them again, because the inner `fixed` ignores an ordinary
+              wrapper. Nothing about the component changes.
             */}
-            <div className="relative h-[112px] w-full [transform:translateZ(0)]">
-              <Toast message="Command copied" />
-              <div className="absolute inset-x-0 bottom-[64px]">
+            <div className="flex flex-col gap-[8px]">
+              <div className="relative h-[64px] w-full [transform:translateZ(0)]">
+                <Toast message="Command copied" />
+              </div>
+              <div className="relative h-[64px] w-full [transform:translateZ(0)]">
                 <Toast
                   variant="error"
                   message="The browser would not give up the clipboard."
@@ -478,6 +486,15 @@ export default function MotionPage() {
           <p className="body-14 flex items-center gap-[8px]">
             <Equaliser />
             Listening
+          </p>
+          <Working>Checking</Working>
+          <p className="meta-12_5 text-[var(--text-secondary)]">
+            <span className="mono-value-12_5">Working</span> is the in-place form, from{' '}
+            <span className="mono-value-12_5">components/loading.tsx</span>.{' '}
+            <span className="mono-value-12_5">RouteLoader</span> is deliberately not on this page:
+            it only appears after a delay on a real navigation and holds a minimum before fading,
+            so a static specimen of it would be a picture of a thing that never sits still. See
+            docs/MOTION.md.
           </p>
         </div>
       </Section>
