@@ -8,8 +8,40 @@
 // person having said yes to it.
 
 import { z } from 'zod';
-import { guarded, parseBody } from '../setup/http.js';
+import { parseBody } from '../setup/http.js';
 import { converse, hasKey, CADENCES, MODELS, type TraceEvent, type ChatResult } from './index.js';
+
+type Handler = (request: Request, ctx: { params: Promise<Record<string, string>> }) => Promise<Response>;
+
+/**
+ * Guard an OPERATOR-SESSION route.
+ *
+ * These two used `guarded` from `../setup/http.js`, which is the wrong gate
+ * here and had never been exercised: `guarded` calls `requireKey`, the CONSUMER
+ * API key check for the machine-to-machine surface. A browser has no bearer key,
+ * so every request from the screen this endpoint exists to serve answered 401.
+ * It went unnoticed because the home surface reached `converse` through a Server
+ * Action and never called this route at all.
+ *
+ * `web/proxy.ts` states the boundary and is the authority on it: its matcher
+ * deliberately excludes `/api/v1` because that surface "is machine-to-machine
+ * and carries its own Bearer key auth -- operator sessions do not apply there".
+ * `/api/chat` is NOT under `/api/v1`, so it is inside the matcher and the
+ * operator session is what protects it. Adding the machine gate on top did not
+ * make it safer; it made it unreachable.
+ *
+ * What `guarded` also did is kept, because it is the half that matters once the
+ * request is in: a driver error names tables, columns and the parameters it was
+ * given, and none of that may reach a consumer.
+ */
+const sessionGuarded = (fn: Handler): Handler => async (request, ctx) => {
+  try {
+    return await fn(request, ctx);
+  } catch (e) {
+    console.error('[assay/agent]', (e as Error).message);
+    return Response.json({ error: 'internal' }, { status: 500 });
+  }
+};
 
 const Body = z.strictObject({
   message: z.string().min(1).max(4000),
@@ -35,7 +67,7 @@ const Body = z.strictObject({
  * before any conversation starts so the screen can render the manual path
  * immediately instead of discovering it on the operator's first message.
  */
-export const getChat = guarded(async () =>
+export const getChat = sessionGuarded(async () =>
   Response.json({
     model_configured: hasKey(),
     cadences: CADENCES,
@@ -92,7 +124,7 @@ const frame = (f: ChatFrame): string => `data: ${JSON.stringify(f)}\n\n`;
  * treat a supported configuration as a fault. It is delivered as a `result`
  * frame like any other, so the client has one code path.
  */
-export const postChat = guarded(async (request) => {
+export const postChat = sessionGuarded(async (request) => {
   const body = await parseBody(request, Body);
   if (!body.ok) return body.response;
 

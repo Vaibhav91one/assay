@@ -254,7 +254,8 @@ function ProposalView({
           </span>
         </button>
         <span className="meta-12_5 text-[var(--text-secondary)]">
-          {keep.length} of {p.fields.length} field{p.fields.length === 1 ? '' : 's'} · every {p.cadence}
+          {keep.length} of {p.fields.length} field{p.fields.length === 1 ? '' : 's'} ·{' '}
+          {/^\d/.test(p.cadence) ? `every ${p.cadence}` : p.cadence}
         </span>
         <button type="button" onClick={onRestart} className="meta-13 ml-auto text-[var(--text-secondary)]">
           Start over

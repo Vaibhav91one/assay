@@ -108,6 +108,17 @@ export type Model = (typeof MODELS)[number];
 
 const isModel = (m: unknown): m is Model => MODELS.includes(m as Model);
 
+/**
+ * A cadence as it reads in a sentence.
+ *
+ * Half the vocabulary is already an adverb -- "daily" -- and half is an
+ * interval -- "6h". `every ${cadence}` is right for the second and produces
+ * "every daily" for the first. Exported because the screen prints the same
+ * phrase under the confirm button and the two must not diverge.
+ */
+export const cadencePhrase = (c: string): string =>
+  /^\d/.test(c) ? `every ${c}` : c;
+
 /** An index into a list this code built. Never a value, never a URL. */
 const Index = z.int().min(0).max(999);
 
@@ -633,7 +644,7 @@ function render(r: Reply, pages: string[], fetched: Map<number, Candidate[]>): C
     kind: 'propose',
     model_configured: true,
     urls: pages,
-    reply: `I can watch ${url} every ${r.cadence} for ${named}.`
+    reply: `I can watch ${url} ${cadencePhrase(r.cadence)} for ${named}.`
       + (unsure.length ? ` I am least sure about ${unsure.join(' and ')} -- check ${unsure.length > 1 ? 'those' : 'that one'} before you confirm.` : '')
       + ' Nothing is created until you confirm.',
     proposal: { url, cadence: r.cadence, fields, create: { url, cadence: r.cadence, fields: create } },
