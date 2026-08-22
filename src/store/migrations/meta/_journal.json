@@ -29,6 +29,13 @@
       "when": 1787345172074,
       "tag": "0003_round_hex",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787393645816,
+      "tag": "0004_chemical_sabretooth",
+      "breakpoints": true
     }
   ]
 }

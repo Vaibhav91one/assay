@@ -10,7 +10,10 @@ import { sign, verify, EVENTS } from '../src/api/webhooks.js';
 import { loadTools, REFUSED_TOOLS, type McpTool } from '../src/mcp/server.js';
 import { getHeld, getRow } from '../src/api/handlers.js';
 import { HeldCell, Row, Status } from '../src/api/schemas.js';
-import { getDb, closeDb, heldCells } from '../src/store/index.js';
+import { getDb, closeDb, heldCells, sql } from '../src/store/index.js';
+import * as schema from '../src/store/schema.js';
+import { getTableName, is } from 'drizzle-orm';
+import { PgTable } from 'drizzle-orm/pg-core';
 
 let dbUp = false;
 // The whole merged surface, through the loader rather than one tool file:
@@ -68,6 +71,21 @@ describe('webhook signing', () => {
 });
 
 describe('database', () => {
+  // Nine features are about to be built in parallel against the tables wave 0
+  // added, in nine worktrees, each of which has to have run the migration. A
+  // missing table shows up here as one clear failure rather than as nine
+  // confusing ones in nine feature suites.
+  it('has every table schema.ts declares', async () => {
+    if (!dbUp) return;
+    const declared = Object.values(schema).filter((v) => is(v, PgTable)).map(getTableName);
+    const { rows } = await getDb().execute(
+      sql`SELECT tablename FROM pg_tables WHERE schemaname = 'public'`,
+    );
+    const present = new Set((rows as { tablename: string }[]).map((r) => r.tablename));
+    expect(declared.length).toBeGreaterThan(0);
+    expect(declared.filter((t) => !present.has(t))).toEqual([]);
+  });
+
   // A DB-backed test that early-returns without Postgres reports PASSED, not
   // skipped -- vitest cannot tell the difference, so the test count is identical
   // either way. CI sets ASSAY_REQUIRE_DB=1 to turn that vacuous green into a

@@ -127,8 +127,140 @@ export const queueItems = pgTable('queue_items', {
   stakesRows: integer('stakes_rows').notNull().default(0),
   groupKey: text('group_key'),
   resolvedBy: text('resolved_by'),     // null while open. 'human' | 'model' when settled.
+  // The human's answer: 'first' | 'second' | 'empty' | 'neither'.
+  //
+  // Note for whoever owns the decide path: assay_propose ALSO writes here, as
+  // `model_nominated:<index>`, while leaving resolved_by null. That is a
+  // nomination, not a resolution -- an open item with a note attached. Read
+  // resolved_by, never this column, to decide whether an item is settled.
   resolution: text('resolution'),
+  resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+  // Undo is a column, not a delete. The receipt has to survive being taken
+  // back -- "I resolved this and then unresolved it" is a different fact from
+  // "this was never resolved", and an auditor needs to be able to tell them
+  // apart months later.
+  undoneAt: timestamp('undone_at', { withTimezone: true }),
   ts: timestamp('ts', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
   open: index('queue_items_resolved_idx').on(t.resolvedBy),
+  // Decide-once is `UPDATE ... WHERE group_key = ?` in one transaction; without
+  // this index that statement scans the table on every resolve.
+  group: index('queue_items_group_idx').on(t.groupKey),
+}));
+
+// ---------------------------------------------------------------------------
+// Wave 1. Every table below is written by exactly one feature, and none of them
+// existed when the engine was built -- the features that need them are listed
+// per table so a reader can find the code that owns each one.
+// ---------------------------------------------------------------------------
+
+/**
+ * Every heal that was applied, and whether it was later taken back (F10/F11).
+ *
+ * The brake needs memory: a selector that has been healed A -> B -> A -> B is
+ * not healing, it is oscillating, and the honest response is to stop and hold
+ * rather than keep flipping. That is not visible from the current state of any
+ * other table -- field_runs records what a run decided, not what the sequence
+ * of decisions looks like. Hence a log, kept in heal order.
+ */
+export const healHistory = pgTable('heal_history', {
+  healId: serial('heal_id').primaryKey(),
+  targetId: text('target_id').notNull().references(() => targets.targetId),
+  field: text('field').notNull(),
+  fromSelector: text('from_selector'),
+  toSelector: text('to_selector').notNull(),
+  runId: integer('run_id').notNull().references(() => runs.runId),
+  // Unheal sets this. The row stays: a reverted heal is evidence, and deleting
+  // it would erase exactly the pattern the brake is looking for.
+  reverted: boolean('reverted').notNull().default(false),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  seq: index('heal_history_target_field_idx').on(t.targetId, t.field, t.createdAt),
+}));
+
+/**
+ * Standing state per field: what we think of it, as opposed to what one run
+ * found (F1 fragility, F3 drift, F11 brake).
+ *
+ * Deliberately one row per field rather than one per run. Fragility is a
+ * property of a field's history, drift is a property of anchors disagreeing
+ * OVER TIME, and a brake is a latch -- none of the three is a fact about a
+ * single run, and storing them per run would mean recomputing a trend on every
+ * read of every screen.
+ */
+export const fieldState = pgTable('field_state', {
+  targetId: text('target_id').notNull().references(() => targets.targetId),
+  field: text('field').notNull(),
+  // How much this field's fingerprint moves between runs, as a grade rather
+  // than a float: a number here would invite the same "confidence percentage"
+  // the gate refuses (docs/FEATURES.md 4).
+  fragilityGrade: text('fragility_grade'),
+  drifting: text('drift_state'),
+  // A latch, not a computed flag. Something tripped it, and it stays tripped
+  // until a human types the confirmation -- which is the whole point of a brake.
+  brakeActive: boolean('brake_active').notNull().default(false),
+  brakeReason: text('brake_reason'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.targetId, t.field] }),
+  braked: index('field_state_brake_idx').on(t.brakeActive),
+}));
+
+/**
+ * A published range now believed wrong, and the rows it covers (F9).
+ *
+ * A retraction is a record, not a deletion. Downstream already has the rows;
+ * the only honest thing left is to say which ones and from when, in a form a
+ * warehouse can join on. `exportedAt` is when the operator actually took the
+ * list -- null means the retraction has been computed but nobody has acted.
+ */
+export const retractions = pgTable('retractions', {
+  retractionId: serial('retraction_id').primaryKey(),
+  targetId: text('target_id').notNull().references(() => targets.targetId),
+  field: text('field').notNull(),
+  fromRun: integer('from_run').notNull(),
+  toRun: integer('to_run').notNull(),
+  rowIds: jsonb('row_ids'),
+  exportedAt: timestamp('exported_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  byTarget: index('retractions_target_field_idx').on(t.targetId, t.field),
+}));
+
+/**
+ * Field contracts, versioned per target (F2).
+ *
+ * Both forms are kept. `yaml` is what the operator wrote and what a diff should
+ * show; `parsed` is what the runner reads. Storing only the parsed form loses
+ * the comments and ordering a reviewer needs, and storing only the YAML means
+ * reparsing on every run and discovering a syntax error at scrape time.
+ *
+ * Versions are appended, never updated: a run's thresholds have to be
+ * recoverable months later, and "the contract said 0.6 at the time" is not
+ * answerable from a mutable row.
+ */
+export const contracts = pgTable('contracts', {
+  contractId: serial('contract_id').primaryKey(),
+  targetId: text('target_id').notNull().references(() => targets.targetId),
+  version: integer('version').notNull(),
+  yaml: text('yaml').notNull(),
+  parsed: jsonb('parsed').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  byTarget: index('contracts_target_version_idx').on(t.targetId, t.version),
+}));
+
+/**
+ * Digest scheduling. Same shape as `targets.next_run_at`, for the same reason:
+ * the due query is one indexed SELECT and there is no queue anywhere in this
+ * product.
+ */
+export const digests = pgTable('digests', {
+  digestId: serial('digest_id').primaryKey(),
+  cadence: text('cadence').notNull(),
+  nextRunAt: timestamp('next_run_at', { withTimezone: true }),
+  lastSentAt: timestamp('last_sent_at', { withTimezone: true }),
+  recipients: jsonb('recipients'),
+}, (t) => ({
+  due: index('digests_next_run_at_idx').on(t.nextRunAt),
 }));
