@@ -23,6 +23,7 @@ moved a number.
 | E Health | `recomputeField(t, f)` / `recomputeAll(t)` | `tools/worker.ts` after a run, or a cadence | pure addition; writes only E's two columns |
 | F Reports | `dueDigests()` | `tools/worker.ts` digest loop | returns empty with no `digests` rows |
 | H AI | `scoreNomination()` | `assay_propose` in `src/mcp/tools/core.ts` | `assay_propose` must **stay inert** — it scores, it does not decide |
+| G Connectors | `ingestPage({ target, html, via })` | `tools/worker.ts` `runOne` | `runOne` is now a near-duplicate of it; wiring the worker through it removes the duplication rather than adding behaviour |
 
 **`shouldHeal` deliberately does not catch database errors.** D's reasoning: a
 brake that cannot be read is not a brake that is not set, and answering `true`
@@ -92,6 +93,7 @@ where it bit, not speculative.
 | `UNIQUE (target_id, version)` on `contracts` | `saveContract` computes the next version in a sub-select, atomic against everything except a second writer on the same target at the same instant | B |
 | per-run anchor hash + fingerprint digest on `field_runs` | the store keeps neither, so E rebuilds the observation series by re-parsing stored pages — and captures are kept only for non-`ok` runs, so on a pruned store it grades **over the broken runs only**. `unobserved_runs`/`total_runs` carry the hole to the API rather than hiding it. | E |
 | a boolean on `retractions` for "this window is a floor" | `bounded:false` survives in the API and CLI but not in the table | C |
+| a `connectors` table | there is none, so connector config is a 0600 JSON file at `data/connectors.json` holding three bearer credentials. `data/` is now gitignored; Postgres would be better. | G |
 
 ---
 
@@ -131,6 +133,42 @@ did establish: the harness reproduces `bench.ts` exactly (153 / 60.8% / 64.7% /
 (82.4%)** — a per-run agent session on four fifths of breaks, which is a very
 different operating profile from Cheerio, and the cost `AI-AND-AGENTS.md` §7
 lists as unestimated.
+
+---
+
+## 3c. Bright Data publishes no signature mechanism
+
+G fetched the docs looking for an HMAC and found none: no signing secret, no
+signature header, on any page. Authenticity is a **customer-supplied
+`Authorization` value** (`auth_header`, or `webhook_header_Authorization`) plus
+a published source-IP list. So Assay mints the bearer itself and compares it
+constant-time.
+
+**This is weaker than the signed webhook this repo sends outbound**, and the
+module header says so rather than implying parity. Wave 2 should not describe
+the two as equivalent in any doc or README.
+
+Two more things Bright Data does not promise, each of which forced a decision:
+
+- **No content-type on the delivery**, so gzip is detected by magic number
+  rather than a header we were never given. (`uncompressed_webhook` defaults
+  false, so deliveries *are* gzipped by default.)
+- **No snapshot or dataset id header**, so the target is taken from the URL path.
+- The row shape is collector-specific and undocumented, so the page is looked
+  for under five plausible keys and a delivery carrying none is refused **with
+  the list in the message**. Marked `TODO(types)` rather than given a
+  fabricated interface.
+
+**The source-IP allowlist is documented but not implemented** — a reverse proxy
+is the right layer for it, and a hardcoded IP list would rot in the repo.
+
+### The seam holds
+
+G proved it rather than asserting it: the same page through the delivery path
+and the local fetch path, evaluated fresh both times, produced run records
+**identical in every persisted column** — status, page_bytes, skeleton_hash,
+page_sha, value, reason, golden_sha, capture_sha, ranked, group_key. Provenance
+rides in `meta.via`; there is no branch anywhere in the engine.
 
 ---
 
