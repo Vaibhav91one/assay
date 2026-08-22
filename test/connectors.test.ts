@@ -209,6 +209,21 @@ suite('bright data delivery: the body', () => {
     }
   });
 
+  it('stops decompressing a zip bomb instead of inflating it', () => {
+    // 200 MiB of one repeated byte compresses to about 200 KB. Without a bound,
+    // a body that small allocates all of it on the request thread. The bound is
+    // zlib's own `maxOutputLength`, so nothing is inflated and then measured.
+    const bomb = gzipSync(Buffer.alloc(200 * 1024 * 1024, 0x41));
+    expect(bomb.length).toBeLessThan(1024 * 1024);
+    try {
+      decodeDelivery(bomb);
+      expect.unreachable('should have refused');
+    } catch (e) {
+      expect((e as DeliveryError).code).toBe('too_large');
+      expect((e as DeliveryError).status).toBe(413);
+    }
+  });
+
   it('finds the page under any documented key, and says so when there is none', () => {
     for (const k of HTML_KEYS) expect(pageFrom([{ [k]: '<h2>x</h2>' }])).toBe('<h2>x</h2>');
     // An empty string is an absence, not a page. No silent fallback to ''.
