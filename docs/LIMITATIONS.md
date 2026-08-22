@@ -183,9 +183,37 @@ because none of them ran through the broken path.
 
 ---
 
+## 8. A run can be asked for, not made to happen — and a baseline cell is never held
+
+Two consequences of decisions taken elsewhere, both visible from the UI.
+
+**The Schedule screen's `Ask for a run` is an enqueue.** `CONTRIBUTING.md` is
+explicit that Next never runs a scrape, so the control sets `next_run_at` and the
+worker claims it — nothing more. With no worker running, the target is queued and
+stays queued forever. That is why the screen carries a real liveness signal
+rather than a spinner: the worker holds a shared advisory lock for as long as its
+connection lives (`holdWorkerLock` / `workersUp` in `src/store/index.ts`), and
+when the count is zero the screen says so in a sentence. A heartbeat row was
+rejected for this — it forces every reader to pick a staleness window, and for
+the width of that window a worker killed with `SIGKILL` still reads as present.
+
+**The first run of a field cannot produce a held cell.** With no prior baseline,
+`ingestPage` establishes one from the page in hand, so `runTarget` compares that
+page against itself — the selector resolves, the value matches, and the gate
+cannot fire. `createTarget` also refuses a field whose resolver matches nothing,
+so the "no element" path is closed before the run starts. The held-cell branch in
+the confirm-step schema table (`web/app/(app)/schema-table.tsx`, rendered by
+`Built` in `watch.tsx`) is therefore unreachable through the create flow as it
+stands: a held cell needs a *second* run against a page that has since changed.
+Nothing is wrong with the rendering — it has simply never had a state to draw.
+
+---
+
 ## What is not claimed
 
 - That the deployed path had ever detected a break before 2026-08-22. It had not.
+- That `Ask for a run` runs anything. It enqueues; a worker has to be up.
+- That a field's baseline run can be held. It cannot — see section 8.
 - That the gate improves outcomes on any corpus other than this one.
 - That 0.6 / 0.16 are correct for any field other than `recall_title`.
 - That zero wrong values is achievable without the abstention rate in section 2.
