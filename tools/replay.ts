@@ -25,9 +25,9 @@ const SITES = ['mattel', 'ikea', 'chicco'];
 const TAU = 0.6;
 const DELTA = 0.16;
 
-const sha = (s) => createHash('sha256').update(s || '').digest('hex').slice(0, 16); // proof ids only
+const sha = (s: string | null | undefined): string => createHash('sha256').update(s || '').digest('hex').slice(0, 16); // proof ids only
 
-const parse = async (site, file) => {
+const parse = async (site: string, file: string) => {
   const $ = load(await readFile(`corpus/${site}/${file}`, 'utf8'));
   $('script,style,noscript').remove();
   return $;
@@ -36,8 +36,10 @@ const parse = async (site, file) => {
 const EXPECTED = { regex: '(recall|rappel|retirada|remedy|alert)', regexFlags: 'i', minLen: 20 };
 
 const run = async () => {
-  const events = [];
-  const rows = [];
+  // TODO(types): these are the proof record and the published row -- see
+  // `ProofEvent` in src/runner.ts for why neither is pinned as an interface.
+  const events: any[] = [];
+  const rows: any[] = [];
   let runNo = 0;
   let stored = 0;
   let deduped = 0;
@@ -88,12 +90,12 @@ const run = async () => {
   await writeFile(OUT, events.map((e) => JSON.stringify(e)).join('\n') + '\n');
   await writeFile(ROWS, rows.map((e) => JSON.stringify(e)).join('\n') + '\n');
 
-  const by = (k) => events.filter((e) => e.event === k).length;
+  const by = (k: string) => events.filter((e) => e.event === k).length;
   console.log(`\nreplayed ${events.length} runs across ${SITES.length} sites`);
   console.log(`  ok       ${by('ok')}`);
   console.log(`  heal     ${by('heal')}`);
   console.log(`  abstain  ${by('abstain')}`);
-  const causes = {};
+  const causes: Record<string, number> = {};
   events.filter((e) => e.event !== 'ok').forEach((e) => {
     causes[e.attributed_cause] = (causes[e.attributed_cause] || 0) + 1;
   });

@@ -1,7 +1,7 @@
-// Runnable check for src/fingerprint.js, asserted against the real corpus.
-// node tools/selftest.js   ->   exits non-zero on any failure.
+// Runnable check for src/fingerprint.ts, asserted against the real corpus.
+// npm test   ->   exits non-zero on any failure.
 
-import { load } from 'cheerio';
+import { load, type CheerioAPI } from 'cheerio';
 import { readFile, readdir } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import {
@@ -11,6 +11,7 @@ import {
   candidates,
   isVolatileClass,
   isVolatileId,
+  type Fingerprint,
 } from '../src/fingerprint.js';
 import { ned, jaccard, sharedWords, score } from '../src/heal.js';
 import { healGated } from '../src/heal.js';
@@ -18,19 +19,19 @@ import { MUTATIONS, markTarget } from '../src/mutate.js';
 import { publishRow, STATUSES } from '../src/envelope.js';
 import { detect } from '../src/detect.js';
 
-const capturesOf = async (site) =>
+const capturesOf = async (site: string): Promise<string[]> =>
   (await readdir(`corpus/${site}`)).filter((f) => f.endsWith('.html')).sort();
 
-const parse = async (site, file) => {
+const parse = async (site: string, file: string): Promise<CheerioAPI> => {
   const $ = load(await readFile(`corpus/${site}/${file}`, 'utf8'));
   $('script,style,noscript').remove();
   return $;
 };
 
 /** Pick a real recall-item element the way a human would at capture time. */
-function findRecallItem($) {
-  let best = null;
-  $('a,h2,h3,li,p').each((i, el) => {
+function findRecallItem($: CheerioAPI): any {
+  let best: any = null;
+  $('a,h2,h3,li,p').each((i: number, el: any) => {
     if (best) return;
     const t = $(el).text().replace(/\s+/g, ' ').trim();
     if (t.length < 25 || t.length > 160) return;
@@ -42,13 +43,13 @@ function findRecallItem($) {
 }
 
 let failures = 0;
-const check = (name, fn) => {
+const check = (name: string, fn: () => void): void => {
   try {
     fn();
     console.log(`  ok   ${name}`);
   } catch (err) {
     failures++;
-    console.log(`  FAIL ${name}\n       ${err.message}`);
+    console.log(`  FAIL ${name}\n       ${(err as Error).message}`);
   }
 };
 
@@ -57,10 +58,10 @@ const run = async () => {
 
   // ---- 1. the extractor produces a usable fingerprint on every real site ----
   console.log('fingerprint over real captures');
-  const fps = {};
+  const fps: Record<string, Fingerprint> = {};
   for (const site of ['mattel', 'ikea', 'chicco']) {
     const files = await capturesOf(site);
-    const $ = await parse(site, files.at(-1));
+    const $ = await parse(site, files.at(-1)!);
     const el = findRecallItem($);
     check(`${site}: found a recall item to fingerprint`, () => assert.ok(el, 'no element matched'));
     if (!el) continue;
@@ -80,7 +81,7 @@ const run = async () => {
   // ---- 2. skeleton hash: stable on content change, moves on template change ----
   console.log('\nskeleton hash');
   const ikeaFiles = await capturesOf('ikea');
-  const $a = await parse('ikea', ikeaFiles.at(-1));
+  const $a = await parse('ikea', ikeaFiles.at(-1)!);
 
   check('deterministic: same page hashes the same twice', () =>
     assert.equal(skeletonHash($a).hash, skeletonHash($a).hash)
@@ -123,7 +124,7 @@ const run = async () => {
   console.log('\ncandidate set');
   for (const site of ['mattel', 'ikea', 'chicco']) {
     const files = await capturesOf(site);
-    const $ = await parse(site, files.at(-1));
+    const $ = await parse(site, files.at(-1)!);
     const c = candidates($);
     check(`${site}: ${c.length} candidates, no script/style`, () => {
       assert.ok(c.length > 50, `only ${c.length} candidates`);
@@ -133,7 +134,7 @@ const run = async () => {
 
   // ---- 4. selector-based capture, the production path ----
   console.log('\nselector capture');
-  const $ikea = await parse('ikea', ikeaFiles.at(-1));
+  const $ikea = await parse('ikea', ikeaFiles.at(-1)!);
   check('fingerprintSelector returns null for a miss (does not throw)', () =>
     assert.equal(fingerprintSelector($ikea, '.definitely-not-present-xyz'), null)
   );
@@ -169,7 +170,7 @@ const run = async () => {
   // measure it rather than assume it
   for (const site of ['mattel', 'ikea', 'chicco']) {
     const files = await capturesOf(site);
-    const $ = await parse(site, files.at(-1));
+    const $ = await parse(site, files.at(-1)!);
     let total = 0;
     let dropped = 0;
     for (const el of candidates($)) {
@@ -237,15 +238,15 @@ const run = async () => {
   console.log('\ntrust envelope over a real capture');
   {
     const files = await capturesOf('ikea');
-    const mkPage = async () => parse('ikea', files.at(-1));
+    const mkPage = async () => parse('ikea', files.at(-1)!);
     const $base = await mkPage();
     const el = findRecallItem($base);
     const target = fingerprint($base, el);
-    const gateOn = async (mutationId) => {
+    const gateOn = async (mutationId: string) => {
       const $ = await mkPage();
       const e = findRecallItem($);
       markTarget($, e);
-      MUTATIONS.find((m) => m.id === mutationId).apply($, e);
+      MUTATIONS.find((m) => m.id === mutationId)!.apply($, e);
       return healGated($, target, { tau: 0.6, delta: 0.16, limit: 5 });
     };
     const abstainReasons = ['no_candidates', 'below_tau', 'thin_margin'];
@@ -290,7 +291,9 @@ const run = async () => {
     check('the status vocabulary is closed', () => {
       assert.deepEqual(STATUSES, ['live', 'healed', 'quarantined', 'stale', 'degraded']);
       assert.throws(() => publishRow({
-        values: {}, statuses: { x: { status: 'confident' } }, run: 'r', proof: 'p',
+        // `as any`: the type already refuses this. The assertion is that the
+        // RUNTIME refuses it too, for a status arriving over JSON.
+        values: {}, statuses: { x: { status: 'confident' as any } }, run: 'r', proof: 'p',
       }));
     });
   }

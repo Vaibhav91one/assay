@@ -25,7 +25,12 @@ type El = any;
 type Cmp = (a: any, b: any) => number;
 
 /** One row of the weighted property spec: name, weight, reader, comparator. */
-export type SpecEntry = [name: string, weight: number, get: (f: Fingerprint) => any, cmp: Cmp];
+export type SpecEntry = [
+  name: string,
+  weight: number,
+  get: (f: Partial<Fingerprint>) => any,
+  cmp: Cmp,
+];
 
 /** One scored candidate element. */
 export interface Ranked {
@@ -140,9 +145,13 @@ const isEmpty = (v: unknown): boolean => v === null || v === undefined || v === 
  * the clearest mechanism for a confident wrong heal in that codebase. Skipping
  * renormalises over the properties that actually carry signal.
  */
+// `Partial<Fingerprint>` rather than `Fingerprint`, and not as a concession:
+// the absent-on-both rule below means a missing property is a first-class input
+// to this function, so a caller weighing two hand-built partial descriptions --
+// which is exactly what the selftest does -- is using it as designed.
 export function score(
-  target: Fingerprint,
-  cand: Fingerprint,
+  target: Partial<Fingerprint>,
+  cand: Partial<Fingerprint>,
   { spec = SPEC }: { spec?: SpecEntry[] } = {},
 ): { score: number; weighed: number; parts: Record<string, number> } {
   let hit = 0;

@@ -6,10 +6,10 @@
   "license": "MIT",
   "scripts": {
     "corpus": "tsx tools/fetch-corpus.js",
-    "test": "tsx tools/selftest.js",
-    "bench": "tsx tools/bench.js",
+    "test": "tsx tools/selftest.ts",
+    "bench": "tsx tools/bench.ts",
     "sweep": "tsx tools/sweep.js",
-    "replay": "tsx tools/replay.js",
+    "replay": "tsx tools/replay.ts",
     "audit": "tsx tools/audit.js",
     "app": "tsx tools/build-app.js",
     "vendor": "mkdir -p app/vendor && cp node_modules/mermaid/dist/mermaid.min.js app/vendor/",

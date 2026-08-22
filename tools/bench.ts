@@ -13,7 +13,7 @@ import { heal, healGated, rank } from '../src/heal.js';
 import { MUTATIONS, markTarget, TRUTH_ATTR } from '../src/mutate.js';
 import { pickTarget } from '../src/target.js';
 
-const arg = (name, dflt) => {
+const arg = (name: string, dflt: number): number => {
   const i = process.argv.indexOf(`--${name}`);
   return i > -1 ? Number(process.argv[i + 1]) : dflt;
 };
@@ -22,7 +22,7 @@ const TAU = arg('tau', 0.6);   // calibrated, see tools/sweep.js
 const DELTA = arg('delta', 0.16); // calibrated, see tools/sweep.js
 const SITES = ['mattel', 'ikea', 'chicco'];
 
-const fresh = async (site, file) => {
+const fresh = async (site: string, file: string) => {
   const $ = load(await readFile(`corpus/${site}/${file}`, 'utf8'));
   $('script,style,noscript').remove();
   return $;
@@ -31,14 +31,25 @@ const fresh = async (site, file) => {
 /** A real recall item, picked the way a human would at capture time. */
 
 /** Naive baseline: first element sharing the original tag. What a beginner writes. */
-function healNaive($, target) {
+function healNaive($: any, target: any) {
   for (const el of candidates($)) {
     if (el.name === target.tag) return { element: el };
   }
   return null;
 }
 
-const blank = () => ({ correct: 0, wrong: 0, value_ok: 0, value_wrong: 0,
+/** One arm's running score. Two notions of correct -- see `tally` below. */
+interface Tally {
+  correct: number;
+  wrong: number;
+  value_ok: number;
+  value_wrong: number;
+  abstain_right: number;
+  abstain_wrong: number;
+  n: number;
+}
+
+const blank = (): Tally => ({ correct: 0, wrong: 0, value_ok: 0, value_wrong: 0,
   abstain_right: 0, abstain_wrong: 0, n: 0 });
 
 /**
@@ -52,7 +63,13 @@ const blank = () => ({ correct: 0, wrong: 0, value_ok: 0, value_wrong: 0,
  * and M4 does not; for a scraper it genuinely IS a match, because the extracted
  * value is the same. We report BOTH rather than picking the flattering one.
  */
-function tally(bucket, expect, decision, chose, valueMatch) {
+function tally(
+  bucket: Tally,
+  expect: string,
+  decision: string,
+  chose: unknown,
+  valueMatch: unknown,
+) {
   bucket.n++;
   if (decision === 'abstain') {
     if (expect === 'none') bucket.abstain_right++;
@@ -64,7 +81,7 @@ function tally(bucket, expect, decision, chose, valueMatch) {
   if (valueMatch) bucket.value_ok++; else bucket.value_wrong++;
 }
 
-const pct = (x, n) => (n ? ((x / n) * 100).toFixed(1) + '%' : '-');
+const pct = (x: number, n: number): string => (n ? ((x / n) * 100).toFixed(1) + '%' : '-');
 
 const run = async () => {
   const arms = {
@@ -72,7 +89,10 @@ const run = async () => {
     plain: blank(),
     gated: blank(),
   };
-  const byMutation = {};
+  const byMutation: Record<
+    string,
+    { label: string; expect: string; plain: Tally; gated: Tally }
+  > = {};
   const events = [];
 
   for (const site of SITES) {
@@ -117,12 +137,12 @@ const run = async () => {
         if ($m.html().includes(TRUTH_ATTR)) {
           throw new Error(`canary: ${TRUTH_ATTR} leaked into arm input (${site}/${file} ${mut.id})`);
         }
-        const isTruth = (el2) => !!el2 && el2 === truthEl;
+        const isTruth = (el2: any) => !!el2 && el2 === truthEl;
 
         byMutation[mut.id] ||= { label: mut.label, expect: mut.expect, plain: blank(), gated: blank() };
 
         // --- naive
-        const sameValue = (el2) =>
+        const sameValue = (el2: any) =>
           el2 && $m(el2).text().replace(/\s+/g, ' ').trim() === truthText;
 
         const n = healNaive($m, target);
@@ -134,14 +154,14 @@ const run = async () => {
         const pOk = p && isTruth(p.element);
         const pVal = p && sameValue(p.element);
         tally(arms.plain, mut.expect, p ? 'heal' : 'abstain', pOk, pVal);
-        tally(byMutation[mut.id].plain, mut.expect, p ? 'heal' : 'abstain', pOk, pVal);
+        tally(byMutation[mut.id]!.plain, mut.expect, p ? 'heal' : 'abstain', pOk, pVal);
 
         // --- gated
         const g = healGated($m, target, { tau: TAU, delta: DELTA, limit: 3 });
         const gOk = g.decision === 'heal' && isTruth(g.element);
         const gVal = g.decision === 'heal' && sameValue(g.element);
         tally(arms.gated, mut.expect, g.decision, gOk, gVal);
-        tally(byMutation[mut.id].gated, mut.expect, g.decision, gOk, gVal);
+        tally(byMutation[mut.id]!.gated, mut.expect, g.decision, gOk, gVal);
 
         events.push({
           site, capture: file.slice(0, 8), mutation: mut.id, expect: mut.expect,
@@ -171,7 +191,7 @@ const run = async () => {
     const label = { naive: 'naive (first tag match)', plain: 'similarity, no gate',
       gated: `margin gate (t${TAU}/d${DELTA})` }[name];
     console.log(
-      label.padEnd(28) + String(a.n).padStart(5) +
+      label!.padEnd(28) + String(a.n).padStart(5) +
       pct(a.correct, a.n).padStart(9) +
       pct(a.value_ok, a.n).padStart(11) +
       pct(a.value_wrong, a.n).padStart(13) +
