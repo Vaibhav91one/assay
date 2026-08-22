@@ -545,13 +545,15 @@ export default function MotionPage() {
           <p className="meta-12_5 text-[var(--text-secondary)]">
             <span className="mono-value-12_5">ui/badge</span>,{' '}
             <span className="mono-value-12_5">ui/card</span> and{' '}
-            <span className="mono-value-12_5">ui/dialog</span> have zero importers. The rest of{' '}
-            <span className="mono-value-12_5">ui/</span> is alive but only through{' '}
+            <span className="mono-value-12_5">ui/dialog</span> have zero importers. Most of the
+            rest of <span className="mono-value-12_5">ui/</span> is alive only through{' '}
             <span className="mono-value-12_5">ui/sidebar</span>:{' '}
             <span className="mono-value-12_5">ui/button</span> in particular is on every screen,
             because <span className="mono-value-12_5">SidebarTrigger</span> is one and the top bar
             draws it. That is why the product&rsquo;s buttons got their own file instead of taking
-            this one over.
+            this one over. <span className="mono-value-12_5">ui/sheet</span> is the one that got out:
+            it was moved from Radix to Base UI and the proof sheet is drawn with it, so it is a
+            product component now rather than a shelf one.
           </p>
 
           <div className="flex items-center gap-[10px]">

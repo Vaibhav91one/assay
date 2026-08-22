@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import {
-  CircleAlert, Eye, Hammer, Split, ChevronRight, PencilLine, RotateCw, Scissors,
+  CircleAlert, Eye, Hammer, Shapes, Split, ChevronRight, PencilLine, RotateCw, Scissors,
 } from 'lucide-react';
 import { turn, type TraceEvent } from '@/lib/chat-stream';
 import { Button } from '@/components/button';
@@ -666,6 +666,22 @@ function StartFrom({ waiting }: { waiting: number }) {
           sub="held rows, nothing published yet"
         />
       )}
+      {/* First of the two, and above Runs on purpose: this is the row for
+          somebody who has nothing yet, and Runs is the row for somebody who
+          has. On an empty instance the runs table is empty, so offering it
+          first offers a blank screen.
+
+          It is a Row like the others rather than a special affordance because
+          it IS like the others -- a place to start that is not the composer.
+          The tracker screens do the explaining; a paragraph here about what a
+          tracker is would be a paragraph on the one screen that has to stay
+          quiet. */}
+      <Row
+        href="/library"
+        icon={<Shapes size={18} strokeWidth={1.5} className="text-[var(--text-primary)]" aria-hidden />}
+        title="Pick a tracker and paste a link"
+        sub="Amazon, GitHub, Wikipedia, or any page"
+      />
       <Row
         href="/runs"
         icon={<Eye size={18} strokeWidth={1.5} className="text-[var(--text-primary)]" aria-hidden />}
