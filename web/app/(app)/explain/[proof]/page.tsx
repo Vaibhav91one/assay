@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Copy as CopyIcon, RefreshCw } from 'lucide-react';
-import { TopBar, TOP_BAR_ACTION } from '@/components/top-bar';
+import { TopBar } from '@/components/top-bar';
+import { actionVariants } from '@/components/button';
 import { StatusLine, type Tone } from '@/components/status-line';
 import { Disclosure } from '@/components/disclosure';
 import { Copy } from '@/components/copy';
@@ -23,9 +24,13 @@ export default async function ExplainPage({ params }: { params: Promise<{ proof:
         title="Where did this number come from?"
         status={`proof ${p.proof}`}
         action={
-          <Copy text={p.proof} receipt={<>Copied <code className="mono-value-12_5">{p.proof}</code></>} className={TOP_BAR_ACTION}>
-            <CopyIcon size={16} strokeWidth={1.5} className="text-[var(--text-primary)]" aria-hidden />
-            <span className="meta-12_5 text-[var(--text-primary)]">Copy</span>
+          <Copy
+            text={p.proof}
+            receipt={<>Copied <code className="mono-value-12_5">{p.proof}</code></>}
+            className={actionVariants({ variant: 'outline' })}
+          >
+            <CopyIcon size={16} strokeWidth={1.5} aria-hidden />
+            Copy
           </Copy>
         }
       />

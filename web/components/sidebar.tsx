@@ -14,6 +14,7 @@ import {
   SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { SidebarNav, ScraperList } from './sidebar-nav';
+import { actionVariants } from './button';
 
 /**
  * The app's left rail, on shadcn's Sidebar.
@@ -58,12 +59,13 @@ export async function Sidebar({
         <div className="px-[20px] pb-[32px] group-data-[collapsible=icon]:px-[12px]">
           <Link
             href="/?new=1"
-            className="flex h-[40px] w-full items-center justify-center gap-[12px] rounded-[9px] bg-[var(--accent-brand)] px-[16px] group-data-[collapsible=icon]:px-0"
+            className={actionVariants({
+              variant: 'primary',
+              className: 'w-full justify-center group-data-[collapsible=icon]:px-0',
+            })}
           >
-            <Plus size={16} strokeWidth={2} className="shrink-0 text-[var(--accent-on-primary)]" aria-hidden />
-            <span className="body-13_5 text-[var(--accent-on-primary)] group-data-[collapsible=icon]:hidden">
-              New scrape
-            </span>
+            <Plus size={16} strokeWidth={2} className="shrink-0" aria-hidden />
+            <span className="group-data-[collapsible=icon]:hidden">New scrape</span>
           </Link>
         </div>
 
