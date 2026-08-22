@@ -54,9 +54,14 @@ const NOT_OURS = new Set(['NODE_ENV', 'USER']);
  * promise that the name was checked against that vendor's own documentation.
  */
 const READ_BY_A_VENDOR: Record<string, string> = {
-  // clerk.com/docs -- `clerk init` writes exactly these two names.
+  // clerk.com/docs/nextjs/getting-started/quickstart -- `clerk init` writes
+  // exactly these two names.
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: '@clerk/nextjs',
   CLERK_SECRET_KEY: '@clerk/nextjs',
+  // clerk.com/docs/reference/nextjs/clerk-middleware -- without it
+  // `auth.protect()` redirects to Clerk's hosted Account Portal rather than to
+  // Assay's own sign-in screen.
+  NEXT_PUBLIC_CLERK_SIGN_IN_URL: '@clerk/nextjs',
 };
 
 /** Every `NAME=` on a non-comment line of `.env.example`, in file order. */
