@@ -386,3 +386,22 @@ and it needs a static form that still says the same thing.
 banner at the top flips, the shimmer becomes plain text, the bars stop at a legible height, and
 nothing else moves.
 
+---
+
+## 7. Where this came from
+
+The motion vocabulary here was adapted from Beautiful UI (beautifului.dev), MIT, © 2026 Shane Levine.
+
+No files were copied. The keyframes and primitives in `motion.css` and `components/motion/` were
+written from a described vocabulary — which effects a small app needs, what each one is for, roughly
+how long each should run — onto Assay's own tokens. The durations, the two easing curves, the
+reduced-motion contract and the component APIs are this repo's.
+
+This note is a courtesy, not a compliance step. MIT requires the notice to travel with copies of the
+covered work, and nothing here is a copy of it; there was no obligation to credit and this does not
+create one. It records where the ideas came from, which is worth recording on its own.
+
+One detail worth knowing if the licence is ever checked: the MIT grant for Beautiful UI is published
+as a web page the author controls, not as a LICENSE file in a repository. A page can change or go
+away, and there is no commit to point at for what it said on the day it was read. If this ever needs
+to be relied on rather than acknowledged, capture the page as it stands then.
