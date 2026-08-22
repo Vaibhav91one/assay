@@ -11,7 +11,7 @@ import {
   WINDOW_DAYS, RETURN_THRESHOLD, type HealRow,
 } from '../src/brake/index.js';
 import {
-  getDb, closeDb, sql, targets, runs, fieldRuns, captures, fieldState,
+  getDb, closeDb, sql, and, eq, targets, runs, fieldRuns, captures, fieldState,
 } from '../src/store/index.js';
 
 const T = 'test_brake';
@@ -214,7 +214,13 @@ describe('the brake', () => {
     await clearBrake({ targetId: T, field: F, confirm: F, clearedBy: 'test' });
 
     // Read the whole row -- including the columns this module must not touch.
-    const [after] = await d.select().from(fieldState);
+    // Scoped to this suite's field: `wipe()` only clears T, so an unscoped
+    // select here reads whichever row Postgres returns first and asserts
+    // against some other test's target. Every non-corpus run now leaves a
+    // field_state row behind (it is where a field's baseline is kept), so that
+    // was a flake waiting for a second target to exist.
+    const [after] = await d.select().from(fieldState)
+      .where(and(eq(fieldState.targetId, T), eq(fieldState.field, F)));
     expect(after!.fragilityGrade).toBe('brittle');
     expect(after!.drifting).toBe('drifting');
   });
