@@ -110,7 +110,11 @@ function emit({ vars, styles, effects }: any) {
       `font-family: var(${mono ? '--font-mono' : '--font-sans'});`,
       `font-size: ${s.size}px;`,
     ];
-    if (s.lineHeight) parts.push(`line-height: ${s.lineHeight}px;`);
+    // Figma's AUTO line height is the font's own metrics, which is exactly what
+    // CSS `normal` means -- so it has to be written down, not left out. Tailwind's
+    // preflight sets line-height 1.5 on the root, so an omitted line-height is
+    // not the browser default: display/96 came out at 144px against Figma's 99.
+    parts.push(s.lineHeight ? `line-height: ${s.lineHeight}px;` : 'line-height: normal;');
     if (s.letterSpacing) parts.push(`letter-spacing: ${round(s.letterSpacing)}px;`);
     L.push(`${cls} { ${parts.join(' ')} }`);
   }
