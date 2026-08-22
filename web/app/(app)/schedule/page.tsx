@@ -32,7 +32,15 @@ export default async function SchedulePage({
 
   return (
     <>
-      <TopBar title="Schedule" status={headline(running, data.clocks.length, ranToday)} />
+      {/* `scraper={null}`: this is the one screen that already carries the run
+          control, per scraper, in the dialog behind each next-run mark. A copy
+          in the bar would be the redundancy every other screen's copy exists
+          to remove. */}
+      <TopBar
+        title="Schedule"
+        status={headline(running, data.clocks.length, ranToday)}
+        scraper={null}
+      />
       {/* 1056 is the drawn content width: past it a month grid stretches into
           seven columns nobody scans across. */}
       <div className="flex w-full max-w-[1112px] flex-col items-start gap-[18px] px-[56px] pb-[64px] pt-[26px]">
