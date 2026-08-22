@@ -54,6 +54,42 @@ ASSAY_REQUIRE_DB=1 npx vitest run
 reports as passed, not skipped** — the test count is identical either way. Set
 `ASSAY_REQUIRE_DB=1` to turn that vacuous green into a failure. CI always sets it.
 
+### Running the app: build and start, not `next dev`
+
+```bash
+npm run build --workspace web
+DATABASE_URL=... PORT=3000 npm --workspace web run start
+```
+
+**`npm run dev --workspace web` does not work on this tree, and has not for some
+time.** It boots, and then the first route it is asked to compile dies about
+thirty seconds in:
+
+```
+○ Compiling / ...
+RangeError: Invalid array length
+    at Array.push (<anonymous>)
+⨯ uncaughtException: RangeError: Invalid array length
+```
+
+The process exits. There is no more stack than that — one native frame, with
+`--stack-trace-limit=200` and in `.next/dev/logs/next-development.log` alike.
+
+What it is **not**, each ruled out by running the dev server with that one thing
+changed and getting the identical error:
+
+- not route-dependent — `/motion` fails exactly as `/` does, on a fresh server
+  with an empty `.next`;
+- not the dev source maps (`devtool: false`);
+- not fumadocs (`createMDX()` bypassed);
+- not the watcher walking the sibling worktrees under `.claude/worktrees/`
+  (`watchOptions.ignored`), which was the strong candidate, because it is the
+  same shape as the bug `vitest.config.ts` already documents.
+
+`next build --webpack` compiles the same graph cleanly, so CI has never seen it
+and neither has the deployed app. Until someone gets a stack out of it, build and
+start: the loop is slower, and it is the loop that works.
+
 ## Architecture
 
 Two processes over one Postgres, and Next never runs a scrape:
