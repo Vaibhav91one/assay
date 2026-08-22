@@ -15,6 +15,7 @@
 import { load } from 'cheerio';
 import { readFile, readdir } from 'node:fs/promises';
 import { ingestPage } from '../src/connectors/ingest.js';
+import { recomputeField } from '../src/health/observe.js';
 import { deliver } from '../src/api/webhooks.js';
 import { send, breakSubject, breakBody } from '../src/notify.js';
 import { getDb, closeDb, claimDueTarget, markNotified } from '../src/store/index.js';
@@ -122,6 +123,21 @@ async function runOne(target: any) {
     } else {
       note = '  (episode already open — no second alert)';
     }
+  }
+
+  // F1/F3 standing state, refreshed from the run that just landed. Writes only
+  // E's two columns on field_state, so it cannot disturb a brake sharing the row.
+  //
+  // Not fatal, and not silent. A grade is an OBSERVATION about the run; the run
+  // record is the run. Losing the record because the grader could not read a
+  // pruned capture would be letting a report break the thing it reports on --
+  // and detect() needs an unbroken series, so it would break the detector too.
+  // The failure is named on the same line the operator is already reading.
+  try {
+    const h = await recomputeField(targetId, field);
+    note += `  ${h.fragility_grade}/${h.drift_state}`;
+  } catch (e) {
+    note += `  (health not recomputed: ${(e as Error).message.split('\n')[0]})`;
   }
 
   return `${targetId}  run ${r.runId}  ${result.event.event}  ${result.status.status}${note}`;
