@@ -105,16 +105,23 @@ function RunsTable({ rows }: { rows: RunRow[] }) {
       <tbody>
         {rows.map((r) => (
           <tr key={r.runId} className="border-b border-[var(--border-hairline)]">
-            <td className="mono-value-13 w-[64px] py-[12px] text-[var(--text-primary)]">{r.runId}</td>
+            <td className="w-[64px] py-[12px]">
+              <Link href={`/runs/${r.runId}`} className="mono-value-13 text-[var(--semantic-link)]">
+                {r.runId}
+              </Link>
+            </td>
             <td className="body-13_5 w-[180px] py-[12px] text-[var(--text-primary)]">{when(r.at)}</td>
             <td className="body-13_5 py-[12px] text-[var(--text-primary)]">{r.scraper}</td>
             <td className="py-[12px]"><Happened row={r} /></td>
             <td className="py-[12px] text-right">
-              {r.proof && r.outcome !== 'clean' && (
-                <Link href={`/explain/${r.proof}`} className="meta-13 text-[var(--semantic-link)]">
-                  details ›
-                </Link>
-              )}
+              {/* Every run opens, not only the ones with a cell worth explaining.
+                  A clean run and a skipped one are answers too, and until this
+                  route existed the only thing to open was a proof -- which sent
+                  a reader to the provenance of one value when what they clicked
+                  was a run. */}
+              <Link href={`/runs/${r.runId}`} className="meta-13 text-[var(--semantic-link)]">
+                what happened ›
+              </Link>
             </td>
           </tr>
         ))}
