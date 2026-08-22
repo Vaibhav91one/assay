@@ -14,7 +14,7 @@
 
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { TRACKERS, trackerById, thresholdsOf } from '../src/library/index.js';
+import { TRACKERS, GROUPS, trackerById, thresholdsOf } from '../src/library/index.js';
 import { analyse } from '../src/library/analyse.js';
 import { contractFor } from '../src/library/contract.js';
 import { formatIssues, parseContract, thresholdsFor, TIERS } from '../src/contracts/index.js';
@@ -77,8 +77,12 @@ describe('every tracker is applicable', () => {
     expect(TRACKERS.length).toBeGreaterThan(0);
     expect(new Set(TRACKERS.map((t) => t.id)).size).toBe(TRACKERS.length);
 
+    const groups = new Set(GROUPS.map((g) => g.id));
     for (const t of TRACKERS) {
       expect(trackerById(t.id)).toBe(t);
+      // A tracker in no group renders nowhere: the catalogue draws shelf by
+      // shelf, so a typo here silently removes the card from the product.
+      expect(groups.has(t.group as never), `${t.id} group "${t.group}"`).toBe(true);
       expect(t.fields.length, `${t.id} has no fields`).toBeGreaterThan(0);
       expect(new Set(t.fields.map((f) => f.name)).size, `${t.id} repeats a field`)
         .toBe(t.fields.length);
@@ -100,11 +104,18 @@ describe('every tracker is applicable', () => {
     // The whole difference between a site tracker and the generic one. If a
     // named tracker loses its hints it silently becomes the generic tracker
     // wearing a site's name, which is the failure mode worth a test.
+    // Narrowed by the element's identity or by its tag -- arXiv anchors on
+    // `dt a` and an `h3` rather than a class, which is still a claim about
+    // arXiv's markup and not about pages in general.
     for (const t of TRACKERS.filter((x) => x.id !== 'any')) {
-      expect(t.fields.some((f) => f.match.select), `${t.id} has no select hint`).toBe(true);
+      expect(
+        t.fields.some((f) => f.match.select || f.match.tags),
+        `${t.id} is not narrowed to its site`,
+      ).toBe(true);
     }
     for (const f of trackerById('any')!.fields) {
       expect(f.match.select, `any.${f.name} should be generic`).toBeUndefined();
+      expect(f.match.tags, `any.${f.name} should be generic`).toBeUndefined();
     }
   });
 });
@@ -135,6 +146,13 @@ describe('a prior finds the value a person would point at', () => {
     // fixture by luck, which is how it was nearly shipped wrong.
     { fixture: 'gh-releases', tracker: 'github', field: 'released_on', value: '05 Aug 16:25' },
     { fixture: 'wikipedia-article', tracker: 'wikipedia', field: 'last_edited', value: 'This page was last edited on 9 August 2026, at 08:53 (UTC).' },
+    { fixture: 'pypi-project', tracker: 'pypi', field: 'version', value: 'Django 6.1' },
+    { fixture: 'pypi-project', tracker: 'pypi', field: 'released_on', value: 'Aug 5, 2026' },
+    // The identifier, not the title: arXiv's title div begins with a "Title:"
+    // descriptor span, and watching that value would watch the label too.
+    { fixture: 'arxiv-listing', tracker: 'arxiv', field: 'newest_paper', value: 'arXiv:2608.20338' },
+    { fixture: 'arxiv-listing', tracker: 'arxiv', field: 'announcement', value: 'Fri, 21 Aug 2026 (showing first 50 of 76 entries )' },
+    { fixture: 'mdn-page', tracker: 'mdn', field: 'last_modified', value: 'This page was last modified on Jun 22, 2026 by MDN contributors.' },
     // The generic tracker, with no identity hint, on two ordinary shops.
     { fixture: 'books-product', tracker: 'any', field: 'price', value: '£51.77' },
     { fixture: 'books-product', tracker: 'any', field: 'availability', value: 'In stock (22 available)' },
