@@ -15,7 +15,52 @@
  * MAD 0. Returning 0 there scores a jump from 0% to 90% nulls as perfectly
  * normal, which is precisely the alert this exists for.
  */
-export function robustZ(series, x) {
+/** Median, median-absolute-deviation, and the robust z-score of one observation. */
+export interface RobustZ {
+  z: number;
+  med: number;
+  mad: number;
+  spike: boolean;
+}
+
+/** What capture time recorded about the shape of a healthy value. */
+export interface Expected {
+  regex?: string;
+  regexFlags?: string;
+  minLen?: number;
+}
+
+/** One prior run, as far as the detectors are concerned. */
+export interface HistoryPoint {
+  nullRate?: number | null;
+  pageBytes?: number | null;
+}
+
+export interface DetectInput {
+  field: string;
+  value: unknown;
+  expected?: Expected;
+  history?: HistoryPoint[];
+  skeleton?: { before?: string | null; after?: string | null };
+  anchors?: Record<string, unknown>;
+  anchorsBefore?: Record<string, unknown> | null;
+  pageBytes?: number | null;
+}
+
+/** Attribution. Not every signal means the selector broke -- see below. */
+export type Cause = 'ok' | 'semantic_drift' | 'wrong_value' | 'selector_break' | 'unknown';
+
+export interface Detection {
+  field: string;
+  broken: boolean;
+  cause: Cause;
+  signals: string[];
+  context: string[];
+  corroborated: boolean;
+  diagnosis: string;
+}
+
+export function robustZ(series: readonly number[], x: number): RobustZ {
   const s = [...series].sort((a, b) => a - b);
   if (!s.length) return { z: 0, med: x, mad: 0, spike: false };
   const med = s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2;
@@ -29,7 +74,7 @@ export function robustZ(series, x) {
 const PLACEHOLDERS = new Set(['', '-', '--', 'n/a', 'na', 'null', 'undefined', 'tbd', '0', 'none']);
 
 /** A value that is present but meaningless is a break, not a success. */
-export function isPlaceholder(v) {
+export function isPlaceholder(v: unknown): boolean {
   return v === null || v === undefined || PLACEHOLDERS.has(String(v).trim().toLowerCase());
 }
 
@@ -55,8 +100,8 @@ export function detect({
   // rate; only SHRINKAGE fires (a page that grows is content, a page that
   // loses a third of itself is a template failure or a block page).
   pageBytes = null,
-}) {
-  const signals = [];
+}: DetectInput): Detection {
+  const signals: string[] = [];
 
   if (value === null || value === undefined) signals.push('value_missing');
   else if (isPlaceholder(value)) signals.push(`placeholder_value:"${value}"`);
@@ -64,11 +109,11 @@ export function detect({
   if (value != null && expected.regex) {
     // JS has no inline (?i) -- flags are a separate argument. Guard against a
     // bad pattern rather than letting a malformed expectation crash the run.
-    let re = null;
+    let re: RegExp | null = null;
     try {
       re = new RegExp(expected.regex, expected.regexFlags ?? 'i');
     } catch (err) {
-      signals.push(`bad_expectation_regex:${err.message}`);
+      signals.push(`bad_expectation_regex:${(err as Error).message}`);
     }
     if (re && !re.test(String(value))) {
       signals.push(`shape_mismatch:/${expected.regex}/${expected.regexFlags ?? 'i'} got "${String(value).slice(0, 40)}"`);
@@ -94,7 +139,7 @@ export function detect({
   }
 
   if (pageBytes != null && history.length >= 3) {
-    const sizes = history.map((h) => h.pageBytes).filter((v) => v != null);
+    const sizes = history.map((h) => h.pageBytes).filter((v): v is number => v != null);
     if (sizes.length >= 3) {
       const rz = robustZ(sizes, pageBytes);
       // 5% materiality floor. Without it the zero-variance branch fires on a
@@ -114,7 +159,7 @@ export function detect({
   // incident. Treating a layout change as a break is how a detector earns being
   // ignored. It corroborates other signals and raises confidence; it never fires
   // alone.
-  const context = [];
+  const context: string[] = [];
   if (skeleton.before && skeleton.after && skeleton.before !== skeleton.after) {
     context.push(`skeleton_changed:${skeleton.before}->${skeleton.after}`);
   }
@@ -137,7 +182,7 @@ export function detect({
 
   // Attribution: not every signal means the selector broke. Healing a blocked
   // page or a soft-404 is how a healer poisons its own baseline.
-  let cause = 'ok';
+  let cause: Cause = 'ok';
   if (signals.length) {
     if (signals.some((s) => s.startsWith('anchors_disagree'))) cause = 'semantic_drift';
     else if (signals.some((s) => s.startsWith('shape_mismatch') || s.startsWith('placeholder')))

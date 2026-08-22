@@ -8,7 +8,27 @@
 
 // The closed vocabulary. stale and degraded are defined by F13 but nothing can
 // emit them yet -- they need the per-field policy engine (contracts) to exist.
-export const STATUSES = ['live', 'healed', 'quarantined', 'stale', 'degraded'];
+export type FieldStatus = 'live' | 'healed' | 'quarantined' | 'stale' | 'degraded';
+
+export const STATUSES: FieldStatus[] = ['live', 'healed', 'quarantined', 'stale', 'degraded'];
+
+export interface FieldVerdict {
+  status: FieldStatus;
+  reason?: string;
+  held_since_run?: string | number | null;
+}
+
+export interface PublishInput {
+  values?: Record<string, unknown>;
+  statuses: Record<string, FieldVerdict>;
+  run: unknown;
+  proof: unknown;
+}
+
+/** A published row: the field values, plus the `_assay` block that justifies them. */
+export type PublishedRow = Record<string, unknown> & {
+  _assay: { run: unknown; proof: unknown; fields: Record<string, Record<string, unknown>> };
+};
 
 /**
  * Build the published row from raw values and per-field statuses.
@@ -17,9 +37,9 @@ export const STATUSES = ['live', 'healed', 'quarantined', 'stale', 'degraded'];
  * Every field named in statuses appears in the row; quarantined fields are
  * forced to null regardless of what values carries for them.
  */
-export function publishRow({ values = {}, statuses, run, proof }) {
-  const row = {};
-  const fields = {};
+export function publishRow({ values = {}, statuses, run, proof }: PublishInput): PublishedRow {
+  const row: Record<string, unknown> = {};
+  const fields: Record<string, Record<string, unknown>> = {};
   for (const [field, st] of Object.entries(statuses)) {
     if (!STATUSES.includes(st.status)) {
       throw new Error(`unknown field status "${st.status}" for ${field}`);
@@ -31,5 +51,5 @@ export function publishRow({ values = {}, statuses, run, proof }) {
       ...(st.held_since_run != null ? { held_since_run: st.held_since_run } : {}),
     };
   }
-  return { ...row, _assay: { run, proof, fields } };
+  return { ...row, _assay: { run, proof, fields } } as PublishedRow;
 }

@@ -13,12 +13,73 @@
 //   - absent-on-both properties are SKIPPED, not scored as agreement
 
 import { distance } from 'fastest-levenshtein';
-import { fingerprint, candidates } from './fingerprint.js';
+import type { CheerioAPI } from 'cheerio';
+import { fingerprint, candidates, type Fingerprint } from './fingerprint.js';
+
+// TODO(types): elements are domhandler `Element`s, but fingerprint.ts may not
+// import cheerio (see its header) so it hands them back as `any`. Naming the
+// type here and `any` there would be a lie in one of the two places.
+type El = any;
+
+/** How two property values are compared. Values are heterogeneous by design. */
+type Cmp = (a: any, b: any) => number;
+
+/** One row of the weighted property spec: name, weight, reader, comparator. */
+export type SpecEntry = [name: string, weight: number, get: (f: Fingerprint) => any, cmp: Cmp];
+
+/** One scored candidate element. */
+export interface Ranked {
+  score: number;
+  fp: Fingerprint;
+  parts: Record<string, number>;
+  el: El;
+}
+
+export interface RankOptions {
+  limit?: number;
+  spec?: SpecEntry[];
+}
+
+/** What the plain healer returns. It always answers -- that is the point of it. */
+export interface HealResult {
+  element: El;
+  fingerprint: Fingerprint;
+  score: number;
+  parts: Record<string, number>;
+  runnerUp: number | null;
+  margin: number | null;
+  ranked: Ranked[];
+}
+
+/** Everything the gate reports when it actually had candidates to weigh. */
+interface GateEvidence {
+  score: number;
+  runnerUp: number | null;
+  margin: number;
+  tau: number;
+  delta: number;
+  ranked: Ranked[];
+  fingerprint: Fingerprint;
+  element: El;
+}
+
+/**
+ * The gate's answer. Three shapes, not one: `no_candidates` fires before
+ * anything has been weighed, so it genuinely has no score, no margin and no
+ * element to report. Modelling that as a union rather than a bag of optional
+ * numbers is what makes `g.decision === 'heal' && g.fingerprint.text` type-check
+ * at the call sites that already write it.
+ */
+export type HealGateResult =
+  | ({ decision: 'heal'; reason: 'benign_tie' | 'clear_margin' } & GateEvidence)
+  | ({ decision: 'abstain'; reason: 'below_tau' | 'thin_margin' } & GateEvidence)
+  | ({ decision: 'abstain'; reason: 'no_candidates'; tau: number; delta: number } &
+      Partial<GateEvidence>);
 
 // --- comparators ------------------------------------------------------------
 
 /** Normalised Levenshtein similarity in [0,1]. */
-export function ned(a, b) {
+export function ned(a: string | null | undefined, b: string | null | undefined): number {
   if (a === b) return 1;
   if (!a || !b) return 0;
   const m = Math.max(a.length, b.length);
@@ -26,7 +87,7 @@ export function ned(a, b) {
 }
 
 /** Jaccard over two arrays of tokens. */
-export function jaccard(a, b) {
+export function jaccard(a: readonly string[] | null | undefined, b: readonly string[] | null | undefined): number {
   const A = new Set(a || []);
   const B = new Set(b || []);
   if (!A.size && !B.size) return 1;
@@ -36,7 +97,7 @@ export function jaccard(a, b) {
 }
 
 /** Fraction of the original's words that survive in the candidate. */
-export function sharedWords(a, b) {
+export function sharedWords(a: string | null | undefined, b: string | null | undefined): number {
   const A = new Set((a || '').toLowerCase().split(/\W+/).filter(Boolean));
   const B = new Set((b || '').toLowerCase().split(/\W+/).filter(Boolean));
   if (!A.size && !B.size) return 1;
@@ -46,12 +107,12 @@ export function sharedWords(a, b) {
   return hit / A.size;
 }
 
-const exact = (a, b) => (a === b ? 1 : 0);
+const exact: Cmp = (a, b) => (a === b ? 1 : 0);
 
 // --- the weighted property spec --------------------------------------------
 // weight, how to read the value off a fingerprint, how to compare two values
 
-const SPEC = [
+const SPEC: SpecEntry[] = [
   ['text',          2.7, (f) => f.text,           ned],
   ['name',          2.3, (f) => f.name,           ned],
   ['aria_label',    2.0, (f) => f.aria_label,     ned],
@@ -66,7 +127,7 @@ const SPEC = [
   ['abs_xpath',     0.3, (f) => f.abs_xpath,      ned],
 ];
 
-const isEmpty = (v) => v === null || v === undefined || v === '' || (Array.isArray(v) && !v.length);
+const isEmpty = (v: unknown): boolean => v === null || v === undefined || v === '' || (Array.isArray(v) && !v.length);
 
 /**
  * Similarity of a candidate to the stored fingerprint, in [0,1].
@@ -79,10 +140,14 @@ const isEmpty = (v) => v === null || v === undefined || v === '' || (Array.isArr
  * the clearest mechanism for a confident wrong heal in that codebase. Skipping
  * renormalises over the properties that actually carry signal.
  */
-export function score(target, cand, { spec = SPEC } = {}) {
+export function score(
+  target: Fingerprint,
+  cand: Fingerprint,
+  { spec = SPEC }: { spec?: SpecEntry[] } = {},
+): { score: number; weighed: number; parts: Record<string, number> } {
   let hit = 0;
   let total = 0;
-  const parts = {};
+  const parts: Record<string, number> = {};
   for (const [name, w, get, cmp] of spec) {
     const a = get(target);
     const b = get(cand);
@@ -99,8 +164,8 @@ export function score(target, cand, { spec = SPEC } = {}) {
  * Rank every element on the page against a stored fingerprint.
  * Returns candidates sorted best-first. Caller decides what to do with them.
  */
-export function rank($, target, { limit = 5, spec = SPEC } = {}) {
-  const out = [];
+export function rank($: CheerioAPI, target: Fingerprint, { limit = 5, spec = SPEC }: RankOptions = {}): Ranked[] {
+  const out: Ranked[] = [];
   for (const el of candidates($)) {
     const fp = fingerprint($, el);
     const { score: s, parts } = score(target, fp, { spec });
@@ -117,7 +182,7 @@ export function rank($, target, { limit = 5, spec = SPEC } = {}) {
  * means its failure rate IS a mismatch rate -- every wrong answer is returned with
  * the same confidence as every right one. Measuring that is the point of having it.
  */
-export function heal($, target, opts = {}) {
+export function heal($: CheerioAPI, target: Fingerprint, opts: RankOptions = {}): HealResult | null {
   const ranked = rank($, target, opts);
   if (!ranked.length) return null;
   const [best, runnerUp] = ranked;
@@ -150,7 +215,11 @@ export function heal($, target, opts = {}) {
  * Benign ties are recovered for free: if the tied candidates carry the SAME value,
  * the ambiguity is harmless -- we do not care which node we read it from.
  */
-export function healGated($, target, { tau = 0.6, delta = 0.16, ...opts } = {}) {
+export function healGated(
+  $: CheerioAPI,
+  target: Fingerprint,
+  { tau = 0.6, delta = 0.16, ...opts }: RankOptions & { tau?: number; delta?: number } = {},
+): HealGateResult {
   const ranked = rank($, target, opts);
   if (!ranked.length) {
     return { decision: 'abstain', reason: 'no_candidates', tau, delta };

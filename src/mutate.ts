@@ -10,16 +10,38 @@
 // deliberately not one fingerprint() reads (it reads data-testid/data-test-id/
 // data-qa), so marking cannot leak into the score.
 
+import type { CheerioAPI } from 'cheerio';
+
 export const TRUTH_ATTR = 'data-assay-truth';
 
-const SWEDISH = {
+// TODO(types): same as heal.ts -- elements come back from fingerprint.ts as
+// `any` because that file may not import cheerio's types.
+type El = any;
+
+/**
+ * What the correct answer is after this mutation:
+ *   'target'    -> the marked element is the single correct answer
+ *   'none'      -> nothing is correct; the honest answer is to abstain
+ *   'ambiguous' -> a decoy exists that a naive healer may prefer
+ */
+export type Expectation = 'target' | 'none' | 'ambiguous';
+
+export interface Mutation {
+  id: string;
+  label: string;
+  expect: Expectation;
+  /** Returns false when the mutation does not apply to this element. */
+  apply: ($: CheerioAPI, el: El) => boolean;
+}
+
+const SWEDISH: Record<string, string> = {
   recall: 'aterkallelse', recalls: 'aterkallelser', chair: 'stol', table: 'bord',
   mirror: 'spegel', drawer: 'lada', game: 'spel', charger: 'laddare',
   hazard: 'risk', fire: 'brand', injury: 'skada', child: 'barn', due: 'grund',
   the: 'den', and: 'och', of: 'av', to: 'till', for: 'for', with: 'med',
 };
 
-const rewriteWords = (s) =>
+const rewriteWords = (s: string | null | undefined): string =>
   (s || '').replace(/[A-Za-z]+/g, (w) => {
     const hit = SWEDISH[w.toLowerCase()];
     if (!hit) return w;
@@ -32,7 +54,7 @@ const rewriteWords = (s) =>
  *   'none'    -> nothing is correct; the honest answer is to abstain
  *   'ambiguous' -> a decoy exists that a naive healer may prefer
  */
-export const MUTATIONS = [
+export const MUTATIONS: Mutation[] = [
   {
     id: 'rename_class',
     label: 'rename class',
@@ -61,9 +83,9 @@ export const MUTATIONS = [
     apply: ($, el) => {
       const $el = $(el);
       const to = el.name === 'a' ? 'span' : el.name.match(/^h\d$/) ? 'div' : 'section';
-      const attrs = { ...el.attribs };
+      const attrs: Record<string, string> = { ...el.attribs };
       const inner = $el.html();
-      const $new = $(`<${to}></${to}>`).html(inner);
+      const $new = $(`<${to}></${to}>`).html(inner as string);
       Object.entries(attrs).forEach(([k, v]) => $new.attr(k, v));
       $el.replaceWith($new);
       return true;
@@ -93,7 +115,7 @@ export const MUTATIONS = [
         .filter((k) => k.startsWith('data-') && k !== TRUTH_ATTR)
         .forEach((k) => $el.removeAttr(k));
       // also strip ids on the ancestor chain, which is what kills id_xpath
-      $el.parents().each((i, p) => {
+      $el.parents().each((i: number, p: El) => {
         if (i < 4) $(p).removeAttr('id');
       });
       return true;
@@ -111,7 +133,7 @@ export const MUTATIONS = [
         .find('*')
         .addBack()
         .contents()
-        .each((i, n) => {
+        .each((i: number, n: El) => {
           if (n.type === 'text' && n.data.trim()) n.data = rewriteWords(n.data);
         });
       return true;
@@ -179,10 +201,10 @@ export const MUTATIONS = [
 ];
 
 /** Mark the ground-truth element so we can recognise it after mutation. */
-export function markTarget($, el) {
+export function markTarget($: CheerioAPI, el: El): void {
   $(el).attr(TRUTH_ATTR, '1');
 }
 
-export function isTarget(el) {
+export function isTarget(el: El): boolean {
   return !!(el && el.attribs && el.attribs[TRUTH_ATTR]);
 }
