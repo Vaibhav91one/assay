@@ -113,13 +113,32 @@ export async function postDelivery(request: Request, ctx: RouteCtx): Promise<Res
       // -- Bright Data retries every non-200, and the retry would be refused as
       // a replay, so the job would fail for ever over a chat message.
       try {
-        announced = summarise(await announce(breakMessage(announcement)));
-        // A bounced alert is an unread break, so how it went -- or did not --
-        // is stored on the episode rather than left in a log line.
-        await markNotified(result.episode, announced);
+        // `announce` REPORTS a dead connector, it does not throw for one: a
+        // Slack 500 comes back as a result with `ok: false`, and no connector
+        // configured comes back as an empty array. So "did the alert go out" is
+        // a question about the results and not about whether this line threw.
+        const rs = await announce(breakMessage(announcement));
+        announced = summarise(rs);
+        if (!rs.some((r) => r.ok)) announced = `undelivered: ${announced}`;
       } catch (e) {
         announced = `undelivered: ${(e as Error).message}`;
         console.error('[connectors] announcement failed', (e as Error).message);
+      }
+      // A bounced alert is an unread break, so how it went -- or did not -- is
+      // stored on the episode rather than left in a log line. BOTH outcomes:
+      // the Activity badge raises `undelivered` by reading this column
+      // (`web/lib/notifications.ts`), and while the failing branch wrote
+      // nothing the column stayed null, so the one delivery an operator most
+      // needed to hear about was the one the badge could never show. The
+      // fetched path already does this (`notifyBreak` in `tools/worker.ts`);
+      // the two now record the same failure the same way.
+      //
+      // Wrapped for the reason the block above is wrapped: the run is committed,
+      // and a note that cannot be written must not turn it into a 500.
+      try {
+        await markNotified(result.episode, announced);
+      } catch (e) {
+        console.error('[connectors] could not record the announcement', (e as Error).message);
       }
     }
     return Response.json({ ...body_, ...(announced ? { announced } : {}) });
