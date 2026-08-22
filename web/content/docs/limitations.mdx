@@ -55,7 +55,7 @@ same way, with the same third candidate at 0.6314 against a band floor of 0.5318
 ### The auditability gap
 
 That diagnosis is possible only because `serialiseDecision` in
-`tools/headtohead.js` keeps a ranked list, and it keeps **less than the decision
+`tools/headtohead.ts` keeps a ranked list, and it keeps **less than the decision
 was made from**: the top 3 of 5 candidates, each reduced to a selector, a score
 rounded to four places, and the first 80 characters of its text. The
 per-property contributions that produced 0.7363 against 0.6918 are not kept
@@ -142,7 +142,7 @@ to work with and would likely shift where the thresholds belong.
 
 ## The thresholds are calibrated on this corpus and nowhere else
 
-`tau = 0.6` and `delta = 0.16` came out of `tools/sweep.js`: an 11 x 10 grid, 110
+`tau = 0.6` and `delta = 0.16` came out of `tools/sweep.ts`: an 11 x 10 grid, 110
 points, scored over these pages and these mutations. `results/sweep.json` holds
 the surface.
 
@@ -160,7 +160,7 @@ produced them would have to be rerun on a new corpus to find out.
 
 `fingerprint()` describes an element with text, tag, type, id, classes, ARIA
 label, neighbour text, href, alt and two XPaths. It records **no position and no
-dimensions**, and the comment in `src/fingerprint.js` says why: Cheerio parses
+dimensions**, and the comment in `src/fingerprint.ts` says why: Cheerio parses
 HTML and has no layout engine, so there is no box to measure.
 
 The weights come from Kluge & Stocco (EMSE 2026), which weighted location at 1.7
@@ -171,7 +171,7 @@ That is a real loss and it bears directly on the first limitation above. A
 wrapper div occupies a visibly larger box than the `h2` inside it, and a
 geometry-aware scorer would separate the two on exactly the case where this one
 cannot. Recovering the signal means a headless browser, which would end the
-property that makes `src/fingerprint.js` useful: it imports nothing, so it pastes
+property that makes `src/fingerprint.ts` useful: it imports nothing, so it pastes
 verbatim into a Bright Data collector's Cheerio parser and runs identically in
 both places. The trade was taken deliberately and it has a measurable cost.
 

@@ -111,8 +111,9 @@ guarantee rather than a filter.
 Model choice per feature is deliberately deferred until the 4th benchmark arm can measure
 it — the project does not make unmeasured accuracy claims.
 
-**Licence note:** the Agent SDK publishes as `SEE LICENSE IN README.md`, not OSI. That is
-the **second** non-OSI dependency after GSAP in an MIT project; both belong in the README.
+**Licence note:** the Agent SDK publishes as `SEE LICENSE IN README.md`, not OSI. GSAP
+was going to be the other one and never got installed, so this is the only non-OSI
+dependency in an MIT project. It belongs in the README, and is there.
 
 ### What TanStack Query is scoped to
 
@@ -131,9 +132,9 @@ replacement for RSC data loading, and adding it to static pages would be a regre
 | UI runtime | React | 19.2.8 | MIT | Bundled with Next 16 | — |
 | Styling | Tailwind CSS | 4.3.3 | MIT | Fixed. v4 CSS-first config suits token binding | — |
 | Components | shadcn/ui | CLI, copy-in | MIT | Fixed. Source lands in repo, no runtime dep | — |
-| Motion | GSAP + `@gsap/react` | 3.15.0 / 2.1.2 | **Not OSI** — see §6 | Fixed. Free incl. former Club plugins | — |
-| Database | SQLite | — | Public domain | Write rate is ~100 runs/day. Zero ops | file on disk |
-| Driver | `better-sqlite3` | 13.0.3 | MIT | Sync, prebuilt binaries, mature | native module |
+| Motion | CSS — `web/app/motion.css` + `web/lib/motion.ts` | — | — | GSAP was the plan; nothing needed it. Not a dependency | — |
+| Database | Postgres | 17-alpine | PostgreSQL licence | §0. Two processes, one store, no WAL-over-a-mount question | one container |
+| Driver | `pg` | 8.23.0 | MIT | Pure JS, no native build in the image | — |
 | ORM | Drizzle ORM + drizzle-kit | 0.45.2 | Apache-2.0 | Typed queries, real migrations, `drizzle-zod` | — |
 | Validation | Zod | 4.4.3 | MIT | Load-bearing — §5 | — |
 | DB→Zod | `drizzle-zod` | 0.8.3 | Apache-2.0 | One schema, no duplicate row types | — |
@@ -304,6 +305,13 @@ filters shareable and back-button correct, which a store would not.
 ---
 
 ## 6. Motion — GSAP, honestly scoped
+
+> **Not what shipped.** Motion is CSS: `web/app/motion.css` holds the tokens,
+> keyframes and the reduced-motion guard, `web/lib/motion.ts` holds the same
+> numbers for JavaScript, and five primitives live in `web/components/motion/`.
+> GSAP is not a dependency. `docs/MOTION.md` is the current document. The
+> scoping below is kept because it is why the four "signature" moments were
+> allowed to be expensive at all.
 
 **Licence, verified.** GSAP 3.15.0 is free for commercial use and now **includes the
 formerly paid Club plugins** (SplitText, MorphSVG, ScrollSmoother, DrawSVG). The only
