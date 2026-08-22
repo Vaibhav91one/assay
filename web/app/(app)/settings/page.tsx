@@ -12,6 +12,10 @@ import {
   type Policy,
   type SettingsView,
 } from '@/lib/settings';
+import { alertsView } from '@/lib/alerts';
+import { SettingsTabs } from './settings-tabs';
+import { isTabId, type TabId } from './tabs';
+import { NotificationsPanel } from './notifications-panel';
 
 export const metadata: Metadata = { title: 'Settings · Assay' };
 
@@ -20,8 +24,13 @@ export const metadata: Metadata = { title: 'Settings · Assay' };
 // another machine runs.
 export const dynamic = 'force-dynamic';
 
-export default async function SettingsPage() {
-  const v = await settingsView();
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const [v, alerts, { tab }] = await Promise.all([settingsView(), alertsView(), searchParams]);
+  const initial: TabId = isTabId(tab) ? tab : 'publishing';
 
   return (
     <>
@@ -31,86 +40,131 @@ export default async function SettingsPage() {
         action={null}
       />
       <div className="flex w-full max-w-[1112px] flex-col items-start px-[56px] pb-[64px] pt-[26px]">
-        <Section label="WHAT ASSAY MAY PUBLISH" />
-        <div className="flex w-full items-center pt-[32px]">
-          <p className="body-13_5 flex-1 text-[var(--text-primary)]">
-            Calibrated: publishes only a clear winner ({v.defaults.tau.toFixed(2)} floor,{' '}
-            {v.defaults.delta.toFixed(2)} lead). Change per-field policy in a contract.
-          </p>
-          <Copy
-            text={policiesAsYaml(v.policies)}
-            receipt="Field contracts copied as YAML"
-            className="meta-12_5 shrink-0 text-[var(--semantic-link)] hover:underline"
-          >
-            export as YAML ›
-          </Copy>
-        </div>
+        {/* The panels are built here, on the server, and handed to a client
+            component that only decides which one is visible. Postgres, the
+            capture directory and the connector file never cross into the
+            browser bundle -- `web/components/chrome.ts` is the scar from the
+            time something did. */}
+        <SettingsTabs
+          initial={initial}
+          panels={{
+            publishing: <Publishing v={v} />,
+            output: <Output v={v} />,
+            notifications: <NotificationsPanel view={alerts} />,
+            connections: <Connections v={v} />,
+          }}
+        />
+      </div>
+    </>
+  );
+}
 
-        <Section label="PER-FIELD POLICY" top={43} />
-        <div className="w-full pt-[32px]">
-          {v.policies.length === 0 ? (
-            <Empty title="No field has a policy yet.">
-              A field takes a policy the moment a scraper watches it. Until then there is nothing to
-              govern.
-            </Empty>
-          ) : (
-            <SpecTable head={['field', 'tier', 'on hold']}>
-              {v.policies.map((p) => (
-                <SpecRow
-                  key={p.targetId + p.field}
-                  a={
-                    <span>
-                      <span className="meta-12_5 text-[var(--text-muted)]">{p.scraper} · </span>
-                      <span className="mono-value-12_5 text-[var(--text-primary)]">{p.field}</span>
-                    </span>
-                  }
-                  b={<Tier p={p} />}
-                  c={ON_ABSTAIN_PLAIN[p.thresholds.onAbstain] ?? p.thresholds.onAbstain}
-                />
-              ))}
-            </SpecTable>
-          )}
-        </div>
+/* ------------------------------------------------------------------ panels */
 
-        <Section label="WHERE THE DATA GOES" top={52} />
-        <div className="w-full pt-[32px]">
-          <SpecTable>
-            <SpecRow
-              a="Output"
-              b="Postgres"
-              c={
-                <StatusLine tone={v.store.reachable ? 'success' : 'danger'} size={13} type="caption-12">
-                  {v.store.detail}
-                </StatusLine>
-              }
-            />
-            <SpecRow
-              a="Page captures"
-              b={<span className="mono-value-12_5">{v.captures.dir}</span>}
-              c={`${v.captures.kept} kept · ${v.captures.pruned} pruned`}
-            />
-            <SpecRow
-              a="On a held field"
-              b="Leave empty"
-              c="never filled, always labelled"
-            />
-            <SpecRow
-              a="Proof"
-              b="one proof id per cell, on the published row"
-              c="not optional"
-            />
+/**
+ * What Assay may write, and under what policy -- read-only, on purpose.
+ *
+ * APP-DESIGN 7.1 is the ruling: a global publish threshold is the exact thing
+ * FEATURES.md F2 attacks incumbents by name for, and a slider that loosens it
+ * is a button for publishing more and holding less, one click away at 2am. So
+ * the numbers are provenance and the escape hatch is the YAML export, which
+ * puts policy in a repo where it can be reviewed instead of in a text field
+ * where it cannot.
+ */
+function Publishing({ v }: { v: SettingsView }) {
+  return (
+    <>
+      <Section label="WHAT ASSAY MAY PUBLISH" id="what-assay-may-publish" />
+      <div className="flex w-full items-center pt-[32px]">
+        <p className="body-13_5 flex-1 text-[var(--text-primary)]">
+          Calibrated: publishes only a clear winner ({v.defaults.tau.toFixed(2)} floor,{' '}
+          {v.defaults.delta.toFixed(2)} lead). Change per-field policy in a contract.
+        </p>
+        <Copy
+          text={policiesAsYaml(v.policies)}
+          receipt="Field contracts copied as YAML"
+          className="meta-12_5 shrink-0 text-[var(--semantic-link)] hover:underline"
+        >
+          export as YAML ›
+        </Copy>
+      </div>
+
+      <Section label="PER-FIELD POLICY" id="per-field-policy" top={43} />
+      <div className="w-full pt-[32px]">
+        {v.policies.length === 0 ? (
+          <Empty title="No field has a policy yet.">
+            A field takes a policy the moment a scraper watches it. Until then there is nothing to
+            govern.
+          </Empty>
+        ) : (
+          <SpecTable head={['field', 'tier', 'on hold']}>
+            {v.policies.map((p) => (
+              <SpecRow
+                key={p.targetId + p.field}
+                a={
+                  <span>
+                    <span className="meta-12_5 text-[var(--text-muted)]">{p.scraper} · </span>
+                    <span className="mono-value-12_5 text-[var(--text-primary)]">{p.field}</span>
+                  </span>
+                }
+                b={<Tier p={p} />}
+                c={ON_ABSTAIN_PLAIN[p.thresholds.onAbstain] ?? p.thresholds.onAbstain}
+              />
+            ))}
           </SpecTable>
-        </div>
+        )}
+      </div>
+    </>
+  );
+}
 
-        <Section label="MODEL ACCESS" top={52} />
-        <div className="w-full pt-[24px]">
-          <ModelAccess auth={modelAuth()} />
-        </div>
+function Output({ v }: { v: SettingsView }) {
+  return (
+    <>
+      <Section label="WHERE THE DATA GOES" id="where-the-data-goes" />
+      <div className="w-full pt-[32px]">
+        <SpecTable>
+          <SpecRow
+            a="Output"
+            b="Postgres"
+            c={
+              <StatusLine tone={v.store.reachable ? 'success' : 'danger'} size={13} type="caption-12">
+                {v.store.detail}
+              </StatusLine>
+            }
+          />
+          <SpecRow
+            a="Page captures"
+            b={<span className="mono-value-12_5">{v.captures.dir}</span>}
+            c={`${v.captures.kept} kept · ${v.captures.pruned} pruned`}
+          />
+          <SpecRow
+            a="On a held field"
+            b="Leave empty"
+            c="never filled, always labelled"
+          />
+          <SpecRow
+            a="Proof"
+            b="one proof id per cell, on the published row"
+            c="not optional"
+          />
+        </SpecTable>
+      </div>
+    </>
+  );
+}
 
-        <Section label="CONNECTIONS" top={52} />
-        <div className="w-full pt-[32px]">
-          <Connectors v={v} />
-        </div>
+function Connections({ v }: { v: SettingsView }) {
+  return (
+    <>
+      <Section label="MODEL ACCESS" id="model-access" />
+      <div className="w-full pt-[24px]">
+        <ModelAccess auth={modelAuth()} />
+      </div>
+
+      <Section label="CONNECTIONS" id="connections" top={52} />
+      <div className="w-full pt-[32px]">
+        <Connectors v={v} />
       </div>
     </>
   );
@@ -118,8 +172,11 @@ export default async function SettingsPage() {
 
 /* ------------------------------------------------------------------ pieces */
 
-const Section = ({ label, top = 0 }: { label: string; top?: number }) => (
-  <p className="label-10 text-[var(--text-muted)]" style={{ marginTop: top }}>
+// The id is what an old `#per-field-policy` link aims at; `settings-tabs.tsx`
+// maps the same slugs back to the tab holding them, so a hash that predates the
+// tabs still lands on the section rather than on a page hiding it.
+const Section = ({ label, id, top = 0 }: { label: string; id?: string; top?: number }) => (
+  <p id={id} className="label-10 scroll-mt-[24px] text-[var(--text-muted)]" style={{ marginTop: top }}>
     {label}
   </p>
 );
