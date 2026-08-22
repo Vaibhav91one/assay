@@ -69,7 +69,7 @@ export default async function ComparePage() {
             </Empty>
           ) : (
             <p className="meta-13 text-[var(--text-secondary)]">
-              {count(v.unchangedFields, 'field')} across {count(v.scrapers, 'page')} read exactly as
+              {count(v.unchangedFields, 'field')} across {count(v.scrapers, 'scraper')} read exactly as
               before.
             </p>
           )}

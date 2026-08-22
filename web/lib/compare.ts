@@ -148,7 +148,7 @@ export function summary(v: CompareView): string {
       `Nothing changed and nothing was held. ${plural(
         v.unchangedFields,
         'field',
-      )} across ${plural(v.scrapers, 'page')} read exactly as before.`,
+      )} across ${plural(v.scrapers, 'scraper')} read exactly as before.`,
     );
   }
   return parts.join(' ');

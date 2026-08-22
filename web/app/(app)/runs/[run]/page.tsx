@@ -71,7 +71,7 @@ export default async function RunPage({ params }: { params: Promise<{ run: strin
         )}
 
         <section className="flex flex-col gap-[24px]">
-          <Heading note={`${d.scraper} · ${d.history.length} runs`}>History</Heading>
+          <Heading note={`${d.scraper} · ${d.history.length} run${d.history.length === 1 ? '' : 's'}`}>History</Heading>
           <OutcomeDonut history={d.history} scraper={d.scraper} />
           <PageSizeBars history={d.history} runId={d.runId} scraper={d.scraper} />
         </section>

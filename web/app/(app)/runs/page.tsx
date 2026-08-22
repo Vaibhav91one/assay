@@ -46,7 +46,7 @@ export default async function RunsPage({
 
         {v.recent.length > 0 && (
           <RunStrip
-            label={`LAST ${v.recent.length} RUNS`}
+            label={`LAST ${v.recent.length} RUN${v.recent.length === 1 ? '' : 'S'}`}
             bars={[...v.recent].reverse().map((r) => ({ runId: r.runId, held: r.outcome === 'held' }))}
           />
         )}
@@ -165,5 +165,10 @@ function Happened({ row }: { row: RunRow }) {
   );
 }
 
+// `${total} run${...}`, not `${total} runs`: a fresh instance with one run in it
+// read "1 runs · 0 healed · 0 held" in the top bar. `healed` and `held` are
+// participles and do not take one.
 const summary = (total: number, healed: number, held: number) =>
-  total === 0 ? t('runs.summary.none') : `${total} runs · ${healed} healed · ${held} held`;
+  total === 0
+    ? t('runs.summary.none')
+    : `${total} run${total === 1 ? '' : 's'} · ${healed} healed · ${held} held`;
