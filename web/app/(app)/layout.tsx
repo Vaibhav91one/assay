@@ -1,6 +1,7 @@
 import { Sidebar } from '@/components/sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { openDecisions, scrapers } from '@/lib/queue';
+import { listConversations } from 'assay/engine/store/conversations';
 
 /**
  * The app shell. Sign-in sits outside this group on purpose -- it has no
@@ -14,11 +15,28 @@ import { openDecisions, scrapers } from '@/lib/queue';
  * and then snapping shut.
  */
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const [queue, list] = await Promise.all([openDecisions(), scrapers()]);
+  const [queue, list, chats] = await Promise.all([
+    openDecisions(),
+    scrapers(),
+    listConversations(),
+  ]);
+
+  // A scraper that no conversation owns. Every target created before the
+  // `conversations` table is one, and so is anything the REST surface or the CLI
+  // made. They keep their own group in the rail rather than being folded in
+  // under a conversation that does not exist -- see `ConversationList`.
+  const owned = new Set(chats.map((c) => c.scraperSlug).filter(Boolean));
+  const unchatted = list.filter((s) => !owned.has(s.id));
 
   return (
     <SidebarProvider>
-      <Sidebar waiting={queue.length} scrapers={list} />
+      <Sidebar
+        waiting={queue.length}
+        scrapers={unchatted}
+        conversations={chats.map((c) => ({
+          id: c.id, title: c.title, scraperSlug: c.scraperSlug, turns: c.turns,
+        }))}
+      />
       <SidebarInset className="min-w-0 bg-[var(--bg-page)]">{children}</SidebarInset>
     </SidebarProvider>
   );

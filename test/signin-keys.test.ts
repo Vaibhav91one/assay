@@ -44,7 +44,7 @@ describe('key panel', () => {
   // -- but the panel's other consumers do, and clearing it keeps this file
   // honest if that ever changes back.
   const NAMES = [
-    'ANTHROPIC_API_KEY', 'CLAUDE_CODE_OAUTH_TOKEN', 'BRIGHT_DATA_TOKEN', 'RESEND_API_KEY',
+    'ANTHROPIC_API_KEY', 'CLAUDE_CODE_OAUTH_TOKEN', 'BRIGHTDATA_API_TOKEN', 'ASSAY_RESEND_KEY', 'FIRECRAWL_API_KEY',
   ];
 
   beforeEach(() => {
@@ -73,7 +73,15 @@ describe('key panel', () => {
       {
         name: 'Bright Data',
         buys: expect.any(String),
-        vars: ['BRIGHT_DATA_TOKEN'],
+        vars: ['BRIGHTDATA_API_TOKEN'],
+        set: false,
+        via: '',
+        doc: expect.any(String),
+      },
+      {
+        name: 'Firecrawl',
+        buys: expect.any(String),
+        vars: ['FIRECRAWL_API_KEY'],
         set: false,
         via: '',
         doc: expect.any(String),
@@ -81,7 +89,7 @@ describe('key panel', () => {
       {
         name: 'Email delivery',
         buys: expect.any(String),
-        vars: ['RESEND_API_KEY'],
+        vars: ['ASSAY_RESEND_KEY'],
         set: false,
         via: '',
         doc: expect.any(String),
@@ -91,6 +99,12 @@ describe('key panel', () => {
     // The names are the contract with the operator's shell. A rename here that
     // is not a rename there sends someone to set a variable nothing reads.
     // Still every variable the panel offers, now one row deeper.
+    //
+    // This check is necessary and was never sufficient: it proves the panel and
+    // `.env.example` agree with EACH OTHER, and for months they agreed on two
+    // names -- BRIGHT_DATA_TOKEN and RESEND_API_KEY -- that no other file in the
+    // repository read. `test/env-names.test.ts` closes that: it takes the third
+    // side, what the code actually reads, and fails when any of the three drifts.
     const example = readFileSync(join(ROOT, '.env.example'), 'utf8');
     for (const { vars } of readKeys('none')) {
       for (const v of vars) expect(example).toContain(`${v}=`);
@@ -151,8 +165,8 @@ describe('key panel', () => {
 
   it('never returns a key it can see', () => {
     // Every credential, one at a time -- the old version planted the canary in
-    // ANTHROPIC_API_KEY only, and a leak of RESEND_API_KEY would have passed.
-    for (const name of ['BRIGHT_DATA_TOKEN', 'RESEND_API_KEY']) {
+    // ANTHROPIC_API_KEY only, and a leak of ASSAY_RESEND_KEY would have passed.
+    for (const name of ['BRIGHTDATA_API_TOKEN', 'ASSAY_RESEND_KEY', 'FIRECRAWL_API_KEY']) {
       process.env[name] = SECRET;
       const keys = readKeys('none');
       expect(keys.find((k) => k.vars.includes(name))?.set).toBe(true);

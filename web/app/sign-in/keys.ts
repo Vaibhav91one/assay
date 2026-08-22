@@ -41,9 +41,19 @@
 // capabilities -- `.env.example` already says "Either one satisfies the model
 // path" -- so they are no longer two rows.
 //
-// BRIGHT_DATA_TOKEN and RESEND_API_KEY have no alternative route. For those,
-// satisfied still means the variable is set, and the row is unchanged in
+// BRIGHTDATA_API_TOKEN and ASSAY_RESEND_KEY have no alternative route. For
+// those, satisfied still means the variable is set, and the row is unchanged in
 // substance.
+//
+// THE NAMES, CORRECTED 2026-08-22. This panel used to check BRIGHT_DATA_TOKEN
+// and RESEND_API_KEY, which are the names `.env.example` used to declare and
+// the names nothing else in the repository has ever read. `tools/bd-heal.ts`
+// and `tools/bd-status.sh` read BRIGHTDATA_API_TOKEN; `src/notify.ts` reads
+// ASSAY_RESEND_KEY and throws by that name. So the panel reported a token as
+// present while the tool that needs it saw nothing, and reported mail as
+// configured while every alert went undelivered. The working code kept its
+// names and everything else moved to meet it; `test/env-names.test.ts` now
+// fails if the two sides drift apart again.
 
 /**
  * Which credential the model path has, restated rather than imported.
@@ -115,17 +125,30 @@ export const readKeys = (auth: ModelAuth): KeyPresence[] => [
   {
     name: 'Bright Data',
     buys: 'Fetches pages that refuse a plain request.',
-    vars: ['BRIGHT_DATA_TOKEN'],
-    set: Boolean(process.env.BRIGHT_DATA_TOKEN),
-    via: process.env.BRIGHT_DATA_TOKEN ? 'with a token set in this process’s environment' : '',
+    vars: ['BRIGHTDATA_API_TOKEN'],
+    set: Boolean(process.env.BRIGHTDATA_API_TOKEN),
+    via: process.env.BRIGHTDATA_API_TOKEN ? 'with a token set in this process’s environment' : '',
     doc: '/docs/credentials#bright-data',
+  },
+  {
+    name: 'Firecrawl',
+    // Optional in a stronger sense than the others, and the row says so:
+    // `src/skills/page.ts` is reached only after a direct fetch is refused, so
+    // an instance without the key loses nothing on pages that already work. A
+    // row that read "Reads pages" would make an operator go and find a key for
+    // a capability they may never need.
+    buys: 'Reads a page that refuses a direct request. Only tried after one is.',
+    vars: ['FIRECRAWL_API_KEY'],
+    set: Boolean(process.env.FIRECRAWL_API_KEY),
+    via: process.env.FIRECRAWL_API_KEY ? 'with a key set in this process’s environment' : '',
+    doc: '/docs/credentials#firecrawl',
   },
   {
     name: 'Email delivery',
     buys: 'Sends the break alert and the digest.',
-    vars: ['RESEND_API_KEY'],
-    set: Boolean(process.env.RESEND_API_KEY),
-    via: process.env.RESEND_API_KEY ? 'with a key set in this process’s environment' : '',
+    vars: ['ASSAY_RESEND_KEY'],
+    set: Boolean(process.env.ASSAY_RESEND_KEY),
+    via: process.env.ASSAY_RESEND_KEY ? 'with a key set in this process’s environment' : '',
     doc: '/docs/credentials#email-delivery',
   },
 ];

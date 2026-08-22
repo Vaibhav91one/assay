@@ -6,8 +6,13 @@ import {
   type ChatResult, type Proposal,
 } from 'assay/engine/agent/index';
 import { createTarget, CreateInput, listTargets } from 'assay/engine/setup/index';
+import {
+  appendTurns, attachScraper, startConversation, type Turn,
+} from 'assay/engine/store/conversations';
+import { fetchHtml } from 'assay/engine/skills/page';
 
 export type { ChatResult, Proposal };
+export type { Turn };
 
 /** One thing `@` can name: a field already under watch. */
 export interface Source {
@@ -57,6 +62,40 @@ export async function ask(
   return converse({ message, history });
 }
 
+// --- the conversation ---------------------------------------------------------
+
+/**
+ * Open a conversation on the operator's first message.
+ *
+ * Called BEFORE the turn is asked, so the transcript exists even if the agent
+ * never answers -- a question that was asked and got nothing back is a fact
+ * about this instance, and losing it because the model timed out would make the
+ * rail's list quietly wrong.
+ *
+ * The name is `titleFor(message)`: the operator's own words, truncated. No model
+ * call, and nothing invented.
+ */
+export async function openConversation(message: string): Promise<number> {
+  const id = await startConversation(message);
+  revalidatePath('/', 'layout');
+  return id;
+}
+
+/**
+ * Append to a transcript.
+ *
+ * Trusted with what the browser sends because everything in a turn CAME from the
+ * browser or was rendered for it: the operator's own message, and the reply and
+ * trace this instance streamed back a moment ago. There is nothing here a
+ * hostile client could gain by lying about, and no path from this table into the
+ * gate, the queue or a proof record -- `conversations` is read by the rail and
+ * by the export, and by nothing that decides anything.
+ */
+export async function recordTurns(id: number, turns: Turn[]): Promise<void> {
+  await appendTurns(id, turns);
+  revalidatePath('/', 'layout');
+}
+
 /** One field after its baseline run. `status` and `reason` are the gate's own. */
 export interface BuiltField {
   /** The target row id, `slug__field`. Links a held cell to its decision. */
@@ -81,8 +120,19 @@ export type BuildResult =
  * unticked, so a model's proposal and a hand-typed form take the identical
  * write path -- there is no privileged "the agent said so" route into the
  * store.
+ *
+ * `conversationId` is the ownership edge and is written AFTER the scraper
+ * exists, never before: a conversation that claimed a scraper `createTarget`
+ * then refused to make would be a rail entry pointing at nothing. It is optional
+ * because the manual path and the API reach here without a conversation, and a
+ * scraper with no chat is a supported state -- every target that predates this
+ * table is one.
  */
-export async function build(create: unknown, keep: string[]): Promise<BuildResult> {
+export async function build(
+  create: unknown,
+  keep: string[],
+  conversationId?: number,
+): Promise<BuildResult> {
   const parsed = CreateInput.safeParse(create);
   if (!parsed.success) return { ok: false, detail: 'That proposal is not a valid target.' };
 
@@ -92,7 +142,17 @@ export async function build(create: unknown, keep: string[]): Promise<BuildResul
   const r = await createTarget({ ...parsed.data, fields });
   if (!r.ok) return { ok: false, detail: r.detail };
 
-  revalidatePath('/');
+  if (conversationId != null) {
+    await attachScraper(conversationId, r.id);
+    await appendTurns(conversationId, [{
+      role: 'event',
+      kind: 'built',
+      at: new Date().toISOString(),
+      text: `Started watching ${r.id} — ${fields.length} field${fields.length === 1 ? '' : 's'}.`,
+    }]);
+  }
+
+  revalidatePath('/', 'layout');
   revalidatePath('/decisions');
   return {
     ok: true,
@@ -128,6 +188,8 @@ export async function describeFields(input: {
   url: string;
   cadence: string;
   fields: { name: string; example: string }[];
+  /** Set when the form was opened inside a conversation, so the scraper it makes belongs to one. */
+  conversationId?: number;
 }): Promise<BuildResult> {
   const url = input.url.trim();
   if (!/^https?:\/\//i.test(url)) return { ok: false, detail: 'That is not an http or https URL.' };
@@ -138,9 +200,10 @@ export async function describeFields(input: {
 
   let html: string;
   try {
-    const res = await fetch(url, { headers: { 'user-agent': 'assay/0.1 (+self-hosted)' } });
-    if (!res.ok) throw new Error(`fetch ${res.status}`);
-    html = await res.text();
+    // The same seam `createTarget` and the worker read through, so a page only
+    // an enabled connector can reach is describable here too -- rather than
+    // being refused on this screen and then fetchable on the next one.
+    ({ html } = await fetchHtml(url));
   } catch (e) {
     return { ok: false, detail: `Could not read ${url}: ${(e as Error).message}` };
   }
@@ -171,5 +234,9 @@ export async function describeFields(input: {
     };
   }
 
-  return build({ url, cadence: input.cadence, fields: create }, create.map((f) => f.name));
+  return build(
+    { url, cadence: input.cadence, fields: create },
+    create.map((f) => f.name),
+    input.conversationId,
+  );
 }

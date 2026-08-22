@@ -14,7 +14,7 @@ import {
 import {
   contractHistory, contractVersion, latestContract, saveContract,
 } from '../src/contracts/store.js';
-import { closeDb, getDb, sql } from '../src/store/index.js';
+import { closeDb, getDb, sql, targets } from '../src/store/index.js';
 
 const parsed = (source: string): Contract => {
   const r = parseContract(source);
@@ -243,7 +243,13 @@ fields:
 
 describe('contracts are versioned and append-only', () => {
   let dbUp = false;
-  const target = 'ikea';
+  // Its own target, created here and dropped in afterAll. This used to be
+  // 'ikea', which exists in the `assay` template database and in nothing else:
+  // `contracts.target_id` has a foreign key to `targets`, so on a database made
+  // by `createdb` + `db:migrate` every `saveContract` here returned
+  // `{ ok: false }` and three cases failed. A fresh deployment could not run
+  // its own suite green. A test that needs a row creates the row.
+  const target = 'test_contracts';
 
   beforeAll(async () => {
     try {
@@ -252,11 +258,22 @@ describe('contracts are versioned and append-only', () => {
     } catch {
       dbUp = false;
     }
-    if (dbUp) await getDb().execute(sql`DELETE FROM contracts WHERE target_id = ${target}`);
+    if (dbUp) {
+      const d = getDb();
+      await d.execute(sql`DELETE FROM contracts WHERE target_id = ${target}`);
+      await d.insert(targets).values({
+        targetId: target, url: 'corpus://ikea', cadence: '6h',
+        contract: { field: 'recall_title' },
+      }).onConflictDoNothing();
+    }
   });
 
   afterAll(async () => {
-    if (dbUp) await getDb().execute(sql`DELETE FROM contracts WHERE target_id = ${target}`);
+    if (dbUp) {
+      const d = getDb();
+      await d.execute(sql`DELETE FROM contracts WHERE target_id = ${target}`);
+      await d.execute(sql`DELETE FROM targets WHERE target_id = ${target}`);
+    }
     await closeDb().catch(() => {});
   });
 

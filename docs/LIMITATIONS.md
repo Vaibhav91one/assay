@@ -50,7 +50,7 @@ benign tie is not recognised and the gate abstains. `combo_redesign` fails the
 same way, with the same third candidate at 0.6314 against a band floor of 0.5318.
 
 **The auditability gap.** That diagnosis is possible only because
-`serialiseDecision` in `tools/headtohead.js` keeps a ranked list, and it keeps
+`serialiseDecision` in `tools/headtohead.ts` keeps a ranked list, and it keeps
 less than the decision was made from: the **top 3 of 5** candidates, each reduced
 to a selector, a score rounded to four places, and the first 80 characters of its
 text. The per-property contributions that produced 0.7363 against 0.6918 are not
@@ -80,9 +80,11 @@ not ship.
 
 The gated arm's 54 abstentions split 18 / 36. Eighteen are on `remove_field`,
 where the element is gone and refusing is the only correct answer. The other 36
-are on breaks where a correct answer existed, and on 24 of those 36 the ungated
-arm actually produced it — 6 on `swap_tag`, 12 on `duplicate_similar`, 6 on
-`duplicate_longtail`.
+are on breaks where a correct answer existed, and on 18 of those 36 the ungated
+arm actually produced it — 6 on `swap_tag` and 12 on `duplicate_similar`. On
+`duplicate_longtail` the ungated arm got none of the abstained 12 right: the six
+it got right are the same six the gated arm healed, and the twelve the gate
+refused are exactly the twelve the ungated arm published wrong.
 
 `duplicate_similar` is the worst of it. A near-identical decoy sits beside the
 real value; the ungated healer gets 12 of 18 right and 6 wrong; the gated healer
@@ -99,8 +101,8 @@ is probably not, which is why `tau` and `delta` are arguments to every tool.
 
 ## 3. The gate has never fired on real drift
 
-`results/events.jsonl` is the replay over the archived corpus: 74 records, 50
-clean, 24 heals, **0 abstentions**.
+`results/events.jsonl` is the replay over the archived corpus: 74 records, 8
+clean, 66 heals, **0 abstentions**.
 
 Two and a half years of genuine site changes across three sites never once
 produced a near-tie. When those pages moved, the right answer won by a wide
@@ -131,7 +133,7 @@ to work with and would likely shift where the thresholds belong.
 
 ## 5. The thresholds are calibrated on this corpus and nowhere else
 
-`tau = 0.6` and `delta = 0.16` came out of `tools/sweep.js`: an 11 x 10 grid, 110
+`tau = 0.6` and `delta = 0.16` came out of `tools/sweep.ts`: an 11 x 10 grid, 110
 points, scored over these pages and these mutations. `results/sweep.json` holds
 the surface.
 
@@ -147,7 +149,7 @@ copies 0.6 / 0.16 without rerunning the sweep as unvalidated.
 
 `fingerprint()` describes an element with text, tag, type, id, classes, ARIA
 label, neighbour text, href, alt and two XPaths. It records no position and no
-dimensions, and the comment in `src/fingerprint.js` says why: Cheerio parses HTML
+dimensions, and the comment in `src/fingerprint.ts` says why: Cheerio parses HTML
 and has no layout engine, so there is no box to measure.
 
 The weights come from Kluge & Stocco (EMSE 2026), which weighted location at 1.7
@@ -158,7 +160,7 @@ That is a real loss and it bears directly on limitation 1. A wrapper div occupie
 a visibly larger box than the `h2` inside it, and a geometry-aware scorer would
 separate the two on exactly the case where this one cannot. Recovering the signal
 means a headless browser, which would end the property that makes
-`src/fingerprint.js` useful: it imports nothing, so it pastes verbatim into a
+`src/fingerprint.ts` useful: it imports nothing, so it pastes verbatim into a
 Bright Data collector's Cheerio parser and runs identically in both places. The
 trade was taken deliberately and it has a measurable cost.
 
@@ -178,8 +180,17 @@ from the first capture and evaluates every later one against it, which is what
 produced the numbers in sections 2 and 3. So the published 0.0% was a measurement
 of the engine and was never a measurement of the product. The baseline is now
 persisted per field (`field_state.baseline_golden_sha` / `baseline_selector`) and
-advances only on a published heal; the numbers in this document are unchanged,
-because none of them ran through the broken path.
+advances only on a published heal. No number in this document moved because of
+*this* fix, because none of them ran through the broken path.
+
+That sentence used to read "the numbers in this document are unchanged", which
+was true of this fix and false of the document: a separate fix earlier the same
+day (`4213c8f`, the xpath anchor built with the path separators still in it, so
+the second anchor read `null` on every page) moved the replay split from 50 clean
+/ 24 heals to 8 / 66, and section 3 quoted the old pair for hours afterwards.
+Nothing published changed — all 74 values are identical across that fix — but 42
+runs stopped being called healthy by a detector that was not running. Section 3
+now quotes what `npm run replay` prints.
 
 ---
 

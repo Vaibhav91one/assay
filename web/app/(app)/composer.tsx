@@ -5,7 +5,7 @@ import { ArrowRight, AtSign, Check, ChevronDown, KeyRound, Slash, Terminal } fro
 import { useRouter } from 'next/navigation';
 import { useGlide } from '@/components/motion/glide';
 import { MODELS, MODEL_LABEL } from 'assay/engine/agent/models';
-import { menuAt, applyChoice, type Menu } from '@/lib/composer-menu';
+import { menuAt, applyChoice, insertSigil, type Menu } from '@/lib/composer-menu';
 import { sources as loadSources, type Source } from './watch-actions';
 
 /**
@@ -50,6 +50,7 @@ const COMMANDS: Command[] = [
   { name: 'held', hint: 'every field currently holding a cell', href: '/fields?show=held' },
   { name: 'runs', hint: 'what every scraper did last', href: '/runs' },
   { name: 'fields', hint: 'everything under watch', href: '/fields' },
+  { name: 'skills', hint: 'what Assay can be given, and what each one needs', href: '/skills' },
 ];
 
 export function Composer({
@@ -182,18 +183,25 @@ export function Composer({
     </div>
   );
 
+  /**
+   * The `@` / `/` buttons. Where the string goes is `insertSigil`'s problem --
+   * it is pure and tested; this is the DOM half.
+   *
+   * `el.selectionStart` and not a piece of state: pressing the button blurs the
+   * textarea, and the blur closes the menu but leaves the caret where the
+   * operator put it, which is where the sigil belongs.
+   */
   function insert(sigil: '@' | '/') {
     const el = box.current;
     if (!el) return;
-    const at = el.selectionStart ?? text.length;
-    const pad = at > 0 && !/\s$/.test(text.slice(0, at)) ? ' ' : '';
-    const next = `${text.slice(0, at)}${pad}${sigil}${text.slice(at)}`;
-    setText(next);
+    const { value, caret } = insertSigil(text, el.selectionStart ?? text.length, sigil);
+    setText(value);
+    // After the commit, or `setSelectionRange` runs against the old string and
+    // React then drops the caret at the end of the new one.
     queueMicrotask(() => {
       el.focus();
-      const caret = at + pad.length + 1;
       el.setSelectionRange(caret, caret);
-      setMenu(menuAt(next, caret));
+      setMenu(menuAt(value, caret));
     });
   }
 }

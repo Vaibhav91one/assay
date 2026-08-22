@@ -88,7 +88,7 @@ context. Nothing measures page length against history.
 series — feed it `html.length` per run. ~5 lines in the runner, none in detect().
 
 **Measure.** Replay the corpus with the size signal on; count new true/false
-positives against the 74 known-good runs. It must fire on zero of the 50 healthy
+positives against the 74 known-good runs. It must fire on zero of the 8 healthy
 runs to ship.
 
 ### 1.4 Discovery and field proposal are the front door, and there is no house

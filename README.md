@@ -285,8 +285,8 @@ dist/fingerprint.js  generated: the file pasted into Bright Data's worker
 
 ## Example output
 
-`results/events.jsonl` holds one proof record per run: 74 records, 50 healthy and
-24 heals. Each carries the candidates considered, their scores, the margin, the
+`results/events.jsonl` holds one proof record per run: 74 records, 8 healthy and
+66 heals. Each carries the candidates considered, their scores, the margin, the
 thresholds in force, and a hash of the last known-good value.
 
 Note what is not in there: **zero abstentions**. Two and a half years of real

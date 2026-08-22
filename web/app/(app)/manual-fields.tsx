@@ -23,7 +23,18 @@ import { describeFields, type BuildResult } from './watch-actions';
  * sits in the DOM -- the same derivation `resolverFor` does for a proposal.
  * There is no text box here that a CSS selector goes into.
  */
-export function ManualFields({ seedUrl, onCancel }: { seedUrl: string; onCancel: () => void }) {
+export function ManualFields({
+  seedUrl, onCancel, conversationId,
+}: {
+  seedUrl: string;
+  onCancel: () => void;
+  /**
+   * The conversation this form was opened inside, when it was opened inside
+   * one. Undefined on the empty state, and a scraper made there simply has no
+   * chat -- which is a supported state, not a gap to be filled in later.
+   */
+  conversationId?: number;
+}) {
   const [url, setUrl] = useState(seedUrl);
   const [cadence, setCadence] = useState('6h');
   const [rows, setRows] = useState<{ name: string; example: string }[]>([{ name: '', example: '' }]);
@@ -149,6 +160,7 @@ export function ManualFields({ seedUrl, onCancel }: { seedUrl: string; onCancel:
                 fields: rows
                   .map((r) => ({ name: r.name.trim(), example: r.example.trim() }))
                   .filter((r) => r.name && r.example),
+                conversationId,
               })))
           }
           className="press-wide flex h-[38px] items-center gap-[10px] rounded-[var(--radius-control)] bg-[var(--accent-brand)] px-[16px] disabled:opacity-60"

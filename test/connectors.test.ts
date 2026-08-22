@@ -18,8 +18,10 @@ import { verifyBearer, decodeDelivery, pageFrom, HTML_KEYS, DeliveryError } from
 import { slackPayload, discordPayload, announce, summarise, breakMessage, testMessage } from '../src/connectors/deliver.js';
 import { getConnectors, putConnector, deleteConnector, postDelivery } from '../src/connectors/handlers.js';
 import { ingestPage, pageDigest } from '../src/connectors/ingest.js';
+import { MUTATIONS, markTarget } from '../src/mutate.js';
+import { pickTarget } from '../src/target.js';
 import { loadTools } from '../src/mcp/server.js';
-import { getDb, closeDb, heldCells, sql } from '../src/store/index.js';
+import { getDb, closeDb, heldCells, sql, targets } from '../src/store/index.js';
 
 // A real Slack webhook URL is a bearer credential. This is a syntactically
 // valid one pointed at a host that exists, so the host allow-list is exercised
@@ -332,8 +334,13 @@ suite('delivery degrades honestly', () => {
 suite('the seam', () => {
   it('runs the delivered page down the same pipeline a local fetch takes', async () => {
     if (!dbUp) return;
+    // Its own target row, created here. This used to name 'ikea' and create
+    // nothing: 'ikea' exists in the `assay` template database and in nothing
+    // else, so against `createdb` + `db:migrate` the `runs.target_id` foreign
+    // key rejected the insert and this case failed. The page is still the ikea
+    // corpus -- only the row this run belongs to is the test's own.
     const target = {
-      targetId: 'ikea',
+      targetId: 'test_connectors',
       url: 'corpus://ikea',
       contract: {
         field: 'recall_title',
@@ -350,6 +357,10 @@ suite('the seam', () => {
     const files = (await readdir('corpus/ikea')).filter((f) => f.endsWith('.html')).sort();
     const html = await readFile(`corpus/ikea/${files.at(-1)}`, 'utf8');
 
+    await getDb().insert(targets).values({
+      targetId: target.targetId, url: target.url, cadence: '6h', contract: target.contract,
+    }).onConflictDoNothing();
+
     const r = await ingestPage({ target, html, via: 'brightdata' });
 
     // The proof record carries provenance and nothing else that a local fetch
@@ -357,7 +368,7 @@ suite('the seam', () => {
     // the seam is wrong.
     if (!r.skipped) {
       expect(r.result!.event.via).toBe('brightdata');
-      expect(r.result!.event.site).toBe('ikea');
+      expect(r.result!.event.site).toBe(target.targetId);
       expect(['ok', 'heal', 'abstain']).toContain(r.result!.event.event);
       expect(r.result!.event.thresholds).toEqual({ tau: 0.6, delta: 0.16 });
       // A held cell is null. The webhook path cannot fill one either.
@@ -372,7 +383,8 @@ suite('the seam', () => {
     // the last one.
     await getDb().execute(sql`DELETE FROM field_runs WHERE run_id = ${r.runId}`);
     await getDb().execute(sql`DELETE FROM runs WHERE run_id = ${r.runId}`);
-    await getDb().execute(sql`DELETE FROM field_state WHERE target_id = 'ikea'`);
+    await getDb().execute(sql`DELETE FROM field_state WHERE target_id = ${target.targetId}`);
+    await getDb().execute(sql`DELETE FROM targets WHERE target_id = ${target.targetId}`);
   });
 
   it('refuses a contract with no resolver instead of guessing one', async () => {
@@ -385,6 +397,151 @@ suite('the seam', () => {
       html: '<html><body><h2>Recall notice for the thing</h2></body></html>',
       via: 'brightdata',
     })).rejects.toThrow();
+  });
+
+  // The failure this product exists to condemn, in its own delivery path: the
+  // alert did not go out, and nothing on any screen said so. `postDelivery`
+  // wrote `episodes.notified` only when the announcement SUCCEEDED, and
+  // `web/lib/notifications.ts` raises its `undelivered` notice by reading that
+  // column -- so the Activity badge could never fire for a delivered page. The
+  // fetched path (`notifyBreak` in `tools/worker.ts`) has always recorded both
+  // outcomes. These assert the two paths now agree.
+  suite('a break that could not be announced says so on the episode', () => {
+    const T = 'test_undelivered';
+    const FIELD = 'recall_title';
+    const CONTRACT = {
+      field: FIELD,
+      expected: { regex: '(recall|rappel|retirada|remedy|alert)', regexFlags: 'i', minLen: 20 },
+      resolver: {
+        tags: 'h2,h3,a,li', flags: 'i', maxLen: 140, minLen: 20,
+        include: 'recall|rappel|retirada|remedy kit',
+        exclude: 'recalls\\.gov|learn more|click here|^product recalls$',
+      },
+      thresholds: { tau: 0.6, delta: 0.16 },
+    };
+
+    let page = '';
+    const realFetch = globalThis.fetch;
+
+    const wipe = async () => {
+      const d = getDb();
+      await d.execute(sql`DELETE FROM queue_items WHERE proof_id IN (
+        SELECT fr.proof_id FROM field_runs fr JOIN runs r ON r.run_id = fr.run_id
+        WHERE r.target_id = ${T})`);
+      await d.execute(sql`DELETE FROM field_runs WHERE run_id IN (
+        SELECT run_id FROM runs WHERE target_id = ${T})`);
+      await d.execute(sql`DELETE FROM heal_history WHERE target_id = ${T}`);
+      await d.execute(sql`DELETE FROM episodes WHERE target_id = ${T}`);
+      await d.execute(sql`DELETE FROM runs WHERE target_id = ${T}`);
+      await d.execute(sql`DELETE FROM field_state WHERE target_id = ${T}`);
+    };
+
+    beforeAll(async () => {
+      if (!dbUp) return;
+      const { readdir } = await import('node:fs/promises');
+      const files = (await readdir('corpus/ikea')).filter((f) => f.endsWith('.html')).sort();
+      page = await readFile(`corpus/ikea/${files.at(-1)}`, 'utf8');
+      await wipe();
+      await getDb().insert(targets)
+        .values({ targetId: T, url: 'corpus://ikea', cadence: '6h', contract: CONTRACT })
+        .onConflictDoNothing();
+    });
+
+    afterAll(async () => {
+      globalThis.fetch = realFetch;
+      if (!dbUp) return;
+      await wipe();
+      await getDb().execute(sql`DELETE FROM targets WHERE target_id = ${T}`);
+    });
+
+    /** Remove the field the contract tracks, so the gate holds and an episode opens. */
+    const broken = (html: string): string => {
+      const $ = load(html);
+      $('script,style,noscript').remove();
+      const el = pickTarget($, CONTRACT.resolver);
+      if (!el) throw new Error('the corpus capture no longer resolves -- fix the fixture, not this');
+      const m = MUTATIONS.find((x) => x.id === 'remove_field')!;
+      markTarget($, el);
+      if (!m.apply($, el)) throw new Error('remove_field did not apply');
+      return $.html();
+    };
+
+    const deliver = (html: string) =>
+      postDelivery(
+        new Request('http://x', {
+          method: 'POST',
+          headers: { authorization: `Bearer ${BD_SECRET}` },
+          body: JSON.stringify([{ html }]),
+        }),
+        ctx({ kind: 'brightdata', target: T }),
+      );
+
+    const episodeNote = async () => {
+      const { rows } = await getDb().execute(sql`
+        SELECT notified FROM episodes WHERE target_id = ${T} ORDER BY episode_id DESC LIMIT 1`);
+      return (rows[0] as { notified: string | null } | undefined)?.notified ?? null;
+    };
+
+    it('records the failure on the episode, and still answers 200', async () => {
+      if (!dbUp) return;
+      await put('brightdata', { secret: BD_SECRET });
+      await put('slack', { url: SLACK_URL });
+      // Slack is down. Injected at the global, because `postDelivery` calls
+      // `announce` with no transport argument -- which is the code path a real
+      // delivery takes and therefore the one worth testing.
+      globalThis.fetch = (async () => new Response('', { status: 500 })) as typeof fetch;
+
+      await deliver(page);                       // baseline
+      const res = await deliver(broken(page));   // the break
+
+      // 200 is load-bearing: Bright Data retries every non-200 within 30s and
+      // the retry would be refused as a replay, so a chat message nobody could
+      // send must never fail the job.
+      expect(res.status).toBe(200);
+      const body = await res.json() as { announced?: string; status: string };
+      expect(body.status).toBe('quarantined');
+      expect(body.announced).toMatch(/^undelivered: /);
+
+      // The whole point. Before this, the column stayed null and the Activity
+      // badge had nothing to raise.
+      const note = await episodeNote();
+      expect(note).toMatch(/^undelivered: /);
+      // Readable: it says which connector and what it answered.
+      expect(note).toContain('slack');
+      expect(note).toContain('500');
+    });
+
+    it('marks a break nobody is configured to hear about as undelivered too', async () => {
+      if (!dbUp) return;
+      await wipe();
+      await put('brightdata', { secret: BD_SECRET });
+      for (const k of KINDS) if (k !== 'brightdata') await remove(k);
+      globalThis.fetch = (async () => new Response('', { status: 500 })) as typeof fetch;
+
+      await deliver(page);
+      await deliver(broken(page));
+
+      // `announce` returns an empty array rather than throwing, so the old code
+      // reported success. An alert with nowhere to go did not go anywhere.
+      const note = await episodeNote();
+      expect(note).toMatch(/^undelivered: /);
+      expect(note).toContain('no chat connector configured');
+    });
+
+    it('still records a successful announcement plainly', async () => {
+      if (!dbUp) return;
+      await wipe();
+      await put('brightdata', { secret: BD_SECRET });
+      await put('slack', { url: SLACK_URL });
+      globalThis.fetch = (async () => new Response('ok')) as typeof fetch;
+
+      await deliver(page);
+      await deliver(broken(page));
+
+      const note = await episodeNote();
+      expect(note).toBe('slack ok');
+      expect(note).not.toMatch(/undelivered/);
+    });
   });
 
   it('digests the page the way runs.page_sha does, so a replay can be recognised', () => {
