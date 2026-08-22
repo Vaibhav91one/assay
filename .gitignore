@@ -3,6 +3,12 @@
 .env.*
 !.env.example
 
+# Connector configuration. There is no connectors table in the schema, so this
+# is a 0600 JSON file, and it holds three bearer credentials: the token Assay
+# mints for Bright Data to present, and the Slack and Discord webhook URLs --
+# each of which is itself a secret, since anyone holding one can post as you.
+data/
+
 # Agent/harness state. Excluded because session transcripts have been observed
 # to contain a live Bright Data API token. Never commit this directory.
 .claude/
@@ -64,3 +70,9 @@ dist/
 # it should be, and `tsc --noEmit` in web/ needs it present.
 !web/next-env.d.ts
 web/tsconfig.tsbuildinfo
+
+# `next dev` rewrites these on every start. Nine feature branches each ran the
+# dev server, so nine branches each produced a different version of the same
+# generated file -- a conflict with no author and no correct resolution.
+web/AGENTS.md
+web/CLAUDE.md

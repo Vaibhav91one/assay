@@ -14,21 +14,16 @@
 
 import { load } from 'cheerio';
 import { readFile, readdir } from 'node:fs/promises';
-import { createHash } from 'node:crypto';
-import { establishBaseline, runTarget, digest } from '../src/runner.js';
-import { pickTarget } from '../src/target.js';
-import { putCapture } from '../src/store/captures.js';
-import { openEpisode, closeEpisode, deliver } from '../src/api/webhooks.js';
+import { ingestPage } from '../src/connectors/ingest.js';
+import { recomputeField } from '../src/health/observe.js';
+import { dueDigests, markDigestSent } from '../src/reports/digest.js';
+import { deliver } from '../src/api/webhooks.js';
 import { send, breakSubject, breakBody } from '../src/notify.js';
-import {
-  getDb, closeDb, reserveRunId, recordRun, claimDueTarget,
-  lastRunFor, historyFor, markNotified, sql,
-} from '../src/store/index.js';
+import { getDb, closeDb, claimDueTarget, markNotified } from '../src/store/index.js';
 
 const args = process.argv.slice(2);
 const ONCE = args.includes('--once');
 const POLL_MS = (Number(args[args.indexOf('--poll') + 1]) || 30) * 1000;
-const sha16 = (s: any) => createHash('sha256').update(s || '').digest('hex').slice(0, 16);
 
 let stopping = false;
 for (const sig of ['SIGTERM', 'SIGINT']) {
@@ -59,19 +54,6 @@ function fetcherFor(url: any) {
     const $ = load(await res.text()); $('script,style,noscript').remove();
     return { $ };
   };
-}
-
-/** Rebuild the baseline from the target's contract. */
-async function baselineFor(target: any, $: any) {
-  const el = pickTarget($, target.contract.resolver);
-  if (!el) throw new Error('no target element in the capture');
-  const golden = await putCapture($.html());
-  return establishBaseline({
-    $, el,
-    field: target.contract.field,
-    expected: target.contract.expected,
-    goldenSha: golden.sha,
-  });
 }
 
 /** Email first, webhook as the fallback. Never fatal to the run. */
@@ -105,74 +87,92 @@ async function notifyBreak({ target, field, diagnosis, runId, episodeId }: any) 
   }
 }
 
-/** One target, start to finish. Returns a short line for the log. */
+/**
+ * One target, start to finish. Returns a short line for the log.
+ *
+ * The fetch is the worker's, and everything after it is `ingestPage` -- the same
+ * function a Bright Data delivery calls. This used to be a second copy of that
+ * sequence, which meant the delivered path and the fetched path could drift and
+ * the benchmark would only ever exercise one of them.
+ *
+ * What stays here is what a delivery deliberately does not do: announce. A run
+ * record and an announcement are different facts, and coupling them would make
+ * the delivered run differ from the fetched one in the engine rather than only
+ * in provenance.
+ */
 async function runOne(target: any) {
-  const { targetId, contract } = target;
-  const fetchPage = fetcherFor(target.url);
-  const { $ } = await fetchPage();
-  const html = $.html();
-  const sha = digest(html);
+  const { targetId } = target;
+  const { $ } = await fetcherFor(target.url)();
 
-  const last = await lastRunFor(targetId);
-  const runId = await reserveRunId();
+  const r = await ingestPage({ target, html: $.html(), via: 'worker' });
+  if (r.skipped) return `${targetId}  run ${r.runId}  skipped (page unchanged)`;
 
-  // Skip-if-unchanged. The run is still RECORDED, with its page size, because
-  // detect() guards on history.length >= 3 and robustZ needs an unbroken
-  // series -- a silent gap here disarms the detector without ever erroring.
-  if (last && last.page_sha && last.page_sha === sha) {
-    await getDb().execute(
-      sql`INSERT INTO runs (run_id, target_id, status, page_bytes, page_sha)
-          VALUES (${runId}, ${targetId}, 'skipped', ${html.length}, ${sha})`,
-    );
-    return `${targetId}  run ${runId}  skipped (page unchanged, ${html.length} bytes)`;
-  }
+  const result = r.result!;
+  const field = result.event.field;
 
-  const baseline = await baselineFor(target, $);
-  const history = await historyFor(targetId);
-  // Per RUN, not per page: a page that reverts to an earlier state would
-  // otherwise collide on the unique proof_id, and a proof is about a run.
-  const proofId = `pr_${sha16(`${targetId}${runId}${baseline.field}`)}`;
-
-  const r = await runTarget({
-    fetchPage, baseline, history,
-    thresholds: contract.thresholds || { tau: 0.6, delta: 0.16 },
-    meta: { run: runId, site: targetId },
-    proofId,
-  });
-
-  const capture = r.event.event === 'ok'
-    ? null
-    : { ...(await putCapture(html)), url: target.url };
-
-  await recordRun({
-    runId, targetId, capture, result: r, proofId,
-    groupKey: `${r.event.skeleton.after}:${baseline.field}`,
-  });
-
-  // An episode opens on a break and closes when the field recovers. openEpisode
-  // returns null if one is already open -- that dedupe is why a template change
-  // breaking 400 pages sends one message and not 400.
-  const broken = r.status.status === 'quarantined';
+  // An episode opens on a break and closes when the field recovers. ingestPage
+  // returns a null episode id when one was already open -- that dedupe is why a
+  // template change breaking 400 pages sends one message and not 400.
   let note = '';
-  if (broken) {
-    const ep = await openEpisode({
-      targetId, field: baseline.field, cause: r.event.attributed_cause, runId,
-    });
-    if (ep) {
+  if (result.status.status === 'quarantined') {
+    if (r.episodeId != null) {
       const how = await notifyBreak({
-        target: targetId, field: baseline.field,
-        diagnosis: r.event.diagnosis, runId, episodeId: ep.episodeId,
+        target: targetId, field,
+        diagnosis: result.event.diagnosis, runId: r.runId, episodeId: r.episodeId,
       });
-      note = `  episode ${ep.episodeId} opened, notified via ${how}`;
+      note = `  episode ${r.episodeId} opened, notified via ${how}`;
     } else {
       note = '  (episode already open — no second alert)';
     }
-  } else {
-    const closed = await closeEpisode({ targetId, field: baseline.field, runId });
-    if (closed) note = `  episode ${closed.episodeId} closed`;
   }
 
-  return `${targetId}  run ${runId}  ${r.event.event}  ${r.status.status}${note}`;
+  // F1/F3 standing state, refreshed from the run that just landed. Writes only
+  // E's two columns on field_state, so it cannot disturb a brake sharing the row.
+  //
+  // Not fatal, and not silent. A grade is an OBSERVATION about the run; the run
+  // record is the run. Losing the record because the grader could not read a
+  // pruned capture would be letting a report break the thing it reports on --
+  // and detect() needs an unbroken series, so it would break the detector too.
+  // The failure is named on the same line the operator is already reading.
+  try {
+    const h = await recomputeField(targetId, field);
+    note += `  ${h.fragility_grade}/${h.drift_state}`;
+  } catch (e) {
+    note += `  (health not recomputed: ${(e as Error).message.split('\n')[0]})`;
+  }
+
+  return `${targetId}  run ${r.runId}  ${result.event.event}  ${result.status.status}${note}`;
+}
+
+/**
+ * Send every digest that has come due (F14). Returns a line per digest, or none.
+ *
+ * The claim and the send are two calls on purpose and are wired as two. dueDigests
+ * bumps next_run_at inside the same transaction as its FOR UPDATE SKIP LOCKED,
+ * which is what stops two workers sending the same digest twice; markDigestSent
+ * moves last_sent_at and runs ONLY after the send returns. A failed send moves
+ * neither window, so the next run composes over the period nobody received.
+ * Calling markDigestSent alongside the claim would turn a failed send into a
+ * silently skipped reporting period.
+ *
+ * Empty until an operator inserts a digests row, which is why wiring it moved
+ * nothing.
+ */
+async function sendDueDigests(): Promise<string[]> {
+  const out: string[] = [];
+  for (const d of await dueDigests()) {
+    try {
+      // Null recipients is "this install's address", the same one a break alert
+      // uses. If that is unset too, send() refuses rather than inventing one --
+      // and because markDigestSent is never reached, the period is re-covered.
+      await send({ to: d.recipients ?? process.env.ASSAY_MAIL_TO, subject: d.subject, html: d.html });
+      await markDigestSent(d.digestId);
+      out.push(`digest ${d.digestId} (${d.cadence}) sent`);
+    } catch (e) {
+      out.push(`digest ${d.digestId} (${d.cadence}) NOT sent: ${(e as Error).message.split('\n')[0]}`);
+    }
+  }
+  return out;
 }
 
 const main = async () => {
@@ -189,6 +189,13 @@ const main = async () => {
       try { console.log(await runOne(target)); }
       catch (e) { console.error(`${target.targetId}  failed: ${(e as Error).message}`); }
     }
+
+    // After the runs, so a digest covers the cycle that just finished rather
+    // than the one before it. Never fatal to the loop: a mail outage must not
+    // stop the scrapes, which are the thing that has a deadline.
+    try { for (const line of await sendDueDigests()) console.log(line); }
+    catch (e) { console.error(`digests failed: ${(e as Error).message.split('\n')[0]}`); }
+
     if (ONCE || stopping) { if (!claimed) console.log('nothing due'); break; }
     await new Promise((r) => setTimeout(r, POLL_MS));
   } while (!stopping);

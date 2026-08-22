@@ -66,6 +66,7 @@
     "./mcp/*": "./src/mcp/*.ts"
   },
   "bin": {
+    "assay": "./bin/assay.ts",
     "assay-mcp": "./src/mcp/server.ts"
   }
 }

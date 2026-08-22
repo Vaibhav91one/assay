@@ -5,8 +5,12 @@
 // detection and gating. Two loops would mean the benchmark stops testing the
 // product, which is the failure this file exists to prevent.
 //
-// Imports nothing but the engine -- no cheerio, no fs, no network. `$` arrives
-// already parsed, so this runs anywhere the engine runs.
+// Imports nothing but the engine and the contract vocabulary -- no cheerio, no
+// fs, no network, no database. `$` arrives already parsed, so this runs anywhere
+// the engine runs, and `npm run bench` and `npm run replay` still need no
+// Postgres. `src/contracts/index.ts` is pure yaml and zod for exactly that
+// reason; the database half of that feature lives in `src/contracts/store.ts`
+// and is not reachable from here.
 
 import { createHash } from 'node:crypto';
 import type { CheerioAPI } from 'cheerio';
@@ -14,6 +18,7 @@ import { fingerprint, skeletonHash, type Fingerprint } from './fingerprint.js';
 import { healGated, type HealGateResult } from './heal.js';
 import { detect, type Expected, type HistoryPoint } from './detect.js';
 import { publishRow, type FieldVerdict } from './envelope.js';
+import { thresholdsFor, type Contract } from './contracts/index.js';
 
 // TODO(types): elements arrive from fingerprint.ts, which may not import
 // cheerio's types. See that file's header.
@@ -89,9 +94,18 @@ export function establishBaseline({
   const readAnchors = ($p: CheerioAPI): Record<string, string | null> => ({
     css: clean($p(selector).first().text()).slice(0, 200) || null,
     xpath: (() => {
+      // `/` is a CHILD COMBINATOR, not a separator to leave lying around.
+      // abs_xpath is `/html[1]/body[1]/...`; replacing only the predicates left
+      // `html:nth-of-type(1)/body:nth-of-type(1)/...`, which is not a CSS
+      // selector. css-select does not throw on it, it simply matches nothing --
+      // so this anchor read null on every page since the file was written, and
+      // `anchors_disagree` in detect() had never once fired.
       const css = target.abs_xpath
         .replace(/^\//, '')
-        .replace(/\[(\d+)\]/g, ':nth-of-type($1)');
+        .replace(/\[(\d+)\]/g, ':nth-of-type($1)')
+        .replace(/\//g, ' > ');
+      // An unparseable selector is an anchor that did not resolve, which is an
+      // absence. It must not become an empty string that agrees with nothing.
       try { return clean($p(css).first().text()).slice(0, 200) || null; } catch { return null; }
     })(),
   });
@@ -122,15 +136,39 @@ export function evaluate({
   baseline,
   history = [],
   thresholds,
+  contract,
+  healBlock = null,
   meta = {},
 }: {
   $: CheerioAPI;
   baseline: Baseline;
   history?: HistoryPoint[];
   thresholds: { tau: number; delta: number };
+  /**
+   * The operator's field contract (F2), if this target has one. Absent -- which
+   * is every caller today -- leaves `thresholds` exactly as the caller gave
+   * them, which is why wiring this moved no number.
+   *
+   * Present, it governs: a contract is the operator saying what scepticism this
+   * field is owed, and a contract silent on a field means the field takes the
+   * tier vocabulary's default rather than whatever the caller happened to pass.
+   */
+  contract?: Contract | null;
+  /**
+   * Why this field may not heal on this run, or null. Resolved by the caller,
+   * because the answer lives in Postgres and this file reaches no database --
+   * `tools/worker.ts` and a Bright Data delivery both get it from D's
+   * `shouldHeal` via `ingestPage`, and `npm run replay` supplies nothing.
+   *
+   * A string, not a boolean: a withheld heal has to say what withheld it, or
+   * the operator who set the brake reads back the gate's reason instead of
+   * their own.
+   */
+  healBlock?: string | null;
   meta?: Record<string, any>;
 }): Evaluation {
-  const { tau, delta } = thresholds;
+  const policy = contract ? thresholdsFor(contract, baseline.field) : null;
+  const { tau, delta } = policy ?? thresholds;
   const skel = skeletonHash($).hash;
   const hit = $(baseline.selector).first();
   const value = hit.length ? clean(hit.text()).slice(0, 200) : null;
@@ -152,6 +190,10 @@ export function evaluate({
     field: baseline.field,
     mode: 'tiered',
     thresholds: { tau, delta },
+    // Only when a contract actually governed this run. Spread conditionally
+    // rather than left undefined: a proof record is a committed artifact and a
+    // key that appears on every event is a change to its shape.
+    ...(policy ? { policy: policy.policy } : {}),
     skeleton: { before: baseline.skeleton, after: skel, changed: baseline.skeleton !== skel },
     value_now: value,
     baseline_value: baseline.value,
@@ -178,7 +220,24 @@ export function evaluate({
     score: Number(r.score.toFixed(4)),
     value: clean(r.fp.text).slice(0, 90),
   }));
-  const healed = g.decision === 'heal';
+  // A heal the GATE allowed and a POLICY withheld. Two different facts, and the
+  // proof record has to say which, or an operator reading `thin_margin` on a
+  // field they set to `auto_approve: never` is being told the wrong reason.
+  //
+  // The brake is checked before the floor: an operator saying "stop healing this
+  // field" outranks an arithmetic threshold, and reporting the threshold when a
+  // brake is what stopped it would send them to tune the wrong number.
+  const withheld: string | null =
+    g.decision !== 'heal'
+      ? null
+      : healBlock
+        ? healBlock
+        : policy && g.score <= policy.autoApproveAbove
+          ? `auto_approve_floor:${policy.autoApproveAbove}`
+          : null;
+
+  const healed = g.decision === 'heal' && withheld === null;
+  const reason = withheld ?? g.reason;
 
   return {
     sample,
@@ -194,7 +253,7 @@ export function evaluate({
       runner_up: g.runnerUp != null ? Number(g.runnerUp.toFixed(4)) : null,
       margin: g.margin != null ? Number(g.margin.toFixed(4)) : null,
       decision: healed ? 'auto_approved' : 'abstain',
-      reason: g.reason,
+      reason,
       healed_to: healed
         ? { selector: selectorFor(g.element), value: clean(g.fingerprint.text).slice(0, 120) }
         : null,
@@ -203,7 +262,7 @@ export function evaluate({
     // A held cell is quarantined, never filled. envelope.js enforces the null.
     status: healed
       ? { status: 'healed' }
-      : { status: 'quarantined', reason: g.reason, held_since_run: meta.run },
+      : { status: 'quarantined', reason, held_since_run: meta.run },
     publishedValue: healed ? clean(g.fingerprint.text) : null,
   };
 }
@@ -217,6 +276,8 @@ export async function runTarget({
   baseline,
   history,
   thresholds,
+  contract,
+  healBlock,
   meta,
   proofId,
 }: {
@@ -224,11 +285,13 @@ export async function runTarget({
   baseline: Baseline;
   history?: HistoryPoint[];
   thresholds: { tau: number; delta: number };
+  contract?: Contract | null;
+  healBlock?: string | null;
   meta: Record<string, any>;
   proofId: unknown;
 }): Promise<Evaluation & { row: Record<string, unknown> }> {
   const { $ } = await fetchPage();
-  const r = evaluate({ $, baseline, history, thresholds, meta });
+  const r = evaluate({ $, baseline, history, thresholds, contract, healBlock, meta });
   const row = publishRow({
     values: { [baseline.field]: r.publishedValue },
     statuses: { [baseline.field]: r.status },
