@@ -49,25 +49,35 @@ import { cn } from '@/lib/utils';
 export const actionVariants = cva(
   // Press, hover tint and focus ring come from the motion system rather than
   // from each variant, so a button cannot ship without them. See docs/MOTION.md.
-  'inline-flex shrink-0 cursor-pointer items-center rounded-[var(--radius-control)] outline-none transition-colors duration-[var(--duration-tint)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-link)] disabled:pointer-events-none disabled:opacity-60',
+  //
+  // `focus-ring` replaced four focus-visible: utilities that drew a plain 2px
+  // browser-style outline. Same promise -- the keyboard is always visible --
+  // in the app's own palette. The class is in motion.css, with the contrast
+  // measurements that chose its colour.
+  'focus-ring inline-flex shrink-0 cursor-pointer items-center rounded-[var(--radius-control)] transition-colors duration-[var(--duration-tint)] disabled:pointer-events-none disabled:opacity-60',
   {
     variants: {
+      // Each variant declares its gap ONCE, as --action-gap, and spends it on
+      // the flex gap. The icon swap needs that same number to know how far to
+      // slide, and reading it from the variable is what stops the two drifting
+      // -- a gap changed here changes the slide with it.
       variant: {
         /** The outlined right-hand control. Settings, Activity, Check again, a filter. */
         outline:
-          'press-row meta-12_5 gap-[8px] border border-[var(--border-default)] bg-[var(--surface-card)] py-[8px] pl-[12px] pr-[14px] text-[var(--text-primary)] hover:bg-[var(--surface-subtle)]',
+          'press-row meta-12_5 [--action-gap:8px] gap-[var(--action-gap)] border border-[var(--border-default)] bg-[var(--surface-card)] py-[8px] pl-[12px] pr-[14px] text-[var(--text-primary)] hover:bg-[var(--surface-subtle)]',
         /** The one orange verb. New scrape, Start watching. Never two at once on a screen. */
         primary:
-          'press-wide body-13_5 h-[40px] gap-[10px] bg-[var(--accent-brand)] px-[16px] text-[var(--accent-on-primary)]',
+          'press-wide body-13_5 h-[40px] [--action-gap:10px] gap-[var(--action-gap)] bg-[var(--accent-brand)] px-[16px] text-[var(--accent-on-primary)]',
         /** The same wide action where the verb is navigation rather than commitment. */
-        link: 'press-wide body-13_5 h-[40px] gap-[10px] bg-[var(--semantic-link)] px-[16px] text-[var(--accent-on-primary)] hover:bg-[var(--semantic-link-hover)]',
+        link: 'press-wide body-13_5 h-[40px] [--action-gap:10px] gap-[var(--action-gap)] bg-[var(--semantic-link)] px-[16px] text-[var(--accent-on-primary)] hover:bg-[var(--semantic-link-hover)]',
         /** Committing to an answer. Use this. Green because it resolves, not because it is safe. */
         success:
-          'press-row meta-12_5 h-[36px] gap-[8px] bg-[var(--semantic-success)] px-[15px] text-[var(--accent-on-primary)]',
+          'press-row meta-12_5 h-[36px] [--action-gap:8px] gap-[var(--action-gap)] bg-[var(--semantic-success)] px-[15px] text-[var(--accent-on-primary)]',
         /** A command or value you are meant to copy. Mono, so it reads as the thing itself. */
-        chip: 'press-row mono-value-12_5 gap-[8px] border border-[var(--border-default)] bg-[var(--surface-card)] px-[12px] py-[7px] text-left text-[var(--text-primary)] hover:bg-[var(--surface-subtle)]',
+        chip: 'press-row mono-value-12_5 [--action-gap:8px] gap-[var(--action-gap)] border border-[var(--border-default)] bg-[var(--surface-card)] px-[12px] py-[7px] text-left text-[var(--text-primary)] hover:bg-[var(--surface-subtle)]',
         /** A real choice that must not compete with the primary one. No box at all. */
-        quiet: 'press-row meta-13 gap-[6px] text-[var(--text-primary)] hover:underline',
+        quiet:
+          'press-row meta-13 [--action-gap:6px] gap-[var(--action-gap)] text-[var(--text-primary)] hover:underline',
         /** A verb with no room for its word. Always carries an aria-label. */
         icon: 'press-icon size-[32px] justify-center border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--surface-subtle)]',
       },
@@ -86,6 +96,7 @@ export function Button({
   disabled,
   className,
   children,
+  style,
   ...props
 }: React.ComponentProps<'button'> &
   VariantProps<typeof actionVariants> & {
@@ -98,6 +109,21 @@ export function Button({
      */
     loading?: boolean;
   }) {
+  /**
+   * The hover swap, and the three things that decide whether a button gets it.
+   *
+   * It is a condition on the render rather than a list of variants, because
+   * "has a glyph on the left" is a fact about the call site and not about the
+   * family: `outline` carries one on Check again and none on a bare label, and
+   * a variant list would be wrong for one of those two. So:
+   *
+   * - there has to BE a left glyph to send away;
+   * - there has to be a label for it to travel past -- `icon` is the whole
+   *   button, and sliding it out leaves an empty box;
+   * - and not while loading, when the glyph is a Spinner saying something.
+   */
+  const swap = !loading && Boolean(Icon) && children != null && variant !== 'icon';
+
   return (
     <button
       type="button"
@@ -105,15 +131,30 @@ export function Button({
       data-variant={variant ?? 'outline'}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      className={cn(actionVariants({ variant }), className)}
+      className={cn(actionVariants({ variant }), swap && 'icon-swap', className)}
+      // The one number the swap cannot read off a class. The glyph's box is
+      // whatever iconSize the caller asked for, and the slide is exactly that
+      // plus the variant's own --action-gap.
+      style={swap ? ({ '--swap-slot': `${iconSize}px`, ...style } as React.CSSProperties) : style}
       {...props}
     >
       {loading ? (
         <Spinner size={iconSize} />
       ) : Icon ? (
-        <Icon size={iconSize} strokeWidth={1.5} aria-hidden />
+        <Icon
+          size={iconSize}
+          strokeWidth={1.5}
+          aria-hidden
+          className={swap ? 'swap-lead shrink-0' : undefined}
+        />
       ) : null}
-      {children}
+      {swap ? <span className="swap-label">{children}</span> : children}
+      {/* The same glyph a second time, and aria-hidden like the first: the
+          button's accessible name is its label, and a decorative copy of a
+          decorative glyph must not turn into a second announcement. */}
+      {swap && Icon && (
+        <Icon size={iconSize} strokeWidth={1.5} aria-hidden className="swap-trail shrink-0" />
+      )}
     </button>
   );
 }

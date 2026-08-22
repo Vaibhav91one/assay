@@ -91,8 +91,28 @@ describe('no variant can ship without its motion', () => {
 
   it('puts the focus ring and the hover tint in the base, not in a variant', () => {
     const base = RECIPE.slice(0, RECIPE.indexOf('variants: {'));
-    expect(base).toContain('focus-visible:outline-[var(--semantic-link)]');
+    // `focus-ring`, not the four focus-visible: utilities this used to name.
+    // The ring moved into app/motion.css so it could be one declaration shared
+    // with the links and rows that are not buttons; what this test is actually
+    // guarding is unchanged, which is that it lives in the BASE and so no
+    // variant can ship without it.
+    expect(base).toContain('focus-ring');
     expect(base).toContain('duration-[var(--duration-tint)]');
     expect(base).toContain('disabled:opacity-60');
+  });
+
+  it('gives each variant its gap once, as the variable the icon swap reads', () => {
+    // --action-gap is spent twice -- on the flex gap and on how far the swap
+    // slides -- so a variant that declares a bare gap-[Npx] would move its
+    // label by the wrong distance on hover, silently.
+    for (const v of variants) {
+      const start = RECIPE.indexOf(`        ${v}:`);
+      const rest = RECIPE.slice(start);
+      const decl = rest.slice(0, rest.indexOf("',") + 1);
+      if (!/gap-\[/.test(decl)) continue; // `icon` has no gap: one child.
+      expect(decl, `${v} sets a gap that --action-gap does not know about`).toMatch(
+        /\[--action-gap:\d+px\][^']*gap-\[var\(--action-gap\)\]/,
+      );
+    }
   });
 });
