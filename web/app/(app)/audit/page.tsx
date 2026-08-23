@@ -39,7 +39,7 @@ export default async function AuditPage() {
     <>
       <TopBar title={t('audit.heading')} status={a ? headline(a) : t('audit.noSnapshot.status')} scraper={null} />
 
-      <div className="flex w-full max-w-[1100px] flex-col gap-[28px] px-[56px] pb-[64px] pt-[36px]">
+      <div className="flex w-full max-w-[1100px] flex-col gap-[28px] px-[20px] md:px-[56px] pb-[64px] pt-[36px]">
         {a === null ? (
           <Empty title={t('audit.empty.title')}>
             {t('audit.empty.body.before')} <span className="mono-value-12_5">{SNAPSHOT}</span>{' '}
@@ -112,27 +112,32 @@ function headline(a: Audit): string {
 
 function Table({ a }: { a: Audit }) {
   return (
-    <table className="w-full border-collapse">
-      <thead>
-        <tr className="border-b border-[var(--border-hairline)] text-left">
-          {[
-            t('audit.head.field'),
-            t('audit.head.delivered'),
-            t('audit.head.nullRate'),
-            t('audit.head.verdict'),
-          ].map((h) => (
-            <th key={h} className="caption-12 pb-[8px] font-normal text-[var(--text-muted)]">
-              {h}
-            </th>
+    // A SCROLLER BELOW 768. Somebody else's data, read across: the null-rate and
+    // the verdict only mean anything beside the field they grade. The wrapper
+    // scrolls; the page body never does.
+    <div className="w-full overflow-x-auto">
+      <table className="w-full min-w-[560px] border-collapse">
+        <thead>
+          <tr className="border-b border-[var(--border-hairline)] text-left">
+            {[
+              t('audit.head.field'),
+              t('audit.head.delivered'),
+              t('audit.head.nullRate'),
+              t('audit.head.verdict'),
+            ].map((h) => (
+              <th key={h} className="caption-12 pb-[8px] font-normal text-[var(--text-muted)]">
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {a.fields.map((f) => (
+            <Row key={f.field} f={f} rows={a.rows} />
           ))}
-        </tr>
-      </thead>
-      <tbody>
-        {a.fields.map((f) => (
-          <Row key={f.field} f={f} rows={a.rows} />
-        ))}
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    </div>
   );
 }
 

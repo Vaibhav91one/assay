@@ -38,7 +38,7 @@ export default function GlobalError({
         className="bg-[var(--bg-page)] text-[var(--text-primary)]"
         style={{ fontFamily: 'ui-sans-serif, system-ui, sans-serif' }}
       >
-        <main className="flex min-h-screen w-full flex-col items-start gap-[10px] px-[56px] pt-[96px]">
+        <main className="flex min-h-screen w-full flex-col items-start gap-[10px] px-[20px] md:px-[56px] pt-[96px]">
           {/* The one mark that survives when the shell does not. Set in
               --text-primary rather than the brand orange: #ff4d00 measures
               3.33:1 on white, which is a fine reading for a 40px button fill

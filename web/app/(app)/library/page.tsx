@@ -28,7 +28,7 @@ export default function LibraryPage() {
   return (
     <>
       <TopBar title={t('nav.library')} scraper={null} />
-      <div className="flex w-full max-w-[860px] flex-col gap-[22px] pl-[56px] pr-[32px] pb-[48px] pt-[18px]">
+      <div className="flex w-full max-w-[860px] flex-col gap-[22px] px-[20px] md:pl-[56px] md:pr-[32px] pb-[48px] pt-[18px]">
         {GROUPS.map((g) => {
           const rows = ALL_TRACKERS.filter((t) => t.group === g.id);
           if (!rows.length) return null;

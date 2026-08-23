@@ -30,7 +30,7 @@ export default async function FieldsPage({
           and how reliably it has been there." The columns are `field`,
           `seen in`, `how it is found` and `last change` -- the sentence was a
           reading of the table header, above the table header. */}
-      <div className="flex w-full flex-col items-start px-[56px] pt-[44px]">
+      <div className="flex w-full flex-col items-start px-[20px] md:px-[56px] pt-[44px]">
         <div className="pt-[22px]">
           <FilterMenu
             current={filter}
@@ -51,7 +51,10 @@ export default async function FieldsPage({
           {v.rows.length === 0 ? (
             <Empty title={emptyTitle(filter)}>{emptyBody(filter, v)}</Empty>
           ) : (
-            <FieldsTable rows={v.rows} />
+            <>
+              <FieldsCards rows={v.rows} />
+              <FieldsTable rows={v.rows} />
+            </>
           )}
         </div>
 
@@ -81,100 +84,165 @@ function midTruncate(s: string, max = 20): string {
   return `${s.slice(0, head)}…${s.slice(s.length - (max - 1 - head))}`;
 }
 
+/**
+ * The same rows, stacked, below 768.
+ *
+ * A CARD, like /runs, and for the same reason: the primary line is
+ * `scraper · field` and everything else on the row qualifies it. The four
+ * fixed columns -- 260 + 190 + auto + 150 -- do not fit in 390px and never
+ * will, and a scroller would put `last change` off the edge of every row.
+ *
+ * `how it is found` and its suggestion are the one part that is genuinely
+ * prose, so they get their own line rather than a column's worth of width.
+ * Both halves read the same `rows`.
+ */
+function FieldsCards({ rows }: { rows: FieldRow[] }) {
+  return (
+    <ul className="flex w-full flex-col md:hidden">
+      {rows.map((r) => (
+        <li
+          key={r.targetId + r.field}
+          className="flex flex-col gap-[8px] border-t border-[var(--border-hairline)] py-[12px]"
+        >
+          <Link
+            href={`/fields/${encodeURIComponent(r.targetId)}`}
+            title={`${r.scraper} · ${r.field}`}
+            className="flex min-w-0 items-baseline gap-[6px]"
+          >
+            {r.grade === 'fragile' && (
+              <CircleAlert
+                size={14}
+                strokeWidth={1.5}
+                className="shrink-0 translate-y-[2px] text-[var(--semantic-warning)]"
+                aria-label={t('fields.fragile')}
+              />
+            )}
+            <span className="mono-value-12_5 min-w-0 truncate text-[var(--text-primary)]">
+              {r.field}
+            </span>
+            <span className="meta-12_5 min-w-0 truncate text-[var(--text-muted)]">{r.scraper}</span>
+          </Link>
+          <span className="flex items-center gap-[12px]">
+            <span className="meta-12_5 w-[46px] shrink-0 text-[var(--text-secondary)]">
+              {r.seen}/{r.runs}
+            </span>
+            <Bar value={r.seen} of={r.runs} />
+            <span className="shrink-0"><LastChange row={r} /></span>
+          </span>
+          <span className="body-13_5 text-[var(--text-secondary)]">
+            {r.how ?? <span className="text-[var(--text-muted)]">{t('fields.notAssessed')}</span>}
+            {r.suggestion && (
+              <span className="caption-12 block pt-[3px] text-[var(--text-muted)]">
+                {r.suggestion}
+              </span>
+            )}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function FieldsTable({ rows }: { rows: FieldRow[] }) {
   return (
-    <table className="w-full table-fixed border-collapse">
-      <colgroup>
-        <col style={{ width: 260 }} />
-        <col style={{ width: 190 }} />
-        <col />
-        <col style={{ width: 150 }} />
-      </colgroup>
-      <thead>
-        <tr className="border-t border-[var(--border-hairline)] text-left">
-          {HEADINGS.map((h) => (
-            <th key={h} className="caption-11 pb-[7px] pt-[7px] font-normal text-[var(--text-muted)]">
-              {h}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((r) => (
-          <tr key={r.targetId + r.field} className="border-t border-[var(--border-hairline)]">
-            <td className="py-[9px]">
-              <span className="flex items-center gap-[8px]">
-                <span className="flex size-[14px] shrink-0 items-center justify-center">
-                  {r.grade === 'fragile' && (
-                    <CircleAlert
-                      size={14}
-                      strokeWidth={1.5}
-                      className="text-[var(--semantic-warning)]"
-                      aria-label={t('fields.fragile')}
-                    />
-                  )}
-                </span>
-                {/* The scraper qualifies the field: three targets watch a
-                    field called `recall_title`, and a column of three
-                    identical names is a table that tells you nothing.
-
-                    THE FIELD NAME IS NEVER THE HALF THAT GETS CUT. This was one
-                    `truncate` over the whole pair, and slugs derived from one
-                    site share a long head -- `fda-recalls-device`,
-                    `fda-recalls-drug`, `fda-recalls-food` -- so a right-hand
-                    ellipsis ate the field name and left three rows reading
-                    `fda-recalls-…`, which is the column saying nothing again by
-                    a different route. The slug is squeezed from the middle,
-                    where it carries the least, and the field gets whatever is
-                    left. `title` carries the untruncated pair for anyone who
-                    needs the exact id. */}
-                {/* The row is a link now. Every column on this table is a
-                    SUMMARY of values the screen never showed -- "seen in 22/30"
-                    invites exactly one question and there was nowhere to go and
-                    ask it. */}
-                <Link
-                  href={`/fields/${encodeURIComponent(r.targetId)}`}
-                  title={`${r.scraper} · ${r.field}`}
-                  className="flex min-w-0 items-baseline hover:underline"
-                >
-                  <span className="meta-12_5 shrink-0 text-[var(--text-muted)]">
-                    {midTruncate(r.scraper)} ·&nbsp;
-                  </span>
-                  <span className="mono-value-12_5 min-w-0 truncate text-[var(--text-primary)]">
-                    {r.field}
-                  </span>
-                </Link>
-              </span>
-            </td>
-            <td className="py-[9px]">
-              <span className="flex items-center gap-[12px]">
-                <span className="meta-12_5 w-[46px] shrink-0 text-[var(--text-secondary)]">
-                  {r.seen}/{r.runs}
-                </span>
-                <Bar value={r.seen} of={r.runs} />
-              </span>
-            </td>
-            <td className="body-13_5 py-[9px] pr-[16px] text-[var(--text-secondary)]">
-              {r.how ?? <span className="text-[var(--text-muted)]">{t('fields.notAssessed')}</span>}
-              {/* The grade said what is wrong; this says what would fix it, in
-                  the same cell, because a warning with no next move is a
-                  warning the reader can only file away. Derived from the
-                  anchors the grade was computed from -- see `suggest` in
-                  web/lib/fields.ts -- so it cannot recommend an id to a field
-                  that already has one. */}
-              {r.suggestion && (
-                <span className="caption-12 block pt-[3px] text-[var(--text-muted)]">
-                  {r.suggestion}
-                </span>
-              )}
-            </td>
-            <td className="py-[9px]">
-              <LastChange row={r} />
-            </td>
+    // AND A SCROLLER ABOVE 768, because the cards stop at exactly the width
+    // where this table still does not fit: 260 + 190 + auto + 150 against a
+    // 768px window minus a 272px rail is 384px of room for 600px of columns.
+    // The cards handle below, this handles the band between.
+    <div className="hidden w-full overflow-x-auto md:block">
+      <table className="w-full min-w-[640px] table-fixed border-collapse">
+        <colgroup>
+          <col style={{ width: 260 }} />
+          <col style={{ width: 190 }} />
+          <col />
+          <col style={{ width: 150 }} />
+        </colgroup>
+        <thead>
+          <tr className="border-t border-[var(--border-hairline)] text-left">
+            {HEADINGS.map((h) => (
+              <th key={h} className="caption-11 pb-[7px] pt-[7px] font-normal text-[var(--text-muted)]">
+                {h}
+              </th>
+            ))}
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.targetId + r.field} className="border-t border-[var(--border-hairline)]">
+              <td className="py-[9px]">
+                <span className="flex items-center gap-[8px]">
+                  <span className="flex size-[14px] shrink-0 items-center justify-center">
+                    {r.grade === 'fragile' && (
+                      <CircleAlert
+                        size={14}
+                        strokeWidth={1.5}
+                        className="text-[var(--semantic-warning)]"
+                        aria-label={t('fields.fragile')}
+                      />
+                    )}
+                  </span>
+                  {/* The scraper qualifies the field: three targets watch a
+                      field called `recall_title`, and a column of three
+                      identical names is a table that tells you nothing.
+
+                      THE FIELD NAME IS NEVER THE HALF THAT GETS CUT. This was one
+                      `truncate` over the whole pair, and slugs derived from one
+                      site share a long head -- `fda-recalls-device`,
+                      `fda-recalls-drug`, `fda-recalls-food` -- so a right-hand
+                      ellipsis ate the field name and left three rows reading
+                      `fda-recalls-…`, which is the column saying nothing again by
+                      a different route. The slug is squeezed from the middle,
+                      where it carries the least, and the field gets whatever is
+                      left. `title` carries the untruncated pair for anyone who
+                      needs the exact id. */}
+                  {/* The row is a link now. Every column on this table is a
+                      SUMMARY of values the screen never showed -- "seen in 22/30"
+                      invites exactly one question and there was nowhere to go and
+                      ask it. */}
+                  <Link
+                    href={`/fields/${encodeURIComponent(r.targetId)}`}
+                    title={`${r.scraper} · ${r.field}`}
+                    className="flex min-w-0 items-baseline hover:underline"
+                  >
+                    <span className="meta-12_5 shrink-0 text-[var(--text-muted)]">
+                      {midTruncate(r.scraper)} ·&nbsp;
+                    </span>
+                    <span className="mono-value-12_5 min-w-0 truncate text-[var(--text-primary)]">
+                      {r.field}
+                    </span>
+                  </Link>
+                </span>
+              </td>
+              <td className="py-[9px]">
+                <span className="flex items-center gap-[12px]">
+                  <span className="meta-12_5 w-[46px] shrink-0 text-[var(--text-secondary)]">
+                    {r.seen}/{r.runs}
+                  </span>
+                  <Bar value={r.seen} of={r.runs} />
+                </span>
+              </td>
+              <td className="body-13_5 py-[9px] pr-[16px] text-[var(--text-secondary)]">
+                {r.how ?? <span className="text-[var(--text-muted)]">{t('fields.notAssessed')}</span>}
+                {/* The grade said what is wrong; this says what would fix it, in
+                    the same cell, because a warning with no next move is a
+                    warning the reader can only file away. Derived from the
+                    anchors the grade was computed from -- see `suggest` in
+                    web/lib/fields.ts -- so it cannot recommend an id to a field
+                    that already has one. */}
+                {r.suggestion && (
+                  <span className="caption-12 block pt-[3px] text-[var(--text-muted)]">
+                    {r.suggestion}
+                  </span>
+                )}
+              </td>
+              <td className="py-[9px]">
+                <LastChange row={r} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

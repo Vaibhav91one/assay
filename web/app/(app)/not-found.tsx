@@ -22,7 +22,7 @@ export default function AppNotFound() {
   return (
     <>
       <TopBar title={t('notFound.topbar')} status={t('notFound.status')} scraper={null} />
-      <div className="flex w-full flex-col items-start gap-[10px] px-[56px] pt-[48px]">
+      <div className="flex w-full flex-col items-start gap-[10px] px-[20px] md:px-[56px] pt-[48px]">
         <StatusLine tone="warning" type="heading-18" size={18}>
           {t('notFound.title')}
         </StatusLine>

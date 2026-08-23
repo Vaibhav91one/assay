@@ -94,51 +94,55 @@ export function Apply({ tracker: t }: { tracker: Tracker }) {
         </div>
       )}
 
-      <table className="w-full border-collapse">
-        <tbody>
-          {rows.map((f) => {
-            const hit = read?.ok ? read.fields.find((x) => x.name === f.name) : undefined;
-            const row = built?.fields.find((x) => x.field === f.name);
-            const missing = read?.ok && hit?.value == null;
-            return (
-              <tr key={f.name} className="border-b border-[var(--border-hairline)] last:border-0">
-                <th
-                  scope="row"
-                  className="caption-13 w-[132px] py-[10px] pr-[16px] text-left align-top font-normal text-[var(--text-secondary)]"
-                >
-                  {read?.ok && !built ? (
-                    <label className="flex items-start gap-[8px]">
-                      <input
-                        type="checkbox"
-                        checked={keep.includes(f.name)}
-                        disabled={Boolean(missing)}
-                        onChange={(e) =>
-                          setKeep((p) =>
-                            e.target.checked ? [...p, f.name] : p.filter((n) => n !== f.name))}
-                        className="mt-[3px] size-[13px] shrink-0 accent-[var(--accent-brand)] disabled:opacity-40"
-                      />
-                      {f.label}
-                    </label>
-                  ) : (
-                    f.label
-                  )}
-                </th>
-                <td className="body-13_5 py-[10px] align-top text-[var(--text-primary)]">
-                  {built
-                    ? row
-                      ? row.status === 'quarantined'
-                        ? <span className="text-[var(--semantic-warning)]">held</span>
-                        : row.baseline ?? <span className="text-[var(--text-muted)]">empty</span>
-                      : <span className="text-[var(--text-muted)]">—</span>
-                    : missing
-                      ? <span className="caption-12 text-[var(--text-muted)]">not on this page</span>
-                      : hit?.value ?? <span className="text-[var(--text-muted)]">—</span>}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      {/* A SCROLLER BELOW 768: a column per field, so the width is the number
+          of fields the tracker promises. The wrapper scrolls, not the page. */}
+      <div className="w-full overflow-x-auto">
+        <table className="w-full min-w-[480px] border-collapse">
+          <tbody>
+            {rows.map((f) => {
+              const hit = read?.ok ? read.fields.find((x) => x.name === f.name) : undefined;
+              const row = built?.fields.find((x) => x.field === f.name);
+              const missing = read?.ok && hit?.value == null;
+              return (
+                <tr key={f.name} className="border-b border-[var(--border-hairline)] last:border-0">
+                  <th
+                    scope="row"
+                    className="caption-13 w-[132px] py-[10px] pr-[16px] text-left align-top font-normal text-[var(--text-secondary)]"
+                  >
+                    {read?.ok && !built ? (
+                      <label className="flex items-start gap-[8px]">
+                        <input
+                          type="checkbox"
+                          checked={keep.includes(f.name)}
+                          disabled={Boolean(missing)}
+                          onChange={(e) =>
+                            setKeep((p) =>
+                              e.target.checked ? [...p, f.name] : p.filter((n) => n !== f.name))}
+                          className="mt-[3px] size-[13px] shrink-0 accent-[var(--accent-brand)] disabled:opacity-40"
+                        />
+                        {f.label}
+                      </label>
+                    ) : (
+                      f.label
+                    )}
+                  </th>
+                  <td className="body-13_5 py-[10px] align-top text-[var(--text-primary)]">
+                    {built
+                      ? row
+                        ? row.status === 'quarantined'
+                          ? <span className="text-[var(--semantic-warning)]">held</span>
+                          : row.baseline ?? <span className="text-[var(--text-muted)]">empty</span>
+                        : <span className="text-[var(--text-muted)]">—</span>
+                      : missing
+                        ? <span className="caption-12 text-[var(--text-muted)]">not on this page</span>
+                        : hit?.value ?? <span className="text-[var(--text-muted)]">—</span>}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
 
       {read && !read.ok && (
         <p role="alert" className="flex items-start gap-[8px]">

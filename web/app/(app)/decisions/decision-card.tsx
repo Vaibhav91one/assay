@@ -47,9 +47,11 @@ export function DecisionCard({
 
   return (
     <article className="flex w-full flex-col gap-[18px] rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] px-[24px] pb-[18px] pt-[22px] shadow-elevation-control">
-      <div className="flex items-center gap-[12px]">
+      {/* Wraps below 768: three columns in 340px turned the middle one into a
+          four-line paragraph and squeezed the target id into two. */}
+      <div className="flex flex-wrap items-center gap-x-[12px] gap-y-[4px]">
         <span className="body-14 text-[var(--text-primary)]">{d.target}</span>
-        <span className="meta-12_5 flex-1 text-[var(--text-muted)]">
+        <span className="meta-12_5 md:flex-1 text-[var(--text-muted)]">
           {/* The run id is on the Decision, so the reference is the link.
               It used to be inert text -- or, on the sibling screens, a link to
               /runs, which is the list this run is one row of. A reader who
@@ -116,7 +118,12 @@ export function DecisionCard({
         )}
 
         {d.candidates.length > 0 && (
-          <div className="flex w-full items-stretch gap-[16px]">
+          // STACKED BELOW 768. Two candidate cards side by side in 350px is two
+          // columns of 165px, and the value in each is the whole question --
+          // "£4.99" against "Add to basket" only reads as a choice if both are
+          // legible. One under the other keeps the order (best match first),
+          // which is the other half of what the pair is saying.
+          <div className="flex w-full flex-col items-stretch gap-[16px] md:flex-row">
             {d.candidates.map((c, i) => (
               <div
                 key={c.selector + i}
@@ -145,7 +152,9 @@ export function DecisionCard({
 
       <div className="h-px w-full bg-[var(--border-hairline)]" />
 
-      <div className="flex items-center gap-[24px] pt-[4px]">
+      {/* Same reason as the header. Three verbs of unequal length share this
+          row; below 768 they wrap rather than each losing half their words. */}
+      <div className="flex flex-wrap items-center gap-x-[24px] gap-y-[12px] pt-[4px]">
         <button
           type="button"
           disabled={pending}
@@ -158,7 +167,7 @@ export function DecisionCard({
           type="button"
           disabled={pending}
           onClick={() => act(() => resolveCell(d.proof, 'neither'))}
-          className="meta-13 flex-1 text-left text-[var(--text-primary)] disabled:opacity-60"
+          className="meta-13 text-left text-[var(--text-primary)] disabled:opacity-60 md:flex-1"
         >
           {t('decisions.card.neither')}
         </button>
@@ -167,7 +176,7 @@ export function DecisionCard({
             item nine of fifty, and coming back puts you at the top. */}
         <ProofSheet
           proof={d.proof}
-          className="focus-ring flex items-center gap-[8px] rounded-[var(--radius-control)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          className="focus-ring flex shrink-0 items-center gap-[8px] rounded-[var(--radius-control)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
         >
           <Eye size={14} strokeWidth={1.5} aria-hidden />
           <span className="meta-13">{t('decisions.card.seeOnPage')}</span>

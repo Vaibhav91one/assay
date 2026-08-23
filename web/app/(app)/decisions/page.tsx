@@ -18,7 +18,7 @@ export default async function DecisionsPage() {
   return (
     <>
       <TopBar title={t('nav.decisions')} status={waiting(count)} />
-      <div className="flex w-full flex-col gap-[20px] pl-[56px] pr-[32px] pt-[18px]">
+      <div className="flex w-full flex-col gap-[20px] px-[20px] md:pl-[56px] md:pr-[32px] pt-[18px]">
         {decisions.length === 0 ? (
           // Empty is not the same as loading, and it is not a failure either.
           // Nothing waiting means the gate published everything it could

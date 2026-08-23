@@ -18,7 +18,7 @@ export default async function ComparePage() {
   return (
     <>
       <TopBar title={t('compare.heading')} status={headline(v)} />
-      <div className="flex w-full max-w-[1168px] flex-col items-start px-[56px] pb-[64px] pt-[40px]">
+      <div className="flex w-full max-w-[1168px] flex-col items-start px-[20px] md:px-[56px] pb-[64px] pt-[40px]">
         {/* TWO THINGS CAME OFF HERE.
 
             A subtitle -- "What changed on the pages you watch, and what I could
@@ -92,46 +92,51 @@ const HEAD = [
 
 function ChangedTable({ v }: { v: CompareView }) {
   return (
-    <table className="w-full table-fixed border-collapse">
-      <colgroup>
-        <col style={{ width: 172 }} />
-        <col style={{ width: 180 }} />
-        <col />
-        {/* 108, not 94. The widest thing `when` can return is `yesterday 18:48`,
-            which at the larger meta measures 98px and used to measure 92 -- so
-            the timestamp wrapped onto a second line and took the whole row with
-            it. The fourteen pixels come off `what changed`, which is the auto
-            column and has three hundred to spare. */}
-        <col style={{ width: 108 }} />
-      </colgroup>
-      <thead>
-        <tr>
-          {HEAD.map((h) => (
-            <th key={h} className="caption-11 pb-[9px] text-left font-normal text-[var(--text-muted)]">
-              {h}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {rows(v).map((c) => (
-          <tr key={c.proof} className="border-t border-[var(--border-hairline)]">
-            <td className="meta-13 py-[8px] text-[var(--text-primary)]">{c.scraper}</td>
-            <td className="meta-13 py-[8px] text-[var(--text-secondary)]">{c.field}</td>
-            <td className="meta-13 py-[8px] pr-[16px] text-[var(--text-primary)]">
-              {c.from === null ? (
-                <>first value: {c.to}</>
-              ) : (
-                <>
-                  {c.from} <span className="text-[var(--text-muted)]">→</span> {c.to}
-                </>
-              )}
-            </td>
-            <td className="meta-13 py-[8px] text-[var(--text-muted)]">{when(c.at)}</td>
+    // The wrapper scrolls, the page body does not. Four fixed columns of
+    // 172 + 180 + auto + 108 do not fit 390px, and `what changed` is a
+    // before/after pair that only reads as one beside the field it belongs to.
+    <div className="w-full overflow-x-auto">
+      <table className="w-full min-w-[720px] table-fixed border-collapse">
+        <colgroup>
+          <col style={{ width: 172 }} />
+          <col style={{ width: 180 }} />
+          <col />
+          {/* 108, not 94. The widest thing `when` can return is `yesterday 18:48`,
+              which at the larger meta measures 98px and used to measure 92 -- so
+              the timestamp wrapped onto a second line and took the whole row with
+              it. The fourteen pixels come off `what changed`, which is the auto
+              column and has three hundred to spare. */}
+          <col style={{ width: 108 }} />
+        </colgroup>
+        <thead>
+          <tr>
+            {HEAD.map((h) => (
+              <th key={h} className="caption-11 pb-[9px] text-left font-normal text-[var(--text-muted)]">
+                {h}
+              </th>
+            ))}
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows(v).map((c) => (
+            <tr key={c.proof} className="border-t border-[var(--border-hairline)]">
+              <td className="meta-13 py-[8px] text-[var(--text-primary)]">{c.scraper}</td>
+              <td className="meta-13 py-[8px] text-[var(--text-secondary)]">{c.field}</td>
+              <td className="meta-13 py-[8px] pr-[16px] text-[var(--text-primary)]">
+                {c.from === null ? (
+                  <>first value: {c.to}</>
+                ) : (
+                  <>
+                    {c.from} <span className="text-[var(--text-muted)]">→</span> {c.to}
+                  </>
+                )}
+              </td>
+              <td className="meta-13 py-[8px] text-[var(--text-muted)]">{when(c.at)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

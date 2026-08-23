@@ -51,7 +51,7 @@ export default async function ExplainPage({ params }: { params: Promise<{ proof:
           off." came off. The top bar already asks "Where did this number come
           from?" and the two cards below answer it; the sentence between them
           restated the question as a feature description. */}
-      <div className="flex w-full flex-col items-start px-[56px] pb-[48px] pt-[48px]">
+      <div className="flex w-full flex-col items-start px-[20px] md:px-[56px] pb-[48px] pt-[48px]">
         <ProofDetail p={p} />
       </div>
     </>

@@ -48,7 +48,7 @@ export default async function SchedulePage({
           off. The screen is titled Schedule, the top bar counts what is running
           and what ran today, and the calendar draws both halves of that
           sentence directly below it. */}
-      <div className="flex w-full max-w-[1112px] flex-col items-start gap-[18px] px-[56px] pb-[64px] pt-[26px]">
+      <div className="flex w-full max-w-[1112px] flex-col items-start gap-[18px] px-[20px] md:px-[56px] pb-[64px] pt-[26px]">
         <CalendarView data={data} initialView={initialView} />
       </div>
     </>

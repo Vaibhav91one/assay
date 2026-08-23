@@ -26,8 +26,8 @@ export default async function RunsPage({
   return (
     <>
       <TopBar title={t('nav.runs')} status={summary(v.total, v.healed, v.held)} />
-      <div className="flex w-full flex-col gap-[20px] pl-[56px] pr-[32px] pt-[18px]">
-        <nav className="flex items-center gap-[28px]">
+      <div className="flex w-full flex-col gap-[20px] px-[20px] md:pl-[56px] md:pr-[32px] pt-[18px]">
+        <nav className="flex flex-wrap items-center gap-x-[28px] gap-y-[8px]">
           {OUTCOMES.map((o) => (
             <Link
               key={o}
@@ -56,7 +56,10 @@ export default async function RunsPage({
             {filter === 'all' ? t('runs.none') : `No ${filter} runs in the last ${v.total}.`}
           </p>
         ) : (
-          <RunsTable rows={v.rows} />
+          <>
+            <RunsCards rows={v.rows} />
+            <RunsTable rows={v.rows} />
+          </>
         )}
       </div>
     </>
@@ -79,8 +82,8 @@ function NeedsYou({
   items: NonNullable<Awaited<ReturnType<typeof runsView>>['needsYou']>;
 }) {
   return (
-    <div className="flex items-center gap-[24px] rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] px-[24px] py-[18px]">
-      <div className="flex min-w-0 flex-1 flex-col gap-[6px]">
+    <div className="flex flex-col items-start gap-[16px] rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] px-[20px] py-[18px] md:flex-row md:items-center md:gap-[24px] md:px-[24px]">
+      <div className="flex w-full min-w-0 flex-1 flex-col gap-[6px]">
         <p className="flex items-center gap-[8px]">
           <CircleAlert size={16} strokeWidth={1.5} className="text-[var(--semantic-warning)]" aria-hidden />
           <span className="body-14 text-[var(--text-primary)]">
@@ -103,9 +106,43 @@ function NeedsYou({
   );
 }
 
+/**
+ * The same rows, stacked, below 768.
+ *
+ * A CARD AND NOT A SCROLLER, because this row has a clear primary line: the
+ * run id and what happened to it. `when` and `scraper` are qualifiers, and a
+ * horizontal scroller would put the one thing worth reading -- "held for
+ * review" -- off the right-hand edge on every row. The action column, which
+ * clipped at 390px, stops being a column: the whole card is the link the last
+ * cell used to be, so there is nothing left to clip.
+ *
+ * Two renderings of one list rather than one that reflows: a `<table>` whose
+ * cells become blocks loses the header, the alignment and the row semantics
+ * all at once, and what is left is a card built out of table elements. Both
+ * halves read the same `rows`, so they cannot list different runs.
+ */
+function RunsCards({ rows }: { rows: RunRow[] }) {
+  return (
+    <ul className="flex w-full flex-col md:hidden">
+      {rows.map((r) => (
+        <li key={r.runId} className="border-b border-[var(--border-hairline)]">
+          <Link href={`/runs/${r.runId}`} className="flex flex-col gap-[6px] py-[14px]">
+            <span className="flex items-baseline justify-between gap-[12px]">
+              <span className="mono-value-13 text-[var(--semantic-link)]">{r.runId}</span>
+              <span className="meta-12_5 shrink-0 text-[var(--text-muted)]">{when(r.at)}</span>
+            </span>
+            <span className="body-13_5 truncate text-[var(--text-primary)]">{r.scraper}</span>
+            <Happened row={r} />
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function RunsTable({ rows }: { rows: RunRow[] }) {
   return (
-    <table className="w-full border-collapse">
+    <table className="hidden w-full border-collapse md:table">
       <thead>
         <tr className="border-b border-[var(--border-hairline)] text-left">
           {[

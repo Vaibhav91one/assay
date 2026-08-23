@@ -12,7 +12,7 @@ export default function ProofNotFound() {
   return (
     <>
       <TopBar title={t('explain.heading')} status={t('explain.notFound.status')} />
-      <div className="flex w-full flex-col items-start gap-[10px] px-[56px] pt-[48px]">
+      <div className="flex w-full flex-col items-start gap-[10px] px-[20px] md:px-[56px] pt-[48px]">
         <StatusLine tone="danger" type="heading-18" size={18}>
           No cell carries that proof id.
         </StatusLine>

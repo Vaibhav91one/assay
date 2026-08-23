@@ -73,7 +73,12 @@ export function RunAction({
           variant in components/button.tsx for the green and its contrast. */}
       <DialogTrigger asChild>
         <Button variant="start" icon={Play} iconSize={16}>
-          {t('schedule.ask.button')}
+          {/* The words go, the accessible name does not. Below 768 this control
+              shares a 390px bar with the rail trigger, Activity, Settings and
+              the screen's title; `sr-only` gives back ~90px of it and leaves a
+              Play glyph, which is what this button is anyway. `hidden` would
+              have taken the button's only accessible name with it. */}
+          <span className="sr-only md:not-sr-only">{t('schedule.ask.button')}</span>
         </Button>
       </DialogTrigger>
 

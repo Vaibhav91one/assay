@@ -46,7 +46,7 @@ export default async function SettingsPage({
         status={`${v.policies.length} field${v.policies.length === 1 ? '' : 's'} governed`}
         action={null}
       />
-      <div className="flex w-full max-w-[1112px] flex-col items-start px-[56px] pb-[64px] pt-[26px]">
+      <div className="flex w-full max-w-[1112px] flex-col items-start px-[20px] md:px-[56px] pb-[64px] pt-[26px]">
         {/* The panels are built here, on the server, and handed to a client
             component that only decides which one is visible. Postgres, the
             capture directory and the connector file never cross into the
@@ -259,28 +259,35 @@ function SpecTable({
   children: React.ReactNode;
 }) {
   return (
-    <table className="w-full table-fixed border-collapse">
-      <colgroup>
-        <col style={{ width: cols[0] }} />
-        <col style={{ width: cols[1] }} />
-        <col />
-      </colgroup>
-      {head && (
-        <thead>
-          <tr>
-            {head.map((h) => (
-              <th
-                key={h}
-                className="meta-12_5 pb-[8px] text-left font-normal text-[var(--text-muted)]"
-              >
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-      )}
-      <tbody>{children}</tbody>
-    </table>
+    // A SCROLLER, NOT A STACK. Both tables here are name / value / note, and
+    // the note only means anything beside the value it qualifies -- stacked,
+    // "Lets Assay call Bright Data..." floats free of the row that is or is not
+    // configured. The colgroup below is fixed px by design, so the wrapper
+    // scrolls and the page body does not.
+    <div className="w-full overflow-x-auto">
+      <table className="w-full min-w-[720px] table-fixed border-collapse">
+        <colgroup>
+          <col style={{ width: cols[0] }} />
+          <col style={{ width: cols[1] }} />
+          <col />
+        </colgroup>
+        {head && (
+          <thead>
+            <tr>
+              {head.map((h) => (
+                <th
+                  key={h}
+                  className="meta-12_5 pb-[8px] text-left font-normal text-[var(--text-muted)]"
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+        )}
+        <tbody>{children}</tbody>
+      </table>
+    </div>
   );
 }
 

@@ -100,10 +100,10 @@ function StatsBand({ stats }: { stats: Awaited<ReturnType<typeof homeStats>> }) 
   if (stats.runs === 0) return null;
 
   return (
-    <div className="border-t border-[var(--border-hairline)] px-[56px] py-[28px]">
+    <div className="border-t border-[var(--border-hairline)] px-[20px] md:px-[56px] py-[28px]">
       <p className="label-10 pb-[10px] text-[var(--text-muted)]">ACROSS ALL SCRAPERS</p>
       <div className="flex flex-wrap items-start gap-x-[64px] gap-y-[20px]">
-        <div className="flex flex-col gap-[12px]">
+        <div className="flex min-w-0 max-w-full flex-col gap-[12px]">
           <p className="title-20 text-[var(--text-primary)]">
             {stats.runs} run{stats.runs === 1 ? '' : 's'} {sinceLabel(stats.since)}
           </p>

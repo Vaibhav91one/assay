@@ -99,7 +99,7 @@ export default async function RunPage({ params }: { params: Promise<{ run: strin
         }
       />
 
-      <div className="flex w-full max-w-[1100px] flex-col gap-[32px] pb-[64px] pl-[56px] pr-[32px] pt-[18px]">
+      <div className="flex w-full max-w-[1100px] flex-col gap-[32px] pb-[64px] px-[20px] md:pl-[56px] md:pr-[32px] pt-[18px]">
         {/* The diagram opens the page with no heading and no caption. It is the
             first thing under a top bar that already says which run this is, and
             a card that can be dragged should look draggable rather than carry a
@@ -278,83 +278,88 @@ const TONE: Record<string, Tone> = {
 
 function Fields({ cells }: { cells: CellSummary[] }) {
   return (
-    <table className="w-full border-collapse">
-      <thead>
-        <tr className="border-b border-[var(--border-hairline)] text-left">
-          {[
-            t('run.table.head.field'),
-            t('run.table.head.status'),
-            t('run.table.head.value'),
-            t('run.table.head.reason'),
-            '',
-          ].map((h, i) => (
-            <th key={h + i} className="caption-12 pb-[8px] font-normal text-[var(--text-muted)]">
-              {h}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {cells.map((c) => {
-          const why = heldBecause(c.reason);
-          return (
-            <tr key={c.field} className="border-b border-[var(--border-hairline)] align-top">
-              <td className="mono-value-13 w-[160px] py-[12px] text-[var(--text-primary)]">
-                {c.field}
-              </td>
-              <td className="w-[140px] py-[12px]">
-                <StatusLine tone={TONE[c.status] ?? 'info'} muted={c.status === 'live'}>
-                  {c.status === 'quarantined' ? t('run.cell.held') : c.status}
-                </StatusLine>
-              </td>
-              <td className="body-13_5 py-[12px] text-[var(--text-primary)]">
-                {/* A held cell is null AND labelled, never an empty string and
-                    never a dash that could be mistaken for one.
+    // A SCROLLER BELOW 768. Each column here qualifies the one beside it -- a
+    // status with no field, a reason with no status -- so a stacked row stops being
+    // a row. The wrapper scrolls; the page body never does.
+    <div className="w-full overflow-x-auto">
+      <table className="w-full min-w-[640px] border-collapse">
+        <thead>
+          <tr className="border-b border-[var(--border-hairline)] text-left">
+            {[
+              t('run.table.head.field'),
+              t('run.table.head.status'),
+              t('run.table.head.value'),
+              t('run.table.head.reason'),
+              '',
+            ].map((h, i) => (
+              <th key={h + i} className="caption-12 pb-[8px] font-normal text-[var(--text-muted)]">
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {cells.map((c) => {
+            const why = heldBecause(c.reason);
+            return (
+              <tr key={c.field} className="border-b border-[var(--border-hairline)] align-top">
+                <td className="mono-value-13 w-[160px] py-[12px] text-[var(--text-primary)]">
+                  {c.field}
+                </td>
+                <td className="w-[140px] py-[12px]">
+                  <StatusLine tone={TONE[c.status] ?? 'info'} muted={c.status === 'live'}>
+                    {c.status === 'quarantined' ? t('run.cell.held') : c.status}
+                  </StatusLine>
+                </td>
+                <td className="body-13_5 py-[12px] text-[var(--text-primary)]">
+                  {/* A held cell is null AND labelled, never an empty string and
+                      never a dash that could be mistaken for one.
 
-                    `held`, matching the status column two cells to the left,
-                    which says `held` for the same cell. This said `withheld`,
-                    so one row of one table gave the same cell two names.
-                    `withheld` is the /compare word for a diff that will not
-                    render; a cell is held. */}
-                {c.value === null ? (
-                  <span
-                    className="rounded-[6px] px-[6px] py-[1px]"
-                    style={{
-                      color: 'var(--semantic-warning)',
-                      background: 'var(--semantic-warning-subtle)',
-                    }}
-                  >
-                    {t('run.cell.held')}
-                  </span>
-                ) : (
-                  c.value
-                )}
-              </td>
-              <td className="meta-12_5 py-[12px] text-[var(--text-secondary)]">
-                {/* A code with no wording is printed as a code, never given an
-                    invented one. src/reports/vocabulary.ts. */}
-                {why ? why.plain ?? <code className="mono-value-12_5">{why.code}</code> : '—'}
-              </td>
-              <td className="py-[12px] text-right">
-                <span className="flex justify-end gap-[16px]">
-                  <ProofSheet
-                    proof={c.proofId}
-                    className="focus-ring meta-13 rounded-[var(--radius-control)] text-[var(--semantic-link)]"
-                  >
-                    {t('run.link.proof')}
-                  </ProofSheet>
-                  {c.status === 'quarantined' && (
-                    <Link href="/decisions" className="meta-13 text-[var(--semantic-link)]">
-                      {t('run.link.decide')}
-                    </Link>
+                      `held`, matching the status column two cells to the left,
+                      which says `held` for the same cell. This said `withheld`,
+                      so one row of one table gave the same cell two names.
+                      `withheld` is the /compare word for a diff that will not
+                      render; a cell is held. */}
+                  {c.value === null ? (
+                    <span
+                      className="rounded-[6px] px-[6px] py-[1px]"
+                      style={{
+                        color: 'var(--semantic-warning)',
+                        background: 'var(--semantic-warning-subtle)',
+                      }}
+                    >
+                      {t('run.cell.held')}
+                    </span>
+                  ) : (
+                    c.value
                   )}
-                </span>
-              </td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
+                </td>
+                <td className="meta-12_5 py-[12px] text-[var(--text-secondary)]">
+                  {/* A code with no wording is printed as a code, never given an
+                      invented one. src/reports/vocabulary.ts. */}
+                  {why ? why.plain ?? <code className="mono-value-12_5">{why.code}</code> : '—'}
+                </td>
+                <td className="py-[12px] text-right">
+                  <span className="flex justify-end gap-[16px]">
+                    <ProofSheet
+                      proof={c.proofId}
+                      className="focus-ring meta-13 rounded-[var(--radius-control)] text-[var(--semantic-link)]"
+                    >
+                      {t('run.link.proof')}
+                    </ProofSheet>
+                    {c.status === 'quarantined' && (
+                      <Link href="/decisions" className="meta-13 text-[var(--semantic-link)]">
+                        {t('run.link.decide')}
+                      </Link>
+                    )}
+                  </span>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -393,34 +398,39 @@ function Candidates({ gate }: { gate: NonNullable<RunDetail['gate']> }) {
   return (
     <div className="flex flex-col gap-[10px]">
       <p className="meta-12_5 text-[var(--text-secondary)]">{t('run.gate.caption')}</p>
-      <table className="w-full border-collapse">
-        <thead>
-          <tr className="border-b border-[var(--border-hairline)] text-left">
-            {[
-              t('run.gate.head.rank'),
-              t('run.gate.head.element'),
-              t('run.gate.head.text'),
-            ].map((h) => (
-              <th key={h} className="caption-12 pb-[8px] font-normal text-[var(--text-muted)]">
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {gate.candidates.map((c, i) => (
-            <tr key={i} className="border-b border-[var(--border-hairline)]">
-              <td className="mono-label-12 w-[32px] py-[10px] text-[var(--text-muted)]">{i + 1}</td>
-              <td className="mono-value-13 w-[180px] py-[10px] text-[var(--text-primary)]">
-                {c.selector}
-              </td>
-              <td className="body-13_5 py-[10px] text-[var(--text-secondary)]">
-                {c.value || t('common.dash')}
-              </td>
+      {/* A SCROLLER BELOW 768. Each column here qualifies the one beside it --
+          a status with no field, a reason with no status -- so a stacked row
+          stops being a row. The wrapper scrolls; the page body never does. */}
+      <div className="w-full overflow-x-auto">
+        <table className="w-full min-w-[560px] border-collapse">
+          <thead>
+            <tr className="border-b border-[var(--border-hairline)] text-left">
+              {[
+                t('run.gate.head.rank'),
+                t('run.gate.head.element'),
+                t('run.gate.head.text'),
+              ].map((h) => (
+                <th key={h} className="caption-12 pb-[8px] font-normal text-[var(--text-muted)]">
+                  {h}
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {gate.candidates.map((c, i) => (
+              <tr key={i} className="border-b border-[var(--border-hairline)]">
+                <td className="mono-label-12 w-[32px] py-[10px] text-[var(--text-muted)]">{i + 1}</td>
+                <td className="mono-value-13 w-[180px] py-[10px] text-[var(--text-primary)]">
+                  {c.selector}
+                </td>
+                <td className="body-13_5 py-[10px] text-[var(--text-secondary)]">
+                  {c.value || t('common.dash')}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       {/* The hybrid. Collapsed, asked for, never scanned. See the note above. */}
       <GateNumbers gate={gate} />
     </div>
@@ -430,44 +440,49 @@ function Candidates({ gate }: { gate: NonNullable<RunDetail['gate']> }) {
 /** Every fact on the canvas, beside the column it was read from. The receipt. */
 function Evidence({ d }: { d: RunDetail }) {
   return (
-    <table className="w-full border-collapse">
-      <thead>
-        <tr className="border-b border-[var(--border-hairline)] text-left">
-          {[
-            t('run.evidence.head.stage'),
-            t('run.evidence.head.fact'),
-            t('run.evidence.head.value'),
-            t('run.evidence.head.source'),
-          ].map((h) => (
-            <th key={h} className="caption-12 pb-[8px] font-normal text-[var(--text-muted)]">
-              {h}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {d.flow.nodes.flatMap((n) =>
-          n.facts.map((f) => (
-            <tr key={`${n.id}-${f.label}`} className="border-b border-[var(--border-hairline)]">
-              <td className="meta-12_5 w-[190px] py-[8px] text-[var(--text-secondary)]">
-                {n.title}
-              </td>
-              {/* 110, not 150. `read from` is the only column here that has to
-                  hold a sentence, and at the larger mono label its longest one
-                  -- "field_runs joined runs, earlier run_id for this target and
-                  field" -- came up five pixels short and wrapped, which cost
-                  the row its 34px and broke the table's rhythm. The forty
-                  pixels come from `fact`, whose widest label is 72px wide. */}
-              <td className="meta-12_5 w-[110px] py-[8px] text-[var(--text-muted)]">{f.label}</td>
-              <td className="mono-value-12_5 max-w-[260px] truncate py-[8px] text-[var(--text-primary)]">
-                {f.value}
-              </td>
-              <td className="mono-label-12 py-[8px] text-[var(--text-secondary)]">{f.source}</td>
-            </tr>
-          )),
-        )}
-      </tbody>
-    </table>
+    // A SCROLLER BELOW 768. Each column here qualifies the one beside it -- a
+    // status with no field, a reason with no status -- so a stacked row stops being
+    // a row. The wrapper scrolls; the page body never does.
+    <div className="w-full overflow-x-auto">
+      <table className="w-full min-w-[560px] border-collapse">
+        <thead>
+          <tr className="border-b border-[var(--border-hairline)] text-left">
+            {[
+              t('run.evidence.head.stage'),
+              t('run.evidence.head.fact'),
+              t('run.evidence.head.value'),
+              t('run.evidence.head.source'),
+            ].map((h) => (
+              <th key={h} className="caption-12 pb-[8px] font-normal text-[var(--text-muted)]">
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {d.flow.nodes.flatMap((n) =>
+            n.facts.map((f) => (
+              <tr key={`${n.id}-${f.label}`} className="border-b border-[var(--border-hairline)]">
+                <td className="meta-12_5 w-[190px] py-[8px] text-[var(--text-secondary)]">
+                  {n.title}
+                </td>
+                {/* 110, not 150. `read from` is the only column here that has to
+                    hold a sentence, and at the larger mono label its longest one
+                    -- "field_runs joined runs, earlier run_id for this target and
+                    field" -- came up five pixels short and wrapped, which cost
+                    the row its 34px and broke the table's rhythm. The forty
+                    pixels come from `fact`, whose widest label is 72px wide. */}
+                <td className="meta-12_5 w-[110px] py-[8px] text-[var(--text-muted)]">{f.label}</td>
+                <td className="mono-value-12_5 max-w-[260px] truncate py-[8px] text-[var(--text-primary)]">
+                  {f.value}
+                </td>
+                <td className="mono-label-12 py-[8px] text-[var(--text-secondary)]">{f.source}</td>
+              </tr>
+            )),
+          )}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
