@@ -9,21 +9,21 @@ in this document.
 
 ---
 
-## 1. It abstains when it does not need to, on wrapper mutations
+## 1. It abstained when it did not need to, on wrapper mutations — mechanism changed, not re-measured
 
-`results/headtohead.jsonl` is the live run against the deployed testbed: nine
-mutations, one field, one system. Assay published five correct values, published
-nothing wrong, and abstained four times. Two of those four abstentions were right
-— `remove_field`, where nothing was recoverable, and `duplicate_similar`, marked
-`ambiguous`. Two were not:
+`results/headtohead.jsonl` is a run against a testbed that is no longer deployed:
+nine variants, one field, one system, all nine records `system: "assay"`. Assay
+published five correct values, published nothing wrong, and abstained four times.
+Two of those four abstentions were right — `remove_field`, where nothing was
+recoverable, and `duplicate_similar`, marked `ambiguous`. Two were not:
 
 | variant | expect | score | runner-up | margin | delta |
 |---|---|---|---|---|---|
 | `wrapper_div` | target | 0.7363 | 0.6918 | **0.0446** | 0.16 |
 | `combo_redesign` | target | 0.6918 | 0.6380 | **0.0537** | 0.16 |
 
-Both fields were recoverable. Both went to a human. That is 2 of 9 cases on the
-live run sent to a queue for no reason.
+Both fields were recoverable. Both went to a human. That was 2 of 9 cases sent to
+a queue for no reason — past tense, and §1.1 below is why the tense matters.
 
 The cause is structural. Wrapping the target in a new parent creates an element
 whose `text` is character-for-character the target's own, and `text` carries the
@@ -31,11 +31,11 @@ heaviest weight in the scorer (2.7 of 18.6). The wrapper therefore lands within 
 few hundredths of the thing it wraps. On `combo_redesign` it lands *above* it:
 the top candidate is `div.v2-shell`, not `h2.v2-recall-card__title`.
 
-`healGated` has an escape hatch for exactly this. When the margin is thin it
-collects every candidate within `delta` of the best and, if they all carry the
-same text, heals anyway — `reason: "benign_tie"`, on the grounds that it does not
-matter which node you read an identical string from. It did not fire on either
-case. The persisted ranked list says why:
+`healGated` has an escape hatch for exactly this. As it stood then, when the
+margin was thin it collected every candidate within `delta` of the best and, if
+they all carried the same text, healed anyway — `reason: "benign_tie"`, on the
+grounds that it does not matter which node you read an identical string from. It
+did not fire on either case. The persisted ranked list says why:
 
 ```
 wrapper_div      band = 0.7363 - 0.16 = 0.5763
@@ -60,11 +60,58 @@ first place, or what candidates 4 and 5 were. `results/events.jsonl` truncates
 the same way. The ranked list is the evidence for every gate decision this
 project makes, and it is stored in a lossy form in both places.
 
-Nothing has been changed in response to this. The obvious repair — treat a
-candidate as a benign tie when it is an ancestor or descendant of the best
-candidate and carries the same text, regardless of what else is in the band — is
-untested, and an untested fix to the gate is the one thing this project should
-not ship.
+### 1.1 What changed, and what that does and does not license
+
+`5a16b6f` changed the mechanism. `healGated` reaches the ambiguity branch on
+`margin <= delta`, and `margin` is `best.score - runnerUp.score` — the top two and
+nothing else. The branch then asked its question of a *different* set: every
+candidate within `delta` of the best. One function held two notions of "tied", and
+whenever they disagreed the disagreement was resolved in favour of holding. The
+tie is now the top two, which is the pair the margin compared. `decide()` in
+`src/heal.ts` carries the reasoning at the line that changed.
+
+On both cases above the top two carry identical text, so the change is **expected**
+to flip `wrapper_div` and `combo_redesign` to `published_correct`. Three things
+have to be said about that expectation, in order of how much they cost.
+
+**The corpus does not exercise this path at all.** Across all 153 mutation cases
+and all 74 replay runs, the old gate and the new gate decide identically:
+
+| | before `5a16b6f` | after |
+|---|---|---|
+| `npm test` | 34 assertions, all checks pass | unchanged |
+| `npm run bench` gated arm | 60.8 exact / 64.7 correct / **0.0 wrong** / 35.3 abstained | identical |
+| `npm run replay` | 74 runs, 8 ok, 66 heals, 0 abstentions | unchanged |
+| `results/events.jsonl`, `results/bench.json`, `results/rows.jsonl` | — | byte-identical |
+
+So there is no corpus evidence that this helps. That is not a hedge, it is the
+measurement: the benchmark's near-ties are twin decoys, where the top two
+themselves disagree, and that is the case this branch still refuses.
+
+**It has not been re-measured on the cases it was meant to fix.** The testbed
+named by `ASSAY_TESTBED` is not deployed, so the 9 variants could not be re-run.
+The table above this section is what the old gate did. What the new gate does on
+those nine pages is a prediction and is written here as one.
+
+**The evidence is a test, and the test was built by measuring rather than by
+assuming.** `test/benign-tie.test.ts` fails on the previous implementation and
+passes on this one; the revert was run to confirm it bites. Getting there
+corrected a wrong first attempt — with two recall cards the only other candidates
+are the wrapper divs at ~0.55 against the target's ~0.99, far outside the band, so
+the tied set is the top two either way and the old code heals too. Three cards,
+two agreeing and one near-identical decoy, is the smallest page that separates the
+implementations.
+
+This **loosens** a safety mechanism, so the pinned case is the important one:
+`duplicate_similar` and `remove_field` are the two variants where abstaining was
+correct, and both are the shape where the top two themselves disagree. Still
+refused, and the test fails loudly with the value it was about to publish rather
+than with a bare assertion.
+
+The repair proposed here before — treat a candidate as a benign tie when it is an
+ancestor or descendant of the best and carries the same text — was **not** what
+shipped, and `docs/CRITIQUE.md` §3.1 measured why it would not have been enough on
+its own: post-collapse the margins are 0.105 and 0.060, both still under 0.16.
 
 ---
 
@@ -112,7 +159,7 @@ margin — run 51 is typical, 0.8787 against a runner-up of 0.3763, a margin of
 So on the only real-world data in this repo, the margin gate is inert. It costs
 nothing and it catches nothing. Every abstention the project has ever recorded
 comes from a manufactured near-tie: 54 from the benchmark's deliberate
-mutations, 4 from the deployed testbed. The claim "the gate prevents wrong
+mutations, 4 from the testbed variants. The claim "the gate prevents wrong
 values" is supported by constructed cases and by no observed production incident.
 
 ---
@@ -142,6 +189,33 @@ for that reason. There is no evidence they transfer to another vertical, another
 field type, or another site's markup conventions, and the sweep that produced
 them would have to be rerun on a new corpus to find out. Treat any repo that
 copies 0.6 / 0.16 without rerunning the sweep as unvalidated.
+
+**What is no longer a limitation here, since `0efaa3c`: the sweep and the
+benchmark disagreed.** `results/sweep.json` used to recommend `tau = 0.75` and
+report 3 wrong values at the shipped 0.60 / 0.16, on the same 153 cases where
+`npm run bench` reported zero. The cause was that `evaluate()` held a second copy
+of the gate's arithmetic, and the copy had drifted: it compared `fp.text`, which
+the fingerprint truncates at 200 characters, where the gate has always compared
+the full element text. On `duplicate_longtail` — a decoy identical for 200
+characters and divergent after — the copy saw a benign tie and published. So the
+sweep was grading a healer with a known wrong-publish bug and then recommending a
+higher `tau` to compensate for it. `decide()` in `src/heal.ts` is now the only
+implementation and both tools call it, and `--captures` defaults to 6 in both
+where the sweep used to default to 4, which is what hid the disagreement behind a
+different `n`.
+
+`npm run sweep` with no arguments now re-derives the operating point that ships
+and agrees with `npm run bench` cell for cell on the same 153 cases:
+
+```
+RECOMMENDED OPERATING POINT   tau = 0.6   delta = 0.16
+  correct         64.7%   (99/153)
+  WRONG            0.0%   (0/153)
+  abstained       35.3%   right 18, unnecessary 36
+```
+
+That removes a contradiction. It does not weaken anything above it: the point is
+still fitted to this corpus, and two tools agreeing is not two corpora agreeing.
 
 ---
 
@@ -220,6 +294,88 @@ Nothing is wrong with the rendering — it has simply never had a state to draw.
 
 ---
 
+## 9. A renamed JSON key ranks correctly and still cannot clear the gate
+
+Bright Data's prebuilt scrapers return structured JSON, and `src/connectors/record.ts`
+renders a record into a deterministic HTML document so the unmodified engine reads
+it (`docs/FEATURES.md` and the file's own header explain why a second extraction
+path was refused). The interesting question is what happens when a vendor renames
+a key, because that is the JSON equivalent of a selector break.
+
+Measured on the documented Instagram profile record — the same `IG` fixture
+`test/record.test.ts` uses — with `followers` renamed and the baseline fingerprint
+taken from the original `followers` entry:
+
+| rename | best | runner-up | margin | gate |
+|---|---|---|---|---|
+| `followers` → `follower_count` | 0.6312 | 0.4377 | 0.1934 | heal, `clear_margin` |
+| `followers` → `subscriber_count` | 0.5423 | 0.4386 | 0.1037 | **abstain**, `below_tau` |
+| `followers` → `audience_size` | 0.5546 | 0.4377 | 0.1169 | **abstain**, `below_tau` |
+
+In every row the *right* candidate wins: the top-ranked element carries
+`676000000`, and the runner-up is `following`'s `500`. So the adapter gives the
+healer enough signal to **rank** a renamed key correctly. Whether it gives enough
+to **publish** one depends on how much of the old key name survives in the new
+one, and on the two synonym renames it does not: `0.5423 < tau 0.60` and
+`0.1037 < delta 0.16` — the gate refuses on both counts, not one.
+
+The cause is that a rendered record is sparse. The baseline fingerprint of a leaf
+is:
+
+```
+text          "676000000"        classes  ["k-followers"]   id  "k-followers"
+neighbor_text "followers"        tag dd   parent_tag div    depth 4  sibling_index 1
+href / alt / aria_label / role / testid   null
+heading_path  []
+```
+
+Six scored properties are null for every leaf in the document, and on a rename the
+class, the id and the `<dt>` label that becomes `neighbor_text` all change
+*together*, because all three are derived from the key. What survives a rename is
+position, parent, depth, tag and the shape of the text — and that is what the
+scores above are made of. There is no more signal to find; the renderer is not
+throwing any away.
+
+So a renamed JSON key publishes a labelled hole and alerts, rather than healing.
+That is arguably the correct outcome rather than a defect, and the runner-up is
+the argument: the alternative to abstaining is healing `followers` to `following`
+and publishing `500` as a follower count. But it is a limitation as stated
+elsewhere — the thresholds are fitted to `recall_title`, a long prose string
+(section 5), and a nine-digit number is about as far from that as a field gets.
+Re-running the sweep against rendered records is what would settle where `tau`
+belongs for this source; it has not been done.
+
+---
+
+## 10. The Bright Data code gate is three rules fitted to n=1
+
+`src/bd/diffgate.ts` reads the collector code Bright Data's self-healing proposes
+and returns a verdict, so `tools/bd-heal.ts --approve` refuses a repair the gate
+rejects. It catches a class of failure no output check can see — the committed
+transcript is a repair whose output rules all pass and whose code retires the only
+independent cross-check the detector had.
+
+**Three rules, each derived from one observed failure in one transcript.**
+`corroboration_collapse`, `not_attempted` and `vendor_preview_failed` fire
+correctly on `results/bd-heal-transcript.json` and are not evidence about heals
+nobody has seen. They are regex over generated JavaScript rather than a parse, so
+a multi-line restatement of the same defect can walk past them; the file says so
+and names acorn over `parse_code` as the upgrade path. Two false positives were
+caught by the tests during the build — a key regex that captured object *values*,
+and `let hazard = null` read as a stub when it is an initialiser the proposal
+later fills four ways — and both are pinned as regressions, which is the only
+reason to have any confidence in the other three.
+
+Reproduce it with no credentials, against the committed transcript:
+
+```
+npx tsx tools/bd-heal.ts --verify
+  ...
+  DO NOT ACCEPT  (output: 3 pass, 0 fail, 1 not evaluable; code: reject)
+```
+
+---
+
 ## What is not claimed
 
 - That the deployed path had ever detected a break before 2026-08-22. It had not.
@@ -228,4 +384,11 @@ Nothing is wrong with the rendering — it has simply never had a state to draw.
 - That the gate improves outcomes on any corpus other than this one.
 - That 0.6 / 0.16 are correct for any field other than `recall_title`.
 - That zero wrong values is achievable without the abstention rate in section 2.
-- That the two unnecessary abstentions in section 1 have been fixed. They have not.
+- That the two unnecessary abstentions in section 1 have been re-measured. The
+  mechanism that caused them was changed in `5a16b6f`; the nine variants could not
+  be re-run, so "fixed" is a prediction and is written as one.
+- That anything in this repository measures Assay against Bright Data. Nothing
+  does — `results/headtohead.jsonl` is 9 records and all 9 are `system: "assay"`.
+  `docs/HEADTOHEAD.md` §0 is the full statement.
+- That the three code-gate rules in section 10 generalise. They are fitted to one
+  transcript.

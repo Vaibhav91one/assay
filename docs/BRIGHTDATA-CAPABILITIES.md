@@ -74,7 +74,23 @@ Browser-only vs Code-worker split:
 ## 2. The finding that matters most (not on the hypothesis list)
 
 **Bright Data's self-healing flow pauses at an approval gate and asks a human.
-Assay's margin gate is exactly the thing that should answer it.**
+Assay is exactly the thing that should answer it.**
+
+> **UPDATE 2026-08-23 — shipped, and the second sentence above was wrong about
+> *which* gate.** `src/bd/diffgate.ts` now answers the approval gate, and
+> `tools/bd-heal.ts --approve` refuses when it rejects. It is **not**
+> `healGated()`. `healGated` scores candidate *elements* on a page; a Bright Data
+> proposal is collector JavaScript, and the row it produces can be perfect while
+> the repair is wrong. That is not hypothetical — on the one real transcript this
+> repo has (`results/bd-heal-transcript.json`) all four output-shape rules passed
+> and the repair was rejected anyway, because it rewrote `title_on_detail` to
+> derive from `input.recall_title` and thereby retired the only independent
+> cross-check between the listing and detail stages. So the code gate is a
+> separate file asking a different question of different evidence. Its three rules
+> are fitted to that single transcript; `docs/LIMITATIONS.md` §10 states the
+> limit. The `resume_automation_job {"message": true}` half described below is
+> still deliberately manual: `cmdHeal` cannot approve, and `--force` is an
+> explicit override rather than a default.
 
 `bdata scraper heal <collector_id> <prompt>` "by default stops at an approval gate
 and returns `status: "awaiting_approval"` with a `preview_result`". You then run
@@ -92,7 +108,10 @@ The same gate exists over REST:
 [trigger-self-healing](https://docs.brightdata.com/api-reference/scraper-studio-api/ai-flow/trigger-self-healing),
 [resume-self-healing-job](https://docs.brightdata.com/api-reference/scraper-studio-api/ai-flow/resume-self-healing-job))
 
-Today `healGated()` produces a verdict that nothing consumes. Wired to this gate,
+When this was written, `healGated()` produced a verdict that nothing consumed.
+The paragraph below is the design that was sketched from that; read the UPDATE
+above for what actually shipped and why the element gate was the wrong instrument.
+Wired to this gate,
 Assay stops being an analyser and becomes an actuator: `detect()` fires →
 `rank()`/`healGated()` decide → margin clears, so `refactor_template` with a prompt
 built from the diagnosis, then `resume_automation_job {"message": true}`; margin
@@ -102,11 +121,22 @@ The Collector ID is stable across healing
 to a draft before production, with a **Versions** menu for rollback
 ([self-healing-tool](https://docs.brightdata.com/datasets/scraper-studio/self-healing-tool)).
 
-Two caveats from the docs. Healing "typically takes 5 to 15 minutes"
-([self-healing-tool](https://docs.brightdata.com/datasets/scraper-studio/self-healing-tool)),
-and the CLI has a `--max-retries` for "the AI-Flow concurrent-job 429 cap"
+Caveats from the docs, re-fetched 2026-08-23. "Refactoring can take up to 15
+minutes"; the tool is human-initiated and prompt-driven ("Type your request in
+plain language"), produces "a code diff in the editor" the operator Accepts or
+Declines, needs a separate **Update Schema** click when fields are added or
+renamed, and works on "an existing scraper in Bright Data Scraper Studio (saved in
+development mode)"
+([self-healing-tool](https://docs.brightdata.com/datasets/scraper-studio/self-healing-tool)).
+The CLI has a `--max-retries` for "the AI-Flow concurrent-job 429 cap"
 ([cli/commands](https://docs.brightdata.com/cli/commands)) — so this is a
 minutes-scale async loop, not a request/response.
+
+Observed rather than documented, from the one run we have
+(`results/bd-heal-transcript.json`): 09:47:00 → 10:05:10 UTC, about **18 minutes**
+to reach `pending_answer` / `user_approval`, across 51 polls and 29 completed
+steps. One run is one run, but it is longer than the documented ceiling and worth
+knowing before wiring a timeout to 15 minutes.
 
 ---
 

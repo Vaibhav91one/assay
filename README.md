@@ -124,8 +124,13 @@ npm test          # 34 assertions against the real corpus
 npm run bench     # the 153-case benchmark
 npm run sweep     # the threshold calibration grid
 npm run replay    # 74 runs over the full corpus, rewrites results/events.jsonl
-npm run audit     # the Bright Data output gap
+npm run audit     # 6 of 10 promised fields unhealthy, behind a 100%-success run
+
+npx tsx tools/bd-heal.ts --verify   # the code gate over the committed transcript
 ```
+
+None of those need a Bright Data account or any credential: `npm run audit` and
+`--verify` read committed API responses off disk.
 
 `npm run replay` rewriting `results/events.jsonl` to a byte-identical file is
 itself the check: `git diff results/` staying empty means the committed evidence
@@ -158,26 +163,128 @@ scores, the margin, and the thresholds in force at the time.
 
 Read `web/content/docs/self-host.mdx` before exposing it — see below.
 
-## How Bright Data is used
+## Bright Data and Assay solve different problems
 
-A Scraper Studio collector (`c_mt1nrjboski90goqc`, Code worker) scrapes IKEA's
-product-recall listing and its detail pages. `npm run build:fingerprint` emits
-`dist/fingerprint.js` from `src/fingerprint.ts`, importing nothing, specifically
-so it pastes verbatim into that collector's Cheerio parser — a worker has no
-module loader — and runs identically in both places. A test rebuilds that
-artifact and asserts it stays import-free.
+Assay is not an alternative to Bright Data. It is a gate that runs on top of one.
 
-That collector produced this repo's most useful finding, by failing.
+**Bright Data is the fetch layer** — proxies, anti-bot, and over a thousand
+prebuilt scrapers addressed by `dataset_id`. Getting the page, and getting it from
+a site that does not want you to have it, is a hard problem Assay does not solve
+and does not try to.
 
-It returned 60 records. Bright Data reported the run as 100% successful, 0 failed
-crawls. But three fields the approved schema promises — `recall_title`,
-`recall_url` and `date_published` — are absent from all 60 records, and
-`product_name` and `hazard` appear in one row each.
+**Assay is the gate** — it decides whether a value is safe to publish, and
+abstains when it is not. It has no fetch layer worth the name.
 
-A green run and empty columns. That is the same failure this whole project is
-about, arriving unprompted from production. `tools/audit.ts` reads the raw API
-response off disk and reports the gap;
-`results/j_mt1q17uoq8rkcxd8a.ndjson` is that response, unmodified.
+The architecture already says this. `src/runner.ts` takes `fetchPage` as a
+**parameter**, which is why a Bright Data delivery and a local fetch reach the
+identical detection and gating code. As of the prebuilt-scraper work, a prebuilt
+scraper is a first-class source: `src/connectors/scrapers.ts` calls the sync and
+async endpoints by `dataset_id`, `src/connectors/record.ts` renders the returned
+JSON record into a deterministic HTML document, and the webhook receiver in
+`src/connectors/brightdata.ts` hands that document to the unmodified engine, which
+is never told the bytes were ever JSON. `dist/fingerprint.js` runs the other
+direction: `npm run build:fingerprint` emits it from `src/fingerprint.ts`
+importing nothing, specifically so it pastes verbatim into a collector's Cheerio
+parser — a worker has no module loader — and runs identically in both places. A
+test rebuilds it and asserts it stays import-free.
+
+### The evidence that both are needed: `npm run audit`
+
+Collector `c_mt1nrjboski90goqc` (Code worker) scrapes IKEA's product-recall
+listing and its detail pages. It ran. It worked.
+
+```
+ASSAY FIELD AUDIT   results/j_mt1q17uoq8rkcxd8a.ndjson
+60 records returned by Bright Data
+platform verdict: 100% success, 0 failed crawls
+
+field                   present  non-null  null-rate  verdict
+recall_title               0/60         0     100.0%  ABSENT - schema promised it, collector never emitted it
+recall_url                 0/60         0     100.0%  ABSENT - schema promised it, collector never emitted it
+title_on_detail           60/60        60       0.0%  ok
+date_published             0/60         0     100.0%  ABSENT - schema promised it, collector never emitted it
+description               60/60        60       0.0%  ok
+product_name               1/60         1      98.3%  SPARSE - 98% null
+hazard                     1/60         1      98.3%  SPARSE - 98% null
+remedy                    51/60        51      15.0%  ok
+image_urls                60/60        37      38.3%  ok
+recall_details_url         3/60         3      95.0%  SPARSE - 95% null
+
+SUMMARY
+  6 of 10 promised fields are not healthy.
+  Bright Data reported this run as 100% successful.
+  Nothing in the platform surfaces the 3 fields that never arrived.
+```
+
+**This is not a criticism of Bright Data's crawling, which worked.** Sixty pages
+were fetched from a site that fights scrapers, and none of them failed. The
+finding is narrower and more useful than "it broke": *the job succeeded* and *the
+data is right* are different claims, and the platform can only answer the first
+one. Six of ten schema-promised fields are unhealthy and three never arrived in
+any of the 60 records, behind a green run.
+
+That gap is exactly the shape of gap Assay fills, and it arrived unprompted from
+production rather than from a benchmark we wrote. `tools/audit.ts` reads the raw
+API response off disk; `results/j_mt1q17uoq8rkcxd8a.ndjson` is that response,
+unmodified. Reproduce it with `npm run audit`, no credentials needed.
+
+### Composed, not compared: Assay's gate answers Bright Data's heal
+
+Bright Data's self-healing deliberately does not auto-apply. `refactor_template`
+proposes a repair and parks at `pending_answer` / `user_approval`, waiting for a
+human. Assay is a decision-maker with a published wrong-value rate. The two sit
+either side of the same question, so `src/bd/diffgate.ts` joins them: Bright Data
+writes the repair, Assay reads the proposed **collector code** and returns a
+verdict, and `tools/bd-heal.ts --approve` refuses when it rejects. The reject path
+stays ungated, because refusing a repair is always safe.
+
+Why the code and not the row: the one real heal this repo has driven end to end
+produced an output that passed every output-shape rule and was rejected anyway.
+
+```
+npx tsx tools/bd-heal.ts --verify
+  PASS  recall_title is non-null      PASS  matches /(recall|rappel|...)/i
+  PASS  at least 15 chars             N/A   agrees with title_on_detail
+  FAIL  code gate (4 finding(s))
+  DO NOT ACCEPT  (output: 3 pass, 0 fail, 1 not evaluable; code: reject)
+```
+
+The load-bearing finding is `corroboration_collapse`: the repair rewrote
+`title_on_detail` to derive from `input.recall_title`, and those two fields were
+the only independent cross-check between the listing and the detail stage.
+Afterwards they can never disagree, so `anchors_disagree` in `src/detect.ts` goes
+permanently silent. The row looks better and the detector is dead — this project's
+thesis, pointed at the repair instead of at the data. Also caught:
+`date_published` was named in the prompt and came back a hardcoded null, and
+`preview.success` was `false`, Bright Data's own verdict sitting unread in the
+payload.
+
+**Honest limit, and it is the important one: three rules fitted to n=1.** They
+fire correctly on the single transcript this repo has and they are not evidence
+about heals nobody has seen. `docs/LIMITATIONS.md` §10 is the full statement.
+
+### A different design, not a worse one
+
+Bright Data's Self-Healing tool is prompt-driven and human-initiated: you type a
+request in plain language, it produces a code diff in the editor, and you Accept
+or Decline. Refactoring can take up to 15 minutes, added or renamed fields need a
+separate **Update Schema** click before Save to Production, and it works on a
+scraper saved in development mode. (Verified against
+<https://docs.brightdata.com/datasets/scraper-studio/self-healing-tool>, fetched
+2026-08-23.)
+
+That is a different set of tradeoffs, not a flaw. A human reading a diff catches
+things no threshold reaches, and a code diff is a more honest artifact than a
+score. It is also minutes-scale, manual and per-scraper, which is why Assay's gate
+is a millisecond-scale function that runs on every field of every row — and why
+the two compose better than they compete.
+
+**One thing this repository does not have is a head-to-head.** The harness at
+`tools/headtohead.ts` is symmetric — `classify()` has no parameter for who is
+being scored — but `results/headtohead.jsonl` holds 9 records and all 9 are
+`system: "assay"`. The single real Bright Data heal was rejected rather than
+applied, so no published value ever existed to grade. `docs/HEADTOHEAD.md` §0
+states that plainly and §5c says what running the second arm would take.
 
 ---
 
@@ -197,10 +304,14 @@ src/runner.ts        the one pipeline: fetch -> detect -> heal -> gate -> publis
 src/library/         the tracker catalogue, and what it proposes for a pasted URL
 src/store/           thirteen tables, and the queries the runner needs
 src/api/  src/mcp/   the REST surface, and the tool surface for agents
+src/connectors/      Bright Data as a source: prebuilt scrapers, webhook, JSON->HTML
+src/bd/diffgate.ts   the code gate over a proposed Bright Data repair
 
 tools/bench.ts       the benchmark          tools/sweep.ts     threshold calibration
-tools/replay.ts      74 runs over the corpus tools/audit.ts    the Bright Data gap
+tools/replay.ts      74 runs over the corpus tools/audit.ts    the Bright Data field audit
 tools/selftest.ts    34 assertions          tools/fetch-corpus.ts  Wayback fetcher
+tools/bd-heal.ts     drives a heal to the approval gate; never auto-approves
+tools/headtohead.ts  the symmetric variant harness (one arm run -- docs/HEADTOHEAD.md)
 tools/worker.ts      the worker service entrypoint
 
 web/                 Next 16, App Router: 16 screens and 31 REST routes
@@ -277,9 +388,18 @@ Both were calibrated, not chosen. `npm run sweep` scores an 11 x 10 grid of
 (tau, delta) — 110 pairs — against ranked candidates from the corpus and prints
 the wrong-value and correct rates at every point. 0.60 / 0.16 is the point Assay
 ships: the wrong-value rate collapses there while the abstention cost is still
-affordable. It is not the only point that holds wrong values at zero, and the
-grid's own pick moves with how many captures per site it samples
-(`--captures`, default 4) — so read the table, not the recommendation.
+affordable. It is not the only point that holds wrong values at zero, so read the
+table and not only the recommendation.
+
+The sweep and the benchmark now agree cell for cell on the same 153 cases —
+0.0% wrong, 64.7% correct, 35.3% abstained — and the sweep independently
+re-derives `tau = 0.6` / `delta = 0.16`. That is newer than it sounds. Until
+`0efaa3c` the sweep held a second, drifted copy of the gate's arithmetic that
+compared truncated fingerprint text, so it recommended `tau = 0.75` and reported
+three wrong values at the shipped thresholds — two of our own tools disagreeing
+about the central claim. It now calls the same `decide()` the gate calls, and
+`--captures` defaults to 6 in both where the sweep used to default to 4.
+`docs/LIMITATIONS.md` §5 has the detail.
 
 ### What "correct" means here
 
@@ -310,9 +430,11 @@ the gate never had to fire.
 
 ### Limitations
 
-`docs/LIMITATIONS.md` is the long version — eight of them, each with the file in
-`results/` that shows it, including two live-run abstentions that were not
-necessary and the fact that the thresholds are calibrated on this corpus and
+`docs/LIMITATIONS.md` is the long version — ten of them, each with the file in
+`results/` that shows it: two testbed abstentions that were not necessary and
+whose cause was changed but not re-measured, a renamed JSON key that ranks right
+and still cannot clear `tau`, three Bright Data code-gate rules fitted to a single
+transcript, and the fact that the thresholds are calibrated on this corpus and
 nowhere else.
 
 ## Design

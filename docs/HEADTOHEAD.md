@@ -1,12 +1,46 @@
-# Head-to-head protocol: Assay vs. Bright Data self-healing
+# The variant-testbed protocol, and the arm that has not been run
 
 A stranger with this repo, a deployed testbed and a Bright Data account should be
 able to reproduce every number below. That is the only bar this document has to
 clear.
 
+## 0. Status, before anything else
+
+**This is not a head-to-head. It is a symmetric harness with one arm run.**
+
+`results/headtohead.jsonl` holds 9 records and every one of them is
+`system: "assay"`. Check it:
+
+```bash
+node -e 'const r=require("fs").readFileSync("results/headtohead.jsonl","utf8").trim().split("\n").map(JSON.parse);
+         const by={}; for(const x of r) by[x.system]=(by[x.system]||0)+1;
+         console.log(r.length, by)'
+# 9 { assay: 9 }
+```
+
+There is no Bright Data arm, so nothing in this repository measures Assay against
+Bright Data, and no claim that it does should survive. What exists is three
+separate things, and they are worth keeping separate:
+
+1. **A harness that is genuinely symmetric.** `classify()` in
+   `tools/headtohead.ts` takes a decision, a published value and the truth. It
+   has no parameter for who is being scored — §4 and §7 spell that out, and it is
+   checkable in about thirty seconds.
+2. **One arm, run.** Assay over 9 pre-registered variants on a deployed testbed.
+   The results are in §5a, and two of the nine are unflattering.
+3. **One qualitative case study, not scored.** A single real Bright Data heal was
+   driven end to end against a real collector and the transcript is committed —
+   `results/bd-heal-transcript.json`, collector `c_mt1nrjboski90goqc`. It was
+   **rejected** at the approval gate rather than applied, so no healed value was
+   ever published, so there was nothing for `classify()` to grade. §5b is that
+   case; §5c is what running the arm properly would take.
+
+The protocol below is written as it was designed, for two arms. Read it as a
+specification of the experiment, not a report of one.
+
 ---
 
-## 1. What is being compared
+## 1. What the harness compares
 
 Two self-healing scrapers, given the same broken page, judged on the same
 question:
@@ -20,12 +54,23 @@ guards: a score floor `tau = 0.6` and a runner-up margin `delta = 0.16`. If the
 best candidate is not good enough, or is not clearly better than the second-best,
 it abstains.
 
-**Bright Data** (`refactor_template` / AI-Flow) regenerates the collector's
-template with an LLM and pauses at a human approval gate with a `preview_result`.
+**Bright Data** (`refactor_template` / AI-Flow, the REST face of the Self-Healing
+tool) regenerates the collector's template with an LLM and pauses at a human
+approval gate with a `preview_result`.
 
-The comparison is not "which one heals more". It is **which one publishes a wrong
-value more often**. A heal you cannot trust is worse than no heal, because a
-wrong value enters the dataset silently and a null does not.
+The intended measurement is not "which one heals more". It is **which one
+publishes a wrong value more often**. A heal you cannot trust is worse than no
+heal, because a wrong value enters the dataset silently and a null does not.
+
+Two notes on what that measurement is and is not. It is a comparison of *one
+mechanism against one mechanism* — a margin gate against an LLM-plus-human gate —
+on the narrow question of what happens when the page moves. It is not a
+comparison of the two products, which do different jobs: Bright Data fetches
+pages through a proxy and anti-bot layer that Assay does not have and does not
+try to have, and Assay decides whether a value is safe to publish, which Bright
+Data does not do and does not claim to. `docs/BRIGHTDATA-CAPABILITIES.md` §2 and
+the README's Bright Data section are the complementary reading; this document is
+deliberately the narrow one.
 
 ---
 
@@ -49,9 +94,9 @@ reuses it across every variant, rather than re-picking a target per variant.
 ## 3. Why the mutation set is pre-registered
 
 The nine mutations come from `src/mutate.ts`, which was written months before this
-comparison, against real Wayback diffs of IKEA, Mattel and Chicco recall pages.
-It was not written to make Assay look good on a Bright Data comparison, because
-Bright Data was not in the picture when it was written. Check the git history of
+protocol, against real Wayback diffs of IKEA, Mattel and Chicco recall pages.
+It was not written to make Assay look good against Bright Data, because Bright
+Data was not in the picture when it was written. Check the git history of
 `src/mutate.ts` against the git history of this file if you doubt it.
 
 Pre-registration matters because the failure mode of a benchmark like this is
@@ -145,6 +190,9 @@ with `system: "brightdata"`, and `--summary-only` picks it up. Whether that is
 done by hand or by script, it goes through the same `classify()` and prints in the
 same table.
 
+**That last paragraph describes a path, not a thing that happened.** No record
+with `system: "brightdata"` has ever been written, for the reason in §5b.
+
 ### Bright Data's acceptance check is not Assay's margin gate
 
 `tools/bd-heal.ts --verify` applies four rules to a captured preview:
@@ -158,6 +206,103 @@ when they are too close, without ever looking at whether the answer is right.
 They are different mechanisms answering different questions. Describing a Bright
 Data approval as having "passed the margin gate" would be a false claim about how
 that decision was made.
+
+---
+
+## 5a. The one arm that was run: Assay, 9 variants
+
+Nine independent variants, one field (`recall_title`), one system, against a
+deployed testbed. Read off `results/headtohead.jsonl`:
+
+| outcome | n | variants |
+| --- | --- | --- |
+| `published_correct` | 5 | `rename_class`, `swap_tag`, `reorder_siblings`, `strip_id`, `translate_text` |
+| `abstained_correct` | 2 | `remove_field`, `duplicate_similar` |
+| `abstained_unnecessary` | **2** | `wrapper_div`, `combo_redesign` |
+| `published_wrong` | 0 | — |
+
+Nine cases is nine cases. It is an anecdote with a scoring rule, and the sample is
+far too small to carry a rate — the useful content is the two abstentions in the
+third row, not the zero in the fourth, because the zero is what a system that
+refuses everything also scores.
+
+`wrapper_div` and `combo_redesign` were both recoverable and both went to a human.
+`docs/LIMITATIONS.md` §1 is the diagnosis: the benign-tie escape hatch did not
+fire, because a third candidate inside the delta band carried different text.
+
+**As of commit `5a16b6f` the gate no longer works that way.** `benign_tie` now
+asks about the two candidates the margin actually compared, so a third candidate
+that was never part of the margin can no longer veto the answer. On both of these
+cases the top two carry identical text, so the change is *expected* to flip both
+to `published_correct`.
+
+**It has not been re-measured, and nothing here should be read as saying it has.**
+The testbed named by `ASSAY_TESTBED` is not deployed, so the 9 variants could not
+be re-run. The 2-in-9 figure above is what the old gate did; what the new gate
+does on these variants is a prediction. The evidence that the *mechanism* changed
+is `test/benign-tie.test.ts`, which fails on the previous implementation and
+passes on this one — the revert was run to confirm it bites. That is a test, not
+a measurement of these nine pages.
+
+## 5b. The arm that was not run, and why
+
+One real heal was driven against a real collector. It is committed in full:
+`results/bd-heal-transcript.json`, collector `c_mt1nrjboski90goqc`, prompt naming
+`recall_title`, `recall_url` and `date_published` as absent from all 60 records.
+
+What the transcript records, as observation rather than contract:
+
+- The job ran 09:47:00 → 10:05:10 UTC on 2026-08-21 — about **18 minutes** to
+  reach `status: "pending_answer"` / `step: "user_approval"`, across 51 polls and
+  29 completed steps, six of them `code_fixer` / `step_preview_runner` /
+  `css_selector_extractor` cycles.
+- It was **rejected**, not approved (`decision.action: "reject"`), for three
+  reasons recorded in the transcript. The load-bearing one: the proposal rewrote
+  `title_on_detail` to derive from `recall_title` rather than read the detail
+  page, and those two fields were the only independent cross-check between the
+  listing and detail stages. Making one a function of the other means they can
+  never disagree, which retires a real corroboration signal in exchange for a
+  populated column. `date_published` came back as a hardcoded null despite being
+  named in the prompt, and Bright Data's own preview reported `success: false`.
+- The transcript also records a bug on our side rather than theirs: the
+  acceptance check reported rule 4 as FAIL, and that rule was *inapplicable* —
+  the preview covers only the listing stage, where `title_on_detail` does not
+  exist. The rejection does not rest on it.
+
+**So there was no published value to grade.** `classify()` scores a decision, a
+published value and the truth; a rejected proposal produces the first and not the
+second. Writing a `system: "brightdata"` record from that transcript would mean
+inventing an outcome for a value that was never published, which is the exact
+failure mode this repository exists to complain about.
+
+The rejection is also a decision *we* made, on one prompt, on one collector. It is
+not evidence about how Bright Data's healer performs in general, and it is not
+scored as such anywhere.
+
+## 5c. What it would take to run the second arm
+
+Concretely, and it is not much:
+
+1. **Deploy the testbed.** Nine variants at stable paths plus `truth.json`; set
+   `ASSAY_TESTBED` and re-run `npm run headtohead -- --origin ...` to refresh the
+   Assay arm on the current gate (which also settles §5a's prediction).
+2. **Nine collectors, or one collector healed nine times.** Each configured
+   against `/v/baseline/`, then pointed at one variant. The Self-Healing tool
+   works on a scraper *saved in development mode*, so the baseline has to live
+   there, not in production.
+3. **Nine heals through the approval gate**, at up to 15 minutes each, each one
+   producing a code diff the operator accepts or declines. Fields added or
+   renamed need a separate **Update Schema** click before Save to Production.
+   (Verified against
+   <https://docs.brightdata.com/datasets/scraper-studio/self-healing-tool>,
+   fetched 2026-08-23.)
+4. **Grade what the approved template publishes**, not what the diff proposes —
+   write the value it produced into `results/headtohead.jsonl` with
+   `system: "brightdata"` and let `--summary-only` tally it.
+
+Step 5 is the one that makes it a real result rather than a second anecdote:
+repeat it. Bright Data's heal is an LLM call and is not deterministic (§7.5), and
+neither nine cases nor one run of nine cases supports a rate.
 
 ---
 
@@ -199,8 +344,10 @@ The claim is narrow: *a runner-up margin lets a healer refuse the cases where it
 would otherwise be confidently wrong, and existing self-healing scrapers do not
 have one.*
 
-It is falsified by any of the following. None of these are hypotheticals we have
-ruled out; they are the results we are looking for.
+It is falsified by any of the following. **None of these have been tested against
+Bright Data**, because the arm that would test them has not been run (§5b). They
+are the results we are looking for, listed so that finding one is a success of the
+protocol rather than an embarrassment.
 
 1. **Bright Data abstains correctly on `remove_field`.** If its approval gate
    surfaces "I found nothing appropriate" rather than a plausible wrong element,
@@ -230,8 +377,16 @@ parameter for who is being scored.
 
 ---
 
-## 8. Known limits of this comparison
+## 8. Known limits
 
+- **One arm.** The largest limit by a distance: `results/headtohead.jsonl` is 9
+  records and all 9 are `system: "assay"`. Everything below is a limit of the
+  protocol; this one is a limit of the evidence.
+- **Nine cases.** Even the arm that ran is nine cases on one field. No rate
+  computed from it means anything, in either direction.
+- **Stale on the current gate.** Those 9 records were produced before `5a16b6f`
+  and the testbed is not deployed, so they describe a gate the repository no
+  longer ships. See §5a.
 - **Synthetic target.** The testbed is a page we wrote. The mutations are real
   patterns from Wayback diffs, but the page is not.
 - **One field.** `recall_title`. A broader field set would be a stronger result.
