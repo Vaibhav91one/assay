@@ -19,7 +19,9 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { withoutCredentials } from './no-credentials.js';
 
-import { MODELS as ENGINE_MODELS, converse, type TraceEvent } from '../src/agent/index.js';
+import {
+  MODELS as ENGINE_MODELS, candidatesOn, converse, render, type TraceEvent,
+} from '../src/agent/index.js';
 import { MODELS, MODEL_LABEL, DEFAULT_MODEL } from '../src/agent/models.js';
 import { HELD_BECAUSE, heldBecause } from '../src/reports/vocabulary.js';
 
@@ -299,6 +301,58 @@ describe('?new=1 opens a new conversation, and touches no old one', () => {
     // one, and does not: it only ever reads.
     const src = readFileSync(new URL('../web/app/(app)/page.tsx', import.meta.url), 'utf8');
     expect(src).not.toMatch(/openConversation|createConversation|recordTurns/);
+  });
+});
+
+// --- no machinery on the screen ----------------------------------------------
+
+describe('nothing the operator reads carries a raw number from the gate', () => {
+  // FEATURES.md 4 refuses a percentage and the screens refuse the vocabulary
+  // behind it. A confidence is `high`, `medium` or `low`; a held cell has a
+  // reason in words. A tau, a margin, a delta or a score is a fact about the
+  // engine's internals and belongs in the proof record, not in a sentence.
+  const MACHINERY = /\b(?:tau|delta|margin|score)\b|(?:^|\s)0\.\d+/i;
+
+  it('is absent from every screen this change touched', () => {
+    for (const f of [
+      'web/app/(app)/page.tsx',
+      'web/app/(app)/watch.tsx',
+      'web/app/(app)/library/page.tsx',
+      'web/app/(app)/library/[entry]/page.tsx',
+      'web/components/brand-mark.tsx',
+    ]) {
+      const src = readFileSync(new URL(`../${f}`, import.meta.url), 'utf8')
+        // Comments come out first: a note may legitimately name the machinery
+        // it is explaining. What is left is what can reach a screen.
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/^\s*\/\/.*$/gm, '');
+      expect([f, /\b(?:tau|delta|margin|score)\b/i.test(src)]).toEqual([f, false]);
+    }
+  });
+
+  it('is absent from every sentence the agent composes', () => {
+    // The replies themselves rather than their source, so a branch that only
+    // exists at runtime is covered too. `render` has five.
+    const pages = ['https://www.youtube.com/'];
+    const cands = candidatesOn('<body><span class="f">© 2026 Example Inc</span>'
+      + '<p class="p">$49.99</p></body>');
+    const fetched = new Map([[0, cands]]);
+    const idx = (cls: string) => cands.findIndex((c) => (c.classes_stable ?? []).includes(cls));
+    const base = { url: 0 as number | null, cadence: 'daily' as const, say: null };
+
+    const replies = [
+      render({ ...base, kind: 'answer', say: 'proposal_waiting', fields: [] }, pages, fetched),
+      render({ ...base, kind: 'answer', say: 'page_read', fields: [] }, pages, fetched),
+      render({ ...base, kind: 'need_url', url: null, fields: [] }, [], new Map()),
+      render({ ...base, kind: 'need_fields', fields: [] }, pages, fetched),
+      // All furniture, and then a real value with a low confidence beside it.
+      render({ ...base, kind: 'propose', fields: [{ name: 'foot', candidate: idx('f'), confidence: 'high' }] }, pages, fetched),
+      render({ ...base, kind: 'propose', fields: [{ name: 'price', candidate: idx('p'), confidence: 'low' }] }, pages, fetched),
+    ].map((r) => r.reply);
+
+    expect(replies.filter((s) => MACHINERY.test(s))).toEqual([]);
+    // And the low-confidence one still SAYS it is unsure, in words.
+    expect(replies.at(-1)).toMatch(/least sure/);
   });
 });
 
