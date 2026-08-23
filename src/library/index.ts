@@ -77,6 +77,36 @@ export interface TrackerField {
   match: Prior;
 }
 
+/**
+ * The shape of page this tracker's priors were written against.
+ *
+ * WHY THIS EXISTS, and it is a real defect it closes rather than a tidiness.
+ * The GitHub tracker's `latest_release` prior selects `Link--primary`, which on
+ * a releases page is a release title. On a REPOSITORY ROOT the same class is on
+ * the file-browser links, so pasting `github.com/facebook/react` proposed the
+ * directory `.claude` as the latest release -- a confidently wrong value on the
+ * happiest path in the product, which is the one failure this project exists to
+ * refuse.
+ *
+ * The prior was not wrong. It was answering a question about a page it was not
+ * looking at, and nothing in the flow said which page it wanted; the placeholder
+ * showed a `/releases` url and that was the whole of the contract.
+ *
+ * So a tracker may declare the url shape it understands, and a url that does not
+ * match is REFUSED rather than read. Refusing costs an operator one correction.
+ * Reading anyway costs them a watched field that has been wrong since the day
+ * they approved it, which is worse and much harder to notice.
+ *
+ * `hint` is shown to the operator, so it says what to paste, not what failed.
+ */
+export interface UrlShape {
+  /** Tested against the whole url. A string, never a RegExp -- see `Prior`. */
+  pattern: string;
+  flags?: string;
+  /** What to paste instead, in the operator's words. */
+  hint: string;
+}
+
 /** The shelves, in the order the catalogue draws them. */
 export const GROUPS = [
   { id: 'shops', label: 'Shops' },
@@ -96,10 +126,21 @@ interface TrackerBase {
   subheading: string;
   /** The shape of link this expects. */
   placeholder: string;
+  /**
+   * Enforced version of `placeholder`, for a tracker whose priors only make
+   * sense on one page shape. Absent means any url on the site is fine.
+   */
+  expects?: UrlShape;
   /** Must be one of `CADENCES` in `src/agent/models.ts` -- the select is built
    *  from that enum and `build` validates against it. */
   cadence: string;
   fields: readonly TrackerField[];
+}
+
+/** The tracker's complaint about a url, or null when it has none. */
+export function urlComplaint(t: Tracker, url: string): string | null {
+  if (!t.expects) return null;
+  return new RegExp(t.expects.pattern, t.expects.flags).test(url) ? null : t.expects.hint;
 }
 
 /**
@@ -199,6 +240,14 @@ export const TRACKERS: readonly Tracker[] = [
     name: 'GitHub',
     subheading: 'The newest release on a repository.',
     placeholder: 'https://github.com/nodejs/node/releases',
+    // `Link--primary` is a release title on /releases and a FILE NAME on the
+    // repository root, which is how `.claude` was once proposed as a release.
+    // See `UrlShape`.
+    expects: {
+      pattern: String.raw`^https?://(www\.)?github\.com/[^/]+/[^/]+/releases(/|\?|#|$)`,
+      flags: 'i',
+      hint: 'Paste a repository’s releases page, like https://github.com/nodejs/node/releases',
+    },
     cadence: '12h',
     fields: [
       {
