@@ -56,6 +56,13 @@ export function FilterMenu({
               <Menu.LinkItem
                 key={o.value}
                 render={<Link href={o.href} />}
+                // Base UI defaults `closeOnClick` to FALSE on a link item --
+                // a full page load would unmount the popup anyway, so it leaves
+                // the decision to the caller. Next navigates client-side, so
+                // nothing unmounts and the popup sat open over the table it had
+                // just filtered. Said explicitly, since the default is wrong
+                // for every link in this app.
+                closeOnClick
                 // No `focus-ring` here on purpose. A menu row's keyboard
                 // position is drawn by Base UI's own `data-highlighted`, which
                 // the next line styles; a second indicator would say the same

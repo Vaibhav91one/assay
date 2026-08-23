@@ -59,7 +59,17 @@ export function ManualFields({
             </li>
           ))}
         </ul>
-        <Link href="/runs" className="meta-13 self-start text-[var(--semantic-link)]">See the run ›</Link>
+        {/* The baseline run's own id, not the list it is one row of. Every
+            field of a build shares one baseline run, so the first is the run.
+            `/runs` is still the fallback for the case that cannot happen --
+            a build with no fields -- rather than an href built from
+            `undefined`. */}
+        <Link
+          href={built.fields[0] ? `/runs/${built.fields[0].baseline_run}` : '/runs'}
+          className="meta-13 self-start text-[var(--semantic-link)]"
+        >
+          See the run ›
+        </Link>
       </div>
     );
   }

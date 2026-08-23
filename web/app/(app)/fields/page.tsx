@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { CircleAlert } from 'lucide-react';
 import { TopBar } from '@/components/top-bar';
 import { Bar } from '@/components/bar';
@@ -67,11 +68,24 @@ const HEADINGS = [
   t('fields.table.head.lastChange'),
 ] as const;
 
+/**
+ * Squeeze the middle out of a slug, never the end.
+ *
+ * `…` is one character, so the budget is `max` including it. Anything at or
+ * under the budget is returned as it is -- an ellipsis in a string that fits is
+ * a lie about there being more.
+ */
+function midTruncate(s: string, max = 20): string {
+  if (s.length <= max) return s;
+  const head = Math.ceil((max - 1) / 2);
+  return `${s.slice(0, head)}…${s.slice(s.length - (max - 1 - head))}`;
+}
+
 function FieldsTable({ rows }: { rows: FieldRow[] }) {
   return (
     <table className="w-full table-fixed border-collapse">
       <colgroup>
-        <col style={{ width: 210 }} />
+        <col style={{ width: 260 }} />
         <col style={{ width: 190 }} />
         <col />
         <col style={{ width: 150 }} />
@@ -102,11 +116,34 @@ function FieldsTable({ rows }: { rows: FieldRow[] }) {
                 </span>
                 {/* The scraper qualifies the field: three targets watch a
                     field called `recall_title`, and a column of three
-                    identical names is a table that tells you nothing. */}
-                <span className="min-w-0 truncate">
-                  <span className="meta-12_5 text-[var(--text-muted)]">{r.scraper} · </span>
-                  <span className="mono-value-12_5 text-[var(--text-primary)]">{r.field}</span>
-                </span>
+                    identical names is a table that tells you nothing.
+
+                    THE FIELD NAME IS NEVER THE HALF THAT GETS CUT. This was one
+                    `truncate` over the whole pair, and slugs derived from one
+                    site share a long head -- `fda-recalls-device`,
+                    `fda-recalls-drug`, `fda-recalls-food` -- so a right-hand
+                    ellipsis ate the field name and left three rows reading
+                    `fda-recalls-…`, which is the column saying nothing again by
+                    a different route. The slug is squeezed from the middle,
+                    where it carries the least, and the field gets whatever is
+                    left. `title` carries the untruncated pair for anyone who
+                    needs the exact id. */}
+                {/* The row is a link now. Every column on this table is a
+                    SUMMARY of values the screen never showed -- "seen in 22/30"
+                    invites exactly one question and there was nowhere to go and
+                    ask it. */}
+                <Link
+                  href={`/fields/${encodeURIComponent(r.targetId)}`}
+                  title={`${r.scraper} · ${r.field}`}
+                  className="flex min-w-0 items-baseline hover:underline"
+                >
+                  <span className="meta-12_5 shrink-0 text-[var(--text-muted)]">
+                    {midTruncate(r.scraper)} ·&nbsp;
+                  </span>
+                  <span className="mono-value-12_5 min-w-0 truncate text-[var(--text-primary)]">
+                    {r.field}
+                  </span>
+                </Link>
               </span>
             </td>
             <td className="py-[9px]">
@@ -119,6 +156,17 @@ function FieldsTable({ rows }: { rows: FieldRow[] }) {
             </td>
             <td className="body-13_5 py-[9px] pr-[16px] text-[var(--text-secondary)]">
               {r.how ?? <span className="text-[var(--text-muted)]">{t('fields.notAssessed')}</span>}
+              {/* The grade said what is wrong; this says what would fix it, in
+                  the same cell, because a warning with no next move is a
+                  warning the reader can only file away. Derived from the
+                  anchors the grade was computed from -- see `suggest` in
+                  web/lib/fields.ts -- so it cannot recommend an id to a field
+                  that already has one. */}
+              {r.suggestion && (
+                <span className="caption-12 block pt-[3px] text-[var(--text-muted)]">
+                  {r.suggestion}
+                </span>
+              )}
             </td>
             <td className="py-[9px]">
               <LastChange row={r} />
@@ -189,7 +237,11 @@ function headline(v: FieldsView): string {
 
 const emptyTitle = (f: FieldFilter) =>
   f === 'held'
-    ? t('fields.empty.held')
+    // Was `t('fields.empty.held')` -- "No field is waiting on you.", which is
+    // the Decisions screen's sentence about a queue. This is a table filtered
+    // to a column, and the honest thing it can say is that the column is empty.
+    /* copy(G) */
+    ? 'No held fields right now.'
     : f === 'fragile'
       ? t('fields.empty.fragile')
       : t('fields.empty.all');

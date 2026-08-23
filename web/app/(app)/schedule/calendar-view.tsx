@@ -20,6 +20,7 @@ import {
 import { stamp, when } from '@/lib/when';
 import { HeldCell } from '../schema-table';
 import { RunNow } from './run-now';
+import { ScraperLifecycle } from '../fields/scraper-lifecycle';
 import type { CalendarData, Cell, Clock, RanEntry } from './data';
 import {
   VIEWS,
@@ -1207,6 +1208,16 @@ function NextDetail({
         workers={workers}
         scrapers={[{ slug: clock.scraper, paused: clock.paused, fields: clock.fields }]}
       />
+
+      {/* The clock, editable, next to the one run it predicts. `RunNow` moves
+          next_run_at for one run; this moves the interval every run after it,
+          and pauses or forgets the scraper outright. Both act on the same
+          scraper and neither is reachable from the other screens, which is why
+          they stand together here. */}
+      <ScraperLifecycle
+        slug={clock.scraper}
+        className="border-t border-[var(--border-hairline)] pt-[14px]"
+      />
     </>
   );
 }
@@ -1237,6 +1248,13 @@ function ProjectedDetail({ clock, at, now }: { clock: Clock; at: Date; now: Date
           The stored run is {stamp(next)}, {untilText(next, now)}. That one is a fact.
         </p>
       )}
+
+      {/* Where a projected mark lands IS the cadence, so the control that moves
+          every mark after this one belongs on the mark the reader clicked. */}
+      <ScraperLifecycle
+        slug={clock.scraper}
+        className="border-t border-[var(--border-hairline)] pt-[14px]"
+      />
     </>
   );
 }
