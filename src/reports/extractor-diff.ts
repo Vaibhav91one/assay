@@ -18,6 +18,7 @@
 import { getDb, sql } from '../store/index.js';
 import { latestContract } from '../contracts/store.js';
 import { thresholdsFor } from '../contracts/index.js';
+import { assayScore, type AssayScore } from './assay-score.js';
 
 export interface Extractor {
   selector: string | null;
@@ -28,6 +29,15 @@ export interface Extractor {
 export interface Rival {
   selector: string;
   score: number;
+  /**
+   * The text this candidate held, as the gate saw it.
+   *
+   * Carried because on a THIN band it is the ONLY thing a person can act on.
+   * Two scores four thousandths apart tell a reader nothing they can decide
+   * with; two different values do, and the disagreement between them is the
+   * whole reason the cell was held rather than published.
+   */
+  value: string;
 }
 
 export interface ExtractorDiff {
@@ -38,6 +48,26 @@ export interface ExtractorDiff {
   after: Extractor;
   /** healed = the gate allowed it. held = the gate refused and a person must answer. reverted = unhealed later. */
   decision: 'healed' | 'held' | 'reverted';
+  /**
+   * The gate's outcome as a word. Null when the store does not carry one --
+   * see `assayScore`, which documents both cases and why neither is guessed.
+   *
+   * Declared `| null` against a spec that asked for the bare union, and that is
+   * the finding rather than a liberty taken: `field_runs.reason` is null on
+   * every healed cell, so a non-nullable band could only be met by inventing
+   * CLEAR for runs whose recorded outcome might have been AGREED.
+   */
+  band: AssayScore | null;
+  /**
+   * THE FOUR NUMBERS BELOW ARE DATA AND ARE NOT FOR DISPLAY.
+   *
+   * They stay on the record because the proof is a record: an auditor with a
+   * `proof_id` must be able to recover what was actually compared, months
+   * later, and `band` is a lossy reading of it by design. What must not happen
+   * is any of them reaching a browser as rendered text -- no float, no
+   * percentage, no bar, no gauge. `band` is what the UI renders; these are what
+   * the record keeps. See docs/FEATURES.md 4.
+   */
   score: number | null;
   margin: number | null;
   tau: number;
@@ -69,10 +99,16 @@ const ENGINE_READ = { attr: 'text', transform: 'trim' } as const;
  * `field_runs.ranked` is jsonb, so it is whatever was written. Narrow it.
  *
  * Its actual shape, from `recordRun` in src/store/index.ts:118, is
- * `{ selector, score, value }[]` -- `selectorFor(r.el)` and the score rounded to
- * four places, ordered best first. `Rival` keeps the first two and drops
- * `value`: this module diffs how a field is READ, and the text a candidate
- * happened to hold is the subject of the decisions screen, not of this one.
+ * `{ selector, score, value }[]` -- `selectorFor(r.el)`, the score rounded to
+ * four places, and the candidate's text capped at 200 characters, ordered best
+ * first. All three are kept.
+ *
+ * `value` defaults to the empty string and deliberately not to null: the column
+ * is written as `(r.fp?.text || '').slice(0, 200)`, so an element that is
+ * genuinely there and genuinely empty is stored as `''`. Reading that back as
+ * an absence would turn "this candidate holds nothing" into "we do not know
+ * what this candidate holds", which are different answers to the question a
+ * person is being asked.
  */
 function rivalsOf(v: unknown): Rival[] {
   if (!Array.isArray(v)) return [];
@@ -80,7 +116,11 @@ function rivalsOf(v: unknown): Rival[] {
     if (!r || typeof r !== 'object') return [];
     const o = r as Record<string, unknown>;
     return typeof o.selector === 'string' && typeof o.score === 'number'
-      ? [{ selector: o.selector, score: o.score }]
+      ? [{
+          selector: o.selector,
+          score: o.score,
+          value: typeof o.value === 'string' ? o.value : '',
+        }]
       : [];
   });
 }
@@ -109,6 +149,7 @@ function gateNumbers(rivals: Rival[]): { score: number; margin: number } | null 
 type Row = {
   target_id: string;
   status: string;
+  reason: string | null;
   ranked: unknown;
   from_selector: string | null;
   to_selector: string | null;
@@ -148,6 +189,7 @@ export async function extractorDiff(runId: number, field: string): Promise<Extra
   const res = await getDb().execute(sql`
     SELECT r.target_id,
            fr.status,
+           fr.reason,
            fr.ranked,
            h.from_selector,
            h.to_selector,
@@ -208,6 +250,11 @@ export async function extractorDiff(runId: number, field: string): Promise<Extra
     before,
     after,
     decision: healed ? (row.reverted ? 'reverted' : 'healed') : 'held',
+    // Read from the recorded reason and mapped, never recomputed from the
+    // numbers below. Recomputing would let the word and the decision disagree
+    // the day a threshold is edited -- the band would describe a gate that did
+    // not run, beside a cell decided by one that did.
+    band: assayScore(row.reason),
     // Null on a heal, and not for want of looking: `recordRun` keeps `ranked`
     // only when the run abstained, because the list exists so a later
     // nomination can be scored against the page the gate actually saw. A run

@@ -146,10 +146,13 @@ const COPY = {
 
   // -- the two diffs on the run page -----------------------------------------
   //
-  // Only the labels are here. The line of numbers under a selector diff is
-  // assembled from the score, the margin and the two thresholds, and by the
-  // rule at the top of this file that makes it prose whose SHAPE changes with
-  // the data, not copy with a hole in it. It lives in the component.
+  // THE BAND NAMES AND THEIR WORDINGS ARE NOT HERE, on the same line this file
+  // already draws for reason codes: `CLEAR` / `AGREED` / `THIN` / `WEAK` /
+  // `GONE` and the sentence explaining each live in
+  // `src/reports/assay-score.ts`, which is a closed vocabulary over
+  // `healGated()`'s five outcomes and is read by the docs page and the engine
+  // as well as by a screen. A second catalogue in front of it would be two
+  // tables free to disagree about what THIN means.
   'run.section.selector': 'The selector',
   'run.section.record': 'The record',
   'diff.pane.before': 'before',
@@ -161,8 +164,13 @@ const COPY = {
   'diff.pane.refused': 'refused',
   'diff.pane.takenBack': 'taken back',
   'diff.nothingPublished': 'Nothing was published into this cell.',
+  'diff.published': 'The replacement was published.',
   'diff.held': 'held',
-  'diff.tooClose': 'the gap between them',
+  'diff.band.label': 'ASSAY SCORE',
+  'diff.band.link': 'what this means ›',
+  'diff.thin.disagreed':
+    'Two elements were too close to separate, and they said different things. Nothing was published.',
+  'diff.emptyElement': 'the element is there and empty',
 
   // -- fields ----------------------------------------------------------------
   'fields.heading': 'Fields',

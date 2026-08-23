@@ -5,11 +5,11 @@ import { ArrowLeft } from 'lucide-react';
 import { TopBar } from '@/components/top-bar';
 import { actionVariants } from '@/components/button';
 import { StatusLine, type Tone } from '@/components/status-line';
-import { Bar } from '@/components/bar';
 import { FlowCanvas } from '@/components/flow-canvas';
 import { OutcomeDonut, PageSizeBars } from '@/components/run-charts';
 import { ProofSheet } from '@/components/proof-sheet';
 import { runDetail, type CellSummary, type RunDetail } from '@/lib/run-detail';
+import type { Flow } from '@/lib/run-flow';
 import { heldBecause } from 'assay/engine/reports/vocabulary';
 import { extractorDiff } from 'assay/engine/reports/extractor-diff';
 import { schemaDiff } from 'assay/engine/reports/schema-diff';
@@ -48,6 +48,11 @@ export default async function RunPage({ params }: { params: Promise<{ run: strin
   // Both are null on a run with nothing to show, and both sections are then
   // absent. Neither renders an empty state: an empty state on a clean run says
   // "no changes here" to a reader who has already read `clean` in the top bar.
+  // Scrubbed once, here, and handed to both surfaces that draw it -- the canvas
+  // and the Sources table are two renderings of ONE object, and scrubbing it
+  // twice is how they end up disagreeing.
+  const flow = withoutNumbers(d.flow);
+
   const [selector, shape] = await Promise.all([
     d.focus ? extractorDiff(d.runId, d.focus) : null,
     previous === null ? [] : schemaDiff(previous, d.runId),
@@ -76,7 +81,7 @@ export default async function RunPage({ params }: { params: Promise<{ run: strin
             first thing under a top bar that already says which run this is, and
             a card that can be dragged should look draggable rather than carry a
             sentence saying so. */}
-        <FlowCanvas flow={d.flow} />
+        <FlowCanvas flow={flow} />
 
         {d.cells.length > 0 && (
           <section className="flex flex-col gap-[12px]">
@@ -126,11 +131,60 @@ export default async function RunPage({ params }: { params: Promise<{ run: strin
 
         <section className="flex flex-col gap-[12px]">
           <Heading>Sources</Heading>
-          <Evidence d={d} />
+          <Evidence flow={flow} />
         </section>
       </div>
     </>
   );
+}
+
+/* ------------------------------------------------------- the number scrub */
+
+/**
+ * A score is a four-decimal number and a threshold is a Greek letter. Both are
+ * data, and neither may be rendered.
+ *
+ * A CONTENT RULE AND NOT A LIST OF LABELS, on purpose. Matching
+ * `label === 'margin'` would silently stop working the day someone renames a
+ * fact in `run-flow.ts`, and it would stop working by letting a float through
+ * -- failing open, on the one policy that must fail closed. Matching the shape
+ * of the value cannot miss a rename. `\d\.\d{4}` is exactly what
+ * `Number(x).toFixed(4)` produces, which is how every score in this repo is
+ * written; page size is `toFixed(1)` and survives, which is the point of
+ * pinning the precision rather than banning decimals.
+ */
+const NUMERIC = /\d\.\d{4}|[τδ]/;
+
+/**
+ * The same flow, with the gate's arithmetic taken out of it.
+ *
+ * THIS IS A STOPGAP AND IS IN THE WRONG FILE. The facts, the node summaries and
+ * one edge label are built by `web/lib/run-flow.ts`, which is where the Assay
+ * score belongs -- the gate node should carry the band instead of a score and a
+ * margin, and then nothing would need scrubbing. `web/lib` is frozen for this
+ * feature, so the numbers are removed at the point of render instead and the
+ * proper change is named in the handover.
+ *
+ * Summaries lose whole SENTENCES rather than tokens: "Refused. Score 0.7412,
+ * margin 0.0409." with the numbers deleted reads "Refused. Score , margin ."
+ * A sentence that existed to carry a number goes with it. Facts go entirely --
+ * a fact is a label, a value and the column it came from, and a fact with its
+ * value removed is not a smaller fact, it is a broken one.
+ */
+function withoutNumbers(flow: Flow): Flow {
+  return {
+    nodes: flow.nodes.map((node) => ({
+      ...node,
+      summary: node.summary
+        .split(/(?<=\.)\s+/)
+        .filter((s) => !NUMERIC.test(s))
+        .join(' '),
+      facts: node.facts.filter((f) => !NUMERIC.test(f.value)),
+    })),
+    // `best 0.7412` -> `best`. The edge says which way the pipeline went, and
+    // it still says it without the number stapled to the end.
+    edges: flow.edges.map((e) => ({ ...e, label: e.label.replace(/\s*\d\.\d{4}/g, '') })),
+  };
 }
 
 /* ----------------------------------------------------------------- pieces */
@@ -242,79 +296,50 @@ function Fields({ cells }: { cells: CellSummary[] }) {
 }
 
 /**
- * The ranked list, against the two thresholds it was judged by.
+ * What was on the page and what each of them said.
  *
- * `Bar` rather than a third chart: this is a proportion with a real denominator
- * (a score out of 1), which is the one thing that component is for.
+ * THE SCORE COLUMN, THE BARS AND THE THRESHOLD SENTENCE CAME OFF HERE, and not
+ * as a tidy-up. The Assay score replaced them: the gate's outcome is now shown
+ * as one of five words, once, in the section above this one, with a link to the
+ * page that defines it. Leaving four-decimal scores and a τ/δ sentence directly
+ * under that band would have handed the reader back the float the band exists
+ * to withhold -- and `reproduces`, whose whole job was deciding whether the
+ * thresholds could honestly be drawn, has nothing left to guard once they are
+ * not drawn at all.
+ *
+ * What remains is the part a person can act on: which elements were considered
+ * and what text each one held. That is the evidence; the scores were the
+ * arithmetic over it, and the arithmetic is on the proof record.
  */
 function Candidates({ gate }: { gate: NonNullable<RunDetail['gate']> }) {
   return (
-    <div className="flex flex-col gap-[10px]">
-      <table className="w-full border-collapse">
-        <thead>
-          <tr className="border-b border-[var(--border-hairline)] text-left">
-            {['#', 'element', 'text on the page', 'score', ''].map((h, i) => (
-              <th key={h + i} className="caption-12 pb-[8px] font-normal text-[var(--text-muted)]">
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {gate.candidates.map((c, i) => (
-            <tr key={i} className="border-b border-[var(--border-hairline)]">
-              <td className="mono-label-12 w-[32px] py-[10px] text-[var(--text-muted)]">{i + 1}</td>
-              <td className="mono-value-13 w-[140px] py-[10px] text-[var(--text-primary)]">
-                {c.selector}
-              </td>
-              <td className="body-13_5 py-[10px] text-[var(--text-secondary)]">{c.value || '—'}</td>
-              <td className="mono-value-13 w-[80px] py-[10px] text-[var(--text-primary)]">
-                {c.score.toFixed(4)}
-              </td>
-              <td className="w-[110px] py-[10px]">
-                <Bar
-                  value={Math.round(c.score * 1000)}
-                  of={1000}
-                  tone={i === 0 ? 'var(--semantic-warning)' : 'var(--border-default)'}
-                />
-              </td>
-            </tr>
+    <table className="w-full border-collapse">
+      <thead>
+        <tr className="border-b border-[var(--border-hairline)] text-left">
+          {['#', 'element', 'text on the page'].map((h) => (
+            <th key={h} className="caption-12 pb-[8px] font-normal text-[var(--text-muted)]">
+              {h}
+            </th>
           ))}
-        </tbody>
-      </table>
-      <p className="meta-12_5 text-[var(--text-secondary)]">
-        {gate.reproduces ? (
-          <>
-            The gate publishes only when the score clears{' '}
-            <span className="mono-value-12_5 text-[var(--text-primary)]">τ {gate.tau}</span> AND the
-            margin over the runner-up clears{' '}
-            <span className="mono-value-12_5 text-[var(--text-primary)]">δ {gate.delta}</span>. Here
-            the score was{' '}
-            <span className="mono-value-12_5 text-[var(--text-primary)]">
-              {gate.score.toFixed(4)}
-            </span>{' '}
-            and the margin{' '}
-            <span className="mono-value-12_5 text-[var(--text-primary)]">
-              {gate.margin.toFixed(4)}
-            </span>
-            .
-          </>
-        ) : (
-          // Refusing to draw a threshold that does not explain the recorded
-          // outcome is the same refusal the gate itself makes.
-          <>
-            The scores are as the gate recorded them. The thresholds are not shown: the target’s
-            contract no longer reproduces this run’s recorded reason, so the numbers on it today are
-            not the ones this run was judged under.
-          </>
-        )}
-      </p>
-    </div>
+        </tr>
+      </thead>
+      <tbody>
+        {gate.candidates.map((c, i) => (
+          <tr key={i} className="border-b border-[var(--border-hairline)]">
+            <td className="mono-label-12 w-[32px] py-[10px] text-[var(--text-muted)]">{i + 1}</td>
+            <td className="mono-value-13 w-[240px] py-[10px] text-[var(--text-primary)]">
+              {c.selector}
+            </td>
+            <td className="body-13_5 py-[10px] text-[var(--text-secondary)]">{c.value || '—'}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
 /** Every fact on the canvas, beside the column it was read from. The receipt. */
-function Evidence({ d }: { d: RunDetail }) {
+function Evidence({ flow }: { flow: Flow }) {
   return (
     <table className="w-full border-collapse">
       <thead>
@@ -327,7 +352,7 @@ function Evidence({ d }: { d: RunDetail }) {
         </tr>
       </thead>
       <tbody>
-        {d.flow.nodes.flatMap((n) =>
+        {flow.nodes.flatMap((n) =>
           n.facts.map((f) => (
             <tr key={`${n.id}-${f.label}`} className="border-b border-[var(--border-hairline)]">
               <td className="meta-12_5 w-[190px] py-[8px] text-[var(--text-secondary)]">

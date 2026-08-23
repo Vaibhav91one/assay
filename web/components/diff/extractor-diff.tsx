@@ -2,22 +2,35 @@
 // was refused.
 //
 // Bright Data's Self-Healing tool ends at a code diff with Accept and Decline.
-// The operator reads a rewritten scraper, in a hurry, with no number beside it,
-// and clicks. This draws the same picture and puts the decision on the other
-// side of it: the gate has already decided, on two thresholds, and the diff is
-// the receipt rather than the prompt.
+// The operator reads a rewritten scraper, in a hurry, with no evidence beside
+// it, and clicks. This draws the same picture and puts the decision on the
+// other side of it: the gate has already decided, and the diff is the receipt
+// rather than the prompt.
 //
 // Which makes the `held` state the important one and not the edge case. It is
-// the diff that was NOT applied, with the margin that was too thin printed
-// under it -- the screen Bright Data has no reason to draw, because there the
-// refusal never happens. Everything below leans that way on purpose.
+// the diff that was NOT applied -- the screen Bright Data has no reason to
+// draw, because there the refusal never happens. Everything below leans that
+// way on purpose.
+//
+// NOT ONE NUMBER REACHES THIS FILE'S OUTPUT. The score, the margin and the two
+// thresholds are on the record and stay there; what is rendered is the band,
+// which is a word. docs/FEATURES.md 4 is the argument and
+// `src/reports/assay-score.ts` is the vocabulary. There is no float here, no
+// percentage, no bar and no gauge, and the moment one appears the product is
+// back to asking a reader to decide what 0.74 is worth.
 //
 // A server component. Nothing here has state, and the one client boundary is
 // `CodeComparison`, which needs one because shiki is a WASM-backed grammar
 // engine and cannot run on the server. Its unhighlighted branch renders here,
 // so the code is in the HTML on first paint and gains colour afterwards.
 
+import Link from 'next/link';
 import type { ExtractorDiff as ExtractorDiffRecord } from 'assay/engine/reports/extractor-diff';
+import {
+  ASSAY_SCORE_DOC,
+  ASSAY_SCORE_MEANS,
+  type AssayScore,
+} from 'assay/engine/reports/assay-score';
 import { CodeComparison } from '@/components/ui/code-comparison';
 import { t } from '@/lib/copy';
 
@@ -49,71 +62,65 @@ function spec(selector: string | null, attr: string, transform: string | null, m
   ].join('\n');
 }
 
-const n = (v: number) => v.toFixed(4);
+/**
+ * The four bands that mean "nothing was published" read as warnings; CLEAR and
+ * AGREED are the gate allowing something and read as success.
+ *
+ * Mapped onto `StatusLine`'s own tones rather than to colours picked here, so a
+ * band and every other status on this page agree about what warning looks like.
+ */
+const TONE: Record<AssayScore, string> = {
+  CLEAR: 'var(--semantic-success)',
+  AGREED: 'var(--semantic-success)',
+  THIN: 'var(--semantic-warning)',
+  WEAK: 'var(--semantic-warning)',
+  GONE: 'var(--semantic-warning)',
+};
+
+const SUBTLE: Record<AssayScore, string> = {
+  CLEAR: 'var(--semantic-success-subtle)',
+  AGREED: 'var(--semantic-success-subtle)',
+  THIN: 'var(--semantic-warning-subtle)',
+  WEAK: 'var(--semantic-warning-subtle)',
+  GONE: 'var(--semantic-warning-subtle)',
+};
 
 /**
- * One line of numbers, in the product's voice.
+ * The band, its one line of English, and the way to the page that defines it.
  *
- * NO PERCENTAGE AND NO CONFIDENCE, here or anywhere near this component.
- * docs/FEATURES.md 4 and CONTRIBUTING.md both refuse it in the same words: a
- * float relocates the abstain decision to whoever cares least about it. What is
- * printed instead is what was actually compared -- a score against tau, a
- * margin against delta -- which is a measurement the reader can check rather
- * than a feeling the product is asking them to share.
- *
- * WHICH TEST FAILED IS DERIVED FROM THE NUMBERS, not read from
- * `field_runs.reason`. The arithmetic is `src/heal.ts:249` and it is on the
- * page: score first, then margin, then neither -- which is a policy holding a
- * heal the gate itself allowed. Deriving it means the sentence cannot disagree
- * with the numbers printed beside it, which is the failure mode a reason code
- * copied onto a screen has.
+ * The link is not decoration and is not optional. A closed vocabulary is only
+ * honest if the definition is one click away -- five invented words with no
+ * glossary would be worse than the number they replaced, because at least a
+ * float admits it is a float. Every surface that shows a band carries this.
  */
-function verdict(d: ExtractorDiffRecord): React.ReactNode {
-  const thresholds = (
-    <>
-      <Num>τ {d.tau}</Num> and <Num>δ {d.delta}</Num>
-    </>
-  );
-
-  if (d.decision !== 'held') {
-    return (
-      <>
-        Cleared {thresholds}, so the selector moved
-        {d.decision === 'reverted' ? ' — and was later taken back.' : '.'}
-      </>
-    );
-  }
-
-  // A held run kept its ranked list, so these are never null on this arm. The
-  // guard is for the one case that can be: `no_candidates`, where the gate
-  // abstained before anything was weighed and there is genuinely no number.
-  if (d.score === null || d.margin === null) {
-    return <>Nothing on the page was close enough to score. {t('diff.nothingPublished')}</>;
-  }
-
-  const belowTau = d.score <= d.tau;
-  const thinMargin = d.margin <= d.delta;
-
+function Band({ band }: { band: AssayScore }) {
   return (
-    <>
-      Best <Num>{n(d.score)}</Num> against <Num>τ {d.tau}</Num>, ahead of the runner-up by{' '}
-      <Num>{n(d.margin)}</Num> against <Num>δ {d.delta}</Num>.{' '}
-      {belowTau
-        ? 'Nothing on the page looked enough like this field.'
-        : thinMargin
-          ? 'Two candidates were too close to separate.'
-          : 'Both thresholds cleared, and a policy withheld it anyway.'}{' '}
-      {t('diff.nothingPublished')}
-    </>
+    <div className="flex flex-wrap items-baseline gap-x-[10px] gap-y-[4px]">
+      <span className="label-10 text-[var(--text-muted)]">{t('diff.band.label')}</span>
+      <span
+        className="mono-label-12 rounded-[6px] px-[7px] py-[2px]"
+        style={{ color: TONE[band], background: SUBTLE[band] }}
+      >
+        {band}
+      </span>
+      <span className="meta-12_5 text-[var(--text-secondary)]">{ASSAY_SCORE_MEANS[band]}</span>
+      <Link
+        href={ASSAY_SCORE_DOC}
+        className="focus-ring meta-12_5 rounded-[var(--radius-control)] text-[var(--semantic-link)] hover:underline"
+      >
+        {t('diff.band.link')}
+      </Link>
+    </div>
   );
 }
 
-const Num = ({ children }: { children: React.ReactNode }) => (
-  <span className="mono-value-12_5 text-[var(--text-primary)]">{children}</span>
-);
-
 export function ExtractorDiff({ diff }: { diff: ExtractorDiffRecord }) {
   const held = diff.decision === 'held';
+  // THIN is the one band whose evidence is worth laying out, because it is the
+  // one where two answers were on the table and they DISAGREED. On WEAK and
+  // GONE there is no pair to compare -- nothing scored, or nothing was there --
+  // and printing a list would be dressing an absence up as a choice.
+  const disagreed = held && diff.band === 'THIN' && diff.rivals.length > 1;
 
   return (
     <div className="flex w-full flex-col gap-[12px]">
@@ -132,32 +139,47 @@ export function ExtractorDiff({ diff }: { diff: ExtractorDiffRecord }) {
         }
       />
 
-      <p className="meta-12_5 text-[var(--text-secondary)]">{verdict(diff)}</p>
+      {/* Null on every healed cell, because `field_runs.reason` is null on
+          every healed cell -- see `assayScore`. The band is simply absent
+          rather than filled in with the likelier of the two heal words. */}
+      {diff.band && <Band band={diff.band} />}
 
-      {/* The two the gate could not separate, and the gap between them.
-          Deliberately TWO and not the whole ranked list: the full list, with
-          the text each candidate held, is the section below this one, and
-          printing it twice on one screen is the duplicated fact
-          docs/APP-DESIGN.md 5b calls P2. What is here is the pair the margin
-          is a measurement OF -- which the list does not say, because a list
-          of scores does not point at the subtraction between two of them. */}
-      {held && diff.rivals.length > 1 && (
-        <dl className="flex flex-col gap-[6px] rounded-[var(--radius-control)] border border-[var(--border-hairline)] bg-[var(--surface-subtle)] px-[16px] py-[12px]">
-          {diff.rivals.slice(0, 2).map((r) => (
-            <div key={r.selector} className="flex items-baseline gap-[12px]">
-              <dt className="mono-value-12_5 min-w-0 flex-1 truncate text-[var(--text-primary)]">
-                {r.selector}
-              </dt>
-              <dd className="mono-value-12_5 text-[var(--text-secondary)]">{n(r.score)}</dd>
-            </div>
-          ))}
-          <div className="flex items-baseline gap-[12px] border-t border-[var(--border-hairline)] pt-[6px]">
-            <dt className="meta-12_5 flex-1 text-[var(--text-muted)]">{t('diff.tooClose')}</dt>
-            <dd className="mono-value-12_5 text-[var(--semantic-warning)]">
-              {diff.margin === null ? t('common.dash') : n(diff.margin)}
-            </dd>
-          </div>
-        </dl>
+      {/* Suppressed when the THIN block is drawn, because that block's own
+          sentence ends on the same words. The refusal said twice, four lines
+          apart, is the duplicated fact docs/APP-DESIGN.md 5b calls P2 -- and
+          repeating it makes it read as two separate findings rather than one. */}
+      {!disagreed && (
+        <p className="meta-12_5 text-[var(--text-secondary)]">
+          {held ? t('diff.nothingPublished') : t('diff.published')}
+        </p>
+      )}
+
+      {/* The two the gate could not separate, and what each of them said.
+          THE VALUES ARE THE POINT. A person deciding this cell cannot act on
+          how close two candidates scored; they can act on the fact that one
+          element says one thing and the other says something else, because
+          that is a question they know the answer to and the gate does not. */}
+      {disagreed && (
+        <div className="flex flex-col gap-[10px] rounded-[var(--radius-control)] border border-[var(--border-hairline)] bg-[var(--surface-subtle)] px-[16px] py-[12px]">
+          <p className="meta-12_5 text-[var(--text-primary)]">{t('diff.thin.disagreed')}</p>
+          <dl className="flex flex-col gap-[8px]">
+            {diff.rivals.slice(0, 2).map((r) => (
+              <div key={r.selector} className="flex flex-col gap-[2px]">
+                <dt className="mono-label-12 truncate text-[var(--text-muted)]">{r.selector}</dt>
+                <dd className="body-13_5 text-[var(--text-primary)]">
+                  {/* An element that is there and empty is a real answer and
+                      is stored as `''`. It is said in words rather than left
+                      as a blank line the reader has to interpret. */}
+                  {r.value === '' ? (
+                    <span className="text-[var(--text-muted)]">{t('diff.emptyElement')}</span>
+                  ) : (
+                    r.value
+                  )}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       )}
     </div>
   );

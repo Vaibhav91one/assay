@@ -10,8 +10,12 @@
 // PASSED and not skipped -- so `ASSAY_REQUIRE_DB=1` turns that vacuous green
 // into a failure, and the last test in this file is the one that fails.
 
+import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { extractorDiff } from '../src/reports/extractor-diff.js';
+import {
+  ASSAY_SCORE, ASSAY_SCORES, ASSAY_SCORE_MEANS, assayScore,
+} from '../src/reports/assay-score.js';
 import { DEFAULT_THRESHOLDS } from '../src/contracts/index.js';
 import {
   closeDb, getDb, sql, fieldRuns, fieldState, healHistory, queueItems, runs, targets,
@@ -171,6 +175,18 @@ describe('the refusal, which is the whole point', () => {
     expect(d.rivals.map((r) => r.score)).toEqual([0.7412, 0.7003, 0.411]);
   });
 
+  // The values are what a person decides on, so they have to survive the trip
+  // out of jsonb. Two candidates that scored within a hair of each other and
+  // said DIFFERENT THINGS is the whole content of a THIN band.
+  it('carries what each rival said, not only how it scored', async () => {
+    if (!dbUp) return;
+    const d = (await extractorDiff(run.held!, FIELD))!;
+    expect(d.rivals.slice(0, 2).map((r) => r.value)).toEqual([
+      'Cot recall, batch 42',
+      'Cot recall, batch 43',
+    ]);
+  });
+
   it('reports a margin that is below delta -- the reason nothing was published', async () => {
     if (!dbUp) return;
     const d = (await extractorDiff(run.held!, FIELD))!;
@@ -195,6 +211,56 @@ describe('the refusal, which is the whole point', () => {
     const d = (await extractorDiff(run.held!, FIELD))!;
     expect(d.before).toMatchObject({ attr: 'text', transform: 'trim' });
     expect(d.after).toMatchObject({ attr: 'text', transform: 'trim' });
+  });
+});
+
+describe('the Assay score', () => {
+  it('reads the band off the recorded reason', async () => {
+    if (!dbUp) return;
+    expect((await extractorDiff(run.held!, FIELD))!.band).toBe('THIN');
+  });
+
+  it('is a bijection over healGated\'s five outcomes', () => {
+    // Both directions, because "no information is invented and nothing is
+    // collapsed" is the claim the band makes and this is what it means.
+    expect(Object.keys(ASSAY_SCORE).sort()).toEqual(
+      ['below_tau', 'benign_tie', 'clear_margin', 'no_candidates', 'thin_margin'].sort(),
+    );
+    expect(new Set(Object.values(ASSAY_SCORE)).size).toBe(ASSAY_SCORES.length);
+    expect(ASSAY_SCORES.every((b) => b in ASSAY_SCORE_MEANS)).toBe(true);
+  });
+
+  it('agrees with the reasons healGated actually returns', () => {
+    // Reads src/heal.ts and fails if the gate grows a sixth outcome or renames
+    // one. A vocabulary claiming to be a bijection over that function has to be
+    // checked against that function, or it is a bijection over a memory of it.
+    const src = readFileSync(new URL('../src/heal.ts', import.meta.url), 'utf8');
+    const declared = new Set(
+      [...src.matchAll(/reason:\s*'([a-z_]+)'(?:\s*\|\s*'([a-z_]+)')*/g)]
+        .flatMap((m) => m[0].match(/'([a-z_]+)'/g) ?? [])
+        .map((q) => q.slice(1, -1)),
+    );
+    expect(declared.size).toBeGreaterThan(0);
+    for (const r of declared) expect(ASSAY_SCORE[r], `heal.ts returns ${r}`).toBeDefined();
+  });
+
+  // The finding, pinned as a test so it cannot be quietly "fixed" by guessing.
+  it('has no band for a healed cell, because the store keeps no reason for one', async () => {
+    if (!dbUp) return;
+    // src/runner.ts:263 returns `{ status: 'healed' }` with no reason, so
+    // `recordRun` writes null. `clear_margin` and `benign_tie` are on the proof
+    // EVENT, which is not persisted. Null rather than an invented CLEAR.
+    expect((await extractorDiff(run.healed!, FIELD))!.band).toBeNull();
+    expect(assayScore(null)).toBeNull();
+  });
+
+  it('has no band for a policy that withheld a heal the gate allowed', () => {
+    // `brake:` and `auto_approve_floor:` share the column and are not gate
+    // outcomes. Mapping one to WEAK would send an operator to tune a threshold
+    // that had nothing to do with it.
+    expect(assayScore('auto_approve_floor:0.6')).toBeNull();
+    expect(assayScore('brake:oscillating')).toBeNull();
+    expect(assayScore('')).toBeNull();
   });
 });
 
