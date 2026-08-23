@@ -251,7 +251,26 @@ export function healGated(
   }
   if (margin <= delta) {
     // a tie whose candidates agree on the VALUE is not a real ambiguity
-    const tied = ranked.filter((r) => best.score - r.score <= delta);
+    //
+    // THE TIE IS THE TOP TWO, because the margin that got us here is the top
+    // two. `margin` is `best.score - runnerUp.score` and nothing else, so a
+    // third candidate inside the delta band was never part of the question
+    // being asked -- letting it veto the answer meant one function held two
+    // different notions of "tied" and abstained whenever they disagreed.
+    //
+    // Measured on the independent variants in `results/headtohead.jsonl`, the
+    // old set held `wrapper_div` and `combo_redesign` for a reason that was
+    // never about the two candidates it had compared: on `wrapper_div` the top
+    // two carry identical text and a third, from an unrelated recall card, sat
+    // inside the band with different text.
+    //
+    // This LOOSENS a safety mechanism, so the thing to check is whether it
+    // loosens it into a wrong publish. `remove_field` and `duplicate_similar`
+    // are the two variants where abstaining was correct, and both survive:
+    // there the top two themselves disagree, which is the case this branch
+    // still refuses. The corpus arms are the real evidence and they are in
+    // the commit message.
+    const tied = runnerUp ? [best, runnerUp] : [best];
     // Compare FULL text read off the elements, not fp.text -- the fingerprint
     // truncates at 200 chars, and two candidates identical to char 200 can carry
     // different values after it. Publishing on a prefix match is a wrong-publish
