@@ -1,8 +1,8 @@
 import {
   AtSign, BedDouble, BookOpen, Boxes, Briefcase, BriefcaseBusiness, Building2, Camera,
-  Code, FileText, Gavel, Globe, Hotel, House, MessageCircleQuestion, MessagesSquare,
-  Music, Package, Palette, Pin, Play, Search, Shirt, ShoppingBag, ShoppingCart, Star,
-  Store, Target, TrendingUp, Tv, Users, type LucideIcon,
+  Code, FileText, Gavel, Globe, Hash, Hotel, House, MessageCircleQuestion,
+  MessagesSquare, Music, Package, Palette, Pin, Play, Search, Shirt, ShoppingBag,
+  ShoppingBasket, ShoppingCart, Star, Store, TrendingUp, Tv, Users, type LucideIcon,
 } from 'lucide-react';
 
 /**
@@ -113,7 +113,10 @@ const ICONS: Record<string, LucideIcon> = {
   tiktok: Music,
   facebook: Users,
   youtube: Play,
-  x: AtSign,
+  // `AtSign` belongs to Threads, whose whole handle model is one. X takes the
+  // hash instead: two cards on one shelf drawing the same glyph is the wall of
+  // identical tiles again, four rows apart.
+  x: Hash,
   reddit: MessagesSquare,
   threads: AtSign,
   pinterest: Pin,
@@ -122,7 +125,10 @@ const ICONS: Record<string, LucideIcon> = {
   // Shopping.
   amazon: ShoppingCart,
   walmart: Store,
-  target: Target,
+  // NOT lucide's `Target`, which is concentric rings -- the one glyph in this
+  // table that would have been the brand's own mark redrawn, which is the thing
+  // the note above says this screen does not do.
+  target: ShoppingBasket,
   ebay: Gavel,
   etsy: Palette,
   bestbuy: Tv,

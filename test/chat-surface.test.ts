@@ -23,7 +23,10 @@ import { MODELS as ENGINE_MODELS, converse, type TraceEvent } from '../src/agent
 import { MODELS, MODEL_LABEL, DEFAULT_MODEL } from '../src/agent/models.js';
 import { HELD_BECAUSE, heldBecause } from '../src/reports/vocabulary.js';
 
-import { tail, turnFailed, toMarkdown, type Turn } from '../src/store/conversation-log.js';
+import { readFileSync } from 'node:fs';
+import {
+  conversationInUrl, tail, turnFailed, toMarkdown, type Turn,
+} from '../src/store/conversation-log.js';
 
 import {
   SHORTCUTS, menuAt, openCommands, shortcutMessage, withoutOrphanSlash,
@@ -250,6 +253,55 @@ describe('withoutOrphanSlash', () => {
 // turn with nothing after it is the same row shape whether the answer is still
 // coming or is never coming, so the screen could not draw the difference and
 // drew neither.
+// --- which conversation a URL has open ---------------------------------------
+//
+// REPORTED. "New scrape" links to `/?new=1`; the home page typed its search
+// params as `{ c?: string }` and never read `new`, so pressing it left whatever
+// conversation was already loaded on the screen and the operator's next message
+// landed in it. The rule now lives in one function that both the server page and
+// the browser's late-render guard call.
+
+describe('?new=1 opens a new conversation, and touches no old one', () => {
+  it('resolves to Home, which is a conversation that does not exist yet', () => {
+    expect(conversationInUrl({ new: '1' })).toBeNull();
+    expect(conversationInUrl({})).toBeNull();
+  });
+
+  it('beats a `c` that is still in the URL', () => {
+    // The button is the more recent thing the operator did. Without this the
+    // two readers disagree -- the page loads Home while the client's guard
+    // still believes conversation 5 is open -- and a disagreement is how the
+    // stale transcript survived in the first place.
+    expect(conversationInUrl({ c: '5', new: '1' })).toBeNull();
+  });
+
+  it('still opens the conversation a plain `?c=` names', () => {
+    expect(conversationInUrl({ c: '5' })).toBe(5);
+    // Not a number is not a conversation, and resolves to Home rather than to
+    // a 404 on a link to something deleted.
+    expect(conversationInUrl({ c: 'abc' })).toBeNull();
+    expect(conversationInUrl({ c: '5x' })).toBeNull();
+  });
+
+  it('is the only thing either side reads a conversation id with', () => {
+    // Source text, because both readers are `.tsx` behind Next's path aliases.
+    // What matters is that neither has its own parse to drift -- the client's
+    // `openedInUrl` used to hold a second copy of this regex.
+    for (const f of ['web/app/(app)/page.tsx', 'web/app/(app)/watch.tsx']) {
+      const src = readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
+      expect(src).toContain('conversationInUrl');
+      expect(src).not.toMatch(/get\('c'\)[\s\S]{0,80}\/\^\\d\+\$\//);
+    }
+  });
+
+  it('creates no row, so nothing appears in the rail before anyone types', () => {
+    // A conversation exists from its FIRST MESSAGE. The home page must not open
+    // one, and does not: it only ever reads.
+    const src = readFileSync(new URL('../web/app/(app)/page.tsx', import.meta.url), 'utf8');
+    expect(src).not.toMatch(/openConversation|createConversation|recordTurns/);
+  });
+});
+
 describe('a transcript can say a turn failed, and not only that one is missing', () => {
   const asked: Turn = { role: 'operator', text: 'watch https://example.com', at: '2026-08-22T19:52:45.035Z' };
   const answered: Turn = { role: 'assay', text: 'I can watch that.', at: '2026-08-22T19:53:15.833Z' };
