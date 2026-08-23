@@ -1,9 +1,10 @@
 import { RefreshCw } from 'lucide-react';
 import { StatusLine, type Tone } from '@/components/status-line';
-import { Disclosure } from '@/components/disclosure';
+import { Disclosure, GateNumbers } from '@/components/disclosure';
 import { Copy } from '@/components/copy';
 import type { Provenance, Standing } from '@/lib/explain';
 import { stamp } from '@/lib/when';
+import { t } from '@/lib/copy';
 
 /**
  * Where one published value came from -- the whole answer, and the only copy of
@@ -37,10 +38,18 @@ export function ProofDetail({ p }: { p: Provenance }) {
         <StandingCard p={p} />
       </div>
 
+      <Counterfactual p={p} />
+
       <div className="mt-[28px] flex flex-col items-start gap-[12px]">
         <Disclosure label="the full record">
           <Record p={p} />
         </Disclosure>
+        {/* Exactly when the gate ranked something -- i.e. on a held cell. The
+            band is still the answer; this is the arithmetic behind it, asked
+            for rather than arrived at. See the note on `GateNumbers`. */}
+        {p.gate && (
+          <GateNumbers gate={p.gate} />
+        )}
         <Copy
           text={`assay explain ${p.proof}`}
           receipt={<>Copied <code className="mono-value-12_5">assay explain {p.proof}</code></>}
@@ -54,6 +63,32 @@ export function ProofDetail({ p }: { p: Provenance }) {
         The proof id is a column on your output.
       </p>
     </>
+  );
+}
+
+/**
+ * The counterfactual: what a healer without a gate would have done here.
+ *
+ * This is the product's whole argument in one sentence, and until now the
+ * screen never said it -- it said what Assay did and left the reader to imagine
+ * the alternative. The alternative is not imagined: `ranked[0]` is the
+ * candidate that WOULD have been published, recorded at the moment of the
+ * refusal, and it is only ever present on a cell that was refused.
+ *
+ * Two sentences and no styling beyond the quote, deliberately. A callout box
+ * would make it a claim the screen is pleased with; it is a fact about a fork
+ * that was taken.
+ */
+function Counterfactual({ p }: { p: Provenance }) {
+  if (p.standing !== 'held' || !p.wouldHavePublished) return null;
+  return (
+    <p className="meta-13 mt-[20px] max-w-[660px] text-[var(--text-secondary)]">
+      {t('counterfactual.before')}{' '}
+      <span className="mono-value-12_5 text-[var(--text-primary)]">
+        “{p.wouldHavePublished}”
+      </span>
+      {t('counterfactual.after')}
+    </p>
   );
 }
 
@@ -92,9 +127,13 @@ function Hole() {
         className="heading-18 rounded-[6px] px-[8px] py-[2px]"
         style={{ color: 'var(--semantic-warning)', background: 'var(--semantic-warning-subtle)' }}
       >
-        held
+        {t('run.cell.held')}
       </span>
-      <span className="meta-12_5 text-[var(--text-muted)]">nothing was written here</span>
+      {/* The same sentence the run canvas's Hold node uses. The two screens
+          describe the same cell and used to disagree about whether anything had
+          been "published": nothing is WRITTEN, and `null` is the labelled hole
+          the output column holds in its place. */}
+      <span className="meta-12_5 text-[var(--text-muted)]">{t('explain.hole.note')}</span>
     </span>
   );
 }

@@ -1,14 +1,16 @@
 import type { Metadata } from 'next';
+import { t } from '@/lib/copy';
 import { modelAuth } from 'assay/engine/ai/model';
 import { TopBar } from '@/components/top-bar';
 import { RunStrip } from '@/components/run-strip';
+import { bench } from '@/lib/bench';
 import { homeStats } from '@/lib/home';
-import { openDecisions } from '@/lib/queue';
-import { getConversation } from 'assay/engine/store/conversations';
+import { waitingCount } from '@/lib/queue';
+import { getConversation, listConversations } from 'assay/engine/store/conversations';
 import { conversationInUrl } from 'assay/engine/store/conversation-log';
 import { Watch } from './watch';
 
-export const metadata: Metadata = { title: 'Assay' };
+export const metadata: Metadata = { title: t('title.home') };
 export const dynamic = 'force-dynamic';
 
 /**
@@ -33,13 +35,28 @@ export const dynamic = 'force-dynamic';
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ c?: string; new?: string }>;
+  searchParams: Promise<{ c?: string; new?: string; target?: string }>;
 }) {
-  const wanted = conversationInUrl(await searchParams);
+  const params = await searchParams;
+  // `?new=1` wins over everything: a new chat is new. Then `?c=` names one.
+  let wanted = conversationInUrl(params);
+  const target = params.new != null ? undefined : params.target;
 
-  const [stats, queue, conversation] = await Promise.all([
+  // `?target=<slug>` is the decisions screen's re-teach link: "neither
+  // candidate is right" means the field points at the wrong thing, and the
+  // place to say so is the conversation that built the scraper. Resolve the
+  // slug to that conversation; a scraper built without one falls back to
+  // plain Home, where the composer is.
+  if (wanted == null && target) {
+    const owned = (await listConversations()).find((s) => s.scraperSlug === target);
+    if (owned) wanted = owned.id;
+  }
+
+  const [stats, waiting, conversation] = await Promise.all([
     homeStats(),
-    openDecisions(),
+    // The same `cache()`d count the rail reads, so the badge on the left and
+    // the row in the middle of this screen cannot disagree.
+    waitingCount(),
     // A `?c=` naming a conversation that is not there resolves to null and the
     // screen is Home. Better than a 404 on a link to something deleted.
     wanted == null ? Promise.resolve(null) : getConversation(wanted),
@@ -61,7 +78,7 @@ export default async function HomePage({
           the contract's word for "this screen offers the control itself". */}
       <TopBar title={conversation?.title ?? 'Home'} scraper={conversation?.scraperSlug ?? undefined} />
       <Watch
-        waiting={queue.length}
+        waiting={waiting}
         auth={auth}
         conversation={
           conversation && {
@@ -75,6 +92,10 @@ export default async function HomePage({
         // component reading the store, and the client only decides whether the
         // screen still has room for it.
         stats={<StatsBand stats={stats} />}
+        // Read on the server, off `results/bench.json`. Numbers, not a node:
+        // three integers cross the boundary rather than markup, and the hero
+        // decides how to say them. Null when the file is not in the checkout.
+        bench={bench()}
       />
     </>
   );
@@ -89,10 +110,10 @@ function StatsBand({ stats }: { stats: Awaited<ReturnType<typeof homeStats>> }) 
   if (stats.runs === 0) return null;
 
   return (
-    <div className="border-t border-[var(--border-hairline)] px-[56px] py-[28px]">
+    <div className="border-t border-[var(--border-hairline)] px-[20px] md:px-[56px] py-[28px]">
       <p className="label-10 pb-[10px] text-[var(--text-muted)]">ACROSS ALL SCRAPERS</p>
       <div className="flex flex-wrap items-start gap-x-[64px] gap-y-[20px]">
-        <div className="flex flex-col gap-[12px]">
+        <div className="flex min-w-0 max-w-full flex-col gap-[12px]">
           <p className="title-20 text-[var(--text-primary)]">
             {stats.runs} run{stats.runs === 1 ? '' : 's'} {sinceLabel(stats.since)}
           </p>

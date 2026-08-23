@@ -48,12 +48,62 @@ if (existsSync(envFile)) {
 }
 
 const config: NextConfig = {
+  // `X-Powered-By: Next.js` names the framework and, near enough, its major
+  // version to anyone scanning. It buys nobody anything.
+  poweredByHeader: false,
+
+  /**
+   * The three headers that hold whether or not anything is in front of this.
+   *
+   * docs/self-host.mdx is explicit that Assay authenticates nobody and that
+   * reaching it on a network means a reverse proxy someone configured on
+   * purpose. That posture is exactly why these live here rather than in the
+   * proxy: a proxy is a thing an operator MIGHT have, and the default compose
+   * path -- bound to 127.0.0.1, port-forwarded over ssh -- has none at all. A
+   * header only the proxy sets is a header the canonical install does not get.
+   *
+   * NO Content-Security-Policy, and that is a decision rather than an
+   * oversight: Next inlines its own bootstrap and flight payloads, the app
+   * ships inline `style` attributes on the charts and the travelling tab
+   * highlight, and `next dev` adds its own eval-backed client. A real policy
+   * means threading a per-request nonce through the render and a separate
+   * relaxation for dev -- its own project, not a line in this object.
+   */
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          // Stop a capture served back to a browser being sniffed into
+          // something executable, whatever the store said its type was.
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          // Nothing here is meant to be framed. Every consequential control on
+          // this console -- resolve a decision, clear a brake -- is one click,
+          // which is the whole clickjacking shape.
+          { key: 'X-Frame-Options', value: 'DENY' },
+          // Assay URLs carry target ids, run ids and proof ids. None of that
+          // belongs in the Referer of an outbound click to a vendor's docs.
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+        ],
+      },
+    ];
+  },
+
   // Pinned rather than left to default, because `createMDX` below fills this in
   // when it is absent and its default is `['mdx', 'md', 'jsx', 'js', 'tsx',
   // 'ts']` -- which would make every `.md` file anywhere under `app/` a route.
   // Documentation lives in `content/docs`, is read through `lib/source.ts`, and
-  // is never a page module, so `app/` has no business compiling markdown.
-  pageExtensions: ['ts', 'tsx', 'js', 'jsx'],
+  // is never a page module, so `app/` has no business compiling markdown --
+  // hence no `md` here.
+  //
+  // `mdx` IS here, and not so `.mdx` files can become routes (there are none
+  // under `app/`). Next applies the RSC layer's `react-server` resolve
+  // condition only to files matching pageExtensions; without `mdx`, every
+  // compiled docs page pulled the CLIENT jsx-dev-runtime into the server
+  // graph and dev rendering of /docs died on
+  // `undefined.recentlyCreatedOwnerStacks` (prod was fine -- its runtime never
+  // touches owner stacks).
+  pageExtensions: ['ts', 'tsx', 'js', 'jsx', 'mdx'],
 
   // The root `exports` map makes `assay/engine/*` and `assay/store` real
   // specifiers, so no `externalDir` escape hatch is needed. Since the migration

@@ -27,9 +27,12 @@ const bad = (code: string, detail: string, status = 400): Response =>
 
 /** Wrap a handler in the API-key guard so no config route can forget it. */
 const guarded = (fn: Handler): Handler => async (request, ctx) => {
-  const denied = await requireKey(request, ctx);
-  if (denied) return denied;
   try {
+    // Inside the try, for the reason src/api/handlers.ts states: `requireKey`
+    // hits Postgres, and a driver error raised while checking the key escaped
+    // the wrapper that exists to keep exactly that out of a response.
+    const denied = await requireKey(request, ctx);
+    if (denied) return denied;
     return await fn(request, ctx);
   } catch (e) {
     // Never echo the caught error to the client: a config error can carry the

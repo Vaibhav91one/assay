@@ -1,5 +1,6 @@
 import { TopBar } from '@/components/top-bar';
 import { RouteLoader } from '@/components/motion/route-loader';
+import { t } from '@/lib/copy';
 
 /**
  * Grading a field re-reads every page kept for it, so this wait is real and
@@ -9,7 +10,7 @@ import { RouteLoader } from '@/components/motion/route-loader';
 export default function FieldsLoading() {
   return (
     <>
-      <TopBar title="Fields" status="loading…" />
+      <TopBar title={t('nav.fields')} status={t('topbar.loading')} />
       <RouteLoader>Reading every page kept for these fields.</RouteLoader>
     </>
   );

@@ -30,7 +30,7 @@ export function ConversationList({
 
   if (conversations.length === 0) {
     return (
-      <p className="caption-12 text-[#65676d]">
+      <p className="caption-12 text-[#8a8d93]">
         No conversations yet. The first message on Home starts one.
       </p>
     );
@@ -52,7 +52,7 @@ export function ConversationList({
               <MessageSquare
                 size={13}
                 strokeWidth={1.5}
-                className={`shrink-0 ${on ? 'text-[var(--text-inverse)]' : 'text-[#65676d]'}`}
+                className={`shrink-0 ${on ? 'text-[var(--text-inverse)]' : 'text-[#8a8d93]'}`}
                 aria-hidden
               />
               <span className="flex min-w-0 flex-1 flex-col">
@@ -62,7 +62,7 @@ export function ConversationList({
                 {/* The scraper this conversation made, when it made one. Most
                     conversations never do, and those simply say nothing. */}
                 {c.scraperSlug && (
-                  <span className="caption-11 truncate text-[#65676d]">{c.scraperSlug}</span>
+                  <span className="caption-11 truncate text-[#8a8d93]">{c.scraperSlug}</span>
                 )}
               </span>
             </Link>

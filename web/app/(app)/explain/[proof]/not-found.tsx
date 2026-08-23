@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { TopBar } from '@/components/top-bar';
 import { StatusLine } from '@/components/status-line';
+import { t } from '@/lib/copy';
 
 /**
  * A proof id that resolves to nothing. Distinct from loading and from a cell
@@ -10,8 +11,8 @@ import { StatusLine } from '@/components/status-line';
 export default function ProofNotFound() {
   return (
     <>
-      <TopBar title="Where did this number come from?" status="no such proof" />
-      <div className="flex w-full flex-col items-start gap-[10px] px-[56px] pt-[48px]">
+      <TopBar title={t('explain.heading')} status={t('explain.notFound.status')} />
+      <div className="flex w-full flex-col items-start gap-[10px] px-[20px] md:px-[56px] pt-[48px]">
         <StatusLine tone="danger" type="heading-18" size={18}>
           No cell carries that proof id.
         </StatusLine>

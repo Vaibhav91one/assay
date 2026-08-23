@@ -3,9 +3,11 @@
 import { getDb } from 'assay/store';
 import * as schema from 'assay/engine/store/schema';
 import { desc, inArray } from 'drizzle-orm';
+import { runOutcome } from './run-flow.js';
+import { waitingCount } from './queue.js';
 
 /** The closed set the runs list filters on. Not the store's vocabulary. */
-export const OUTCOMES = ['all', 'healed', 'held', 'clean'] as const;
+export const OUTCOMES = ['all', 'healed', 'held', 'clean', 'skipped'] as const;
 export type Outcome = (typeof OUTCOMES)[number];
 
 export interface RunRow {
@@ -29,21 +31,36 @@ export interface RunsView {
   recent: RunRow[];
   total: number;
   healed: number;
+  /**
+   * RUNS carrying a quarantined cell, out of the ones read. A run fact, and
+   * deliberately not the same number as `waiting`: the cell of a run counted
+   * here stays `quarantined` in `field_runs` after someone answers it, because
+   * resolving settles the queue item and does not republish the cell. Label it
+   * as a fact about runs wherever it is shown.
+   */
   held: number;
+  /**
+   * Open queue items, uncapped -- what is actually waiting on a person. The
+   * rail, Home and the bell show this same number.
+   */
+  waiting: number;
   /** The held cells still waiting, newest first. Drives the banner. */
   needsYou: { runId: number; field: string; at: Date; proof: string }[];
 }
 
-/**
- * `runs.status` is the engine's word (`ok` / `heal` / `abstain`) and the screen
- * says something else. The mapping is deliberate and one-way: the screen is
- * allowed a plainer vocabulary, the store is not allowed to drift into it.
+/*
+ * `runs.status` is the engine's word (`ok` / `heal` / `abstain` / `skipped`)
+ * and the screen says something else. The mapping is deliberate and one-way:
+ * the screen is allowed a plainer vocabulary, the store is not allowed to
+ * drift into it.
+ *
+ * It lives in `run-flow.ts` and is imported rather than repeated here. That
+ * module already had the four-word version -- including `skipped`, which this
+ * file's own copy was missing -- and the two copies disagreeing is what put
+ * "clean" against a run that fetched a byte-identical page and evaluated
+ * nothing at all. A run that published nothing is not a clean run; it is a run
+ * that did not need to happen.
  */
-function outcomeOf(runStatus: string, fieldStatuses: string[]): RunRow['outcome'] {
-  if (fieldStatuses.includes('quarantined')) return 'held';
-  if (runStatus === 'heal' || fieldStatuses.includes('healed')) return 'healed';
-  return 'clean';
-}
 
 export async function runsView(filter: Outcome = 'all', limit = 60): Promise<RunsView> {
   const db = getDb();
@@ -80,7 +97,7 @@ export async function runsView(filter: Outcome = 'all', limit = 60): Promise<Run
 
   const all: RunRow[] = runs.map((r) => {
     const mine = byRun.get(r.runId) ?? [];
-    const outcome = outcomeOf(r.status, mine.map((c) => c.status));
+    const outcome = runOutcome(r.status, mine.map((c) => c.status));
     const held = mine.find((c) => c.status === 'quarantined');
     // A held run points at the held cell; anything else points at whatever it
     // published, so `details` always has somewhere honest to go.
@@ -95,7 +112,7 @@ export async function runsView(filter: Outcome = 'all', limit = 60): Promise<Run
     };
   });
 
-  const needsYou = await heldAndWaiting(all);
+  const [needsYou, waiting] = await Promise.all([heldAndWaiting(all), waitingCount()]);
 
   return {
     rows: (filter === 'all' ? all : all.filter((r) => r.outcome === filter)).slice(0, limit),
@@ -103,6 +120,7 @@ export async function runsView(filter: Outcome = 'all', limit = 60): Promise<Run
     total: all.length,
     healed: all.filter((r) => r.outcome === 'healed').length,
     held: all.filter((r) => r.outcome === 'held').length,
+    waiting,
     needsYou,
   };
 }

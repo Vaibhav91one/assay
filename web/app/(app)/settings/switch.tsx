@@ -4,6 +4,8 @@ import { useId, useState } from 'react';
 import { Switch } from '@base-ui/react/switch';
 import { Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { StatusLine } from '@/components/status-line';
+import { DocLink } from './doc-link';
 
 /**
  * One setting, and the truth about whether it is a setting.
@@ -14,9 +16,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
  * flattering version of it, and a decorative control is that claim failing in
  * the one place a person goes to check it.
  *
- * So there is no plain disabled state. A row is either operable, or it carries
- * a sentence saying what is missing and what would fix it; `reason` is what
- * makes it the second.
+ * So there is no plain disabled state. A row is one of three things and never
+ * a fourth: operable; operable-but-blocked, carrying a sentence saying what is
+ * missing and what would fix it (`reason`); or not a control at all, drawing
+ * the state as a word (`value`). The third is for a row whose answer lives in
+ * the process environment, and it is a strictly better answer than a disabled
+ * switch -- a switch says "this is a setting, you may not change it here",
+ * which is one claim too many when the truth is that there is no setting.
  *
  * WHAT MOVED INTO THE TOOLTIP, AND WHAT DID NOT. The rows read dense -- title,
  * description, and on the unavailable ones a second sentence naming variables
@@ -43,6 +49,8 @@ export function SettingRow({
   detail,
   checked,
   reason,
+  value,
+  doc,
   pending = false,
   onChange,
 }: {
@@ -56,10 +64,25 @@ export function SettingRow({
    * know which line of which file to go and write.
    */
   reason?: string | null;
+  /**
+   * The word this row reports, for a row that reports rather than offers.
+   *
+   * Its presence is what decides which of the two this is: with it there is no
+   * switch at all, only the state and the reason. A disabled switch was still
+   * a switch -- the same shape, the same affordance, greyed -- and greyed at
+   * `off` and greyed at `on` are ten pixels apart on a control nobody can
+   * move. The words are the caller's because "configured" and "sending" and
+   * "set" are not the same claim, and this component does not know which one
+   * the row is making.
+   */
+  value?: string;
+  /** Where an operator goes to find out what would change it. */
+  doc?: string;
   pending?: boolean;
   onChange?: (next: boolean) => void;
 }) {
   const id = useId();
+  const reports = value !== undefined;
   const unavailable = Boolean(reason);
   // Controlled only so a tap can open it. Base UI's tooltip opens on hover
   // (mouse only) and on focus-visible; neither fires for a finger, and the
@@ -111,10 +134,31 @@ export function SettingRow({
           // screen reader through aria-describedby instead, once.
           <span id={`${id}-reason`} className="caption-12 mt-[2px] text-[var(--text-secondary)]">
             {reason}
+            {doc && (
+              // Inline, at the end of the sentence that names the variable,
+              // because that is the moment the question "where do I write
+              // that" is being asked. The Connections tab puts the same link
+              // in the same relationship to the same kind of sentence.
+              <>
+                {' '}
+                <DocLink href={doc} name={label} className="inline-flex align-baseline" />
+              </>
+            )}
           </span>
         )}
       </span>
 
+      {reports ? (
+        <StatusLine
+          tone={checked ? 'success' : 'info'}
+          icon={checked ? undefined : null}
+          size={13}
+          type="meta-13"
+          className="mt-[2px] shrink-0"
+        >
+          {value}
+        </StatusLine>
+      ) : (
       <Switch.Root
         checked={checked}
         disabled={unavailable || pending}
@@ -135,6 +179,7 @@ export function SettingRow({
           }`}
         />
       </Switch.Root>
+      )}
     </div>
   );
 }

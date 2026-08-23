@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Plus, ChevronsUpDown, Server } from 'lucide-react';
+import { Plus, Server } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth';
 import {
   Sidebar as Rail,
@@ -16,6 +16,7 @@ import {
 import { SidebarNav, ScraperList } from './sidebar-nav';
 import { ConversationList } from './conversation-list';
 import { actionVariants } from './button';
+import { t } from '@/lib/copy';
 
 /**
  * The app's left rail, on shadcn's Sidebar.
@@ -29,6 +30,14 @@ import { actionVariants } from './button';
  * writes eight raw HSL values and a `.dark` block into globals.css; that block
  * was reverted and the names mapped onto our tokens instead, so there is still
  * one palette rather than two free to drift.
+ *
+ * THE RAIL'S QUIET GREY IS #8a8d93 AND IT WAS #65676d. Measured on the rail's
+ * own ground (`--bg-sidebar`, #0e0e0f) the old value is 3.41:1, which fails
+ * WCAG AA for text at any size this rail draws -- and it was carrying the group
+ * labels, the conversation subtitles and the identity line under the avatar,
+ * every one of them 10-12px. #8a8d93 measures 5.80:1 on the same ground. It is
+ * still visibly quieter than `#a3a5a9` (7.82:1), which is what the nav labels
+ * use, so the hierarchy the rail was drawing survives the fix.
  */
 export async function Sidebar({
   waiting = 0,
@@ -44,7 +53,7 @@ export async function Sidebar({
   // reports what lib/auth.ts actually knows. The Figma frame shows a personal
   // name, which is a hosted-case artifact sitting in the self-hosted baseline.
   const user = await getCurrentUser();
-  const label = user?.label ?? 'Self-hosted';
+  const label = user?.label ?? t('nav.selfHosted');
   // Initials of a label are not initials of a person: "Self-hosted" gives
   // "SE", which means nothing. Only a real identity gets initials.
   const named = user?.mode === 'clerk';
@@ -133,10 +142,10 @@ export async function Sidebar({
         {/* Conversations first, because a conversation is the thing that makes
             a scraper -- the rail reads in the order the work happens. */}
         <SidebarGroup className="gap-0 pt-[23px] group-data-[collapsible=icon]:hidden">
-          <SidebarGroupLabel className="label-10_5 h-auto px-0 text-[#65676d]">CHATS</SidebarGroupLabel>
+          <SidebarGroupLabel className="label-10_5 h-auto px-0 text-[#8a8d93]">CHATS</SidebarGroupLabel>
           <SidebarGroupAction
             render={<Link href="/" />}
-            className="text-[#65676d] hover:bg-[#292a2e] hover:text-[var(--text-inverse)]"
+            className="text-[#8a8d93] hover:bg-[#292a2e] hover:text-[var(--text-inverse)]"
           >
             <Plus size={14} strokeWidth={1.5} aria-hidden />
             <span className="sr-only">Start a new conversation</span>
@@ -151,7 +160,7 @@ export async function Sidebar({
             one of these has a transcript -- they do not, and none is invented. */}
         {scrapers.length > 0 && (
           <SidebarGroup className="gap-0 pt-[23px] group-data-[collapsible=icon]:hidden">
-            <SidebarGroupLabel className="label-10_5 h-auto px-0 text-[#65676d]">
+            <SidebarGroupLabel className="label-10_5 h-auto px-0 text-[#8a8d93]">
               SCRAPERS WITH NO CHAT
             </SidebarGroupLabel>
             <SidebarGroupContent className="pt-[17px]">
@@ -178,16 +187,20 @@ export async function Sidebar({
           </span>
           <span className="flex min-w-0 flex-col gap-[2px] group-data-[collapsible=icon]:hidden">
             <span className="body-14 truncate text-[var(--text-inverse)]">{label}</span>
-            <span className="caption-12 truncate text-[#65676d]">
-              {named ? 'Signed in' : 'No accounts on this instance'}
+            <span className="caption-12 truncate text-[#8a8d93]">
+              {named ? t('nav.signedIn') : t('nav.noAccounts')}
             </span>
           </span>
-          <ChevronsUpDown
-            size={14}
-            strokeWidth={1.5}
-            className="ml-auto shrink-0 text-[#65676d] group-data-[collapsible=icon]:hidden"
-            aria-hidden
-          />
+          {/* THE CHEVRON CAME OFF, and this is the whole change: a
+              `ChevronsUpDown` sat here, which is the account-switcher glyph in
+              every product that has one. There is no account switcher. There
+              are no accounts -- the line directly above it says so in as many
+              words -- so the row was drawing the affordance for a menu that
+              cannot exist, on a self-hosted instance where the offer is not
+              merely unbuilt but meaningless. `docs/STATES.md` 1 #11: everything
+              that looks clickable has a defined consequence, or it does not
+              exist. What is left is an identity read off `lib/auth.ts`, which
+              is a fact and not a control, and it now looks like one. */}
         </div>
       </SidebarFooter>
     </Rail>

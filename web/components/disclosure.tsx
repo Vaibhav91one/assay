@@ -1,6 +1,7 @@
 'use client';
 
 import { Popover } from '@base-ui/react/popover';
+import { t } from '@/lib/copy';
 
 /**
  * The `… ›` idiom: `the full record ›`, `what came back ›`, `details ›`.
@@ -43,5 +44,87 @@ export function Disclosure({
         </Popover.Positioner>
       </Popover.Portal>
     </Popover.Root>
+  );
+}
+
+/**
+ * The numbers one gate decision was made from.
+ *
+ * Taken as ONE OBJECT rather than as six props, and that is not a style
+ * preference: it means a screen renders `<GateNumbers gate={gate} />` and never
+ * writes `gate.score` in its own source. The figures live in exactly one file
+ * -- this one -- which is what test/assay-score.test.ts checks by reading the
+ * run screen's source text, and what keeps the amendment below from leaking
+ * back out into a column.
+ *
+ * Structural, not the `RunDetail['gate']` type, so `lib/explain.ts` can satisfy
+ * it too. Both are built from `gateNumbers()` and `thresholdsOf()`.
+ */
+export interface GateFigures {
+  score: number;
+  runnerUp: number | null;
+  margin: number;
+  tau: number;
+  delta: number;
+  /** True when the target row carried its own thresholds rather than defaulting. */
+  declared?: boolean;
+  reproduces: boolean;
+}
+
+/**
+ * The gate's arithmetic, collapsed. The hybrid settled on 2026-08-23.
+ *
+ * THE BAND IS STILL THE INTERFACE. Nothing about this reverts the score column
+ * docs/FEATURES.md §4 refuses: no float is drawn beside a cell, in a table
+ * column, in the published envelope, or anywhere a reader scanning the screen
+ * can arrive at one without asking. What changed is only that the numbers are
+ * REACHABLE -- the proof story is "here is exactly what I weighed", and a proof
+ * that cannot produce the two numbers the decision compared is asking to be
+ * taken on trust, which is the one thing this product refuses to ask for.
+ *
+ * The three objections in §4 are answered by the collapse itself. A number
+ * behind a click is not a column anyone can re-threshold at a glance; it is not
+ * on every cell, because `ranked` is written at abstain time only; and it
+ * arrives with the thresholds it was judged against rather than as a bare
+ * float, so it reports a decision rather than handing back a dial.
+ *
+ * `reproduces` is why this is not just a number formatter. When the recovered
+ * scores no longer produce the recorded reason the contract has been edited
+ * since, and the thresholds on hand are not the ones this run was judged under
+ * -- so they are withheld and said to be withheld. The scores stay: they are
+ * what was recorded. It is the LINE through them that would be a fiction.
+ */
+export function GateNumbers({ gate }: { gate: GateFigures }) {
+  const { score, runnerUp, margin, tau, delta, reproduces } = gate;
+  const declared = gate.declared ?? false;
+  const n = (v: number) => v.toFixed(4);
+  return (
+    <Disclosure label={t('gate.disclosure')}>
+      <div className="flex flex-col gap-[10px]">
+        <p className="label-10 text-[var(--text-muted)]">{t('gate.compared')}</p>
+        <dl className="mono-value-12_5 grid grid-cols-[auto_1fr] gap-x-[16px] gap-y-[4px]">
+          <dt className="text-[var(--text-muted)]">{t('gate.head.score')}</dt>
+          <dd className="text-[var(--text-primary)]">{n(score)}</dd>
+          <dt className="text-[var(--text-muted)]">{t('gate.head.runnerUp')}</dt>
+          <dd className="text-[var(--text-primary)]">
+            {runnerUp === null ? t('gate.aloneValue') : n(runnerUp)}
+          </dd>
+          <dt className="text-[var(--text-muted)]">{t('gate.head.margin')}</dt>
+          <dd className="text-[var(--text-primary)]">{n(margin)}</dd>
+        </dl>
+        <div className="h-px w-full bg-[var(--border-hairline)]" />
+        {reproduces ? (
+          <p className="meta-12_5 text-[var(--text-secondary)]">
+            {t('gate.thresholds', { tau: tau.toFixed(2), delta: delta.toFixed(2) })}{' '}
+            {declared ? t('gate.thresholds.declared') : t('gate.thresholds.defaults')}
+          </p>
+        ) : (
+          <p className="meta-12_5 text-[var(--text-secondary)]">
+            {t('gate.thresholds.unreproducible')}
+          </p>
+        )}
+        <p className="meta-12_5 text-[var(--text-muted)]">{t('gate.bandIsTheAnswer')}</p>
+      </div>
+    </Disclosure>
   );
 }

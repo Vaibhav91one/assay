@@ -6,6 +6,8 @@ import {
   clearFieldBrake, fieldControls, unhealField,
   type ClearOutcome, type FieldControls as Controls, type UnhealOutcome,
 } from './brake-actions';
+import { ScraperLifecycle } from './fields/scraper-lifecycle';
+import { t } from '@/lib/copy';
 
 /**
  * The two decisions a person can make about one field, in the chat.
@@ -25,6 +27,15 @@ import {
  * NOTHING HERE IS REACHABLE BY A MODEL. Both actions are `'use server'`
  * functions called from an onClick, and no tool serves either -- see the header
  * of `./brake-actions.ts`.
+ *
+ * THE SCRAPER'S OWN LIFE IS THE THIRD SECTION, and it is here because this is
+ * the only panel in the product that opens on a specific watched thing. Pause,
+ * resume, cadence and delete were CLI-and-REST-only, which meant an operator
+ * looking at a field going wrong could brake the healing on it and could not
+ * stop the scraper it belongs to. Those controls act on the SLUG, not on this
+ * field -- `{slug}__{field}` -- and the section says so, because a Pause button
+ * inside a panel titled with one field name would otherwise read as pausing
+ * that field alone.
  */
 export function FieldControls({ targetId, field }: { targetId: string; field: string }) {
   const [open, setOpen] = useState(false);
@@ -165,6 +176,14 @@ export function FieldControls({ targetId, field }: { targetId: string; field: st
               Nothing to revert: {field} is on the selector its contract was written with.
             </p>
           )}
+
+          {/* --- the scraper ------------------------------------------------ */}
+          <div className="flex flex-col gap-[8px] border-t border-[var(--border-hairline)] pt-[10px]">
+            <p className="caption-11 text-[var(--text-muted)]">
+              {t('lifecycle.wholeScraper', { field })}
+            </p>
+            <ScraperLifecycle slug={targetId.split('__')[0] ?? targetId} />
+          </div>
         </>
       )}
 

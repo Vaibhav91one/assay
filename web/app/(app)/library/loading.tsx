@@ -1,5 +1,6 @@
 import { TopBar } from '@/components/top-bar';
 import { RouteLoader } from '@/components/motion/route-loader';
+import { t } from '@/lib/copy';
 
 /**
  * The templates are static data and load instantly; what this waits on is the
@@ -9,7 +10,7 @@ import { RouteLoader } from '@/components/motion/route-loader';
 export default function LibraryLoading() {
   return (
     <>
-      <TopBar title="Library" status="loading…" scraper={null} />
+      <TopBar title={t('nav.library')} status={t('topbar.loading')} scraper={null} />
       <RouteLoader>Opening the library.</RouteLoader>
     </>
   );

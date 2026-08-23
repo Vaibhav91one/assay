@@ -1,8 +1,6 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { TopBar } from '@/components/top-bar';
-import { Empty } from '@/components/empty';
-import { openDecisions } from '@/lib/queue';
+import { heldQueue } from '@/lib/queue';
 import { t } from '@/lib/copy';
 import { DecisionsList } from './decisions-list';
 
@@ -10,29 +8,21 @@ export const metadata: Metadata = { title: t('title.decisions') };
 export const dynamic = 'force-dynamic';
 
 export default async function DecisionsPage() {
-  const decisions = await openDecisions();
+  // `items` is a page of cards (capped at 50); `count` is every open item --
+  // the same number the rail, the bell and Home state. The header states the
+  // count, not the page length, so a 51st decision cannot make them disagree.
+  const { items: decisions, count } = await heldQueue();
 
   return (
     <>
-      <TopBar title={t('nav.decisions')} status={waiting(decisions.length)} />
-      <div className="flex w-full flex-col gap-[20px] pl-[56px] pr-[32px] pt-[18px]">
-        {decisions.length === 0 ? (
-          // Empty is not the same as loading, and it is not a failure either.
-          // Nothing waiting means the gate published everything it could
-          // justify -- which is the product working, so it says so.
-          <Empty title={t('decisions.empty.title')}>
-            {t('decisions.empty.body')}{' '}
-            {/* The one screen with no way out. Answering the last decision
-                emptied the list and left the reader on a card with nothing to
-                click; the question they have next is whether the answer landed,
-                and that is a run. */}
-            <Link href="/runs" className="text-[var(--semantic-link)] hover:underline">
-              {t('decisions.empty.link')}
-            </Link>
-          </Empty>
-        ) : (
-          <DecisionsList decisions={decisions} />
-        )}
+      <TopBar title={t('nav.decisions')} status={waiting(count)} />
+      <div className="flex w-full flex-col gap-[20px] px-[20px] md:pl-[56px] md:pr-[32px] pt-[18px]">
+        {/* Always the list component, even with nothing to list: answering the
+            LAST decision revalidates this page to empty, and if the empty
+            state lived here the swap would unmount the list -- and the undo
+            toast inside it -- at the exact moment the operator most needs the
+            undo. The list owns its own empty state instead. */}
+        <DecisionsList decisions={decisions} />
       </div>
     </>
   );

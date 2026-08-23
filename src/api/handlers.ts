@@ -23,9 +23,13 @@ const notFound = (what: string): Response =>
 
 /** Wrap a handler in the auth guard so no route can forget it. */
 const guarded = (fn: Handler): Handler => async (request, ctx) => {
-  const denied = await requireKey(request, ctx);
-  if (denied) return denied;
   try {
+    // Inside the try, not before it. `requireKey` reads the api_keys table, so
+    // it can fail the same way any other query can -- and a driver error thrown
+    // while checking the key used to walk straight past the wrapper whose whole
+    // job is that one never reaches a consumer.
+    const denied = await requireKey(request, ctx);
+    if (denied) return denied;
     return await fn(request, ctx);
   } catch (e) {
     // Never leak a driver error to a consumer; it can name tables and columns.

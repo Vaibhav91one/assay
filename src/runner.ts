@@ -83,12 +83,23 @@ export function establishBaseline({
   field,
   expected,
   goldenSha,
+  pageHtml,
 }: {
   $: CheerioAPI;
   el: El;
   field: string;
   expected?: Expected;
   goldenSha?: string;
+  /**
+   * `$.html()` for THIS `$`, when the caller already has it.
+   *
+   * Re-serialising a multi-megabyte page costs as much as parsing it, and a
+   * caller that normalised the bytes itself has the string in hand already.
+   * Optional and defaulted, so nobody has to pass it -- but a caller that does
+   * must pass the serialisation of the very `$` it is handing over, or
+   * `pageBytes` describes a different page from the one being fingerprinted.
+   */
+  pageHtml?: string;
 }): Baseline {
   const target = fingerprint($, el);
   const selector = selectorFor(el);
@@ -125,7 +136,7 @@ export function establishBaseline({
     value: target.text,
     skeleton: skeletonHash($).hash,
     anchors: readAnchors($),
-    pageBytes: $.html().length,
+    pageBytes: (pageHtml ?? $.html()).length,
   };
 }
 
@@ -146,6 +157,7 @@ export function evaluate({
   healBlock = null,
   meta = {},
   receivedHtml = null,
+  pageHtml,
 }: {
   $: CheerioAPI;
   baseline: Baseline;
@@ -174,13 +186,23 @@ export function evaluate({
   healBlock?: string | null;
   meta?: Record<string, any>;
   receivedHtml?: string | null;
+  /**
+   * `$.html()` for THIS `$`, when the caller already has it. Same contract as
+   * `establishBaseline`: it is read twice here -- once as a size and once as a
+   * digest -- and serialising a page is as expensive as parsing one.
+   */
+  pageHtml?: string;
 }): Evaluation {
   const policy = contract ? thresholdsFor(contract, baseline.field) : null;
   const { tau, delta } = policy ?? thresholds;
   const skel = skeletonHash($).hash;
   const hit = $(baseline.selector).first();
   const value = hit.length ? clean(hit.text()).slice(0, 200) : null;
-  const pageBytes = $.html().length;
+  // Once, not twice: the size below and the digest in `base` are two readings
+  // of the same serialisation, and this used to re-serialise the whole page for
+  // each of them.
+  const page = pageHtml ?? $.html();
+  const pageBytes = page.length;
 
   const diag = detect({
     field: baseline.field,
@@ -208,7 +230,7 @@ export function evaluate({
     value_now: value,
     baseline_value: baseline.value,
     golden_sha256: baseline.goldenSha,
-    capture_sha256: digest($.html()),
+    capture_sha256: digest(page),
   };
 
   const sample = { nullRate: value == null ? 1 : 0, pageBytes };
@@ -316,9 +338,13 @@ export async function runTarget({
   meta,
   proofId,
 }: {
-  fetchPage: () => Promise<{ $: CheerioAPI; receivedHtml?: string }> | {
+  // `pageHtml` is `$.html()` when the caller already has it -- it rides on the
+  // parse that produced it rather than on the options bag, so the string and
+  // the `$` it describes cannot be supplied by two different hands.
+  fetchPage: () => Promise<{ $: CheerioAPI; receivedHtml?: string; pageHtml?: string }> | {
     $: CheerioAPI;
     receivedHtml?: string;
+    pageHtml?: string;
   };
   baseline: Baseline;
   history?: HistoryPoint[];
@@ -328,10 +354,11 @@ export async function runTarget({
   meta: Record<string, any>;
   proofId: unknown;
 }): Promise<Evaluation & { row: Record<string, unknown> }> {
-  const { $, receivedHtml } = await fetchPage();
+  const { $, receivedHtml, pageHtml } = await fetchPage();
   const r = evaluate({
     $, baseline, history, thresholds, contract, healBlock, meta,
     receivedHtml: receivedHtml ?? null,
+    pageHtml,
   });
   const row = publishRow({
     values: { [baseline.field]: r.publishedValue },

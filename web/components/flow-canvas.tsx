@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { Flow, FlowNode, StageKey, StageKind, StageTone } from '@/lib/run-flow';
+import { t } from '@/lib/copy';
 
 /**
  * The run, as draggable cards on a dotted canvas with measured connectors.
@@ -166,15 +167,45 @@ export function FlowCanvas({ flow }: { flow: Flow }) {
   const width =
     Math.max(CARD_W + PAD, ...flow.nodes.map((n) => (pos[n.id]?.x ?? n.x) + CARD_W)) + PAD;
 
+  // Whether there is anything below the fold, measured off the element rather
+  // than compared against the cap -- the cap is a `min()` of a viewport unit,
+  // so only the browser knows what it resolved to. This is the whole of the
+  // scroll affordance: a canvas whose last stage is cut off by a flat edge
+  // reads as a diagram that ends there, and the `Hold` node -- the one the
+  // operator came for -- is the last stage on every held run.
+  const [more, setMore] = useState(false);
+  const box = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const check = () => setMore(el.scrollHeight - el.scrollTop - el.clientHeight > 8);
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    window.addEventListener('resize', check);
+    el.addEventListener('scroll', check, { passive: true });
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', check);
+      el.removeEventListener('scroll', check);
+    };
+  }, [height, width]);
+
   return (
     <div className="flex flex-col">
       <div
+        ref={box}
         className="relative w-full overflow-auto rounded-[var(--radius-card)] border border-[var(--border-default)]"
         style={{
           // The dotted canvas, in the page ground rather than a fourth surface.
           background:
             'radial-gradient(var(--border-default) 1px, transparent 1px) 0 0 / 18px 18px, var(--bg-page)',
-          maxHeight: 700,
+          // 700 was a flat number and it clipped the last pipeline node on any
+          // laptop: the page spends ~220px above this on the top bar and the
+          // canvas's own gutters, so a 800px-tall viewport had 580px to give and
+          // was told to take 700. `min()` keeps the 700px ceiling on a big
+          // screen and yields to the viewport everywhere else.
+          maxHeight: 'min(700px, calc(100vh - 220px))',
         }}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
@@ -198,6 +229,13 @@ export function FlowCanvas({ flow }: { flow: Flow }) {
           ))}
         </div>
       </div>
+      {/* Only when there IS more. A permanent "scroll for more" under a canvas
+          that fits is the caption every reader learns to stop believing. */}
+      {more && (
+        <p className="caption-11 pt-[8px] text-[var(--text-muted)]" aria-hidden>
+          {t('flow.more')}
+        </p>
+      )}
     </div>
   );
 }

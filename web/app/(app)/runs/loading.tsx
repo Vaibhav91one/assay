@@ -1,5 +1,6 @@
 import { TopBar } from '@/components/top-bar';
 import { RouteLoader } from '@/components/motion/route-loader';
+import { t } from '@/lib/copy';
 
 /**
  * The runs table, waiting.
@@ -11,7 +12,7 @@ import { RouteLoader } from '@/components/motion/route-loader';
 export default function RunsLoading() {
   return (
     <>
-      <TopBar title="Runs" status="loading…" />
+      <TopBar title={t('nav.runs')} status={t('topbar.loading')} />
       <RouteLoader>Reading the last runs.</RouteLoader>
     </>
   );

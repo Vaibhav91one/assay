@@ -1,5 +1,6 @@
 import { TopBar } from '@/components/top-bar';
 import { RouteLoader } from '@/components/motion/route-loader';
+import { t } from '@/lib/copy';
 
 /**
  * One run, waiting.
@@ -11,7 +12,7 @@ import { RouteLoader } from '@/components/motion/route-loader';
 export default function RunLoading() {
   return (
     <>
-      <TopBar title="Run" status="loading…" />
+      <TopBar title={t('run.topbar')} status={t('topbar.loading')} />
       <RouteLoader>Reading what this run did.</RouteLoader>
     </>
   );

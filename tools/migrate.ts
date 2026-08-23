@@ -18,7 +18,7 @@
 // The only difference is that an exception reaches the operator.
 
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
-import { closeDb, DATABASE_URL, getDb } from '../src/store/index.js';
+import { causeChain, closeDb, DATABASE_URL, getDb } from '../src/store/index.js';
 
 const FOLDER = 'src/store/migrations';
 
@@ -32,9 +32,7 @@ try {
   // Drizzle wraps the driver error, and the wrapper says "Failed query: CREATE
   // TABLE ..." while the sentence an operator needs -- `relation "captures"
   // already exists` -- is one `cause` deeper. Both are printed, cause first.
-  const chain: string[] = [];
-  for (let err: unknown = e; err instanceof Error; err = err.cause) chain.push(err.message);
-  const message = chain.reverse().join('\n\n  ');
+  const message = causeChain(e).map((err) => err.message).reverse().join('\n\n  ');
   console.error(`\nmigrate FAILED  ${where}\n\n  ${message}\n`);
   // The one failure that looks like a mystery and is not.
   if (/already exists/i.test(message)) {

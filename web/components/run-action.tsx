@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { t } from '@/lib/copy';
 
 /**
  * "Ask for a run", from wherever you are.
@@ -42,18 +43,26 @@ import {
  * but `web/components/chrome.ts` is the scar from the last time a client
  * component's import of a server module dragged `net`/`tls`/`dns` into the
  * browser bundle, and one line of duplicated shape is cheaper than the guard.
+ *
+ * A LIST, NOT ONE SCRAPER. It took a single slug, and the bar drew nothing at
+ * all on an instance watching more than one page -- `runTarget()` answers null
+ * when there is no "current" scraper to name, and the control simply vanished.
+ * `RunNow` has always rendered one row per scraper, refusal and all, so
+ * offering the choice costs nothing but the array: one scraper is the same
+ * dialog it was, and four is four rows with four buttons rather than no button.
  */
 export function RunAction({
-  slug,
-  fields,
-  paused,
+  targets,
   workers,
 }: {
-  slug: string;
-  fields: number;
-  paused: boolean;
+  /** One scraper, or every scraper this instance watches. Never empty. */
+  targets: { slug: string; fields: number; paused: boolean }[];
   workers: number;
 }) {
+  // Named when there is a name to use. With four rows in the dialog the title
+  // cannot be one of the four, so it asks the question the rows answer.
+  const one = targets.length === 1 ? targets[0]! : null;
+
   return (
     <Dialog>
       {/* `asChild` so the trigger IS the product's Button -- press, focus ring
@@ -64,20 +73,30 @@ export function RunAction({
           variant in components/button.tsx for the green and its contrast. */}
       <DialogTrigger asChild>
         <Button variant="start" icon={Play} iconSize={16}>
-          Ask for a run
+          {/* The words go, the accessible name does not. Below 768 this control
+              shares a 390px bar with the rail trigger, Activity, Settings and
+              the screen's title; `sr-only` gives back ~90px of it and leaves a
+              Play glyph, which is what this button is anyway. `hidden` would
+              have taken the button's only accessible name with it. */}
+          <span className="sr-only md:not-sr-only">{t('schedule.ask.button')}</span>
         </Button>
       </DialogTrigger>
 
       <DialogContent className="max-h-[85vh] gap-[18px] overflow-y-auto sm:max-w-[560px]">
         <DialogHeader>
-          <DialogTitle className="title-20 text-[var(--text-primary)]">{slug}</DialogTitle>
+          <DialogTitle className="title-20 text-[var(--text-primary)]">
+            {one ? one.slug : t('run.action.title')}
+          </DialogTitle>
           <DialogDescription className="body-13_5 text-[var(--text-secondary)]">
-            Moves this page to the front of the queue. Assay&apos;s web process never scrapes — a
-            worker claims it.
+            {one ? t('run.action.moves.one') : t('run.action.moves.any')}{' '}
+            {t('run.action.moves.rest')}
           </DialogDescription>
         </DialogHeader>
 
-        <RunNow workers={workers} scrapers={[{ slug, paused, fields }]} />
+        {/* `RunNow` verbatim, list and all -- it owns the paused refusal, the
+            worker-liveness sentence and the watch on the run record, and this
+            file exists precisely so none of that is re-implemented per row. */}
+        <RunNow workers={workers} scrapers={targets} />
 
         {/* Where to go next, and the honest reason this is a link and not a
             second button in the bar: Assay has no UI for changing a cadence, so
@@ -86,7 +105,7 @@ export function RunAction({
         <p className="pt-[18px]">
           <DialogClose asChild>
             <Link href="/schedule" className="meta-12_5 text-[var(--semantic-link)] hover:underline">
-              See when it is due next ›
+              {one ? t('run.action.due.one') : t('run.action.due.many')}
             </Link>
           </DialogClose>
         </p>

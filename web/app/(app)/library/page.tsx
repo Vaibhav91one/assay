@@ -8,8 +8,9 @@ import { GROUPS } from 'assay/engine/library/index';
 // a prop instead -- see the import rule at the top of `src/library/index.ts`.
 import { ALL_TRACKERS } from 'assay/engine/connectors/scrapers';
 import { CatalogueSearch } from './search';
+import { t } from '@/lib/copy';
 
-export const metadata: Metadata = { title: 'Library · Assay' };
+export const metadata: Metadata = { title: t('title.library') };
 
 // The trackers are static data, but the layout above reads the conversation
 // rail and the notification queue, so prerendering would only move a database
@@ -41,8 +42,8 @@ export const dynamic = 'force-dynamic';
 export default function LibraryPage() {
   return (
     <>
-      <TopBar title="Library" scraper={null} />
-      <div className="flex w-full max-w-[860px] flex-col gap-[22px] pl-[56px] pr-[32px] pb-[48px] pt-[18px]">
+      <TopBar title={t('nav.library')} scraper={null} />
+      <div className="flex w-full max-w-[860px] flex-col gap-[22px] px-[20px] md:pl-[56px] md:pr-[32px] pb-[48px] pt-[18px]">
         <CatalogueSearch />
         {GROUPS.map((g) => {
           const rows = ALL_TRACKERS.filter((t) => t.group === g.id);

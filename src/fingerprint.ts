@@ -213,16 +213,51 @@ export function fingerprintSelector($: Cheerio, selector: string): SelectorFinge
   return el ? { selector, ...fingerprint($, el) } : null;
 }
 
-/** Every element worth considering as a relocation candidate. */
+/**
+ * The wall this file will not go through.
+ *
+ * `candidates()` was unbounded: it built one array entry per element on the
+ * page, and `rank()` then builds a full `fingerprint()` object -- twenty-odd
+ * properties, several of them walks of their own -- for every entry. On an
+ * ordinary page that is a few thousand objects. On a generated page it is the
+ * page's element count, with no ceiling anywhere between here and the process
+ * running out of memory.
+ *
+ * 20000 is deliberately far above any real document (the corpus tops out in
+ * the low thousands) and far below what actually hurts. It is the same shape of
+ * decision as MAX_BYTES in `src/skills/page.ts`, for the same reason: a limit
+ * that refuses in one line is worth more than a limit that gets discovered when
+ * a process dies with no message.
+ */
+export const MAX_CANDIDATE_ELEMENTS = 20000;
+
+/**
+ * Every element worth considering as a relocation candidate.
+ *
+ * THROWS on a page above the wall rather than ranking a truncated list. A
+ * healer handed the first 20000 elements of a page would report a confident
+ * score for a search it never finished, and "the best of the ones I looked at"
+ * published as "the best on the page" is the exact failure this product exists
+ * to refuse. Abstaining loudly is the designed answer to "I cannot do this".
+ */
 export function candidates($: Cheerio, root?: string | null): El[] {
+  const all = $(root || 'body').find('*');
+  if (all.length > MAX_CANDIDATE_ELEMENTS) {
+    // Engine-side, and it stays engine-side: `web/lib/copy.ts` is imported by
+    // screens and nothing under `src/` imports it, which is what stops the
+    // worker, the CLI and the MCP server depending on a UI catalogue. This
+    // message reaches all four.
+    throw new Error(
+      `this page has ${all.length} elements; Assay considers at most `
+      + `${MAX_CANDIDATE_ELEMENTS}. Point the watch at a narrower page.`,
+    );
+  }
   const out: El[] = [];
-  $(root || 'body')
-    .find('*')
-    .each((i: number, el: El) => {
-      if (el.type !== 'tag') return;
-      if (el.name === 'script' || el.name === 'style' || el.name === 'noscript') return;
-      out.push(el);
-    });
+  all.each((i: number, el: El) => {
+    if (el.type !== 'tag') return;
+    if (el.name === 'script' || el.name === 'style' || el.name === 'noscript') return;
+    out.push(el);
+  });
   return out;
 }
 

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { CircleAlert, Hammer, Plus, X } from 'lucide-react';
 import { CADENCES } from 'assay/engine/agent/models';
 import { describeFields, type BuildResult } from './watch-actions';
+import { t } from '@/lib/copy';
 
 /**
  * "Describe the fields yourself" -- the path with no model in it.
@@ -46,20 +47,30 @@ export function ManualFields({
   if (built?.ok) {
     return (
       <div className="motion-fade-up flex w-full flex-col gap-[10px] rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] px-[20px] py-[16px]">
-        <p className="body-14 text-[var(--text-primary)]">Watching {built.id}.</p>
+        <p className="body-14 text-[var(--text-primary)]">{t('home.watching', { id: built.id })}</p>
         <ul className="flex flex-col gap-[6px]">
           {built.fields.map((f) => (
             <li key={f.field} className="flex items-baseline gap-[12px]">
               <span className="mono-value-13 shrink-0 text-[var(--text-primary)]">{f.field}</span>
               <span className="body-13_5 min-w-0 flex-1 truncate text-[var(--text-secondary)]">
                 {f.status === 'quarantined'
-                  ? <span className="text-[var(--semantic-warning)]">held -- nothing published</span>
-                  : f.baseline ?? 'the element is there and empty'}
+                  ? <span className="text-[var(--semantic-warning)]">{t('manual.heldNothing')}</span>
+                  : f.baseline ?? t('build.emptyElement')}
               </span>
             </li>
           ))}
         </ul>
-        <Link href="/runs" className="meta-13 self-start text-[var(--semantic-link)]">See the run ›</Link>
+        {/* The baseline run's own id, not the list it is one row of. Every
+            field of a build shares one baseline run, so the first is the run.
+            `/runs` is still the fallback for the case that cannot happen --
+            a build with no fields -- rather than an href built from
+            `undefined`. */}
+        <Link
+          href={built.fields[0] ? `/runs/${built.fields[0].baseline_run}` : '/runs'}
+          className="meta-13 self-start text-[var(--semantic-link)]"
+        >
+          See the run ›
+        </Link>
       </div>
     );
   }

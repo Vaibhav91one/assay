@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import { actionVariants } from './button';
-import { notices, outstandingCount } from '@/lib/notifications';
+import { activity } from '@/lib/notifications';
 import { Notifications } from './notifications';
 import { RunAction } from './run-action';
-import { runTarget } from '@/lib/scrapers';
+import { runTarget, runTargets } from '@/lib/scrapers';
 import { Settings } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { t } from '@/lib/copy';
 
 /**
  * Screen chrome: what this screen is, and one plain fact about its state.
@@ -31,10 +32,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
  * everywhere and it has to keep the same refusals everywhere, so the chrome
  * builds it and the screen only says which page it would run. Naming one is
  * what a screen with a scraper in hand does -- a run detail, a proof, a
- * conversation that built one; `undefined` falls back to the only scraper and
- * draws nothing when there is more than one, because there is no honest
- * "current" scraper on a table that spans them all. `null` suppresses it, for
- * the one screen that already offers the control in its own body.
+ * conversation that built one; `undefined` means the screen has no "current"
+ * scraper -- a table spanning four of them does not -- and the control then
+ * offers ALL of them and lets a person say which. It used to draw nothing in
+ * that case, which put the product's commonest action on two screens out of
+ * eight. `null` suppresses it, for the one screen that already offers the
+ * control in its own body.
  *
  * That makes three controls where the comment above says one, and the law it
  * states is unchanged: `action` is still the single right-hand verb belonging
@@ -60,12 +63,29 @@ export async function TopBar({
   // Fetched here rather than passed by each screen: the bell belongs to the
   // chrome, and eight screens each remembering to thread it through is eight
   // chances for one to forget and quietly show no badge.
-  const list = notifications === undefined ? await notices() : [];
-  const run = scraper === null ? null : await runTarget(scraper);
+  //
+  // `activity()` and not `notices()` + `outstandingCount()`: the badge's held-
+  // cell portion is an uncapped count from the queue, so this number is the
+  // one the rail and Home show rather than a third answer.
+  const bell = notifications === undefined ? await activity() : { items: [], count: 0 };
+  // A named slug means the screen knows which scraper it is about; `undefined`
+  // means it does not, and every scraper is offered rather than none. `null` is
+  // the only thing that suppresses the control -- see the note below.
+  const runs =
+    scraper === null
+      ? []
+      : scraper
+        ? [await runTarget(scraper)].filter((r) => r !== null)
+        : await runTargets();
 
   return (
-    <header className="flex h-[64px] w-full items-center justify-between pl-[24px] pr-[32px]">
-      <div className="flex min-w-0 items-center gap-[22px]">
+    // BELOW 768 THE BAR IS THE ONLY CHROME THERE IS. The rail is a Sheet at
+    // that width (shadcn's Sidebar swaps itself; `hooks/use-mobile.ts` is the
+    // same 768 Tailwind's `md:` is), so `SidebarTrigger` stops being a collapse
+    // toggle and becomes the way in and out of navigation. It is first in the
+    // row and it never shrinks.
+    <header className="flex h-[64px] w-full items-center justify-between gap-[8px] px-[16px] md:pl-[24px] md:pr-[32px]">
+      <div className="flex min-w-0 items-center gap-[12px] md:gap-[22px]">
         {/* The collapse control the rail's header draws. It lives here because
             it has to stay reachable once the rail is collapsed to icons. */}
         <SidebarTrigger className="-ml-[4px] size-[28px] shrink-0 text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)]" />
@@ -78,26 +98,32 @@ export async function TopBar({
             overflow between both, so the run detail -- short title, long status
             -- spent three of its pixels on "Run 41" and rendered "Run 4...".
             The status is the sentence that can afford to lose its tail. */}
-        {status && <p className="meta-13 shrink-[6] truncate text-[var(--text-secondary)]">{status}</p>}
-      </div>
-      <div className="flex shrink-0 items-center gap-[12px]">
-        {/* Absent, never disabled. A control that is on every screen and dead
-            on most of them teaches the reader to stop looking at that corner,
-            and there is no honest disabled state to offer here anyway: on a
-            table spanning four scrapers the answer to "run which one" is not
-            "not yet", it is that the question has no subject. */}
-        {run && (
-          <RunAction
-            slug={run.slug}
-            fields={run.fields}
-            paused={run.paused}
-            workers={run.workers}
-          />
+        {/* Gone below 768, not truncated to nothing. At 390px the bar holds a
+            56px trigger, three controls and the title; a status squeezed in
+            beside them renders as two words and an ellipsis, which is a
+            sentence that has stopped being one. Every status on this bar is a
+            reading of the screen underneath it, so nothing is lost that is not
+            three inches lower. */}
+        {status && (
+          <p className="meta-13 hidden shrink-[6] truncate text-[var(--text-secondary)] md:block">
+            {status}
+          </p>
         )}
+      </div>
+      <div className="flex shrink-0 items-center gap-[8px] md:gap-[12px]">
+        {/* Absent, never disabled. A control that is on every screen and dead
+            on most of them teaches the reader to stop looking at that corner.
+            What is absent is now only the case where there is genuinely
+            nothing to run: no scrapers at all, or a screen that says `null`
+            because it offers the control in its own body. A table spanning
+            four scrapers used to draw nothing here -- the question "run which
+            one" was treated as having no answer when it in fact has four, and
+            the dialog has listed them one per row all along. */}
+        {runs.length > 0 && <RunAction targets={runs} workers={runs[0]!.workers} />}
         {/* Activity sits beside the right-hand control on every screen, so
             "something is waiting on you" is reachable from wherever you are
             rather than only from the one screen that lists it. */}
-        {notifications ?? <Notifications items={list} count={outstandingCount(list)} />}
+        {notifications ?? <Notifications items={bell.items} count={bell.count} />}
         {action !== undefined ? (
           action
         ) : (
@@ -106,11 +132,11 @@ export async function TopBar({
               <TooltipTrigger
                 render={<Link href="/settings" />}
                 className={actionVariants({ variant: 'icon' })}
-                aria-label="Settings"
+                aria-label={t('nav.settings')}
               >
                 <Settings size={16} strokeWidth={1.5} aria-hidden />
               </TooltipTrigger>
-              <TooltipContent side="bottom">Settings</TooltipContent>
+              <TooltipContent side="bottom">{t('nav.settings')}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         )}
