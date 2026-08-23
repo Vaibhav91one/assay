@@ -8,6 +8,14 @@ of the project's stance.
 
 Within each axis, worst first.
 
+**This is a dated snapshot and is not edited to keep up.** Three engine findings
+have moved since it was written, and each carries an inline `> UPDATE` note where
+it sits rather than being rewritten out, because a critique that quietly deletes
+what it got acted on stops being a record. As of 2026-08-23: §3.2 is **fixed**
+(`67cd3d1`), §3.1 is **partly addressed by a different repair than the one
+proposed here** (`5a16b6f`, unmeasured on the cases it targets), and §3.3's
+sampling detail is **stale** (`0efaa3c`). Everything else stands as written.
+
 ---
 
 ## Axis 1 — the wireframes as promises
@@ -266,6 +274,18 @@ the work": after the store exists, the app is server components over SQL.
 
 ### 3.1 The gate cannot tell a twin decoy from a sibling card, and the calibration proves it
 
+> **UPDATE 2026-08-23 — partly addressed, by none of the three fixes below.**
+> `5a16b6f` narrowed `benign_tie` to the two candidates the margin actually
+> compared, so the sibling card at 0.6314 can no longer veto an answer about the
+> top two. On both live cases the top two carry identical text, so both are
+> *expected* to flip to `published_correct` — expected, not measured: the testbed
+> is not deployed and the nine variants could not be re-run. The band-conflation
+> claim below is untouched and still stands; what changed is which set the
+> benign-tie question is asked of. `test/benign-tie.test.ts` is the evidence, and
+> the corpus arms are byte-identical across the change, meaning the 153 benchmark
+> cases and 74 replay runs do not exercise this path at all.
+> `docs/LIMITATIONS.md` §1.1 is the long version.
+
 **Claim.** `delta = 0.16` was calibrated to defeat `duplicate_similar` twins, but
 real sibling elements land in the same margin band, so the gate abstains on
 recoverable cases for the same reason it refuses coin flips.
@@ -307,6 +327,15 @@ published anywhere = revert.
 
 ### 3.2 `benign_tie` compares 200-character prefixes of the value it publishes in full
 
+> **UPDATE 2026-08-23 — FIXED (`67cd3d1`).** The tie branch reads the FULL text
+> off the element rather than `fp.text`. `decide()` in `src/heal.ts` takes a
+> `textAt` callback so the DOM read stays inside the branch that needs it and the
+> hot path is unchanged. The `duplicate_longtail` mutation — a decoy identical for
+> 200 characters and divergent after — pins it, and is in the per-mutation table
+> `npm run bench` prints. This bug turned out to have a second victim:
+> `tools/sweep.ts` held a drifted copy of the same arithmetic and still compared
+> the prefix, which is why it recommended `tau = 0.75`. See §3.3.
+
 **Claim.** A tie is called benign when tied candidates share `fp.text` — which
 `fingerprint()` truncates: `clean($el.text()).slice(0, 200)` (src/fingerprint.js).
 Two containers identical for 200 chars and divergent after count as one value.
@@ -329,8 +358,21 @@ fixed gate must abstain or pick the inner node. Add to the bench.
 
 ### 3.3 Calibration is in-sample, and the README's flagship number inherits that
 
+> **UPDATE 2026-08-23 — the sampling detail is stale; the in-sample point
+> stands, and got worse before it got better.** `--captures` now defaults to 6 in
+> both tools, so they sample the *same* 153 cases rather than overlapping subsets.
+> That difference had been hiding something bigger: `tools/sweep.ts` held a second
+> copy of the gate's arithmetic which still compared truncated `fp.text` (§3.2)
+> and still had the pre-`5a16b6f` tie rule, so it graded a healer with a known
+> wrong-publish bug and recommended `tau = 0.75` to compensate. `0efaa3c` made
+> `decide()` the only implementation; the two tools now agree cell for cell —
+> 0.0% wrong, 64.7% correct, 35.3% abstained — and the sweep re-derives 0.6 /
+> 0.16 on its own. Two tools agreeing is not two corpora agreeing, so the
+> leave-one-site-out fix proposed below is still the right one and is still
+> undone.
+
 **Claim.** sweep.js and bench.js draw from the same corpus, same `pickTarget`,
-same nine mutations — sweep samples 4 captures/site, bench 6, overlapping sets.
+same nine mutations, over the same captures.
 `tau/delta` were selected on essentially the population they are then reported on.
 "Both thresholds were calibrated, not chosen" (README) is true; *calibrated on the
 test set* is the part left unsaid.

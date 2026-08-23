@@ -55,7 +55,8 @@ flip is not a heal. Assay publishes nothing and asks.
 
 <Callout title="Both thresholds were calibrated, not chosen">
   `tools/sweep.ts` scans 110 pairs across an 11 x 10 grid; 0.60 / 0.16 is what
-  came out. They are **fitted values, not constants**, and they are arguments to
+  came out, and the sweep and the benchmark agree cell for cell on the same 153
+  cases. They are **fitted values, not constants**, and they are arguments to
   every tool for that reason — see [Limitations §5](/docs/limitations#the-thresholds-are-calibrated-on-this-corpus-and-nowhere-else).
 </Callout>
 
@@ -111,6 +112,43 @@ different element that happened to contain the identical text. For scraping,
 value is what matters. For test automation, node identity does. Reporting only
 the flattering one would be cheating, so both are in `results/bench.json`.
 
+## Where Bright Data fits
+
+Assay is not an alternative to Bright Data. **Bright Data is the fetch layer** —
+proxies, anti-bot, and over a thousand prebuilt scrapers addressed by
+`dataset_id`. **Assay is a gate on top of it** — it decides whether a value is
+safe to publish, and abstains when it is not. `src/runner.ts` takes `fetchPage` as
+a *parameter*, which is why a Bright Data delivery and a local fetch reach the
+identical detection and gating code.
+
+The clearest evidence that both are needed is `npm run audit`, and it is a real
+production run rather than a benchmark we wrote. A Scraper Studio collector
+returned 60 records and Bright Data reported the run as **100% successful, 0
+failed crawls**:
+
+```
+6 of 10 promised fields are not healthy.
+Bright Data reported this run as 100% successful.
+Nothing in the platform surfaces the 3 fields that never arrived.
+```
+
+That is not a criticism of the crawling, which worked — sixty pages fetched from a
+site that fights scrapers, none failed. It is a demonstration that **"the job
+succeeded" and "the data is right" are different claims**, and the platform can
+only answer the first one.
+
+The two also compose directly. Bright Data's self-healing parks at a human
+approval gate rather than auto-applying; `src/bd/diffgate.ts` reads the collector
+code it proposes and returns a verdict, so `tools/bd-heal.ts --approve` refuses a
+repair that would, for instance, rewrite one field to derive from another and
+silently retire the only cross-check the break detector had. That rule set is
+three rules fitted to one transcript — see
+[Limitations](/docs/limitations#the-bright-data-code-gate-is-three-rules-fitted-to-n1).
+
+Nothing in this repository measures Assay *against* Bright Data.
+`results/headtohead.jsonl` holds 9 records and all 9 are `system: "assay"`;
+`docs/HEADTOHEAD.md` §0 says so and says why.
+
 ## The product, in one line
 
 From `docs/FEATURES.md`:
@@ -134,7 +172,7 @@ npm test          # 34 assertions against the real corpus
 npm run bench     # the 153-case benchmark
 npm run sweep     # the threshold calibration
 npm run replay    # replays the full corpus, writes results/events.jsonl
-npm run audit     # the Bright Data output gap
+npm run audit     # 6 of 10 promised fields unhealthy, behind a 100%-success run
 ```
 
 The corpus is committed on purpose: 77 archived HTML captures of three public
