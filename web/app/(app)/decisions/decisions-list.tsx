@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { MessageSquare, Undo2 } from 'lucide-react';
 import type { Decision } from '@/lib/queue';
+import { Empty } from '@/components/empty';
 import { StatusLine } from '@/components/status-line';
 import { Toast, TOAST_BUTTON } from '@/components/toast';
 import { DecisionCard } from './decision-card';
@@ -72,6 +73,19 @@ export function DecisionsList({
         {decisions.map((d) => (
           <DecisionCard key={d.proof} d={d} onOutcome={(o) => onOutcome(d, o)} />
         ))}
+        {decisions.length === 0 && (
+          // Empty is not the same as loading, and it is not a failure either.
+          // Nothing waiting means the gate published everything it could
+          // justify -- which is the product working, so it says so. It lives
+          // HERE, inside the client list, so that answering the last decision
+          // shows this message WITHOUT unmounting the undo toast below it.
+          <Empty title={t('decisions.empty.title')}>
+            {t('decisions.empty.body')}{' '}
+            <Link href="/runs" className="text-[var(--semantic-link)] hover:underline">
+              {t('decisions.empty.link')}
+            </Link>
+          </Empty>
+        )}
       </div>
 
       {error && (
