@@ -375,6 +375,18 @@ export function forgetPages(): void {
 }
 
 /**
+ * Whether this process's read of `url` is still current.
+ *
+ * The one thing this module can actually check about a turn that has already
+ * happened, and therefore the only thing it is allowed to say about one. See
+ * `nothingWaiting`.
+ */
+export function pageIsFresh(url: string, at: number = Date.now()): boolean {
+  const seen = readRecently.get(url);
+  return seen != null && at - seen.at <= PAGE_MEMORY_MS;
+}
+
+/**
  * One read of one page. The only fetch this module makes, and it goes through
  * the same seam every other caller does.
  *
@@ -568,9 +580,12 @@ const SYSTEM =
   + 'On kind=answer, DO NOT call assay_inspect. The page has not changed since '
   + 'you read it and the conversation above already records what you found; '
   + 'reading it again costs the operator a fetch and tells you nothing. Set '
-  + '`say` instead, and Assay writes the sentence: say=proposal_waiting when a '
-  + 'proposal above is still undecided, say=page_read otherwise. Set `url` to '
-  + 'the page the conversation is about, and `say` to null on every other kind.\n\n'
+  + '`say` instead, and Assay writes the sentence: say=proposal_waiting when '
+  + 'they are asking about a proposal from earlier, say=page_read otherwise. '
+  + 'You are saying WHAT THEY ASKED ABOUT, not what is on their screen -- Assay '
+  + 'checks the state of any proposal itself and writes what is true. Set `url` '
+  + 'to the page the conversation is about, and `say` to null on every other '
+  + 'kind.\n\n'
   + 'When you do propose again for a page you have already read, call '
   + 'assay_inspect for it normally -- it is served from what you read before. '
   + 'Pass refresh=true only when the operator asked you to look at the page '
@@ -688,9 +703,52 @@ export async function converse(
     step({ kind: 'settled', outcome: 'manual' });
     return manual(pages);
   }
-  const result = render(parsed.data, pages, fetched);
+  const result = render(parsed.data, pages, fetched, now());
   step({ kind: 'settled', outcome: result.kind });
   return result;
+}
+
+/**
+ * The answer to "is that proposal still waiting on me?", which is no.
+ *
+ * WHY THIS IS NOT THE MODEL'S TO ANSWER. `say: 'proposal_waiting'` used to
+ * select the sentence "The proposal above is waiting on you", which is a claim
+ * about the SCREEN -- and the screen is decided somewhere else entirely, by
+ * `web/app/(app)/watch.tsx`. Two sources of truth about one fact, with the model
+ * holding the pen on one of them, and they disagreed in front of an operator:
+ * the trace said the read was no longer current and the card was withdrawn,
+ * while the reply underneath insisted a proposal was waiting. Being told "there
+ * is no proposal" produced the sentence a second time, because nothing in the
+ * path could check.
+ *
+ * WHAT MAKES THE ANSWER NO, EVERY TIME. A proposal's confirm button belongs to
+ * exactly one turn -- `live={i === turns.length - 1 && result?.kind ===
+ * 'propose'}` -- and `submit` clears `result` before it asks anything. So the
+ * moment there is a new message for this function to answer, the previous
+ * proposal has already stopped being confirmable. There is no state in which
+ * this branch is reached AND a proposal is pending, which is why the honest
+ * sentence needs no flag from the caller and cannot be got wrong by a model.
+ *
+ * The clock is still consulted, for the other half of the truth. `pageIsFresh`
+ * is a fact this module owns outright, and it decides whether the operator is
+ * told their read has aged out -- which would itself be a small lie two minutes
+ * after a read. Both branches end at "ask again to re-read the page", which is
+ * the affordance `StaleProposal` already puts under the withdrawn card, worded
+ * the same way so the sentence and the button read as one instruction.
+ *
+ * NO NEW `SAYINGS` VALUE. This is prose this file writes, chosen by this file,
+ * on a two-value enum that stays two values wide.
+ */
+function nothingWaiting(url: string, fresh: boolean): string {
+  // "waiting on you" is deliberately NOT in this sentence. Everywhere else in
+  // the product that phrase means a held cell -- the badge, /decisions, the
+  // stats band all count what is outstanding with it -- and spending it here on
+  // the opposite fact would make the one idiom the operator relies on ambiguous.
+  return 'No proposal is pending, and nothing was created from the last one. '
+    + (fresh
+      ? `My read of ${url} is still current, so `
+      : `My earlier read of ${url} has aged out, so `)
+    + 'ask again to re-read the page and I will propose fields from it.';
 }
 
 /**
@@ -705,7 +763,13 @@ export async function converse(
  * The conversational branch is the same deal and not an exception to it: `say`
  * SELECTS one of two sentences written below, it does not supply one.
  */
-export function render(r: Reply, pages: string[], fetched: Map<number, Candidate[]>): ChatResult {
+export function render(
+  r: Reply,
+  pages: string[],
+  fetched: Map<number, Candidate[]>,
+  /** Now, for the one question this function answers about the past. */
+  at: number = Date.now(),
+): ChatResult {
   const url = r.url != null ? pages[r.url] : undefined;
   const cands = r.url != null ? fetched.get(r.url) : undefined;
 
@@ -727,9 +791,10 @@ export function render(r: Reply, pages: string[], fetched: Map<number, Candidate
         kind: 'answer',
         model_configured: true,
         urls: pages,
+        // `say` SELECTS the branch. It no longer supplies the claim: see
+        // `nothingWaiting` for why the model was the wrong thing to ask.
         reply: r.say === 'proposal_waiting'
-          ? 'The proposal above is waiting on you -- confirm it to start watching, '
-            + 'untick anything you do not want, or name a different page and I will read that one.'
+          ? nothingWaiting(about, pageIsFresh(about, at))
           : `I have read ${about} already. Tell me which values on it you care about, `
             + 'point me at another page, or say "look again" if it has changed.',
       };

@@ -11,7 +11,7 @@ import { turn, type TraceEvent } from '@/lib/chat-stream';
 import { Button } from '@/components/button';
 import { DEFAULT_MODEL } from 'assay/engine/agent/models';
 import {
-  commandTurn, historyFor, tail, turnFailed, HISTORY_TURNS,
+  commandTurn, conversationInUrl, historyFor, tail, turnFailed, HISTORY_TURNS,
   type CommandName, type Turn,
 } from 'assay/engine/store/conversation-log';
 import { Composer } from './composer';
@@ -669,10 +669,16 @@ function StaleProposal({ at, onAsk }: { at: string; onAsk?: () => void }) {
 
 const CLOCK = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' });
 
-/** Which conversation the address bar says is open. `null` on a bare Home. */
+/**
+ * Which conversation the address bar says is open. `null` on Home, and on the
+ * `?new=1` the rail's "New scrape" navigates to.
+ *
+ * The same function the server page decides with, so the guard above and the row
+ * it is guarding against cannot read one URL two ways.
+ */
 function openedInUrl(): number | null {
-  const c = new URLSearchParams(window.location.search).get('c');
-  return c && /^\d+$/.test(c) ? Number(c) : null;
+  const q = new URLSearchParams(window.location.search);
+  return conversationInUrl({ c: q.get('c') ?? undefined, new: q.get('new') ?? undefined });
 }
 
 /** The first URL the operator typed, so the manual form does not ask twice. */

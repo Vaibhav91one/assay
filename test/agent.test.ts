@@ -176,13 +176,15 @@ describe('a message that does not ask for a proposal does not get one', () => {
     kind: 'answer', url: 0, cadence: 'daily', say: 'proposal_waiting', fields: [], ...over,
   });
 
-  it('acknowledges a greeting and points at the decision that is waiting', () => {
+  it('acknowledges a greeting and says truthfully where the conversation is', () => {
     const r = render(answer(), pages, fetched);
     expect(r.kind).toBe('answer');
     expect('proposal' in r).toBe(false);
-    // Acknowledge, say what state the conversation is in, suggest the next step.
-    expect(r.reply).toMatch(/waiting on you/);
-    expect(r.reply).toMatch(/different page/);
+    // Acknowledge, say what state the conversation is in, suggest the next step
+    // -- and the state is one this file checked, not one the model asserted.
+    // See "a proposal is only 'waiting' if one actually is" below.
+    expect(r.reply).toMatch(/[Nn]othing was created/);
+    expect(r.reply).toMatch(/re-read the page/);
   });
 
   it('carries no proposal even when the model filled the fields in anyway', () => {
@@ -236,6 +238,67 @@ describe('a message that does not ask for a proposal does not get one', () => {
     );
     expect(r.kind).toBe('propose');
     expect(r.kind === 'propose' && r.proposal.fields.map((f) => f.name)).toEqual(['hazard']);
+  });
+});
+
+// --- the model does not get to say what is on the screen ----------------------
+//
+// REPORTED, AND REPRODUCED HERE. The trace said "Read from the page at 15:53, so
+// it is no longer current. Nothing was created from it." -- the card had been
+// withdrawn -- and the reply underneath it said "The proposal above is waiting on
+// you". The operator typed "there is no proposal" and got the same sentence
+// again, because `say` was the model's to choose and nothing checked it.
+//
+// The fix is not a better prompt. `render` now answers this question itself, so
+// the sentence is false only if the code is wrong rather than if the model is.
+
+describe('a proposal is only "waiting" if one actually is', () => {
+  const url = 'https://ikea.com/recalls';
+  const pages = [url];
+  const fetched = new Map<number, Candidate[]>([[0, candidatesOn(INJECTED)]]);
+  const waiting = (): Reply =>
+    ({ kind: 'answer', url: 0, cadence: 'daily', say: 'proposal_waiting', fields: [] });
+  const read = async (): Promise<Candidate[]> => [];
+
+  it('does not claim one is waiting when the read has aged out', async () => {
+    forgetPages();
+    await pageCandidates(url, read, { at: 0 });
+    const r = render(waiting(), pages, fetched, PAGE_MEMORY_MS + 1);
+
+    expect(r.kind).toBe('answer');
+    expect(r.reply).not.toMatch(/waiting on you/);
+    expect(r.reply).not.toMatch(/proposal above/);
+    // What is true instead: the read is old, nothing was made, and here is the
+    // affordance that gets a current one.
+    expect(r.reply).toMatch(/aged out/);
+    expect(r.reply).toMatch(/[Nn]othing was created/);
+    expect(r.reply).toMatch(/ask again to re-read the page/i);
+  });
+
+  it('does not claim one is waiting even when the read is still current', async () => {
+    // The freshness of the READ is not the existence of a PROPOSAL, and this is
+    // the half a page-memory check alone would get wrong. A proposal's confirm
+    // button belongs to the turn it arrived on and is withdrawn the moment
+    // anything else is said -- so by the time this sentence can be reached, the
+    // answer is no whatever the clock says.
+    forgetPages();
+    await pageCandidates(url, read, { at: 0 });
+    const r = render(waiting(), pages, fetched, 60_000);
+
+    expect(r.reply).not.toMatch(/waiting on you/);
+    expect(r.reply).toMatch(/[Nn]othing was created/);
+    expect(r.reply).toMatch(/ask again to re-read the page/i);
+    // And it does not tell them a current read is stale.
+    expect(r.reply).not.toMatch(/aged out/);
+  });
+
+  it('asking twice gets the same true answer, not the same false one', async () => {
+    forgetPages();
+    await pageCandidates(url, read, { at: 0 });
+    const first = render(waiting(), pages, fetched, PAGE_MEMORY_MS + 1);
+    const second = render(waiting(), pages, fetched, PAGE_MEMORY_MS + 2);
+    expect(second.reply).toBe(first.reply);
+    expect(second.reply).not.toMatch(/waiting on you/);
   });
 });
 

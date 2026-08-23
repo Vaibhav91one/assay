@@ -5,6 +5,7 @@ import { RunStrip } from '@/components/run-strip';
 import { homeStats } from '@/lib/home';
 import { openDecisions } from '@/lib/queue';
 import { getConversation } from 'assay/engine/store/conversations';
+import { conversationInUrl } from 'assay/engine/store/conversation-log';
 import { Watch } from './watch';
 
 export const metadata: Metadata = { title: 'Assay' };
@@ -13,10 +14,17 @@ export const dynamic = 'force-dynamic';
 /**
  * Home, and every conversation that has ever happened on it.
  *
- * `?c=<id>` is the whole of the routing. A conversation is not a separate screen
- * -- it is what this screen becomes -- so it gets a search param rather than a
- * segment, and the client can move the URL onto it with `history.replaceState`
- * without unmounting a turn that is mid-stream.
+ * `?c=<id>` is the whole of the routing, and `?new=1` is its opposite. A
+ * conversation is not a separate screen -- it is what this screen becomes -- so
+ * it gets a search param rather than a segment, and the client can move the URL
+ * onto it with `history.replaceState` without unmounting a turn that is
+ * mid-stream.
+ *
+ * BOTH PARAMS ARE READ, and `conversationInUrl` is where the rule lives so the
+ * browser half cannot read it differently. `new` used to be absent from the type
+ * above and from the body below, which meant the rail's "New scrape" button
+ * navigated to a URL this page had no opinion about -- see the note on that
+ * function for what the operator got instead.
  *
  * The title is read here, on the server, from the row. That is what renames the
  * top bar from "Home": it is not a client override of a server-rendered string,
@@ -25,10 +33,9 @@ export const dynamic = 'force-dynamic';
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ c?: string }>;
+  searchParams: Promise<{ c?: string; new?: string }>;
 }) {
-  const { c } = await searchParams;
-  const wanted = c && /^\d+$/.test(c) ? Number(c) : null;
+  const wanted = conversationInUrl(await searchParams);
 
   const [stats, queue, conversation] = await Promise.all([
     homeStats(),

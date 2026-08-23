@@ -152,6 +152,37 @@ export function commandTurn(
   };
 }
 
+/**
+ * Which conversation a URL has open, from its search params. `null` is Home.
+ *
+ * ONE RULE, HELD BY BOTH SIDES. `web/app/(app)/page.tsx` reads it on the server
+ * to decide which row to load, and `watch.tsx` reads it in the browser to decide
+ * whether a late server payload is a navigation or a stale render. Those two
+ * disagreeing is what "New scrape" did: the button links to `/?new=1`, the page
+ * typed its params as `{ c?: string }` and never read `new`, and the screen kept
+ * whatever conversation was already loaded -- so the operator's next message
+ * landed in somebody else's transcript.
+ *
+ * `new` WINS OVER `c`, and that ordering is the whole of the fix. A URL carrying
+ * both is asking for a new conversation while still naming the old one; the
+ * button is the more recent thing the operator did.
+ *
+ * `new` DOES NOT CREATE A ROW. It resolves to Home, and Home is a conversation
+ * that does not exist yet: `openConversation` is called by the FIRST message and
+ * not before. That is the shape the `conversations` table was designed around --
+ * a conversation exists from its first message, and most never make a scraper --
+ * and it is the reason a blank one must never appear in the rail. Pressing New
+ * scrape and walking away leaves nothing behind, which is correct, because
+ * nothing happened.
+ */
+export function conversationInUrl(
+  params: { c?: string | string[]; new?: string | string[] },
+): number | null {
+  if (params.new != null) return null;
+  const c = Array.isArray(params.c) ? params.c[0] : params.c;
+  return c && /^\d+$/.test(c) ? Number(c) : null;
+}
+
 export interface Conversation {
   id: number;
   title: string;
