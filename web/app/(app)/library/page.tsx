@@ -7,6 +7,7 @@ import { GROUPS } from 'assay/engine/library/index';
 // the Bright Data client. `apply.tsx` is the client half and takes a tracker as
 // a prop instead -- see the import rule at the top of `src/library/index.ts`.
 import { ALL_TRACKERS } from 'assay/engine/connectors/scrapers';
+import { CatalogueSearch } from './search';
 
 export const metadata: Metadata = { title: 'Library · Assay' };
 
@@ -22,12 +23,24 @@ export const dynamic = 'force-dynamic';
  * It is the only ornament on this screen and it earns its place by doing the
  * work a label would otherwise do -- you find GitHub by its shape before you
  * read the word. `aria-hidden`, because the name beside it is the real one.
+ *
+ * SEARCH IS ABOVE THE SHELVES, and that order is the honest one. The shelves
+ * are twenty-eight brands somebody chose out of 1,744; putting them first and
+ * the search underneath would say the choice is the catalogue. It is not, and
+ * the box says so in its own heading.
+ *
+ * THE LAST SHELF IS THE ONE THAT WORKS WITH NO ACCOUNT. Every card above it
+ * asks Bright Data for a record and needs a token to do it. The seven page
+ * trackers read the page themselves, and the shelf's label says that where
+ * somebody with no token will read it before they have wasted a click. See
+ * `GROUPS`.
  */
 export default function LibraryPage() {
   return (
     <>
       <TopBar title="Library" scraper={null} />
       <div className="flex w-full max-w-[860px] flex-col gap-[22px] pl-[56px] pr-[32px] pb-[48px] pt-[18px]">
+        <CatalogueSearch />
         {GROUPS.map((g) => {
           const rows = ALL_TRACKERS.filter((t) => t.group === g.id);
           if (!rows.length) return null;
@@ -41,7 +54,7 @@ export default function LibraryPage() {
                       href={`/library/${t.id}`}
                       className="press-row flex w-full items-center gap-[18px] rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] px-[18px] py-[16px] transition-colors duration-[var(--duration-tint)] hover:bg-[var(--surface-subtle)]"
                     >
-                      <BrandMark id={t.id} size={38} />
+                      <BrandMark id={t.id} name={t.name} size={38} />
                       <span className="flex min-w-0 flex-1 flex-col gap-[3px]">
                         <span className="body-14 text-[var(--text-primary)]">{t.name}</span>
                         <span className="caption-12 text-[var(--text-secondary)]">

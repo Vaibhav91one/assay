@@ -107,13 +107,29 @@ export interface UrlShape {
   hint: string;
 }
 
-/** The shelves, in the order the catalogue draws them. */
+/**
+ * The shelves, in the order the catalogue draws them.
+ *
+ * THE ORDER IS THE ARGUMENT. Bright Data's prebuilt scrapers come first because
+ * they are what most people arrive wanting -- a named brand, a link, a record --
+ * and they are sorted into subject shelves rather than one heap of thirty cards.
+ *
+ * `pages` IS LAST AND SAYS WHY IN ITS OWN LABEL. The seven page trackers are the
+ * only path in this product that works with no Bright Data account, so the shelf
+ * is not "the leftovers": it is the shelf an operator with no token needs, and
+ * the label has to say so where they will read it. They used to be spread across
+ * `shops`, `code`, `reference` and `other`; those four shelves are gone because
+ * seven cards do not need four shelves, and splitting them hid the one property
+ * they share.
+ */
 export const GROUPS = [
-  { id: 'shops', label: 'Shops' },
-  { id: 'code', label: 'Code' },
-  { id: 'reference', label: 'Reference' },
-  { id: 'scrapers', label: 'Prebuilt scrapers' },
-  { id: 'other', label: 'Anything else' },
+  { id: 'social', label: 'Social' },
+  { id: 'commerce', label: 'Shopping' },
+  { id: 'places', label: 'Places and property' },
+  { id: 'work', label: 'Jobs and companies' },
+  { id: 'web', label: 'Search and reference' },
+  { id: 'scrapers', label: 'Any other Bright Data scraper' },
+  { id: 'pages', label: 'Read a page directly — no Bright Data account needed' },
 ] as const;
 
 interface TrackerBase {
@@ -167,9 +183,29 @@ export type Tracker =
      * screens branch on it to ask.
      */
     datasetId: string | null;
+    /**
+     * The other real datasets this brand has, offered as a choice inside the
+     * card. See `ScraperEntry.datasets` -- the list is the whole reason a card
+     * is a BRAND rather than a dataset.
+     */
+    datasets: readonly DatasetChoice[];
     /** The page the dataset_id and the example record were read off. */
     docUrl: string;
   });
+
+/**
+ * One real dataset a brand card offers.
+ *
+ * Both halves come from Bright Data's own `/datasets/list`: `id` is the
+ * `dataset_id` and `name` is the name they gave it, unedited. Renaming one to
+ * read better on this screen would put Assay's word for a third party's product
+ * on the card, and the operator needs the name they will see in Bright Data's
+ * own console when they go looking for what it cost them.
+ */
+export interface DatasetChoice {
+  id: string;
+  name: string;
+}
 
 // --- shared priors ----------------------------------------------------------
 // Written once because three trackers want the same idea of "a price". The
@@ -198,7 +234,7 @@ export const TRACKERS: readonly Tracker[] = [
   {
     id: 'amazon',
     kind: 'page',
-    group: 'shops',
+    group: 'pages',
     name: 'Amazon',
     subheading: 'Price and stock on one product page.',
     placeholder: 'https://www.amazon.in/dp/0143448706',
@@ -236,7 +272,7 @@ export const TRACKERS: readonly Tracker[] = [
   {
     id: 'github',
     kind: 'page',
-    group: 'code',
+    group: 'pages',
     name: 'GitHub',
     subheading: 'The newest release on a repository.',
     placeholder: 'https://github.com/nodejs/node/releases',
@@ -280,7 +316,7 @@ export const TRACKERS: readonly Tracker[] = [
   {
     id: 'pypi',
     kind: 'page',
-    group: 'code',
+    group: 'pages',
     name: 'PyPI',
     subheading: 'The current version of a Python package.',
     placeholder: 'https://pypi.org/project/Django/',
@@ -308,7 +344,7 @@ export const TRACKERS: readonly Tracker[] = [
   {
     id: 'arxiv',
     kind: 'page',
-    group: 'reference',
+    group: 'pages',
     name: 'arXiv',
     subheading: 'The newest preprint in a category.',
     placeholder: 'https://arxiv.org/list/cs.CL/recent',
@@ -336,7 +372,7 @@ export const TRACKERS: readonly Tracker[] = [
   {
     id: 'mdn',
     kind: 'page',
-    group: 'reference',
+    group: 'pages',
     name: 'MDN Web Docs',
     subheading: 'When a reference page was last revised.',
     placeholder: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404',
@@ -360,7 +396,7 @@ export const TRACKERS: readonly Tracker[] = [
   {
     id: 'wikipedia',
     kind: 'page',
-    group: 'reference',
+    group: 'pages',
     name: 'Wikipedia',
     subheading: 'When an article was last edited.',
     placeholder: 'https://en.wikipedia.org/wiki/Web_scraping',
@@ -379,7 +415,7 @@ export const TRACKERS: readonly Tracker[] = [
   {
     id: 'any',
     kind: 'page',
-    group: 'other',
+    group: 'pages',
     name: 'Any site',
     subheading: 'Assay looks for a price, stock, a version and a date.',
     placeholder: 'https://example.com/the-page',
@@ -481,8 +517,13 @@ export interface ScraperEntry {
   datasetId: string | null;
   name: string;
   site: string;
+  /** Which `GROUPS` shelf. Every scraper used to land on `scrapers`; a curated
+   *  brand goes on its subject shelf and only the open card stays there. */
+  group: string;
+  subheading: string;
   placeholder: string;
   fields: readonly string[];
+  datasets: readonly DatasetChoice[];
   docUrl: string;
 }
 
@@ -515,15 +556,14 @@ export function scraperTracker(
   return {
     id: entry.id,
     kind: 'scraper',
-    group: 'scrapers',
+    group: entry.group,
     name: entry.name,
-    subheading: entry.datasetId
-      ? `What Bright Data's scraper returns for one ${entry.site} link.`
-      : 'Paste a Bright Data dataset ID and a link.',
+    subheading: entry.subheading,
     placeholder: entry.placeholder,
     cadence: 'daily',
     fields: fields.map((f) => scraperField(f.path, f.name)),
     datasetId: entry.datasetId,
+    datasets: entry.datasets,
     docUrl: entry.docUrl,
   };
 }

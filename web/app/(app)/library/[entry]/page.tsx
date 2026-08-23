@@ -17,9 +17,22 @@ export async function generateMetadata(
 }
 
 /** Title, one line, a link box, a button, and the table of what it found. */
-export default async function TrackerPage({ params }: { params: Promise<{ entry: string }> }) {
+export default async function TrackerPage({ params, searchParams }: {
+  params: Promise<{ entry: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const t = libraryTrackerById((await params).entry);
   if (!t) notFound();
+
+  // Where a search result lands. `/library/dataset?dataset=gd_...` prefills the
+  // box rather than making the operator copy an id across two screens.
+  //
+  // READ HERE RATHER THAN IN THE CLIENT COMPONENT so `Apply` takes it as a prop
+  // and needs no `useSearchParams`, which would put the whole subtree behind a
+  // Suspense boundary to say one string. It is not trusted: it is the same
+  // channel the text box uses and `read` validates it identically.
+  const q = (await searchParams).dataset;
+  const dataset = typeof q === 'string' ? q : '';
 
   return (
     <>
@@ -40,10 +53,10 @@ export default async function TrackerPage({ params }: { params: Promise<{ entry:
           rel="noreferrer noopener"
           className="flex w-fit items-center gap-[12px]"
         >
-          <BrandMark id={t.id} size={28} />
+          <BrandMark id={t.id} name={t.name} size={28} />
           <span className="body-14 text-[var(--text-secondary)]">{t.subheading}</span>
         </a>
-        <Apply tracker={t} />
+        <Apply tracker={t} dataset={dataset} />
       </div>
     </>
   );

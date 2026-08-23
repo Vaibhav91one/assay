@@ -1,4 +1,4 @@
-import { FileText, Globe, Package, ShoppingCart, type LucideIcon } from 'lucide-react';
+import { Boxes, FileText, Globe, Package, ShoppingCart, type LucideIcon } from 'lucide-react';
 
 /**
  * The brand mark on a tracker card.
@@ -58,10 +58,98 @@ const FALLBACK: Record<string, LucideIcon> = {
   arxiv: FileText,
   pypi: Package,
   any: Globe,
+  dataset: Boxes,
 };
 
-export function BrandMark({ id, size = 40 }: { id: string; size?: number }) {
-  const mark = MARKS[id];
+/**
+ * The letter tile every Bright Data brand card carries, and why it is not a
+ * logo.
+ *
+ * WHAT CHANGED. This screen used to hold seven cards and three of them earned a
+ * real mark, each after its owner's published policy was read and quoted in
+ * TRADEMARKS.md. It now holds twenty-eight more -- LinkedIn, TikTok, Zillow,
+ * Shopee. Twenty-five of those policies were read and every verdict is in
+ * TRADEMARKS.md. NONE of them clears.
+ *
+ * Twenty of the twenty-five require prior written permission in so many words,
+ * which settles those. The interesting three are the ones that DO permit this
+ * -- Instagram, Threads, Yelp -- and they fail on a condition that is easy to
+ * read past: the permission is a licence to use THE OWNER'S ASSET, not a licence
+ * to draw the shape. "Anyone using Instagram's assets should only use the logos
+ * found on our Brand Resource Center site". This file ships path data copied
+ * from simple-icons, which is a monochrome redrawing and not that asset, so a
+ * grant conditioned on using the owner's file does not reach it. YouTube's
+ * grant is scoped to API clients and Assay is not one; Google's excludes
+ * business use, which this is.
+ *
+ * SO THE CARD CARRIES A LETTER, NOT A LOGO. An initial in a tinted tile is
+ * Assay's own artwork. It borrows no trade dress, needs no permission and
+ * cannot be mistaken for the brand's mark -- and it still does the job the mark
+ * did on this screen, which is to make a card findable by shape before it is
+ * read. The alternative was a wall of identical grey globes, which is worse:
+ * twenty-eight cards that all look like "unknown".
+ *
+ * THE TINT IS DERIVED FROM THE ID, NOT FROM THE BRAND'S COLOUR. Instagram's
+ * tile is not Instagram's gradient and LinkedIn's is not LinkedIn's blue --
+ * using the brand's palette would be the trade-dress claim this whole note
+ * avoids. A hash over the id picks a hue, so the assignment is stable across
+ * reloads and machines, and every card gets a different one without a table
+ * anybody has to maintain.
+ *
+ * A REAL MARK STILL WINS. `MARKS` is checked first: `bd-github` and
+ * `bd-wikipedia` fall through to the GitHub and Wikipedia glyphs that were
+ * already cleared, because it is the same brand and the same permission. If a
+ * verdict in TRADEMARKS.md is ever settled the other way -- by obtaining the
+ * owner's own asset file, or by asking them -- adding that brand to `MARKS`
+ * retires its letter with no other change.
+ */
+function Lettermark({ id, name, size }: { id: string; name: string; size: number }) {
+  // FNV-1a over the id. Any stable hash would do; this one is four lines and
+  // has no dependency. The point is only that the same card is the same colour
+  // every time, and that neighbouring cards are not.
+  let h = 0x811c9dc5;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  const hue = h % 360;
+
+  return (
+    <span
+      aria-hidden
+      className="flex shrink-0 items-center justify-center rounded-[8px] font-semibold"
+      style={{
+        width: size,
+        height: size,
+        // Low saturation and high lightness for the ground, the same hue dark
+        // for the letter: readable on `--surface-card` (#ffffff) at every hue,
+        // which a fully saturated pair is not -- yellow on white fails and blue
+        // on white is heavy. There is no dark theme to check against.
+        background: `hsl(${hue} 62% 94%)`,
+        color: `hsl(${hue} 52% 32%)`,
+        fontSize: Math.round(size * 0.44),
+        lineHeight: 1,
+      }}
+    >
+      {/* The first letter or digit of the name, uppercased. `X` for X, `B` for
+          Best Buy. Not two letters: at 38px a monogram is a smudge. */}
+      {(/[a-z0-9]/i.exec(name)?.[0] ?? '?').toUpperCase()}
+    </span>
+  );
+}
+
+export function BrandMark({ id, name, size = 40 }: {
+  id: string;
+  /** The card's title. Only read for its first letter, and only when nothing
+   *  better is available -- see `Lettermark`. */
+  name?: string;
+  size?: number;
+}) {
+  // A curated Bright Data card is `bd-github`; the page tracker for the same
+  // site is `github`. One brand, one mark, so the prefix is dropped before the
+  // lookup rather than every entry being written twice.
+  const key = id.startsWith('bd-') ? id.slice('bd-'.length) : id;
+  const mark = MARKS[key];
   if (mark) {
     return (
       <svg
@@ -79,13 +167,21 @@ export function BrandMark({ id, size = 40 }: { id: string; size?: number }) {
     );
   }
 
-  const Icon = FALLBACK[id] ?? Globe;
-  return (
-    <Icon
-      size={size}
-      strokeWidth={1.25}
-      aria-hidden
-      className="shrink-0 text-[var(--text-muted)]"
-    />
-  );
+  const Icon = FALLBACK[key];
+  if (Icon) {
+    return (
+      <Icon
+        size={size}
+        strokeWidth={1.25}
+        aria-hidden
+        className="shrink-0 text-[var(--text-muted)]"
+      />
+    );
+  }
+
+  // A named brand with no cleared mark gets its letter. Something with no name
+  // at all -- which nothing on this screen is -- gets the globe it always got.
+  return name
+    ? <Lettermark id={id} name={name} size={size} />
+    : <Globe size={size} strokeWidth={1.25} aria-hidden className="shrink-0 text-[var(--text-muted)]" />;
 }
