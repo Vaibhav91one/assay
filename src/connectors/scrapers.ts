@@ -1154,7 +1154,10 @@ export const forgetCatalogue = (): void => { cached = null; };
  * refuse.
  */
 const JUNK = [
-  /(^|[\s\-([])tests?([\s\-)\]]|$)/i,
+  // `testing` as well as `test`: `Testing crunchbase ngo crypto` and
+  // `internal mds testing` are the same kind of entry as `Test - remove me 7`,
+  // and the delimiters keep it off `Contest` and `Protest`.
+  /(^|[\s\-([])test(s|ing)?([\s\-)\]]|$)/i,
   /(^|[\s\-([])(delete|deleted|remove|removed)([\s\-)\]!]|$)/i,
   /\bdelete\s+please\b/i,
   /\bneed[_\s]to[_\s]edit\b/i,

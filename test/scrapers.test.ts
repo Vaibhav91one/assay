@@ -19,8 +19,8 @@ import { keySelector } from '../src/connectors/record.js';
 import { STATUSES } from '../src/envelope.js';
 import { getDb, sql } from '../src/store/index.js';
 import {
-  ALL_TRACKERS, DatasetId, SCRAPERS, ScrapeError, fieldNameFor, fieldsFromRecord,
-  libraryTrackerById, scrape, scraperById,
+  ALL_TRACKERS, CURATED_SCRAPERS, DatasetId, SCRAPERS, ScrapeError, fieldNameFor,
+  fieldsFromRecord, findScraper, isJunkName, libraryTrackerById, scrape, scraperById,
 } from '../src/connectors/scrapers.js';
 import { GROUPS, TRACKERS, thresholdsOf } from '../src/library/index.js';
 import { analyse } from '../src/library/analyse.js';
@@ -312,20 +312,40 @@ describe('the catalogue claims nothing it did not read', () => {
     }
   });
 
-  it('ships only the two dataset ids that were confirmed, plus the open card', () => {
-    // The number is the point. Bright Data advertises 1000+ and exactly two are
-    // visible on pages that were fetched; a third named id would be a
-    // fabrication, and the open card is how the other thousand are reached.
-    const named = SCRAPERS.filter((s) => s.datasetId !== null);
-    expect(named.map((s) => s.datasetId).sort())
-      .toEqual(['gd_l1vikfch901nx3by4', 'gd_l1viktl72bvl7bjuj0']);
+  it('keeps the two ids that a doc page confirms, and one open card', () => {
+    // These two are the only ids in this file that TWO sources agree on: a
+    // fetched quickstart, and `/datasets/list`. The other sixty-seven have one
+    // source, which is the endpoint -- good enough to ship, and pinned live by
+    // `bd-catalogue.test.ts`, but a different claim and worth telling apart.
+    expect(scraperById('bd-instagram')!.datasetId).toBe('gd_l1vikfch901nx3by4');
+    expect(scraperById('bd-linkedin')!.datasetId).toBe('gd_l1viktl72bvl7bjuj0');
     expect(SCRAPERS.filter((s) => s.datasetId === null)).toHaveLength(1);
   });
 
-  it('ships ids its own validator accepts', () => {
+  it('ships ids its own validator accepts, defaults and choices alike', () => {
     for (const s of SCRAPERS) {
       if (s.datasetId) expect(DatasetId.safeParse(s.datasetId).success, s.id).toBe(true);
+      for (const d of s.datasets) {
+        expect(DatasetId.safeParse(d.id).success, `${s.id}: ${d.id}`).toBe(true);
+      }
     }
+  });
+
+  it('opens the select on the dataset a bare Run would use', () => {
+    // The default is the first choice, not merely one of them. If they drift,
+    // the select shows one scraper and the button calls another.
+    for (const s of SCRAPERS) {
+      if (s.datasetId === null) { expect(s.datasets, s.id).toHaveLength(0); continue; }
+      expect(s.datasets[0]?.id, s.id).toBe(s.datasetId);
+    }
+  });
+
+  it('claims a documented field list for exactly the two documented records', () => {
+    // Every other card carries `[]` and takes its fields from the record the
+    // operator's own Run returned. A hand-written list for a scraper nobody has
+    // run is the fabrication this whole file is arranged to prevent.
+    expect(SCRAPERS.filter((s) => s.fields.length).map((s) => s.id).sort())
+      .toEqual(['bd-instagram', 'bd-linkedin']);
   });
 
   it('names fields that can actually become columns', () => {
@@ -338,6 +358,69 @@ describe('the catalogue claims nothing it did not read', () => {
 
   it('gives the open card no fields, because nothing is known about its record', () => {
     expect(scraperById('dataset')!.fields).toHaveLength(0);
+  });
+});
+
+describe('the lookup the composer resolves names through', () => {
+  it('lists the curated brands and excludes the open card', () => {
+    expect(CURATED_SCRAPERS.length).toBe(SCRAPERS.length - 1);
+    for (const s of CURATED_SCRAPERS) expect(s.datasetId, s.id).not.toBeNull();
+  });
+
+  it('resolves a brand, a site, a card id and a dataset name to the same card', () => {
+    for (const q of ['linkedin', 'LinkedIn', 'linkedin.com', 'bd-linkedin']) {
+      const m = findScraper(q);
+      expect(m?.entry.id, q).toBe('bd-linkedin');
+      // A brand name takes the card's default.
+      expect(m?.dataset.id, q).toBe('gd_l1viktl72bvl7bjuj0');
+    }
+    // Naming a dataset fixes the dataset as well as the card.
+    const posts = findScraper('LinkedIn posts');
+    expect(posts?.entry.id).toBe('bd-linkedin');
+    expect(posts?.dataset.name).toBe('LinkedIn posts');
+    expect(findScraper('gd_l1vikfch901nx3by4')?.entry.id).toBe('bd-instagram');
+    // Punctuation and case are noise; `Best Buy` and `bestbuy` are one word.
+    expect(findScraper('best buy')?.entry.id).toBe('bd-bestbuy');
+  });
+
+  it('answers null rather than guessing, and never invents an id', () => {
+    // A prompt bar that turns a typo into a billable scrape has guessed with
+    // the operator's money.
+    for (const q of ['', '   ', 'linkden', 'not a brand', 'gd_nosuchdataset']) {
+      expect(findScraper(q), q).toBeNull();
+    }
+    // Everything it CAN return is an id this file ships.
+    const shipped = new Set(SCRAPERS.flatMap((s) => s.datasets.map((d) => d.id)));
+    for (const s of CURATED_SCRAPERS) {
+      expect(shipped.has(findScraper(s.name)!.dataset.id), s.name).toBe(true);
+    }
+  });
+});
+
+describe('the junk filter says what it hid', () => {
+  it('excludes the names that mark somebody\'s scratch dataset', () => {
+    for (const name of [
+      'Test - remove me 7', 'need_to_edit', 'Testing crunchbase ngo crypto',
+      'test', 'Test', 'delete please', 'TEST IGNORE', 'Zara - test',
+      'LinkedIn jobs information [Delete]', 'TikTok posts [internal use]',
+      'tiktok posts - not relevant [delete]', 'keyword_reddit (delete)',
+      '[DEPRECATED] Crunchbase companies information - enriched',
+      'Google Maps businesses [old version]', '',
+    ]) {
+      expect(isJunkName(name), name).toBe(true);
+    }
+  });
+
+  it('keeps a real name that merely contains one of those words', () => {
+    // The difference between a filter and a censor. Every pattern is anchored
+    // or delimited, so a word inside another word is not a match.
+    for (const name of [
+      'Amazon products', 'LinkedIn people profiles', 'Fastest delivery products',
+      'Contest entries', 'Protest coverage', 'Internally linked pages',
+      'Zillow properties listing information', 'Best Buy products',
+    ]) {
+      expect(isJunkName(name), name).toBe(false);
+    }
   });
 });
 
@@ -392,7 +475,7 @@ describe('a tracker reads its own rendered record', () => {
   // where it shows, and it is why `scraperField` imports `keyClass` from the
   // renderer rather than repeating the rule.
   it('finds every documented Instagram field on a documented record', () => {
-    const t = libraryTrackerById('instagram-profile')!;
+    const t = libraryTrackerById('bd-instagram')!;
     const a = analyse(t, recordToHtml(RECORD));
 
     for (const f of a.found) {
@@ -406,7 +489,7 @@ describe('a tracker reads its own rendered record', () => {
   });
 
   it('reads a nested key through the flattened path', () => {
-    const t = libraryTrackerById('linkedin-profile')!;
+    const t = libraryTrackerById('bd-linkedin')!;
     const a = analyse(t, recordToHtml({
       name: 'Satya Nadella',
       city: 'Redmond, Washington',
@@ -419,7 +502,7 @@ describe('a tracker reads its own rendered record', () => {
   });
 
   it('reports a key the vendor stopped sending as not found, and creates nothing for it', () => {
-    const t = libraryTrackerById('instagram-profile')!;
+    const t = libraryTrackerById('bd-instagram')!;
     const { followers, ...without } = RECORD;
     const a = analyse(t, recordToHtml(without));
 
@@ -430,7 +513,7 @@ describe('a tracker reads its own rendered record', () => {
   });
 
   it('proposes a target the create path would accept', () => {
-    const t = libraryTrackerById('instagram-profile')!;
+    const t = libraryTrackerById('bd-instagram')!;
     const a = analyse(t, recordToHtml(RECORD));
     const r = CreateInput.safeParse({
       url: 'https://www.instagram.com/instagram',
@@ -516,7 +599,7 @@ describe('a JSON record goes through ingestPage and out the other side', () => {
       // Exactly what `analyse` -> `resolverFor` derives for this field on this
       // record. Built through the real functions so the test cannot drift from
       // what the approval screen actually writes.
-      resolver: analyse(libraryTrackerById('instagram-profile')!, recordToHtml(RECORD))
+      resolver: analyse(libraryTrackerById('bd-instagram')!, recordToHtml(RECORD))
         .create.find((f) => f.name === field)!.resolver,
     },
   });
