@@ -6,16 +6,20 @@
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { z } from 'zod';
-import { sign, verify, EVENTS } from '../src/api/webhooks.js';
+import { sign, verify, EVENTS, deliver, heldObservation } from '../src/api/webhooks.js';
 import { loadTools, REFUSED_TOOLS, type McpTool } from '../src/mcp/server.js';
-import { getHeld, getRow } from '../src/api/handlers.js';
+import { getExplain, getHeld, getRow } from '../src/api/handlers.js';
+import { createKey } from '../src/api/keys.js';
 import { HeldCell, Row, Status } from '../src/api/schemas.js';
-import { getDb, closeDb, heldCells, sql } from '../src/store/index.js';
+import {
+  getDb, closeDb, heldCells, sql, targets, runs, fieldRuns, apiKeys,
+} from '../src/store/index.js';
 import * as schema from '../src/store/schema.js';
 import { getTableName, is } from 'drizzle-orm';
 import { PgTable } from 'drizzle-orm/pg-core';
 
 let dbUp = false;
+let heldFixture: { key: string; proof: string; field: string; reason: string } | null = null;
 // The whole merged surface, through the loader rather than one tool file:
 // the refusal below is only worth asserting if it covers every module that
 // registers tools, which after wave 1 is nine of them.
@@ -23,8 +27,36 @@ let TOOLS: Record<string, McpTool> = {};
 beforeAll(async () => {
   TOOLS = await loadTools();
   try { getDb(); await heldCells(); dbUp = true; } catch { dbUp = false; }
+  if (dbUp) {
+    const target = 'surface_withheld';
+    const field = 'price';
+    const proof = 'pr_surface_withheld';
+    const reason = 'below_tau';
+    await getDb().execute(sql`DELETE FROM field_runs WHERE proof_id = ${proof}`);
+    await getDb().execute(sql`DELETE FROM runs WHERE target_id = ${target}`);
+    await getDb().execute(sql`DELETE FROM targets WHERE target_id = ${target}`);
+    await getDb().insert(targets).values({
+      targetId: target, url: 'https://example.test/item', contract: {},
+    });
+    const [run] = await getDb().insert(runs).values({ targetId: target, status: 'abstain' })
+      .returning({ runId: runs.runId });
+    await getDb().insert(fieldRuns).values({
+      runId: run!.runId, field, value: null, status: 'quarantined', reason,
+      proofId: proof, heldSinceRun: run!.runId,
+    });
+    const created = await createKey('surface contract test');
+    heldFixture = { key: created.key, proof, field, reason };
+  }
 });
-afterAll(async () => { await closeDb().catch(() => {}); });
+afterAll(async () => {
+  if (dbUp && heldFixture) {
+    await getDb().execute(sql`DELETE FROM field_runs WHERE proof_id = ${heldFixture.proof}`).catch(() => {});
+    await getDb().execute(sql`DELETE FROM runs WHERE target_id = 'surface_withheld'`).catch(() => {});
+    await getDb().execute(sql`DELETE FROM targets WHERE target_id = 'surface_withheld'`).catch(() => {});
+    await getDb().delete(apiKeys).where(sql`${apiKeys.name} = 'surface contract test'`).catch(() => {});
+  }
+  await closeDb().catch(() => {});
+});
 
 // Next always passes a context; these handlers ignore it, but the type says
 // what Next does, not what one handler happens to need.
@@ -67,6 +99,47 @@ describe('webhook signing', () => {
     await expect(deliver({ url: 'http://x', secret, event: 'made.up' as any, data: {} }))
       .rejects.toThrow(/unknown event/);
     expect(EVENTS).toContain('field.held');
+  });
+
+  it('signs a withheld observation without losing its null, state, reason, or proof', async () => {
+    if (!heldFixture) throw new Error('withheld webhook fixture was not created');
+    const secret = 'whsec_withheld';
+    let sent: { body: string; signature: string | null } | null = null;
+
+    const result = await deliver({
+      url: 'https://consumer.example.test/hooks/assay',
+      secret,
+      event: 'episode.opened',
+      data: heldObservation({
+        target: 'surface_withheld', field: heldFixture.field, run: 1,
+        proof: heldFixture.proof, reason: heldFixture.reason,
+      }),
+      fetchImpl: async (_url, init) => {
+        sent = {
+          body: String(init?.body),
+          signature: new Headers(init?.headers).get('x-assay-signature'),
+        };
+        return new Response(null, { status: 204 });
+      },
+    });
+
+    expect(result).toMatchObject({ ok: true, status: 204 });
+    expect(sent).not.toBeNull();
+    expect(verify(sent!.body, sent!.signature, secret)).toBe(true);
+    const payload = JSON.parse(sent!.body);
+    expect(Object.hasOwn(payload.data, heldFixture.field)).toBe(true);
+    expect(payload.data[heldFixture.field]).toBeNull();
+    expect(payload.data).toMatchObject({
+      status: 'quarantined',
+      reason: heldFixture.reason,
+      proof: heldFixture.proof,
+    });
+
+    const explained = await getExplain(
+      req(`http://x/api/v1/explain/${payload.data.proof}`, heldFixture.key),
+      { params: Promise.resolve({ proof: payload.data.proof }) },
+    );
+    expect(explained.status).toBe(200);
   });
 });
 
@@ -172,5 +245,46 @@ describe('REST', () => {
     expect(row._assay.run).toBe(row._assay.fields[field].held_since_run);
     expect(row[field]).toBeNull();
     expect(Status.parse(row._assay.fields[field].status)).toBe('quarantined');
+  });
+
+  it('keeps a withheld observation distinct and its proof resolvable on list and detail', async () => {
+    if (!heldFixture) throw new Error('withheld REST fixture was not created');
+    const auth = heldFixture.key;
+
+    const listed = await getHeld(req('http://x/api/v1/held', auth), noCtx);
+    expect(listed.status).toBe(200);
+    const listBody: any = await listed.json();
+    const cell = listBody.held.find((x: any) => x.proofId === heldFixture!.proof);
+    expect(cell).toMatchObject({
+      field: heldFixture.field,
+      value: null,
+      status: 'quarantined',
+      reason: heldFixture.reason,
+      proofId: heldFixture.proof,
+    });
+    expect(Object.hasOwn(cell, 'value')).toBe(true);
+
+    const ctx = { params: Promise.resolve({ proof: heldFixture.proof }) };
+    const detailed = await getRow(req(`http://x/api/v1/rows/${heldFixture.proof}`, auth), ctx);
+    expect(detailed.status).toBe(200);
+    const row: any = await detailed.json();
+    expect(Object.hasOwn(row, heldFixture.field)).toBe(true);
+    expect(row[heldFixture.field]).toBeNull();
+    expect(row._assay.proof).toBe(heldFixture.proof);
+    expect(row._assay.fields[heldFixture.field]).toMatchObject({
+      status: 'quarantined', reason: heldFixture.reason,
+    });
+
+    const explained = await getExplain(
+      req(`http://x/api/v1/explain/${heldFixture.proof}`, auth), ctx,
+    );
+    expect(explained.status).toBe(200);
+    expect(await explained.json()).toMatchObject({
+      proof: heldFixture.proof,
+      field: heldFixture.field,
+      value: null,
+      status: 'quarantined',
+      reason: heldFixture.reason,
+    });
   });
 });

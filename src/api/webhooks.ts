@@ -25,6 +25,41 @@ export const EVENTS: WebhookEvent[] = [
 ];
 
 /**
+ * The observation carried by a break notification.
+ *
+ * Build it here so every signed delivery keeps the same distinction as the
+ * REST envelope: this field exists and is withheld, rather than absent or a
+ * value that happened to be null. `proof` is the resolvable join back to the
+ * full explanation.
+ */
+export function heldObservation({
+  target,
+  field,
+  run,
+  proof,
+  reason,
+  diagnosis,
+}: {
+  target: string;
+  field: string;
+  run: number;
+  proof: string;
+  reason: string | null;
+  diagnosis?: unknown;
+}): Record<string, unknown> {
+  return {
+    target,
+    field,
+    run,
+    [field]: null,
+    status: 'quarantined',
+    reason,
+    proof,
+    ...(diagnosis === undefined ? {} : { diagnosis }),
+  };
+}
+
+/**
  * `t=<unix>,v1=<hex>` over `<t>.<body>`.
  *
  * The timestamp is inside the signed string, not beside it, so a captured

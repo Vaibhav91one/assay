@@ -17,7 +17,7 @@ import { fetchHtml } from '../src/skills/page.js';
 import { ingestPage } from '../src/connectors/ingest.js';
 import { recomputeField } from '../src/health/observe.js';
 import { dueDigests, markDigestSent } from '../src/reports/digest.js';
-import { deliver } from '../src/api/webhooks.js';
+import { deliver, heldObservation } from '../src/api/webhooks.js';
 import { send, breakSubject, breakBody } from '../src/notify.js';
 import { getDb, closeDb, claimDueTarget, markNotified, holdWorkerLock } from '../src/store/index.js';
 
@@ -52,7 +52,7 @@ function fetcherFor(url: any) {
 }
 
 /** Email first, webhook as the fallback. Never fatal to the run. */
-async function notifyBreak({ target, field, diagnosis, runId, episodeId }: any) {
+async function notifyBreak({ target, field, diagnosis, runId, episodeId, proofId, reason }: any) {
   const to = process.env.ASSAY_MAIL_TO;
   try {
     await send({
@@ -68,7 +68,10 @@ async function notifyBreak({ target, field, diagnosis, runId, episodeId }: any) 
       try {
         await deliver({
           url: hook, secret: process.env.ASSAY_WEBHOOK_SECRET || '',
-          event: 'episode.opened', data: { target, field, diagnosis, run: runId },
+          event: 'episode.opened',
+          data: heldObservation({
+            target, field, diagnosis, run: runId, proof: proofId, reason,
+          }),
         });
         await markNotified(episodeId, `webhook (email failed: ${(e as Error).message})`);
         return 'webhook';
@@ -118,6 +121,7 @@ async function runOne(target: any) {
       const how = await notifyBreak({
         target: targetId, field,
         diagnosis: result.event.diagnosis, runId: r.runId, episodeId: r.episodeId,
+        proofId: r.proofId, reason: result.status.reason ?? null,
       });
       note = `  episode ${r.episodeId} opened, notified via ${how}`;
     } else {
