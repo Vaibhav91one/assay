@@ -239,7 +239,8 @@ verdict, and `tools/bd-heal.ts --approve` refuses when it rejects. The reject pa
 stays ungated, because refusing a repair is always safe.
 
 Why the code and not the row: the one real heal this repo has driven end to end
-produced an output that passed every output-shape rule and was rejected anyway.
+produced an output that no output-shape rule could fault — 3 of the 4 passed and
+the fourth was not evaluable — and was rejected anyway.
 
 ```
 npx tsx tools/bd-heal.ts --verify
@@ -314,7 +315,7 @@ tools/bd-heal.ts     drives a heal to the approval gate; never auto-approves
 tools/headtohead.ts  the symmetric variant harness (one arm run -- docs/HEADTOHEAD.md)
 tools/worker.ts      the worker service entrypoint
 
-web/                 Next 16, App Router: 16 screens and 31 REST routes
+web/                 Next 16, App Router: 15 screens and 31 REST routes
 results/             every number this README claims, as data
 corpus/              77 archived captures
 dist/fingerprint.js  generated: the file pasted into Bright Data's worker
@@ -346,8 +347,10 @@ To let other people in, do one of these rather than widening the bind:
 
 The hosted instance installs `@clerk/nextjs`, which is deliberately **not** a
 dependency here: a self-hoster should not download an auth SDK they will never
-load. One seam (`web/lib/auth.ts`) knows which mode is active; nothing else
-imports Clerk, and a test enforces that.
+load. Exactly two files import Clerk — `web/lib/auth.ts`, the seam that knows
+which mode is active, and `web/proxy.ts`, which imports it dynamically and only
+when `AUTH_MODE=clerk`. `test/auth.test.ts` enforces that list of two by walking
+`web/` and `src/` for `@clerk/nextjs`, so a third importer fails the suite.
 
 Podman and Apple Container are supported too, with the scripts and the two
 Apple-specific gotchas written up in `web/content/docs/self-host.mdx`. The Apple
@@ -469,8 +472,30 @@ asserted.
 
 MIT — see [LICENSE](LICENSE).
 
-One dependency is not OSI-licensed, which is worth knowing before you
+Two packages are not OSI-licensed, which is worth knowing before you
 redistribute: **`@anthropic-ai/claude-agent-sdk`** publishes as
-`SEE LICENSE IN README.md`. It powers the conversational surfaces; the rest of
-the AI path uses the ordinary Anthropic API SDK, which is MIT. Everything else in
-the dependency tree is MIT, ISC or Apache-2.0.
+`SEE LICENSE IN README.md` and its platform binary
+**`@anthropic-ai/claude-agent-sdk-darwin-arm64`** as `SEE LICENSE IN LICENSE.md`.
+They power the conversational surfaces; the rest of the AI path uses the ordinary
+Anthropic API SDK, which is MIT.
+
+The rest of the tree is **not** uniformly MIT/ISC/Apache-2.0, and the copyleft and
+weak-copyleft entries are the ones that matter to a redistributor. Measured over
+511 distinct packages across both workspaces on 2026-08-23:
+
+| licence | packages |
+|---|---|
+| `LGPL-3.0-or-later` | `@img/sharp-libvips-darwin-arm64` (and `@img/sharp-wasm32`, tri-licensed `Apache-2.0 AND LGPL-3.0-or-later AND MIT`) — pulled in by `sharp`, pulled in by `next` |
+| `MPL-2.0` | `lightningcss` and its platform binary — via `vite`/`vitest` and `@tailwindcss/postcss` |
+| `EPL-2.0` | `elkjs` — via `beautiful-mermaid` in `web/` |
+| `CC-BY-4.0` | `caniuse-lite` — data, not code, via `browserslist` |
+
+The remaining 505 are permissive: 450 MIT, 18 ISC, 13 Apache-2.0, 12 BSD-2-Clause,
+5 BSD-3-Clause, plus `tslib` (0BSD) and `fast-sha256` (Unlicense).
+
+Re-derive it yourself rather than trusting this table — it is a snapshot of one
+install on one platform, and the `-darwin-arm64` rows will differ on yours:
+
+```bash
+npm ls sharp lightningcss elkjs        # provenance of the copyleft entries
+```

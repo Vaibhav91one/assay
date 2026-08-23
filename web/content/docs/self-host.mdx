@@ -168,16 +168,18 @@ timeout applies — see [Architecture](/docs/architecture).
 
 ## The invariants
 
-These are the numbers the project is arguing for, and CI asserts each one on
-every push. A change that moves one has broken the thing being built, not merely
-a test.
+These are the numbers the project is arguing for. A change that moves one has
+broken the thing being built, not merely a test. CI parses and asserts every row
+below except the vitest one, which it runs and requires green without checking
+how many tests ran — that count moves with every contribution, so no document
+here pins it.
 
 | Command | Must produce |
 |---|---|
 | `npm test` | 34 assertions, ending `all checks pass` |
 | `npm run bench` | 153 cases; gated arm at **0.0% wrong values** |
 | `npm run replay` | 74 runs, 8 ok, 66 heals, **0 abstentions**, `results/events.jsonl` byte-identical |
-| `ASSAY_REQUIRE_DB=1 npx vitest run` | 534 passing |
+| `ASSAY_REQUIRE_DB=1 npx vitest run` | green (no count asserted) |
 | `npx tsc --noEmit` | clean, strict, whole repo |
 
 Two more, load-bearing:
@@ -192,15 +194,29 @@ Two more, load-bearing:
 
 ## Redistributing it
 
-MIT, with two dependencies that are not OSI-licensed and are worth knowing about
+MIT, with two packages that are not OSI-licensed and are worth knowing about
 before you redistribute:
 
-- **GSAP** ships under its Standard "no charge" licence. Free to use, including
-  the plugins that were formerly paid, but not open source. It is used for four
-  animated moments and nothing else, so removing it costs you those animations
-  and nothing structural.
 - **`@anthropic-ai/claude-agent-sdk`** publishes as `SEE LICENSE IN README.md`.
   It powers the conversational surfaces; the rest of the AI path uses the
   ordinary Anthropic API SDK, which is MIT.
+- **`@anthropic-ai/claude-agent-sdk-darwin-arm64`**, its platform binary,
+  publishes as `SEE LICENSE IN LICENSE.md`.
 
-Everything else in the dependency tree is MIT, ISC or Apache-2.0.
+(This list used to name GSAP as well. GSAP is not a dependency of this project and
+does not appear in `package-lock.json` — the entry was wrong and has been removed.)
+
+The rest of the tree is **not** uniformly MIT/ISC/Apache-2.0. The copyleft and
+weak-copyleft entries, measured over 511 distinct packages on 2026-08-23:
+
+| licence | packages |
+|---|---|
+| `LGPL-3.0-or-later` | `@img/sharp-libvips-*` (and `@img/sharp-wasm32`, tri-licensed with Apache-2.0 and MIT) — via `sharp`, via `next` |
+| `MPL-2.0` | `lightningcss` and its platform binary — via `vite`/`vitest` and `@tailwindcss/postcss` |
+| `EPL-2.0` | `elkjs` — via `beautiful-mermaid` |
+| `CC-BY-4.0` | `caniuse-lite` — data, not code, via `browserslist` |
+
+The remaining 505 are permissive: 450 MIT, 18 ISC, 13 Apache-2.0, 12 BSD-2-Clause,
+5 BSD-3-Clause, plus `tslib` (0BSD) and `fast-sha256` (Unlicense). That is a
+snapshot of one install on one platform — the `-darwin-arm64` rows differ on
+yours, so re-derive it before you redistribute.
