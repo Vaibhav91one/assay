@@ -16,14 +16,18 @@ export const MODEL_DOC = '/docs/credentials#model-access';
 /**
  * Where each connector is explained.
  *
- * Bright Data has its own section. Slack and Discord do not: nothing under
- * `web/content/docs/` names either of them, and inventing `#slack` would be a
- * button that scrolls nowhere. What they actually are is the non-email path a
- * break alert takes, and that is the one paragraph in `#email-delivery` --
- * "if you are alerting to something other than email, the worker also reads
- * ASSAY_WEBHOOK_URL". So they point at the true nearest thing rather than at a
- * heading that does not exist. That is a documentation gap, recorded here, and
- * it is not a reason to fake a link.
+ * All three now have a section of their own. Slack and Discord used to point at
+ * `#email-delivery`, on the reasoning that the true nearest thing beat a fake
+ * anchor -- which was right about the anchor and wrong about the destination.
+ * The paragraph it landed on describes `ASSAY_WEBHOOK_URL`, a signed
+ * `{event, data, sent_at}` envelope that a Slack incoming webhook answers with
+ * `invalid_payload`. An operator who followed that button got a working link to
+ * a mechanism that cannot do what they came to do, which is worse than a button
+ * that scrolls nowhere: it costs them the afternoon before they find out.
+ *
+ * `#slack` and `#discord` are real headings now, and they document the actual
+ * credential -- an incoming-webhook URL in the connectors file, not a variable
+ * in `.env`.
  *
  * `Record<Kind, string>` rather than a lookup with a fallback: a connector
  * added to `KINDS` and not to this map should fail the build, not ship a row
@@ -31,6 +35,6 @@ export const MODEL_DOC = '/docs/credentials#model-access';
  */
 export const CONNECTOR_DOC: Record<Kind, string> = {
   brightdata: '/docs/credentials#bright-data',
-  slack: '/docs/credentials#email-delivery',
-  discord: '/docs/credentials#email-delivery',
+  slack: '/docs/credentials#slack',
+  discord: '/docs/credentials#discord',
 };
