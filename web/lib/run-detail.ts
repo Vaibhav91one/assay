@@ -61,6 +61,13 @@ export interface RunDetail {
      * thresholds are not drawn against the scores.
      */
     reproduces: boolean;
+    /**
+     * Whether `tau`/`delta` came off the target's contract or are the shipped
+     * defaults. Optional because it arrived after the field it qualifies did,
+     * and a reader that does not have it should say nothing rather than guess:
+     * "declares neither" and "declares both" are different facts about a target.
+     */
+    declared?: boolean;
   } | null;
 }
 
@@ -79,8 +86,13 @@ export interface HistoryPoint {
   outcome: RunOutcome;
 }
 
-/** `ranked` is jsonb, so it is whatever was written. Narrow it, do not trust it. */
-function ranked(v: unknown): RankedCandidate[] | null {
+/**
+ * `ranked` is jsonb, so it is whatever was written. Narrow it, do not trust it.
+ *
+ * Exported for `lib/explain.ts`: the proof screen reads the same column out of
+ * the same store and must not have its own idea of what a malformed row is.
+ */
+export function rankedOf(v: unknown): RankedCandidate[] | null {
   if (!Array.isArray(v)) return null;
   const out = v.flatMap((r) => {
     if (!r || typeof r !== 'object') return [];
@@ -98,8 +110,12 @@ function ranked(v: unknown): RankedCandidate[] | null {
  * `targets.contract` is jsonb owned by the contracts feature; only the one key
  * this screen reads is narrowed, and a target that declares none is reported as
  * defaulting rather than as having chosen 0.6/0.16.
+ *
+ * Exported for `lib/explain.ts`, which needs the same two numbers and the same
+ * `declared` distinction to draw the gate disclosure on a proof. One home for
+ * the defaults, or the two screens quote different floors at the same reader.
  */
-function thresholdsOf(contract: unknown): { tau: number; delta: number; declared: boolean } {
+export function thresholdsOf(contract: unknown): { tau: number; delta: number; declared: boolean } {
   const t = (contract as Record<string, unknown> | null)?.thresholds as
     | Record<string, unknown>
     | undefined;
@@ -172,7 +188,7 @@ export async function runDetail(runId: number): Promise<RunDetail | null> {
           proofId: cell.proofId,
           goldenSha: cell.goldenSha,
           captureSha: cell.captureSha,
-          ranked: ranked(cell.ranked),
+          ranked: rankedOf(cell.ranked),
           heldSinceRun: cell.heldSinceRun,
           groupKey: cell.groupKey,
           heal: (() => {
@@ -218,6 +234,7 @@ export async function runDetail(runId: number): Promise<RunDetail | null> {
             tau: t.tau,
             delta: t.delta,
             reproduces: gateCheck(c, { tau: t.tau, delta: t.delta }),
+            declared: t.declared,
           }
         : null;
     })(),

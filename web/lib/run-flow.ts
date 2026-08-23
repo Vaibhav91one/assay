@@ -198,7 +198,14 @@ export function gateNumbers(
  * contract has been edited since -- and the screen then declines to draw them
  * rather than marking a line at a number that explains nothing.
  */
-export function gateCheck(cell: CellRecord, t: { tau: number; delta: number }): boolean {
+export function gateCheck(
+  // Widened from `CellRecord` to the two columns it actually reads, so
+  // `lib/explain.ts` can ask the same question of a proof row without
+  // assembling a whole cell it does not have. Every existing caller passes a
+  // `CellRecord` and still type-checks: this is strictly more permissive.
+  cell: Pick<CellRecord, 'ranked' | 'reason'>,
+  t: { tau: number; delta: number },
+): boolean {
   const n = gateNumbers(cell.ranked);
   if (!n || !cell.reason) return false;
   if (n.score <= t.tau) return cell.reason === 'below_tau';
