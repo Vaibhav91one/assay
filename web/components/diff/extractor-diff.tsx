@@ -8,9 +8,18 @@
 // the receipt rather than the prompt.
 //
 // Which makes the `held` state the important one and not the edge case. It is
-// the diff that was NOT applied, with the margin that was too thin printed
-// under it -- the screen Bright Data has no reason to draw, because there the
-// refusal never happens. Everything below leans that way on purpose.
+// the diff that was NOT applied, with the reason it was not applied under it --
+// the screen Bright Data has no reason to draw, because there the refusal never
+// happens. Everything below leans that way on purpose.
+//
+// THE REASON IS A WORD, NOT A NUMBER, and this file is where that changed. It
+// used to print `Best 0.7354 against τ 0.6, ahead of the runner-up by 0.1258
+// against δ 0.16`, and it worked out which test had failed by re-running the
+// comparison on those numbers. Both are gone. The band comes off
+// `field_runs.reason` through `src/reports/assay-score.ts`, and what is drawn
+// beside it on a THIN refusal is the pair of VALUES the gate could not separate
+// -- which is the half of the evidence a person can actually judge. See the
+// amendment to docs/FEATURES.md §4 dated 2026-08-23.
 //
 // A server component. Nothing here has state, and the one client boundary is
 // `CodeComparison`, which needs one because shiki is a WASM-backed grammar
@@ -18,7 +27,9 @@
 // so the code is in the HTML on first paint and gains colour afterwards.
 
 import type { ExtractorDiff as ExtractorDiffRecord } from 'assay/engine/reports/extractor-diff';
+import { bandFor } from 'assay/engine/reports/assay-score';
 import { CodeComparison } from '@/components/ui/code-comparison';
+import { AssayScore } from '@/components/assay-score';
 import { t } from '@/lib/copy';
 
 /**
@@ -49,71 +60,49 @@ function spec(selector: string | null, attr: string, transform: string | null, m
   ].join('\n');
 }
 
-const n = (v: number) => v.toFixed(4);
-
 /**
- * One line of numbers, in the product's voice.
+ * One rival, as the reader can act on it: where it is, and what it says.
  *
- * NO PERCENTAGE AND NO CONFIDENCE, here or anywhere near this component.
- * docs/FEATURES.md 4 and CONTRIBUTING.md both refuse it in the same words: a
- * float relocates the abstain decision to whoever cares least about it. What is
- * printed instead is what was actually compared -- a score against tau, a
- * margin against delta -- which is a measurement the reader can check rather
- * than a feeling the product is asking them to share.
- *
- * WHICH TEST FAILED IS DERIVED FROM THE NUMBERS, not read from
- * `field_runs.reason`. The arithmetic is `src/heal.ts:249` and it is on the
- * page: score first, then margin, then neither -- which is a policy holding a
- * heal the gate itself allowed. Deriving it means the sentence cannot disagree
- * with the numbers printed beside it, which is the failure mode a reason code
- * copied onto a screen has.
+ * NO SCORE, AND THE TYPE IS WHY. `ExtractorDiffRecord.rivals` carries
+ * `{ selector, score }` and this deliberately does not accept that shape -- the
+ * caller maps the value in and drops the score at the prop boundary, so
+ * printing one here is a compile error rather than a thing review has to
+ * notice. Same reasoning for `diff` below, which arrives as a `Pick`.
  */
-function verdict(d: ExtractorDiffRecord): React.ReactNode {
-  const thresholds = (
-    <>
-      <Num>τ {d.tau}</Num> and <Num>δ {d.delta}</Num>
-    </>
-  );
-
-  if (d.decision !== 'held') {
-    return (
-      <>
-        Cleared {thresholds}, so the selector moved
-        {d.decision === 'reverted' ? ' — and was later taken back.' : '.'}
-      </>
-    );
-  }
-
-  // A held run kept its ranked list, so these are never null on this arm. The
-  // guard is for the one case that can be: `no_candidates`, where the gate
-  // abstained before anything was weighed and there is genuinely no number.
-  if (d.score === null || d.margin === null) {
-    return <>Nothing on the page was close enough to score. {t('diff.nothingPublished')}</>;
-  }
-
-  const belowTau = d.score <= d.tau;
-  const thinMargin = d.margin <= d.delta;
-
-  return (
-    <>
-      Best <Num>{n(d.score)}</Num> against <Num>τ {d.tau}</Num>, ahead of the runner-up by{' '}
-      <Num>{n(d.margin)}</Num> against <Num>δ {d.delta}</Num>.{' '}
-      {belowTau
-        ? 'Nothing on the page looked enough like this field.'
-        : thinMargin
-          ? 'Two candidates were too close to separate.'
-          : 'Both thresholds cleared, and a policy withheld it anyway.'}{' '}
-      {t('diff.nothingPublished')}
-    </>
-  );
+export interface RivalValue {
+  selector: string;
+  /** The text that candidate holds on the page. The half a person can judge. */
+  value: string;
 }
 
-const Num = ({ children }: { children: React.ReactNode }) => (
-  <span className="mono-value-12_5 text-[var(--text-primary)]">{children}</span>
-);
-
-export function ExtractorDiff({ diff }: { diff: ExtractorDiffRecord }) {
+/**
+ * What a person is looking at, and what they may do about it.
+ *
+ * `diff` IS A `Pick`, NOT THE WHOLE RECORD. The record still carries `score`,
+ * `margin`, `tau` and `delta` -- they are data and they stay -- but this
+ * component may not render them, and the narrow type is the enforcement. The
+ * four keys it does take are the ones that draw the two panes.
+ *
+ * `reason` is `field_runs.reason`, passed down rather than read here: the
+ * extraction diff is composed from `heal_history` and `field_state` and has
+ * never carried the gate's reason. The band is derived from it and from
+ * nothing else -- see `src/reports/assay-score.ts`. Deriving it from the score
+ * and the thresholds instead is what this component used to do, and it is a
+ * second thing that can be wrong: re-running the arithmetic to work out which
+ * test failed produces a confident sentence the moment a contract is edited
+ * under it.
+ */
+export function ExtractorDiff({
+  diff,
+  reason,
+  rivals = [],
+}: {
+  diff: Pick<ExtractorDiffRecord, 'field' | 'before' | 'after' | 'decision'>;
+  reason: string | null;
+  rivals?: RivalValue[];
+}) {
   const held = diff.decision === 'held';
+  const band = bandFor(reason);
 
   return (
     <div className="flex w-full flex-col gap-[12px]">
@@ -132,32 +121,62 @@ export function ExtractorDiff({ diff }: { diff: ExtractorDiffRecord }) {
         }
       />
 
-      <p className="meta-12_5 text-[var(--text-secondary)]">{verdict(diff)}</p>
+      {/* A published heal has no stored reason -- `src/runner.ts:263` writes
+          `{ status: 'healed' }` and nothing else -- so `clear_margin` and
+          `benign_tie` never reach `field_runs` and no band can be drawn here
+          without inventing one. The sentence says what the two panes show and
+          claims nothing about WHICH of the two heals it was. */}
+      {!held && (
+        <p className="meta-12_5 text-[var(--text-secondary)]">
+          {diff.decision === 'reverted' ? t('diff.movedThenTakenBack') : t('diff.moved')}
+        </p>
+      )}
 
-      {/* The two the gate could not separate, and the gap between them.
-          Deliberately TWO and not the whole ranked list: the full list, with
-          the text each candidate held, is the section below this one, and
-          printing it twice on one screen is the duplicated fact
-          docs/APP-DESIGN.md 5b calls P2. What is here is the pair the margin
-          is a measurement OF -- which the list does not say, because a list
-          of scores does not point at the subtraction between two of them. */}
-      {held && diff.rivals.length > 1 && (
-        <dl className="flex flex-col gap-[6px] rounded-[var(--radius-control)] border border-[var(--border-hairline)] bg-[var(--surface-subtle)] px-[16px] py-[12px]">
-          {diff.rivals.slice(0, 2).map((r) => (
-            <div key={r.selector} className="flex items-baseline gap-[12px]">
-              <dt className="mono-value-12_5 min-w-0 flex-1 truncate text-[var(--text-primary)]">
-                {r.selector}
-              </dt>
-              <dd className="mono-value-12_5 text-[var(--text-secondary)]">{n(r.score)}</dd>
-            </div>
-          ))}
-          <div className="flex items-baseline gap-[12px] border-t border-[var(--border-hairline)] pt-[6px]">
-            <dt className="meta-12_5 flex-1 text-[var(--text-muted)]">{t('diff.tooClose')}</dt>
-            <dd className="mono-value-12_5 text-[var(--semantic-warning)]">
-              {diff.margin === null ? t('common.dash') : n(diff.margin)}
-            </dd>
-          </div>
-        </dl>
+      {held && <AssayScore reason={reason} />}
+
+      {/* The band's own sentence ends every held case with "nothing was
+          published", so this line exists only for the case where there is no
+          band: a reason code this build does not know, or `brake_unreadable`,
+          which is deliberately un-worded. The reader still has to be told the
+          cell is empty. */}
+      {held && band === null && (
+        <p className="meta-12_5 text-[var(--text-secondary)]">{t('diff.nothingPublished')}</p>
+      )}
+
+      {/* THIN ONLY, and only two. THIN is the one band whose sentence is not
+          actionable on its own: "they carried different values" is a fact about
+          two things the reader cannot see. The pair the margin was a
+          measurement OF is what settles it, and the VALUES are what settles it
+          -- a person can look at "Recall & Safety Alerts" beside "Recall &
+          Safety Alerts (archived)" and answer in five seconds. The scores that
+          separated them cannot be looked at in the same way, which is why the
+          score column that used to sit here is gone rather than moved.
+
+          The other bands do not get this block: WEAK and GONE have no rival to
+          show, AGREED published, and POLICY and BRAKED are a person's rule
+          rather than a question about the page. */}
+      {band === 'THIN' && rivals.length > 1 && (
+        <div className="flex flex-col gap-[8px] rounded-[var(--radius-control)] border border-[var(--border-hairline)] bg-[var(--surface-subtle)] px-[16px] py-[12px]">
+          <p className="label-10 text-[var(--text-muted)]">{t('diff.rivals.eyebrow')}</p>
+          {/* `dl` and not a table: two rows of "where" and "what it says" is a
+              description list, and a two-row table gets a header a reader then
+              has to read before the two lines under it. */}
+          <dl className="flex flex-col gap-[6px]">
+            {rivals.slice(0, 2).map((r) => (
+              <div key={r.selector + r.value} className="flex items-baseline gap-[12px]">
+                <dt className="mono-value-12_5 w-[140px] shrink-0 truncate text-[var(--text-muted)]">
+                  {r.selector}
+                </dt>
+                <dd className="body-13_5 min-w-0 flex-1 text-[var(--text-primary)]">
+                  {r.value || t('common.dash')}
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <p className="meta-12_5 border-t border-[var(--border-hairline)] pt-[8px] text-[var(--text-secondary)]">
+            {t('diff.rivals.disagree')}
+          </p>
+        </div>
       )}
     </div>
   );

@@ -5,7 +5,6 @@ import { ArrowLeft } from 'lucide-react';
 import { TopBar } from '@/components/top-bar';
 import { actionVariants } from '@/components/button';
 import { StatusLine, type Tone } from '@/components/status-line';
-import { Bar } from '@/components/bar';
 import { FlowCanvas } from '@/components/flow-canvas';
 import { OutcomeDonut, PageSizeBars } from '@/components/run-charts';
 import { ProofSheet } from '@/components/proof-sheet';
@@ -107,10 +106,33 @@ export default async function RunPage({ params }: { params: Promise<{ run: strin
         {selector && (
           <section className="flex flex-col gap-[12px]">
             <Heading note={selector.field}>{t('run.section.selector')}</Heading>
-            <ExtractorDiff diff={selector} />
+            {/* The reason and the rival VALUES both come from this page, not
+                from `extractorDiff`. That module composes the change to how a
+                field is READ -- `heal_history` against `field_state` -- and has
+                never carried either: its `rivals` are `{ selector, score }`,
+                and a score is the one thing the band replaced. `runDetail`
+                already loaded the cell and its `field_runs.ranked`, so both are
+                on hand here and neither needs a second query.
+
+                `value` is mapped across and `score` is dropped at this
+                boundary, so `ExtractorDiff` cannot print one. */}
+            <ExtractorDiff
+              diff={selector}
+              reason={d.cells.find((c) => c.field === selector.field)?.reason ?? null}
+              rivals={(d.gate?.candidates ?? []).map((c) => ({
+                selector: c.selector,
+                value: c.value,
+              }))}
+            />
           </section>
         )}
 
+        {/* The band is NOT repeated here. It is drawn once, on the selector
+            diff above, which is where the refusal itself is drawn -- and it has
+            to be there rather than here, because a run held on `no_candidates`
+            has an empty `ranked` and so no gate section at all, while the diff
+            renders on every held run. This section is what it says it is: the
+            elements the gate weighed. */}
         {d.gate && (
           <section className="flex flex-col gap-[12px]">
             <Heading note={d.gate.field}>The gate</Heading>
@@ -242,19 +264,38 @@ function Fields({ cells }: { cells: CellSummary[] }) {
 }
 
 /**
- * The ranked list, against the two thresholds it was judged by.
+ * What the gate decided, and what it was choosing between.
  *
- * `Bar` rather than a third chart: this is a proportion with a real denominator
- * (a score out of 1), which is the one thing that component is for.
+ * THE SCORE COLUMN AND ITS BAR ARE GONE, and so are the two thresholds that
+ * used to be quoted under them. This screen printed `0.7354` against `τ 0.6`
+ * and a proportional bar beside each candidate, which is precisely the
+ * confidence float docs/FEATURES.md §4 refuses, arrived at one screen at a
+ * time: a reader given four scores out of one will pick their own cut-off, and
+ * picking it is the decision the gate has already made on better evidence.
+ * What replaces it is the band -- one word off `field_runs.reason` -- and the
+ * list of what each candidate SAYS, which is the half of the evidence a person
+ * can judge. The numbers themselves are untouched in `field_runs.ranked` and
+ * the arithmetic is written out at /docs/assay-score. See the amendment to
+ * docs/FEATURES.md §4 dated 2026-08-23.
+ *
+ * The rank column stays. An ordinal is not a score: it says the engine put
+ * these in an order and does not invite anyone to threshold it.
+ *
+ * `gate.reproduces` is no longer consulted here and is deliberately still
+ * computed. It exists to stop the screen drawing a threshold that does not
+ * explain the recorded reason -- and with no threshold on the screen there is
+ * nothing for it to withhold. It stays on `RunDetail` because it is the check
+ * that would have to come back the day a number does.
  */
 function Candidates({ gate }: { gate: NonNullable<RunDetail['gate']> }) {
   return (
     <div className="flex flex-col gap-[10px]">
+      <p className="meta-12_5 text-[var(--text-secondary)]">{t('run.gate.caption')}</p>
       <table className="w-full border-collapse">
         <thead>
           <tr className="border-b border-[var(--border-hairline)] text-left">
-            {['#', 'element', 'text on the page', 'score', ''].map((h, i) => (
-              <th key={h + i} className="caption-12 pb-[8px] font-normal text-[var(--text-muted)]">
+            {['#', 'element', 'text on the page'].map((h) => (
+              <th key={h} className="caption-12 pb-[8px] font-normal text-[var(--text-muted)]">
                 {h}
               </th>
             ))}
@@ -264,51 +305,16 @@ function Candidates({ gate }: { gate: NonNullable<RunDetail['gate']> }) {
           {gate.candidates.map((c, i) => (
             <tr key={i} className="border-b border-[var(--border-hairline)]">
               <td className="mono-label-12 w-[32px] py-[10px] text-[var(--text-muted)]">{i + 1}</td>
-              <td className="mono-value-13 w-[140px] py-[10px] text-[var(--text-primary)]">
+              <td className="mono-value-13 w-[180px] py-[10px] text-[var(--text-primary)]">
                 {c.selector}
               </td>
-              <td className="body-13_5 py-[10px] text-[var(--text-secondary)]">{c.value || '—'}</td>
-              <td className="mono-value-13 w-[80px] py-[10px] text-[var(--text-primary)]">
-                {c.score.toFixed(4)}
-              </td>
-              <td className="w-[110px] py-[10px]">
-                <Bar
-                  value={Math.round(c.score * 1000)}
-                  of={1000}
-                  tone={i === 0 ? 'var(--semantic-warning)' : 'var(--border-default)'}
-                />
+              <td className="body-13_5 py-[10px] text-[var(--text-secondary)]">
+                {c.value || t('common.dash')}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-      <p className="meta-12_5 text-[var(--text-secondary)]">
-        {gate.reproduces ? (
-          <>
-            The gate publishes only when the score clears{' '}
-            <span className="mono-value-12_5 text-[var(--text-primary)]">τ {gate.tau}</span> AND the
-            margin over the runner-up clears{' '}
-            <span className="mono-value-12_5 text-[var(--text-primary)]">δ {gate.delta}</span>. Here
-            the score was{' '}
-            <span className="mono-value-12_5 text-[var(--text-primary)]">
-              {gate.score.toFixed(4)}
-            </span>{' '}
-            and the margin{' '}
-            <span className="mono-value-12_5 text-[var(--text-primary)]">
-              {gate.margin.toFixed(4)}
-            </span>
-            .
-          </>
-        ) : (
-          // Refusing to draw a threshold that does not explain the recorded
-          // outcome is the same refusal the gate itself makes.
-          <>
-            The scores are as the gate recorded them. The thresholds are not shown: the target’s
-            contract no longer reproduces this run’s recorded reason, so the numbers on it today are
-            not the ones this run was judged under.
-          </>
-        )}
-      </p>
     </div>
   );
 }
