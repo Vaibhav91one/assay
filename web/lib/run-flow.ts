@@ -198,7 +198,14 @@ export function gateNumbers(
  * contract has been edited since -- and the screen then declines to draw them
  * rather than marking a line at a number that explains nothing.
  */
-export function gateCheck(cell: CellRecord, t: { tau: number; delta: number }): boolean {
+export function gateCheck(
+  // Widened from `CellRecord` to the two columns it actually reads, so
+  // `lib/explain.ts` can ask the same question of a proof row without
+  // assembling a whole cell it does not have. Every existing caller passes a
+  // `CellRecord` and still type-checks: this is strictly more permissive.
+  cell: Pick<CellRecord, 'ranked' | 'reason'>,
+  t: { tau: number; delta: number },
+): boolean {
   const n = gateNumbers(cell.ranked);
   if (!n || !cell.reason) return false;
   if (n.score <= t.tau) return cell.reason === 'below_tau';
@@ -440,7 +447,14 @@ export function flowFor(run: RunRecord): Flow {
         ? 'The replacement cleared the gate, so it was published.'
         : withheld
           ? 'A policy withheld the heal.'
-          : 'Refused. Nothing was published into this cell.',
+          // ONE TRUTH ABOUT THE HOLE, and this is half of it -- the other half
+          // is the `outcome` node below. They used to contradict each other on
+          // the same canvas: this said nothing was published and that one said
+          // "The cell was published as null", which is the same word used for
+          // both sides of the fork it is describing. Nothing is WRITTEN; the
+          // output column holds `null` as the labelled hole. Both nodes now say
+          // that, in those words. /* copy(G) */
+          : 'Refused. Nothing was written into this cell.',
       tone: held ? 'warning' : 'success',
       branch: held
         ? { taken: 'refused — hold the cell', notTaken: 'cleared — publish the replacement' }
@@ -497,7 +511,7 @@ export function flowFor(run: RunRecord): Flow {
     kind: 'outcome',
     title: held ? 'Hold' : 'Publish',
     summary: held
-      ? 'The cell was published as null and labelled. It was never filled.'
+      ? 'The cell was left empty (null) — nothing was written. The hole is labelled, not filled.' /* copy(G) */
       : `${cell.field} was published as ${cell.status}.`,
     tone: held ? 'warning' : 'success',
     facts: outcomeFacts,
