@@ -411,31 +411,55 @@ Check these before declaring a pass clean; each has recurred:
 
 Nothing in the file covers this; it is net-new.
 
-One MCP server, two transports, three install targets. Not two connectors.
+One MCP server, three install targets. Not two connectors.
 
 - **stdio** → Claude Code (`claude mcp add`) and Codex (`~/.codex/config.toml`). Keys
-  stay on the machine, which is the correct BYOK default.
-- **HTTP** → the claude.ai remote connector, served as a Next route handler.
+  stay on the machine, which is the correct BYOK default. **This is what is built**;
+  `npm run mcp` runs it.
+- **HTTP** → the claude.ai remote connector, to be served as a Next route handler.
+  **Not built.** `src/mcp/server.ts` connects a `StdioServerTransport` and nothing
+  under `web/app/` serves MCP. Two transports is the plan, not the state. The tool
+  surface is loaded from a directory rather than listed, so the HTTP transport will
+  serve the same tools without touching any of them.
 
 **The headline: the agent's inbox is the Decisions screen.** Not "let Claude scrape
 things" — every MCP server at this hackathon can scrape things. This one hands an agent
 the list of calls a scraper refused to make.
 
-| Tool | Returns |
+**27 tools**, registered by globbing `src/mcp/tools/*.ts`. The table below was written
+before the surface existed and had drifted: it listed seven tools, named one
+(`assay_backfill`) that has never existed, and omitted twenty. The canonical list, with
+what each returns, is `/docs/mcp` — kept beside the code rather than here. The shape
+that matters at this altitude:
+
+| Module | Tools |
 |---|---|
-| `assay_status(scraper?)` | Field states, what is held, what is waiting |
-| `assay_decisions(limit?)` | Open items: both answers, evidence, lead, stakes |
-| `assay_propose(item_id, candidate_ref)` | **An element reference, never a string.** Scored and gated like any candidate; may return *still holding* |
-| `assay_runs(scraper, since?)` | The run log |
-| `assay_backfill(field, since?)` | What would be rewritten, and what it would say |
-| `assay_explain(proof_id)` | Provenance |
-| `assay_watch(url, fields)` | Creates a scraper the same way the goal box does |
+| `core.ts` | `assay_status` `assay_held` `assay_decisions` `assay_propose` `assay_runs` `assay_blast` `assay_explain` `assay_watch` |
+| `setup.ts` | `assay_create_watch` `assay_targets` `assay_pause_watch` `assay_delete_watch` |
+| `reports.ts` | `assay_incidents` `assay_incident` `assay_diff` `assay_digest` |
+| `health.ts` | `assay_field_health` `assay_field_health_stored` |
+| `contracts.ts` | `assay_contract` `assay_contract_history` |
+| `brake.ts` | `assay_brakes` `assay_heal_history` |
+| `blast.ts` | `assay_blast_radius` |
+| `ai.ts` | `assay_model_status` `assay_score_nomination` |
+| `connectors.ts`, `skills.ts` | `assay_connectors` `assay_skills` |
+
+`assay_propose(proof, candidate_index)` takes **an index into a list Assay built, never
+a string.** Scored and gated like any candidate; may return *still holding*.
 
 **Refused tool: `assay_resolve`.** No model settles a decision. A model nomination
 enters as a candidate and clears the same two gates or does not. This is not a policy
 choice bolted on — `assay-decision-disagreement` already draws the rule: when the
 scorer and the model disagree, *neither wins*. An MCP tool that let the model decide
-would contradict a screen that already exists.
+would contradict a screen that already exists. It is enforced at boot: a module
+exporting that name stops the server rather than being silently dropped.
+
+Three more are absent for the same reason and are worth naming, because "we did not get
+to it" and "we will not" are different facts: **`assay_clear_brake`** (clearing a brake
+resumes publishing from an oscillating field), **`assay_contract_write`** (a threshold is
+policy, and policy changes in a reviewed diff), and **`assay_skill_enable`** (enabling a
+page source is a grant, and an agent driven by untrusted page text is the last principal
+that should make one).
 
 **Injection posture.** `AI-AND-AGENTS.md` §1 establishes that the model returns element
 references and Assay reads the DOM itself. The connector is where untrusted page text
