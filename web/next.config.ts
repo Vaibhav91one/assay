@@ -1,3 +1,4 @@
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { NextConfig } from 'next';
 import { createMDX } from 'fumadocs-mdx/next';
@@ -13,6 +14,38 @@ import { createMDX } from 'fumadocs-mdx/next';
 // a false statement, rendered confidently, from a missing directory. This
 // config runs before any route module, which is where CAPTURE_DIR is read.
 process.env.ASSAY_CAPTURES ||= resolve(process.cwd(), '..', 'captures');
+
+// The same mistake, one directory up. `.env.example` sits at the repo root and
+// every doc tells an operator to copy it to `.env` there -- but Next roots its
+// own env loading at `web/`, so a root `.env` is never read and the web process
+// starts without credentials that are, as far as the operator is concerned, set.
+//
+// The failure is silent and confidently wrong in the same shape as the capture
+// path above: `keys.ts` reports BRIGHTDATA_API_TOKEN as NOT SET on an instance
+// whose `.env` declares it, because presence is read from THIS process and this
+// process never saw the file. The panel is telling the truth about the wrong
+// scope.
+//
+// `||=` per key, so a variable already exported into the environment wins over
+// the file -- the file is a default, not an override -- and a missing file is
+// simply nothing to read rather than a throw.
+// Anchored on this file, not on `process.cwd()`. The working directory is
+// `web/` under `next dev` but the repo root under `npx next start web`, so a
+// cwd-relative '..' finds the repo root in one case and the directory ABOVE
+// the repo in the other -- where it silently finds nothing and every
+// credential reads as unset. `import.meta.dirname` is always `web/`.
+const envFile = resolve(import.meta.dirname, '..', '.env');
+if (existsSync(envFile)) {
+  for (const line of readFileSync(envFile, 'utf8').split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eq = trimmed.indexOf('=');
+    if (eq < 1) continue;
+    const key = trimmed.slice(0, eq).trim();
+    const value = trimmed.slice(eq + 1).trim().replace(/^["']|["']$/g, '');
+    if (value) process.env[key] ||= value;
+  }
+}
 
 const config: NextConfig = {
   // Pinned rather than left to default, because `createMDX` below fills this in
