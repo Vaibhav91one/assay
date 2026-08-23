@@ -129,7 +129,13 @@ function Hole() {
       >
         held
       </span>
-      <span className="meta-12_5 text-[var(--text-muted)]">nothing was written here</span>
+      {/* The same sentence the run canvas's Hold node uses -- copy(G). The two
+          screens describe the same cell and used to disagree about whether
+          anything had been "published": nothing is WRITTEN, and `null` is the
+          labelled hole the output column holds in its place. */}
+      <span className="meta-12_5 text-[var(--text-muted)]">
+        left empty (null) — nothing was written
+      </span>
     </span>
   );
 }
