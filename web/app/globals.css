@@ -88,9 +88,9 @@ body {
  *
  * Measured against #ffffff (`--bg-page`), which is what all four are read on:
  *
- *   --text-muted     #a2a2a2 -> #767676   2.51:1 -> 4.54:1
+ *   --text-muted        #a2a2a2 -> #767676   2.55:1 -> 4.54:1
  *   --semantic-warning  #ca8a04 -> #a16207   2.94:1 -> 4.92:1
- *   --semantic-success  #16a34a -> #15803d   3.30:1 -> 4.55:1
+ *   --semantic-success  #16a34a -> #15803d   3.30:1 -> 5.02:1
  *   --semantic-link     #2563eb -> unchanged, already 5.17:1
  *
  * 4.5:1 rather than 3:1 because none of the three is decoration: `--text-muted`
@@ -100,12 +100,18 @@ body {
  * was already true when they were unreadable.
  *
  * They also carry white on top -- the `start` and `success` button variants,
- * the decision card -- and both readings IMPROVE: white on #15803d is 4.55:1
- * against 3.30:1 before. NOTE: `components/button.tsx` quotes the old 3.30
- * figure in the comment on `start`, and that comment is now stale.
+ * the decision card -- and both readings IMPROVE, since contrast is symmetric:
+ * white on #15803d is 5.02:1 against 3.30:1 before. NOTE: `components/
+ * button.tsx` quotes the old 3.30 figure in the comment on `start`, and that
+ * comment is now stale -- it says the label "does NOT clear 4.5:1", and it now
+ * does.
  *
- * The two `-subtle` fills are backgrounds and are untouched: the darker text
- * on them gains contrast for free (#a16207 on #fffbeb is 5.14:1).
+ * The two `-subtle` fills are backgrounds and are untouched: the darker text on
+ * them gains for free -- #a16207 on #fffbeb is 4.75:1, #15803d on #f0fdf4 is
+ * 4.79:1, both from under 3:1.
+ *
+ * Every figure above is measured in the browser against the running app, not
+ * computed by hand.
  */
 :root {
   --text-muted: #767676;
