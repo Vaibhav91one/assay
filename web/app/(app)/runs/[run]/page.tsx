@@ -11,6 +11,11 @@ import { OutcomeDonut, PageSizeBars } from '@/components/run-charts';
 import { ProofSheet } from '@/components/proof-sheet';
 import { runDetail, type CellSummary, type RunDetail } from '@/lib/run-detail';
 import { heldBecause } from 'assay/engine/reports/vocabulary';
+import { extractorDiff } from 'assay/engine/reports/extractor-diff';
+import { schemaDiff } from 'assay/engine/reports/schema-diff';
+import { ExtractorDiff } from '@/components/diff/extractor-diff';
+import { SchemaDiff } from '@/components/diff/schema-diff';
+import { t } from '@/lib/copy';
 import { stamp } from '@/lib/when';
 
 export const metadata: Metadata = { title: 'Run · Assay' };
@@ -32,6 +37,22 @@ export default async function RunPage({ params }: { params: Promise<{ run: strin
   const id = Number(run);
   const d = Number.isInteger(id) ? await runDetail(id) : null;
   if (!d) notFound();
+
+  // The run before this one for the same target, off the history this page had
+  // already loaded rather than out of a second query. `history` is every run
+  // for the target, oldest first, so the entry in front of this one is the run
+  // the record's shape is compared against.
+  const at = d.history.findIndex((h) => h.runId === d.runId);
+  const previous = at > 0 ? d.history[at - 1]!.runId : null;
+
+  // Both are null on a run with nothing to show, and both sections are then
+  // absent. Neither renders an empty state: an empty state on a clean run says
+  // "no changes here" to a reader who has already read `clean` in the top bar.
+  const [selector, shape] = await Promise.all([
+    d.focus ? extractorDiff(d.runId, d.focus) : null,
+    previous === null ? [] : schemaDiff(previous, d.runId),
+  ]);
+  const shapeMoved = shape.some((c) => c.kind !== 'same');
 
   return (
     <>
@@ -61,6 +82,32 @@ export default async function RunPage({ params }: { params: Promise<{ run: strin
           <section className="flex flex-col gap-[12px]">
             <Heading>Fields</Heading>
             <Fields cells={d.cells} />
+          </section>
+        )}
+
+        {/* The shape of the published record, against the run before it. Absent
+            when nothing about it moved, and absent on the first run for a
+            target, which has nothing to be compared with. */}
+        {previous !== null && shapeMoved && (
+          <section className="flex flex-col gap-[12px]">
+            <Heading note={`run ${previous} → run ${d.runId}`}>{t('run.section.record')}</Heading>
+            <SchemaDiff
+              changes={shape}
+              scraper={d.scraper}
+              fromRun={previous}
+              toRun={d.runId}
+            />
+          </section>
+        )}
+
+        {/* What moved in HOW the field is read -- or, on a held run, what would
+            have moved. This sits above the gate rather than below it for the
+            same reason the canvas sits above the Sources table: the compact
+            statement first, the full evidence under it. */}
+        {selector && (
+          <section className="flex flex-col gap-[12px]">
+            <Heading note={selector.field}>{t('run.section.selector')}</Heading>
+            <ExtractorDiff diff={selector} />
           </section>
         )}
 
