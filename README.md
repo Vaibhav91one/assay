@@ -1,5 +1,5 @@
 <h1 align="center">
-  <img src="assets/scrape-verse-logo.png" alt="Assay" width="180">
+  <img src="web/public/brand/assay-mark.svg" alt="Assay" width="120">
   <br>
   Assay
   <br>
