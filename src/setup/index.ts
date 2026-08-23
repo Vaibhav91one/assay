@@ -101,7 +101,15 @@ export const Cadence = z.string().min(1).max(16).refine(
 );
 
 export const CreateInput = z.strictObject({
-  url: z.union([z.url(), z.string().regex(/^corpus:\/\/[a-z0-9_-]+$/i)]),
+  // `brightdata://<dataset_id>/<url-encoded page url>` is a Bright Data
+  // prebuilt scraper, resolved by `fetchHtml` the way `corpus://` is. The
+  // dataset id is pinned to Bright Data's own `gd_` shape here as well as in
+  // `scrape()`, so a malformed one is refused before it reaches a request.
+  url: z.union([
+    z.url(),
+    z.string().regex(/^corpus:\/\/[a-z0-9_-]+$/i),
+    z.string().regex(/^brightdata:\/\/gd_[a-z0-9]+\/.+$/i),
+  ]),
   fields: z.array(FieldInput).min(1).max(12),
   cadence: Cadence.default('6h'),
   /** Override the derived id. Lowercase, so two ids cannot differ only by case. */

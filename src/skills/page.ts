@@ -308,6 +308,51 @@ const SOURCES: Record<string, (url: string) => Promise<Fetched>> = {
 };
 
 /**
+ * `brightdata://<dataset_id>/<url-encoded page url>`
+ *
+ * A Bright Data prebuilt scraper as a page source, alongside `corpus://`.
+ *
+ * A SCHEME RATHER THAN A FLAG on the target row, because the whole point of
+ * `fetchHtml` is that everything upstream of the gate is addressable as a
+ * string. `createTarget` stores a url, the worker reads a url, and neither has
+ * to learn what a dataset is. `corpus://` established the pattern.
+ *
+ * IT IS NOT IN `SOURCES`, and that is deliberate. Those are FALLBACKS, tried
+ * after a direct fetch fails, because the operator gave a real url and Assay
+ * could not open it. This is not a fallback: the operator chose a prebuilt
+ * scraper, and quietly fetching the site's own HTML instead would watch a
+ * different document than the one they asked for. So it is matched before the
+ * direct path and never after it.
+ *
+ * The record is rendered to a deterministic document by `recordToHtml` and the
+ * engine reads it exactly as it reads a page. The import is dynamic because 19
+ * modules import this file and most of them will never scrape a dataset;
+ * `src/connectors/scrapers.ts` pulls in zod and the library catalogue, and none
+ * of that belongs in the common path.
+ */
+const BRIGHTDATA = 'brightdata://';
+
+async function fromBrightData(url: string): Promise<Fetched> {
+  const rest = url.slice(BRIGHTDATA.length);
+  const slash = rest.indexOf('/');
+  // Named parts in the message: a malformed one of these is a thing the
+  // operator typed, and "invalid url" would not tell them which half is wrong.
+  if (slash < 1 || slash === rest.length - 1) {
+    throw new Error(
+      `${url} is not a Bright Data source. Expected brightdata://<dataset_id>/<url-encoded page url>`,
+    );
+  }
+  const datasetId = rest.slice(0, slash);
+  const page = decodeURIComponent(rest.slice(slash + 1));
+
+  const [{ scrape }, { recordToHtml }] = await Promise.all([
+    import('../connectors/scrapers.js'),
+    import('../connectors/record.js'),
+  ]);
+  return { html: recordToHtml(await scrape(datasetId, page)), via: 'brightdata' };
+}
+
+/**
  * The bytes at `url`, and which source produced them.
  *
  * `enabledIds` is a parameter so a test can state the configuration it is
@@ -315,6 +360,7 @@ const SOURCES: Record<string, (url: string) => Promise<Fetched>> = {
  */
 export async function fetchHtml(url: string, enabledIds?: readonly string[]): Promise<Fetched> {
   if (url.startsWith('corpus://')) return fromCorpus(url);
+  if (url.startsWith(BRIGHTDATA)) return fromBrightData(url);
 
   try {
     return await direct(url);
