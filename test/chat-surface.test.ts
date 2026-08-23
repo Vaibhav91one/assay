@@ -410,6 +410,89 @@ describe('a transcript can say a turn failed, and not only that one is missing',
   });
 });
 
+// --- a transcript that cannot be saved --------------------------------------
+
+/**
+ * The bodies of the `catch (e) {...}` and `catch {...}` blocks in a source file.
+ *
+ * Brace-matched rather than regexed to the closing brace, because a catch body
+ * here contains braces of its own -- a template literal, an arrow function --
+ * and a lazy `[\s\S]*?\}` stops at the first of them and reports a body that
+ * looks empty. The lookbehind is what keeps `.catch(() => {})` out: that is a
+ * promise handler, not a catch block, and it is the correct shape for a
+ * fire-and-forget write.
+ */
+function catchBodies(src: string): string[] {
+  const out: string[] = [];
+  for (const m of src.matchAll(/(?<![.\w])catch\s*(?:\([^)]*\)\s*)?\{/g)) {
+    let depth = 1;
+    let i = m.index + m[0].length;
+    for (; i < src.length && depth > 0; i++) {
+      if (src[i] === '{') depth++;
+      else if (src[i] === '}') depth--;
+    }
+    out.push(src.slice(m.index + m[0].length, i - 1));
+  }
+  return out;
+}
+
+describe('a conversation that cannot be saved says so while the operator is still in it', () => {
+  const src = readFileSync(new URL('../web/app/(app)/watch.tsx', import.meta.url), 'utf8');
+
+  /**
+   * THE REGRESSION, AND IT COST A WHOLE CONVERSATION. `openConversation` threw
+   * -- `relation "conversations" does not exist`, from an instance whose
+   * DATABASE_URL was unset and had fallen back to a database that predates the
+   * `conversations` migration -- and the catch on the persistence path was
+   * `catch { id = convId; }`. The id stayed null, so every later message
+   * retried and failed identically, and four exchanges left zero rows. The
+   * operator was told nothing at the time and found out on reload, by absence.
+   *
+   * Source text, because there is no DOM in this suite and the property is
+   * about what the component does with an error rather than about what any one
+   * render looks like. What it pins is the shape that cannot come back: a catch
+   * on this screen that swallows.
+   */
+  it('leaves a failed turn behind in every catch, and discards none of them', () => {
+    const bodies = catchBodies(src);
+    // A guard on the guard: a regex that matched nothing would pass silently.
+    expect(bodies.length).toBeGreaterThanOrEqual(3);
+    for (const body of bodies) {
+      expect([body, /failed\(|turnFailed\(/.test(body)]).toEqual([body, true]);
+    }
+  });
+
+  it('never swallows a failed create by resetting the id and saying nothing', () => {
+    expect(src).not.toMatch(/catch\s*(?:\([^)]*\)\s*)?\{\s*(?:\/\/[^\n]*\n\s*)*id = convId;\s*\}/);
+  });
+
+  /**
+   * The sentence carries the driver's own message, which is what turns "this
+   * was not saved" into "this was not saved BECAUSE the table is not there".
+   * That is the difference between an operator who reloads and loses four
+   * messages and an operator who runs the migration.
+   */
+  it('names what went wrong, so the next misconfiguration is readable at the time', () => {
+    expect(src).toMatch(/could not save this message: \$\{\(e as Error\)\.message\}/);
+    expect(src).toMatch(/could not save this command: \$\{\(e as Error\)\.message\}/);
+  });
+
+  // The property the old comment was reaching for, kept: a store that is down
+  // does not stop the agent answering. Answering while VISIBLY unsaved is fine.
+  it('still reads as answered once the reply lands, so no retry is offered', () => {
+    const asked: Turn = { role: 'operator', text: 'Build API: https://www.youtube.com/', at: '2026-08-23T11:38:29.316Z' };
+    const unsaved = turnFailed(
+      'Assay could not save this message: relation "conversations" does not exist.',
+      '2026-08-23T11:38:29.400Z',
+    );
+    const answered: Turn = { role: 'assay', text: 'I can watch that.', at: '2026-08-23T11:38:40.000Z' };
+    expect(tail([asked, unsaved, answered])).toBe('answered');
+    // And before the reply arrives it is a failure like any other, which is the
+    // state that offers "Ask again".
+    expect(tail([asked, unsaved])).toBe('failed');
+  });
+});
+
 // --- the SSE reader ----------------------------------------------------------
 
 /** A body that hands back exactly the chunks given, however they are split. */
