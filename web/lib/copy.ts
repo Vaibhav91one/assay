@@ -144,6 +144,26 @@ const COPY = {
   'run.evidence.head.value': 'value',
   'run.evidence.head.source': 'read from',
 
+  // -- the two diffs on the run page -----------------------------------------
+  //
+  // Only the labels are here. The line of numbers under a selector diff is
+  // assembled from the score, the margin and the two thresholds, and by the
+  // rule at the top of this file that makes it prose whose SHAPE changes with
+  // the data, not copy with a hole in it. It lives in the component.
+  'run.section.selector': 'The selector',
+  'run.section.record': 'The record',
+  'diff.pane.before': 'before',
+  'diff.pane.after': 'after',
+  // The right-hand pane of a refusal is not an `after`: nothing was applied, so
+  // there is no state the page is now in that this describes. It is the change
+  // that was declined, and the label has to say so or the diff reads as a
+  // record of something that happened.
+  'diff.pane.refused': 'refused',
+  'diff.pane.takenBack': 'taken back',
+  'diff.nothingPublished': 'Nothing was published into this cell.',
+  'diff.held': 'held',
+  'diff.tooClose': 'the gap between them',
+
   // -- fields ----------------------------------------------------------------
   'fields.heading': 'Fields',
   'fields.filter.all': 'all fields',
