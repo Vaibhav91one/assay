@@ -13,7 +13,7 @@
 import { load } from 'cheerio';
 import { readFile, readdir, writeFile, mkdir } from 'node:fs/promises';
 import { fingerprint } from '../src/fingerprint.js';
-import { rank } from '../src/heal.js';
+import { decide, rank } from '../src/heal.js';
 import { MUTATIONS, markTarget, isTarget, TRUTH_ATTR } from '../src/mutate.js';
 import { pickTarget } from '../src/target.js';
 
@@ -21,7 +21,7 @@ const arg = (n: any, d: any) => {
   const i = process.argv.indexOf(`--${n}`);
   return i > -1 ? Number(process.argv[i + 1]) : d;
 };
-const CAPTURES = arg('captures', 4);
+const CAPTURES = arg('captures', 6);   // matches tools/bench.ts -- see header
 const SITES = ['mattel', 'ikea', 'chicco'];
 
 const fresh = async (site: any, file: any) => {
@@ -63,15 +63,20 @@ async function collect() {
         const best = ranked[0];
         const runnerUp = ranked[1];
         const margin = runnerUp ? best.score - runnerUp.score : 1;
-        const bestText = $m(best.el).text().replace(/\s+/g, ' ').trim();
+        // FULL text off each element, which is what `decide()` compares. This
+        // used to store `fp.text`, truncated at 200 characters by the
+        // fingerprint, and that one difference is why this file reported wrong
+        // values the real gate never publishes -- see the header.
+        const texts = ranked.map((r) => $m(r.el).text().replace(/\s+/g, ' ').trim());
         rows.push({
           site, mutation: mut.id, expect: mut.expect,
           bestScore: best.score,
           margin,
           bestIsTarget: isTarget(best.el),
           // the scraping-relevant notion of correct: did we get the right STRING
-          bestValueOk: truthText !== null && bestText === truthText,
-          tiedTexts: ranked.map((r) => ({ s: r.score, v: (r.fp.text || '').trim() })),
+          bestValueOk: truthText !== null && texts[0] === truthText,
+          scores: ranked.map((r) => r.score),
+          texts,
         });
       }
     }
@@ -79,16 +84,25 @@ async function collect() {
   return rows;
 }
 
-/** Apply a (tau, delta) pair to the pre-computed rankings. */
+/**
+ * Apply a (tau, delta) pair to the pre-computed rankings.
+ *
+ * THE ARITHMETIC IS NOT REIMPLEMENTED HERE ANY MORE. It calls `decide()`, the
+ * same function `healGated` calls, because the copy that used to live in this
+ * function drifted from the gate and the drift was not visible from either
+ * side: this file reported 3 wrong values at tau 0.60 / delta 0.16 on the same
+ * 153 cases where `npm run bench` reported zero, and then recommended tau 0.75
+ * to compensate for a bug that only existed here.
+ *
+ * `limit` no longer affects the outcome -- `decide()` reads the top two scores
+ * and nothing further down -- so the fact that this file ranks 6, bench ranks 3
+ * and the runner ranks 5 changes only how much evidence each records, not what
+ * any of them decides.
+ */
 function evaluate(rows: any, tau: any, delta: any) {
   const r = { n: rows.length, correct: 0, wrong: 0, abstain_right: 0, abstain_wrong: 0 };
   for (const row of rows) {
-    let decision;
-    if (row.bestScore <= tau) decision = 'abstain';
-    else if (row.margin <= delta) {
-      const tied = row.tiedTexts.filter((t: any) => row.bestScore - t.s <= delta);
-      decision = new Set(tied.map((t: any) => t.v)).size === 1 ? 'heal' : 'abstain';
-    } else decision = 'heal';
+    const { decision } = decide(row.scores, (i: number) => row.texts[i], tau, delta);
 
     if (decision === 'abstain') {
       if (row.expect === 'none') r.abstain_right++;

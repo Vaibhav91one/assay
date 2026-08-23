@@ -224,6 +224,66 @@ export function heal($: CheerioAPI, target: Fingerprint, opts: RankOptions = {})
  * Benign ties are recovered for free: if the tied candidates carry the SAME value,
  * the ambiguity is harmless -- we do not care which node we read it from.
  */
+/** What the arithmetic alone can conclude, before a page or a policy is involved. */
+export type GateVerdict =
+  | { decision: 'heal'; reason: 'benign_tie' | 'clear_margin' }
+  | { decision: 'abstain'; reason: 'below_tau' | 'thin_margin' | 'no_candidates' };
+
+/**
+ * The gate's arithmetic, with no page attached.
+ *
+ * SPLIT OUT BECAUSE THERE WAS A SECOND COPY OF IT. `tools/sweep.ts` fits tau
+ * and delta by ranking each case once and then replaying ~90 threshold pairs
+ * over the stored ranking, which it cannot do by calling `healGated` -- that
+ * re-ranks. So it reimplemented these fifteen lines, and the copy drifted:
+ * it compared `fp.text`, which the fingerprint truncates at 200 characters,
+ * where this function has always compared the FULL element text. On the
+ * `duplicate_longtail` mutation -- a decoy identical for 200 characters and
+ * divergent after -- the copy saw a benign tie where the gate sees two
+ * different values, and published.
+ *
+ * The consequence was not theoretical. `results/sweep.json` reported 3 wrong
+ * values at tau 0.60 / delta 0.16 on the same 153 cases where `npm run bench`,
+ * which calls the real gate, reports zero. The sweep was measuring a healer
+ * with a known wrong-publish bug and recommending thresholds to compensate for
+ * it, which is how it came to recommend tau 0.75.
+ *
+ * `textAt` is a callback rather than an array so the caller only pays for
+ * reading text off the DOM in the branch that needs it, which is the branch
+ * this function used to compute inline. The hot path is unchanged, and
+ * `results/events.jsonl` staying byte-identical across the extraction is the
+ * evidence for that.
+ */
+export function decide(
+  scores: readonly number[],
+  textAt: (i: number) => string,
+  tau: number,
+  delta: number,
+): GateVerdict {
+  if (!scores.length) return { decision: 'abstain', reason: 'no_candidates' };
+  const best = scores[0]!;
+  const margin = scores.length > 1 ? best - scores[1]! : 1;
+
+  if (best <= tau) return { decision: 'abstain', reason: 'below_tau' };
+  if (margin <= delta) {
+    // THE TIE IS THE TOP TWO, because the margin that got us here is the top
+    // two. A third candidate inside the delta band was never part of the
+    // question being asked, and letting it veto the answer meant one function
+    // held two different notions of "tied". See test/benign-tie.test.ts.
+    const tied = scores.length > 1 ? [0, 1] : [0];
+    // FULL text off the element, not `fp.text` -- the fingerprint truncates at
+    // 200 chars, and two candidates identical to char 200 can carry different
+    // values after it. Publishing on a prefix match is a wrong-publish path
+    // inside the safety mechanism (docs/CRITIQUE.md; pinned by the
+    // duplicate_longtail mutation).
+    const values = new Set(tied.map(textAt));
+    return values.size === 1
+      ? { decision: 'heal', reason: 'benign_tie' }
+      : { decision: 'abstain', reason: 'thin_margin' };
+  }
+  return { decision: 'heal', reason: 'clear_margin' };
+}
+
 export function healGated(
   $: CheerioAPI,
   target: Fingerprint,
@@ -246,43 +306,16 @@ export function healGated(
     element: best.el,
   };
 
-  if (best.score <= tau) {
-    return { ...base, decision: 'abstain', reason: 'below_tau' };
-  }
-  if (margin <= delta) {
-    // a tie whose candidates agree on the VALUE is not a real ambiguity
-    //
-    // THE TIE IS THE TOP TWO, because the margin that got us here is the top
-    // two. `margin` is `best.score - runnerUp.score` and nothing else, so a
-    // third candidate inside the delta band was never part of the question
-    // being asked -- letting it veto the answer meant one function held two
-    // different notions of "tied" and abstained whenever they disagreed.
-    //
-    // Measured on the independent variants in `results/headtohead.jsonl`, the
-    // old set held `wrapper_div` and `combo_redesign` for a reason that was
-    // never about the two candidates it had compared: on `wrapper_div` the top
-    // two carry identical text and a third, from an unrelated recall card, sat
-    // inside the band with different text.
-    //
-    // This LOOSENS a safety mechanism, so the thing to check is whether it
-    // loosens it into a wrong publish. `remove_field` and `duplicate_similar`
-    // are the two variants where abstaining was correct, and both survive:
-    // there the top two themselves disagree, which is the case this branch
-    // still refuses. The corpus arms are the real evidence and they are in
-    // the commit message.
-    const tied = runnerUp ? [best, runnerUp] : [best];
-    // Compare FULL text read off the elements, not fp.text -- the fingerprint
-    // truncates at 200 chars, and two candidates identical to char 200 can carry
-    // different values after it. Publishing on a prefix match is a wrong-publish
-    // path inside the safety mechanism (docs/CRITIQUE.md; pinned by the
-    // duplicate_longtail mutation).
-    const values = new Set(tied.map((r) => $(r.el).text().replace(/\s+/g, ' ').trim()));
-    if (values.size === 1) {
-      return { ...base, decision: 'heal', reason: 'benign_tie' };
-    }
-    return { ...base, decision: 'abstain', reason: 'thin_margin' };
-  }
-  return { ...base, decision: 'heal', reason: 'clear_margin' };
+  // One implementation of the arithmetic, shared with `tools/sweep.ts`. The
+  // text callback is only invoked in the tie branch, so the common path still
+  // reads nothing off the DOM.
+  const verdict = decide(
+    ranked.map((r) => r.score),
+    (i) => $(ranked[i]!.el).text().replace(/\s+/g, ' ').trim(),
+    tau,
+    delta,
+  );
+  return { ...base, ...verdict } as HealGateResult;
 }
 
 export { SPEC };
