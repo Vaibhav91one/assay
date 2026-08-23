@@ -80,9 +80,19 @@ function Publishing({ v }: { v: SettingsView }) {
     <>
       <Section label="WHAT ASSAY MAY PUBLISH" id="what-assay-may-publish" />
       <div className="flex w-full items-center pt-[32px]">
+        {/* "Change per-field policy in a contract" was the one dead sentence
+            on this screen: it named the mechanism and then offered no path to
+            it, from a tab where nothing else is settable either, so it read as
+            a control someone had forgotten to draw. There is no such control
+            and there is not going to be one -- src/contracts/http.ts records
+            the rule as "credentials get pixels, policy gets a PR" -- so the
+            sentence now says where a contract is actually written. copy(G) */}
         <p className="body-13_5 flex-1 text-[var(--text-primary)]">
           Calibrated: publishes only a clear winner ({v.defaults.tau.toFixed(2)} floor,{' '}
-          {v.defaults.delta.toFixed(2)} lead). Change per-field policy in a contract.
+          {v.defaults.delta.toFixed(2)} lead). Per-field policy is a YAML contract, checked with{' '}
+          <span className="mono-value-12_5">assay contracts validate</span> and posted to{' '}
+          <span className="mono-value-12_5">/api/v1/contracts</span> — never edited here, so every
+          change to it has a diff.
         </p>
         <Copy
           text={policiesAsYaml(v.policies)}
