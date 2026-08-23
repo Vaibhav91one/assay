@@ -3,7 +3,7 @@
 
 import pg from 'pg';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { eq, and, isNull, sql } from 'drizzle-orm';
+import { eq, and, isNull, sql, getTableName, isTable } from 'drizzle-orm';
 import * as schema from './schema.js';
 import { nextRunAt } from '../schedule.js';
 import { selectorFor, type Evaluation } from '../runner.js';
@@ -35,6 +35,68 @@ export function getDb(): Db {
 export async function closeDb() {
   if (pool) { await pool.end(); pool = undefined; db = undefined; }
 }
+
+/**
+ * Refuse to run against a store that is missing tables this build needs.
+ *
+ * WHY THIS EXISTS, and it cost a real operator a real conversation. The default
+ * above is a convenience for a fresh clone, and it is also a trap: a process
+ * started with no `DATABASE_URL` connects to `assay` and reports nothing unusual
+ * until some feature added after that database was last migrated touches a table
+ * that is not there. On this machine `assay` has twelve tables and no
+ * `conversations`, so an instance served the whole app, answered in chat, and
+ * dropped every message on the floor -- the only symptom being a drizzle error
+ * about a relation, three layers down, in a `catch`.
+ *
+ * The check is TABLES, not the migration journal. `assay`, `assay_live` and
+ * `assay_ui` were all created with `db:push`, which writes the schema and no
+ * journal rows at all, so "count applied == count shipped" would condemn three
+ * working databases and clear the broken one. What actually matters is whether
+ * the tables the code is about to query exist.
+ *
+ * It does NOT check columns. A missing column is the same class of fault and
+ * this would catch only half of it -- but the table list comes free from the
+ * schema object, and a column list would be a second copy of the schema that
+ * drifts. `npm run db:migrate` is the fix for both, and the message says so.
+ */
+export async function assertSchemaCurrent(): Promise<void> {
+  const { rows } = await getDb().execute(
+    sql`SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'`,
+  );
+  const complaint = schemaComplaint(
+    (rows as Row[]).map((r) => String(r.table_name)),
+    DATABASE_URL,
+  );
+  if (complaint) throw new Error(complaint);
+}
+
+/** Every table this build will query, straight off the schema object. */
+export const wantedTables = (): string[] =>
+  Object.values(schema).filter(isTable).map(getTableName);
+
+/**
+ * The sentence, or null when the store is fine.
+ *
+ * Split out from the query so the refusal can be tested without a second
+ * database to be missing tables in. The lesson is one this repo learned twice
+ * today: a check that can only be exercised by standing up broken infrastructure
+ * is a check whose negative case never gets a test.
+ */
+export function schemaComplaint(present: readonly string[], url: string): string | null {
+  const have = new Set(present);
+  const missing = wantedTables().filter((name) => !have.has(name)).sort();
+  if (missing.length === 0) return null;
+
+  // The database is named because the whole failure is being pointed at the
+  // wrong one, and an error that does not say which store it means sends the
+  // operator to migrate the database they were already thinking of.
+  return `The database at ${redact(url)} is missing ${missing.length} table(s) this build needs: `
+    + `${missing.join(', ')}. Run \`npm run db:migrate\` against it, or set DATABASE_URL to the right store — `
+    + `with none set, Assay uses postgres://localhost:5432/assay.`;
+}
+
+/** A connection string is a credential when it carries one. */
+const redact = (url: string) => url.replace(/\/\/[^@/]*@/, '//<credentials>@');
 
 /**
  * Reserve the run id BEFORE the run is evaluated.
