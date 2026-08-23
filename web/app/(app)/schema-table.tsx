@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Check, ChevronDown, CircleAlert, Hand } from 'lucide-react';
+import { ArrowDown, Check, ChevronDown, CircleAlert, Hand } from 'lucide-react';
 import { Collapse } from '@/components/motion/collapse';
 import { TIER_THRESHOLDS, DEFAULT_THRESHOLDS } from 'assay/engine/contracts/tiers';
 import { HELD_BECAUSE } from 'assay/engine/reports/vocabulary';
@@ -36,11 +36,8 @@ import type { Proposal } from './watch-actions';
  * the store.
  *
  * The tier disclosure is the field's real configuration, read from
- * `src/contracts` -- the tier vocabulary, the tau/delta each tier implies, what
- * happens on an abstention. It is a disclosure and not a control: FEATURES.md F2
- * says a user hand-tuning deltas per field is a user the tiers have failed, and
- * docs/APP-DESIGN.md 11 fails review for "a frame that exposes a raw threshold
- * as a control".
+ * `src/contracts` -- see `TierSpec`, which lives OUTSIDE the scroller for the
+ * reason recorded there.
  */
 export function SchemaTable({
   proposal,
@@ -52,6 +49,42 @@ export function SchemaTable({
   onKeep: (names: string[]) => void;
 }) {
   const fields = proposal.fields;
+
+  /**
+   * THE DISCLOSURE IS OWNED HERE, NOT BY THE ROW, and that is the whole fix.
+   *
+   * It used to be a `useState` inside `FieldRow`, so the panel opened INSIDE
+   * the scroller. On the last row that put a 130px panel below a row already
+   * at the bottom of a 320px clip: the reader clicked a chevron and got a
+   * two-pixel sliver of the thing they asked for, with no way to know the rest
+   * existed. Scrolling it into view is a race against the collapse animation,
+   * and a portal is a positioning problem for a panel that is not floating.
+   *
+   * So the panel moved OUT of the clipped area -- one open row at a time,
+   * drawn under the list where nothing can crop it. It names its field, which
+   * it has to now that it is not physically attached to one.
+   */
+  const [openField, setOpenField] = useState<string | null>(null);
+  const open = fields.find((f) => f.name === openField) ?? null;
+
+  /**
+   * Whether the last row is on screen.
+   *
+   * The scrollbar is styled to be visible (`scroller-visible` in globals.css)
+   * and that is still not an affordance a reader looks for inside a chat
+   * transcript -- eight rows in a 320px box look exactly like eight rows. So
+   * the footer says it in words, and stops saying it once it is not true.
+   */
+  const listRef = useRef<HTMLUListElement>(null);
+  const [atEnd, setAtEnd] = useState(true);
+  const measure = useCallback(() => {
+    const el = listRef.current;
+    if (!el) return;
+    // 1px of slack: fractional layout heights make an exact comparison read as
+    // "not at the end" on a list that plainly is.
+    setAtEnd(el.scrollTop + el.clientHeight >= el.scrollHeight - 1);
+  }, []);
+  useEffect(() => { measure(); }, [measure, fields.length]);
 
   return (
     <div className="w-full rounded-[var(--radius-card)] border border-[var(--border-hairline)]">
@@ -67,34 +100,77 @@ export function SchemaTable({
         looks finished, and half a row showing is the cheapest possible
         statement that it is not.
       */}
-      <ul className="scroller-visible max-h-[320px] overflow-y-auto overscroll-contain py-[4px]">
+      <ul
+        ref={listRef}
+        onScroll={measure}
+        className="scroller-visible max-h-[320px] overflow-y-auto overscroll-contain py-[4px]"
+      >
         {fields.map((f) => (
           <FieldRow
             key={f.name}
             field={f}
             on={keep.includes(f.name)}
+            open={openField === f.name}
+            onOpen={() => setOpenField(openField === f.name ? null : f.name)}
             onToggle={() =>
               onKeep(keep.includes(f.name) ? keep.filter((n) => n !== f.name) : [...keep, f.name])
             }
           />
         ))}
       </ul>
+
+      {/* Outside the clip, so the last row's panel is as reachable as the
+          first's. `Collapse` keeps a closed panel inert rather than merely
+          invisible, so nothing here is tabbable while it is shut. */}
+      <Collapse open={open !== null}>
+        {open && <TierSpec field={open} />}
+      </Collapse>
+
+      <div className="flex flex-wrap items-baseline gap-x-[10px] gap-y-[3px] border-t border-[var(--border-hairline)] px-[16px] py-[7px]">
+        <span className="caption-11 text-[var(--text-muted)]">
+          {fields.length} field{fields.length === 1 ? '' : 's'}
+        </span>
+        {!atEnd && (
+          <span className="caption-11 flex items-center gap-[4px] text-[var(--text-secondary)]">
+            <ArrowDown size={11} strokeWidth={1.5} aria-hidden />
+            more below
+          </span>
+        )}
+        {/* READ OFF THE FIELDS, never restated. The sentence this replaces was
+            written once and then drifted from the chips beside it -- it said
+            everything unsure "starts on the strict tier" while `tierFor` puts
+            only `low` there, so a medium-confidence field was labelled `normal`
+            three inches under a paragraph calling it strict. Counting the
+            tiers the rows actually carry cannot drift from the rows. */}
+        <span className="caption-11 ml-auto text-[var(--text-muted)]">{tierLine(fields)}</span>
+      </div>
     </div>
   );
 }
 
+/** "5 on normal, 2 on strict" -- in the order the tier vocabulary is graded. */
+function tierLine(fields: Proposal['fields']): string {
+  const order = ['strict', 'normal', 'loose'] as const;
+  const counted = order
+    .map((tier) => ({ tier, n: fields.filter((f) => tierFor(f.confidence) === tier).length }))
+    .filter((c) => c.n > 0);
+  return `starts on ${counted.map((c) => `${c.n} ${c.tier}`).join(', ')}`;
+}
+
 /** One field: a tick to keep it, its name, its tier, and what the page says in it. */
 function FieldRow({
-  field, on, onToggle,
+  field, on, open, onOpen, onToggle,
 }: {
-  field: Proposal['fields'][number]; on: boolean; onToggle: () => void;
+  field: Proposal['fields'][number];
+  on: boolean;
+  open: boolean;
+  onOpen: () => void;
+  onToggle: () => void;
 }) {
-  const [open, setOpen] = useState(false);
   // A field the model was least sure of gets the tier that interrupts a human
   // more often. That is the real mapping the confirm step will apply, not a
   // decoration -- see `tierFor`.
   const tier = tierFor(field.confidence);
-  const t = TIER_THRESHOLDS[tier];
 
   return (
     <li className="px-[16px] py-[7px]">
@@ -115,8 +191,9 @@ function FieldRow({
 
           <button
             type="button"
-            onClick={() => setOpen((v) => !v)}
+            onClick={onOpen}
             aria-expanded={open}
+            aria-controls={SPEC_ID}
             aria-label={`How ${field.name} is compared`}
             className="focus-ring ml-auto flex shrink-0 items-center gap-[4px] rounded-[var(--radius-control)] px-[4px] py-[2px] transition-colors duration-[var(--duration-tint)] hover:bg-[var(--surface-subtle)]"
           >
@@ -135,23 +212,46 @@ function FieldRow({
           <Cell field={field} on={on} />
         </div>
       </div>
-
-      <Collapse open={open} contentClassName="pt-[8px]">
-        <dl className="flex max-w-[420px] flex-col gap-[5px] rounded-[var(--radius-control)] bg-[var(--surface-subtle)] p-[10px]">
-          <Spec k="reads" v={field.selector} mono />
-          <Spec k="tier" v={tier} />
-          <Spec k="tau" v={t.tau.toFixed(2)} mono />
-          <Spec k="delta" v={t.delta.toFixed(2)} mono />
-          <Spec k="on hold" v={DEFAULT_THRESHOLDS.onAbstain.replace('_', ' ')} />
-          <Spec k="auto-approve" v="clear margin" />
-          <p className="caption-11 pt-[2px] leading-[1.45] text-[var(--text-secondary)]">
-            {tier === 'strict'
-              ? 'Interrupts you more often, on purpose. Below these numbers Assay holds the cell rather than guessing.'
-              : 'Below these numbers Assay holds the cell rather than guessing.'}
-          </p>
-        </dl>
-      </Collapse>
     </li>
+  );
+}
+
+/** One id, because exactly one panel is open at a time. */
+const SPEC_ID = 'schema-table-tier-spec';
+
+/**
+ * The field's real configuration, read from `src/contracts`.
+ *
+ * It is a disclosure and not a control: FEATURES.md F2 says a user hand-tuning
+ * deltas per field is a user the tiers have failed, and docs/APP-DESIGN.md 11
+ * fails review for "a frame that exposes a raw threshold as a control".
+ *
+ * It names its field. Sitting below the list rather than under its own row, it
+ * has to -- a panel that says `tau 0.86` and nothing else is a panel about
+ * whichever row the reader last remembers clicking.
+ */
+function TierSpec({ field }: { field: Proposal['fields'][number] }) {
+  const tier = tierFor(field.confidence);
+  const t = TIER_THRESHOLDS[tier];
+
+  return (
+    <dl
+      id={SPEC_ID}
+      className="flex flex-col gap-[5px] border-t border-[var(--border-hairline)] bg-[var(--surface-subtle)] px-[16px] py-[10px]"
+    >
+      <Spec k="field" v={field.name} mono />
+      <Spec k="reads" v={field.selector} mono />
+      <Spec k="tier" v={tier} />
+      <Spec k="tau" v={t.tau.toFixed(2)} mono />
+      <Spec k="delta" v={t.delta.toFixed(2)} mono />
+      <Spec k="on hold" v={DEFAULT_THRESHOLDS.onAbstain.replace('_', ' ')} />
+      <Spec k="auto-approve" v="clear margin" />
+      <p className="caption-11 pt-[2px] leading-[1.45] text-[var(--text-secondary)]">
+        {tier === 'strict'
+          ? 'Interrupts you more often, on purpose. Below these numbers Assay holds the cell rather than guessing.'
+          : 'Below these numbers Assay holds the cell rather than guessing.'}
+      </p>
+    </dl>
   );
 }
 
