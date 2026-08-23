@@ -11,8 +11,8 @@ import { turn, type TraceEvent } from '@/lib/chat-stream';
 import { Button } from '@/components/button';
 import { DEFAULT_MODEL } from 'assay/engine/agent/models';
 import {
-  commandTurn, conversationInUrl, historyFor, tail, turnFailed, HISTORY_TURNS,
-  type CommandName, type Turn,
+  commandTurn, conversationInUrl, historyFor, tail, turnFailed, whyFailed as why,
+  HISTORY_TURNS, type CommandName, type Turn,
 } from 'assay/engine/store/conversation-log';
 import { Composer } from './composer';
 import { CommandTurn } from './command-turn';
@@ -219,11 +219,11 @@ export function Watch({
       }
     } catch (e) {
       id = convId;
-      // The driver's own message, not a sentence invented here: "relation
+      // The store's own words, not a sentence invented here: "relation
       // `conversations` does not exist" is the difference between an operator
       // who reloads and loses the conversation and one who runs the migration.
       failed(
-        `Assay could not save this message: ${(e as Error).message}. It will still answer, `
+        `Assay could not save this message: ${why(e)}. It will still answer, `
         + 'but this turn is not in the transcript, so a reload will not show it.',
       );
     }
@@ -317,7 +317,7 @@ export function Watch({
       // this command is not in it. There is no `abort` to check here -- a
       // command opens no stream, so nothing newer can be running underneath it.
       setTurns((t) => [...t, turnFailed(
-        `Assay could not save this command: ${(e as Error).message}. What it shows is `
+        `Assay could not save this command: ${why(e)}. What it shows is `
         + 'read live and is correct, but this turn is not in the transcript.',
       )]);
     }

@@ -27,7 +27,7 @@ import { HELD_BECAUSE, heldBecause } from '../src/reports/vocabulary.js';
 
 import { readFileSync } from 'node:fs';
 import {
-  conversationInUrl, tail, turnFailed, toMarkdown, type Turn,
+  conversationInUrl, tail, turnFailed, toMarkdown, whyFailed, WHY_CHARS, type Turn,
 } from '../src/store/conversation-log.js';
 
 import {
@@ -473,8 +473,37 @@ describe('a conversation that cannot be saved says so while the operator is stil
    * messages and an operator who runs the migration.
    */
   it('names what went wrong, so the next misconfiguration is readable at the time', () => {
-    expect(src).toMatch(/could not save this message: \$\{\(e as Error\)\.message\}/);
-    expect(src).toMatch(/could not save this command: \$\{\(e as Error\)\.message\}/);
+    expect(src).toMatch(/could not save this message: \$\{why\(e\)\}/);
+    expect(src).toMatch(/could not save this command: \$\{why\(e\)\}/);
+  });
+
+  /**
+   * The half of the sentence a person can act on, against the real shape the
+   * store throws. `Failed query: insert into "conversations" (...) params: ...`
+   * is drizzle's wrapper and it carries the operator's own message and the turn
+   * JSON after it; `relation "conversations" does not exist` is the cause, and
+   * the cause is the reason the conversation was lost.
+   */
+  it('takes the store error over the wrapper that repeats the transcript back', () => {
+    const wrapped = new Error(
+      'Failed query: insert into "conversations" ("conversation_id", "title", "turns") '
+      + 'values (default, $1, $2) returning "conversation_id"\nparams: Build API: '
+      + 'https://www.youtube.com/,[{"role":"operator","text":"Build API: https://www.youtube.com/"}]',
+      { cause: new Error('relation "conversations" does not exist') },
+    );
+    expect(whyFailed(wrapped)).toBe('relation "conversations" does not exist');
+    // No cause is the browser's own transport error, which is already a clause.
+    expect(whyFailed(new Error('Failed to fetch'))).toBe('Failed to fetch');
+    // A throw that is not an Error at all still says something.
+    expect(whyFailed('nope')).toBe('nope');
+  });
+
+  it('bounds the clause, so one line stays one line', () => {
+    const long = new Error('x'.repeat(WHY_CHARS + 50));
+    expect(whyFailed(long)).toHaveLength(WHY_CHARS + 1);
+    expect(whyFailed(long).endsWith('…')).toBe(true);
+    // Newlines out: a transcript line is a line.
+    expect(whyFailed(new Error('a\n  b'))).toBe('a b');
   });
 
   // The property the old comment was reaching for, kept: a store that is down

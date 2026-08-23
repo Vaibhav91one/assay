@@ -240,6 +240,33 @@ export function turnFailed(detail: string, at = new Date().toISOString()): Turn 
   return { role: 'event', kind: 'failed', text: detail, at };
 }
 
+/** As much of a failed turn's sentence as one clause can hold. */
+export const WHY_CHARS = 160;
+
+/**
+ * What went wrong, in as few words as the error will give up.
+ *
+ * A STORE ERROR ARRIVES WRAPPED, AND THE WRAPPER IS THE WRONG HALF. drizzle's
+ * own message is the entire failed statement with the parameters interpolated
+ * after it -- for a first message that is the operator's text and the whole
+ * turn as JSON, several hundred characters of it -- while the sentence a person
+ * can act on, `relation "conversations" does not exist`, sits on `cause`. Read
+ * verbatim, the transcript line that exists to explain a loss is itself
+ * unreadable, and it copies scraped-page text back into the log for no reason.
+ *
+ * So: the cause when there is one, the error otherwise, and a bound either way.
+ * `turnFailed`'s note says the detail is never an exception's text verbatim on
+ * its own; this is the part that makes that true for the store's exceptions.
+ */
+export function whyFailed(e: unknown): string {
+  const cause = (e as { cause?: unknown } | null)?.cause;
+  const m = cause instanceof Error ? cause.message
+    : e instanceof Error ? e.message
+    : String(e);
+  const one = m.replace(/\s+/g, ' ').trim();
+  return one.length > WHY_CHARS ? `${one.slice(0, WHY_CHARS)}…` : one;
+}
+
 /**
  * How a transcript ends, which is what decides whether a retry is offered.
  *
