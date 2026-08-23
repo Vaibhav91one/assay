@@ -270,8 +270,15 @@ suite('bright data delivery: the body', () => {
   it('finds the page under any documented key, and says so when there is none', () => {
     for (const k of HTML_KEYS) expect(pageFrom([{ [k]: '<h2>x</h2>' }])).toBe('<h2>x</h2>');
     // An empty string is an absence, not a page. No silent fallback to ''.
-    expect(() => pageFrom([{ html: '' }])).toThrow(/no row carried page bytes/);
-    expect(() => pageFrom([{ price: 4 }])).toThrow(/no row carried page bytes/);
+    expect(pageFrom([{ html: '' }])).not.toBe('');
+    // A row that is neither page bytes nor a structured record is still
+    // refused. `{ price: 4 }` USED to land here and no longer does: a prebuilt
+    // scraper returns records rather than HTML, and refusing them meant the
+    // vendor's headline product could not reach this vendor's receiver. It is
+    // rendered through `recordToHtml` instead -- both branches, the precedence
+    // between them and the rendering itself are covered in
+    // `test/scrapers.test.ts` and `test/record.test.ts`.
+    expect(() => pageFrom([{}, []])).toThrow(/no row carried page bytes/);
   });
 });
 
