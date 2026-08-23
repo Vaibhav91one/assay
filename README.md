@@ -3,7 +3,8 @@
 A self-healing scraper that abstains when it is not sure, and measures how often
 its heals are wrong.
 
-**Demo video:** _not yet recorded — link goes here._
+**Demo video:** not recorded yet. Until it is, `npm run demo` is the thirty-second
+version and it runs offline — two breaks, two outcomes, one of them a labelled hole.
 <!-- TODO(owner): paste the demo recording link on the line above before submitting. -->
 
 Built for the **Into the Scrape-Verse** hackathon (WeMakeDevs x Bright Data,
@@ -158,10 +159,12 @@ edit, not a fixed scraper.
 
 From there: **Decisions** is the queue of things Assay would not publish alone,
 **Runs** is what happened and when, and every published value has a proof record
-that opens beside whatever screen you are on and shows the candidates, their
-scores, the margin, and the thresholds in force at the time.
+that opens beside whatever screen you are on and says what the gate decided and
+why — and, behind a disclosure, the scores, margin, and thresholds in force at
+the time.
 
-Read `web/content/docs/self-host.mdx` before exposing it — see below.
+Read [Getting started](/docs/self-host) (`web/content/docs/self-host.mdx`) before
+exposing it — see below.
 
 ## Bright Data and Assay solve different problems
 
