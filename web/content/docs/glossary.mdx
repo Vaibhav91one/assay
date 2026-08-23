@@ -1,0 +1,228 @@
+---
+title: Glossary
+description: The words Assay uses on its screens, in its API and in its code, and which one it uses where.
+---
+
+Assay has a small vocabulary and uses it consistently. This page is the record of
+which word means what, and — where a concept has both a screen word and a data
+token — which one you are looking at.
+
+<Callout title="Screen words and data tokens are different, and neither may be renamed for the other">
+  The words in **What you read on a screen** are user-facing and can be improved.
+  The words in `code font` are stored values — `field_runs.reason`, the
+  `status` in a published envelope — and consumers branch on them. Renaming one
+  of those is a schema change, and this page never asks for it.
+</Callout>
+
+---
+
+## The three words for not publishing
+
+These are the ones most often used as if they were interchangeable. They are
+three different things: an action, a state, and a stored token.
+
+### Abstain
+
+**What the gate does.** When a candidate fails either threshold, the gate
+abstains: it declines to publish. Abstaining is an *event* — it happens once,
+during a run.
+
+The benchmark counts abstentions (`54 of 153`), because that is the price side
+of the [honest trade](/docs/#the-honest-trade).
+
+### Held for review
+
+**What the cell then is, and the phrase every screen uses.** The cell is not
+empty and not wrong — it exists, it is known, and Assay is deliberately
+withholding it until a person answers one question about it. It shows up on
+**Decisions**.
+
+<Callout title="This is the canonical user-facing phrase">
+  A cell the gate refused is **held for review** — not "quarantined", not
+  "abstained", not "blocked", not "pending". One phrase, everywhere a person
+  reads it. Shorten it to **held** where the surrounding sentence already says
+  what for; never lengthen it.
+</Callout>
+
+### `quarantined`
+
+**The stored token for the same state.** It is the value of `status` in the
+published envelope (`src/envelope.ts`), and it is what a downstream consumer
+branches on:
+
+```json
+{
+  "price": null,
+  "_assay": { "fields": { "price": { "status": "quarantined", "reason": "thin_margin" } } }
+}
+```
+
+`null` **plus** `status: "quarantined"` is the whole point. A bare `null` cannot
+be told apart from a field that was genuinely empty, and the difference between
+"this is empty" and "we would not swear to this" is the product.
+
+The full closed set of statuses is `live`, `healed`, `quarantined`, `stale`,
+`degraded`.
+
+---
+
+## The decision
+
+### Heal
+
+Re-finding a field after the page moved under it. Candidates on the new page are
+ranked by weighted similarity against a stored fingerprint of what the field used
+to look like, and the winner is a *proposed* heal — not yet a published one.
+
+### Gate
+
+The two tests a proposed heal has to pass before anything is published:
+
+```
+score > tau   AND   score - runner_up > delta
+```
+
+Both, or nothing is published and the cell is held for review. The second test is
+the one that makes Assay different: a candidate can look very much like the thing
+you lost and still be wrong, if something else looks nearly as much like it.
+
+### τ (tau) — the **floor**
+
+How much a candidate has to look like the field at all. Default `0.60`. Below it,
+nothing on the page was a plausible candidate.
+
+### δ (delta) — the **lead**
+
+How far ahead of the runner-up the winner has to be. Default `0.16`. Below it,
+two candidates were too close to separate and choosing between them is a coin
+flip.
+
+<Callout title="Settings says floor and lead, and that is the same fact">
+  The Settings screen renders these as **"0.60 floor, 0.16 lead"** rather than as
+  τ and δ. Same two numbers, same two tests. The Greek letters are the code's
+  names and this page keeps them so the [assay-score page](/docs/assay-score) and
+  `src/heal.ts` can be read against each other; the screens use the English.
+</Callout>
+
+### Tier
+
+A named pair of thresholds a [contract](#contract) can put on a field, so nobody
+hand-tunes deltas per field:
+
+| Tier | floor (τ) | lead (δ) | On the 135-case corpus |
+|---|---|---|---|
+| `strict` | 0.70 | 0.20 | 84 correct, 0 wrong, 37.8% abstained |
+| `normal` (default) | 0.60 | 0.16 | 93 correct, 0 wrong, 31.1% abstained |
+| `loose` | 0.60 | 0.12 | 105 correct, **6 wrong**, 17.8% abstained |
+
+`loose` forfeits the zero-wrong-values claim for that field. That is stated in
+numbers because it is the reason the tier is opt-in.
+
+---
+
+## The bands
+
+One word for the gate's decision, read off the stored reason and never
+recomputed. Seven of them, and they are a closed set — see
+[The Assay Score](/docs/assay-score) for the arithmetic behind each.
+
+| Band | Stored reason | What it means |
+|---|---|---|
+| **CLEAR** | `clear_margin` | One candidate matched and was well clear of everything else. |
+| **AGREED** | `benign_tie` | The best candidates were too close to separate, but they all carried the **same value**, so which one it was read from does not matter. |
+| **THIN** | `thin_margin` | Too close to separate **and** carrying different values. Held. |
+| **WEAK** | `below_tau` | Nothing on the page matched this field well enough to be a candidate. Held. |
+| **GONE** | `no_candidates` | There was nothing on the page to compare against at all. Held. |
+| **POLICY** | `auto_approve_floor:<n>` | The gate would have published this; the contract asks a person to look first. |
+| **BRAKED** | `brake_engaged` | Healing is stopped on this field by an operator. Held. |
+
+A reason with no band draws **nothing**. That is a real answer and not a bug: an
+unknown reason code, or `brake_unreadable:<message>` — which is deliberately
+*not* BRAKED, because a brake that could not be read is not a brake that is set.
+
+### Why the reason codes read the way they do
+
+`src/reports/vocabulary.ts` turns the stored code into a sentence a person can
+act on. Three of them, verbatim:
+
+| Code | What a person is shown |
+|---|---|
+| `thin_margin` | two candidates on the page were too close to call |
+| `below_tau` | nothing on the page looked enough like this field to be a candidate |
+| `no_candidates` | the element is gone and nothing took its place |
+
+A code with **no** wording in that table is printed **as a code**, marked
+untranslated. It is never given an invented adjective — a record whose whole
+value is that it does not fabricate cannot start by fabricating a word.
+
+`benign_tie` has no entry there because it is not a refusal: it is the gate
+publishing after finding the tie did not matter.
+
+---
+
+## The scraper
+
+### Contract
+
+The per-target YAML that says which fields exist and what policy each is gated
+at — [tier](#tier), or explicit τ and δ, what to do on abstain, and where to
+alert. Versions are appended and never edited, so "what did the contract say when
+that cell was published" is always answerable. A field the contract does not
+mention is gated at the engine defaults, and that is stated rather than left
+blank.
+
+### Cadence
+
+How often a target runs. `hourly`, `daily`, `weekly`, or a count like `6h` or
+`2d`. Default `6h`. `paused` is **not** a cadence — pausing is an operation, and
+a paused target keeps the cadence it will resume on.
+
+### Anchors
+
+The landmark elements around a field that Assay records alongside it — the things
+that let it say *where* the field was, not just what it looked like. When several
+independent anchors stop agreeing with each other, that is semantic drift, and it
+is a break signal even though nothing errored.
+
+### Skeleton
+
+A hash of the page's structure with **all text excluded** — that exclusion is
+what makes it a skeleton rather than a page hash. A changed skeleton is recorded
+as context, never as a break on its own: sites redesign constantly without
+breaking anything.
+
+---
+
+## The record
+
+### Episode
+
+One break, from the run that detected it to the run where the field recovered. It
+is the unit of alerting: a second break on the same field inside an open episode
+is the *same* incident, which is how a template change across 400 pages sends one
+message with a count instead of 400 messages.
+
+### Proof record
+
+The `_assay` block attached to every published row: the run, the proof id, and
+per field the status and the reason. Behind a *show the numbers* disclosure it
+also carries the candidates, their scores, the margin and the thresholds in force
+at the time.
+
+### Proof id
+
+`pr_9f21c4…` — the handle on one published cell. It is what
+[`/api/v1/explain/:proof`](/docs/api-reference) and `assay explain` take, and it
+resolves to the full provenance for that cell. It is stable, which is why a
+target with run history can be paused but never deleted: deleting the runs would
+break the proof id on every row already published from it.
+
+---
+
+## Where to go next
+
+<Cards>
+  <Card title="The Assay Score" href="/docs/assay-score" description="The seven bands, and the arithmetic behind each one." />
+  <Card title="The run flow" href="/docs/run-flow" description="fetch → detect → heal → gate → publish or abstain." />
+  <Card title="API reference" href="/docs/api-reference" description="Where these words appear in a response body." />
+</Cards>
