@@ -23,7 +23,7 @@ const notFound = (what: string): Response =>
 
 /** Wrap a handler in the auth guard so no route can forget it. */
 const guarded = (fn: Handler): Handler => async (request, ctx) => {
-  const denied = await requireKey(request);
+  const denied = await requireKey(request, ctx);
   if (denied) return denied;
   try {
     return await fn(request, ctx);
@@ -54,8 +54,10 @@ export const getExplain = guarded(async (_req, ctx) => {
 });
 
 /** GET /api/v1/held -- every quarantined cell (F4). */
-export const getHeld = guarded(async () =>
-  Response.json({ held: await heldCells() }));
+export const getHeld = guarded(async (request) =>
+  Response.json({
+    held: await heldCells(new URL(request.url).searchParams.get('target')),
+  }));
 
 /** GET /api/v1/runs?target=&limit= */
 export const getRuns = guarded(async (request) => {
@@ -68,5 +70,9 @@ export const getRuns = guarded(async (request) => {
 /** GET /api/v1/queue -- open decisions the gate refused to make. */
 export const getQueue = guarded(async (request) => {
   const url = new URL(request.url);
-  return Response.json({ queue: await openQueue(intParam(url, 'limit', 50, 500)) });
+  return Response.json({
+    queue: await openQueue(
+      intParam(url, 'limit', 50, 500), url.searchParams.get('target'),
+    ),
+  });
 });

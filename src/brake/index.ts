@@ -218,7 +218,7 @@ export async function brakeState(targetId: string, field: string): Promise<Brake
 }
 
 /** Every field currently held by a brake. The index on brake_active is for this. */
-export async function listBrakes(): Promise<BrakeState[]> {
+export async function listBrakes(targetId?: string | null): Promise<BrakeState[]> {
   return getDb()
     .select({
       targetId: fieldState.targetId,
@@ -228,7 +228,9 @@ export async function listBrakes(): Promise<BrakeState[]> {
       updatedAt: fieldState.updatedAt,
     })
     .from(fieldState)
-    .where(eq(fieldState.brakeActive, true));
+    .where(targetId
+      ? and(eq(fieldState.brakeActive, true), eq(fieldState.targetId, targetId))
+      : eq(fieldState.brakeActive, true));
 }
 
 /**

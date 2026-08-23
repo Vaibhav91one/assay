@@ -195,11 +195,18 @@ export async function runsFor(targetId?: string | null, limit = 50) {
 }
 
 /** Open queue items -- the decisions the gate refused to make. */
-export async function openQueue(limit = 50) {
+export async function openQueue(limit = 50, targetId?: string | null) {
   const d = getDb();
   const rows = await d.select().from(schema.queueItems)
     .where(isNull(schema.queueItems.resolvedBy));
-  return rows.sort((a, b) => b.itemId - a.itemId).slice(0, limit);
+  if (!targetId) return rows.sort((a, b) => b.itemId - a.itemId).slice(0, limit);
+  const targetRuns = await d.select({ runId: schema.runs.runId }).from(schema.runs)
+    .where(eq(schema.runs.targetId, targetId));
+  const ids = new Set(targetRuns.map((run) => run.runId));
+  const proofs = new Set((await d.select({ proof: schema.fieldRuns.proofId, runId: schema.fieldRuns.runId })
+    .from(schema.fieldRuns)).filter((cell) => ids.has(cell.runId)).map((cell) => cell.proof));
+  return rows.filter((row) => proofs.has(row.proofId))
+    .sort((a, b) => b.itemId - a.itemId).slice(0, limit);
 }
 
 /**
@@ -235,9 +242,15 @@ export async function explain(proofId: string) {
 }
 
 /** Every held cell. The one query F4 exists to answer. */
-export async function heldCells() {
+export async function heldCells(targetId?: string | null) {
   const d = getDb();
-  return d.select().from(schema.fieldRuns).where(eq(schema.fieldRuns.status, 'quarantined'));
+  const held = await d.select().from(schema.fieldRuns)
+    .where(eq(schema.fieldRuns.status, 'quarantined'));
+  if (!targetId) return held;
+  const targetRuns = await d.select({ runId: schema.runs.runId }).from(schema.runs)
+    .where(eq(schema.runs.targetId, targetId));
+  const ids = new Set(targetRuns.map((run) => run.runId));
+  return held.filter((cell) => ids.has(cell.runId));
 }
 
 /**

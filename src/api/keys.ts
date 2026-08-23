@@ -1,33 +1,38 @@
 // Consumer API keys for the /api/v1 REST surface.
 //
-// NOT read-only, whatever this comment used to say. The same `requireKey` is
-// the only gate on every write in that tree: resolving a held decision
-// (src/decisions/index.ts writeRoute), clearing a brake latch, creating and
-// deleting targets, editing contracts and connectors. There is one kind of key
-// and it can do all of it -- `api_keys` has no scope column, so a key minted to
-// let a dashboard read run history can also settle the queue.
-//
-// That is a boundary worth knowing about before handing a key to anything.
-// Narrowing it is a schema change, not a comment change.
+// NOT read-only: the same guard sits on reads and mutations. New keys can be
+// restricted to named targets and to read versus write. A present scope fails
+// closed when a route cannot be tied to one of those targets; a null scope is
+// the additive legacy behavior and retains its former all-access authority.
 //
 // Only the hash is stored, so a leaked database is not a set of working
 // credentials. The plaintext is returned once at creation and never again.
 
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { z } from 'zod';
+import { parseDocument } from 'yaml';
 import { eq, and, isNull } from 'drizzle-orm';
-import { getDb, apiKeys } from '../store/index.js';
+import { getDb, apiKeys, sql } from '../store/index.js';
 
 const PREFIX = 'ak_';
+
+export const KeyScope = z.strictObject({
+  access: z.enum(['read', 'write']),
+  targets: z.array(z.string().min(1)).min(1),
+});
+export type KeyScope = z.infer<typeof KeyScope>;
 
 export const hashKey = (key: string): string => createHash('sha256').update(key).digest('hex');
 
 /** Mint a key. The plaintext is in the return value and nowhere else, ever. */
-export async function createKey(name: string) {
+export async function createKey(name: string, scope?: KeyScope | null) {
   const key = PREFIX + randomBytes(24).toString('hex');
+  const parsedScope = scope == null ? null : KeyScope.parse(scope);
   const [row] = await getDb().insert(apiKeys).values({
     name,
     keyPrefix: key.slice(0, 11),
     hash: hashKey(key),
+    scope: parsedScope,
   }).returning({ keyId: apiKeys.keyId, keyPrefix: apiKeys.keyPrefix });
   return { ...row, key };            // `key` is the only time the secret exists
 }
@@ -53,7 +58,12 @@ export async function verifyKey(presented: unknown) {
   // Fire-and-forget: a failed last-used update must not fail the request.
   getDb().update(apiKeys).set({ lastUsedAt: new Date() })
     .where(eq(apiKeys.keyId, row.keyId)).catch(() => {});
-  return row;
+  if (row.scope != null) {
+    const parsed = KeyScope.safeParse(row.scope);
+    if (!parsed.success) return null;       // malformed stored authority fails closed
+    return { ...row, scope: parsed.data };
+  }
+  return { ...row, scope: null };
 }
 
 /**
@@ -68,14 +78,105 @@ export function bearerFrom(request: Request): string | null {
   return m ? m[1]! : null;
 }
 
-/** Guard a route. Returns null when authorised, or the 401 Response to send. */
-export async function requireKey(request: Request): Promise<Response | null> {
+type RouteCtx = { params?: Promise<Record<string, string>> };
+
+const forbidden = (): Response => Response.json(
+  { error: 'forbidden', detail: 'This API key does not grant access to that target or capability.' },
+  { status: 403 },
+);
+
+async function jsonBody(request: Request): Promise<Record<string, any> | null> {
+  try {
+    const value = await request.clone().json();
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+async function targetForProof(proof: string): Promise<string | null> {
+  const { rows } = await getDb().execute(sql`
+    SELECT r.target_id FROM field_runs fr
+    JOIN runs r ON r.run_id = fr.run_id
+    WHERE fr.proof_id = ${proof} LIMIT 1
+  `);
+  return (rows as { target_id: string }[])[0]?.target_id ?? null;
+}
+
+async function targetForEpisode(episode: string): Promise<string | null> {
+  if (!/^\d+$/.test(episode)) return null;
+  const { rows } = await getDb().execute(sql`
+    SELECT target_id FROM episodes WHERE episode_id = ${Number(episode)} LIMIT 1
+  `);
+  return (rows as { target_id: string }[])[0]?.target_id ?? null;
+}
+
+/**
+ * Resolve the target this route actually addresses. Returning null means this
+ * route has no target boundary, or that an indirect id did not resolve; both
+ * are a denial for a scoped key.
+ */
+async function scopedTarget(request: Request, ctx?: RouteCtx): Promise<string | null> {
+  const url = new URL(request.url);
+  const path = url.pathname.replace(/^\/api\/v1/, '') || '/';
+  const params: Record<string, string> = await ctx?.params?.catch(() => ({})) ?? {};
+
+  if (/^\/targets\//.test(path) || /^\/contracts\//.test(path)) {
+    return params.target ?? (decodeURIComponent(path.split('/')[2] ?? '') || null);
+  }
+  if (/^\/(rows|explain)\//.test(path)) {
+    const proof = params.proof ?? decodeURIComponent(path.split('/')[2] ?? '');
+    return proof ? targetForProof(proof) : null;
+  }
+  if (/^\/reports\/incidents\//.test(path)) {
+    const episode = params.episode ?? path.split('/')[3] ?? '';
+    return targetForEpisode(episode);
+  }
+
+  if (path === '/contracts' && request.method !== 'GET') {
+    const yaml = (await jsonBody(request))?.yaml;
+    if (typeof yaml !== 'string') return null;
+    const document = parseDocument(yaml);
+    if (document.errors.length) return null;
+    const parsed = document.toJS();
+    return parsed && typeof parsed === 'object' && typeof parsed.target === 'string'
+      ? parsed.target
+      : null;
+  }
+  if (path.startsWith('/decisions/') || path === '/ai/nominate') {
+    const proof = (await jsonBody(request))?.proof;
+    return typeof proof === 'string' ? targetForProof(proof) : null;
+  }
+  if ((path === '/brake' || path === '/blast/retraction') && request.method !== 'GET') {
+    const target = (await jsonBody(request))?.target;
+    return typeof target === 'string' && target ? target : null;
+  }
+
+  const targetQueryRoutes = new Set([
+    '/targets', '/runs', '/held', '/queue', '/health-fields', '/blast',
+    '/blast/retraction', '/brake', '/reports/diff', '/reports/incidents',
+  ]);
+  if (targetQueryRoutes.has(path) && request.method === 'GET') {
+    return url.searchParams.get('target') || null;
+  }
+  return null;
+}
+
+/** Guard a route. Returns null when authorised, or the refusal Response. */
+export async function requireKey(request: Request, ctx?: RouteCtx): Promise<Response | null> {
   const key = bearerFrom(request);
-  if (!key || !(await verifyKey(key))) {
+  const verified = key ? await verifyKey(key) : null;
+  if (!verified) {
     return Response.json(
       { error: 'unauthorized', detail: 'Send Authorization: Bearer <api key>.' },
       { status: 401, headers: { 'WWW-Authenticate': 'Bearer' } },
     );
   }
+  if (verified.scope == null) return null;       // exact legacy behavior
+
+  const needed = request.method === 'GET' || request.method === 'HEAD' ? 'read' : 'write';
+  if (needed === 'write' && verified.scope.access !== 'write') return forbidden();
+  const target = await scopedTarget(request, ctx);
+  if (!target || !verified.scope.targets.includes(target)) return forbidden();
   return null;
 }

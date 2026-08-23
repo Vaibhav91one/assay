@@ -35,7 +35,7 @@ const badRequest = (e: z.ZodError): Response => Response.json({
 }, { status: 400 });
 
 const guarded = (fn: Handler): Handler => async (request, ctx) => {
-  const denied = await requireKey(request);
+  const denied = await requireKey(request, ctx);
   if (denied) return denied;
   try {
     return await fn(request, ctx);

@@ -9,6 +9,11 @@ import {
   primaryKey, index,
 } from 'drizzle-orm/pg-core';
 
+export type ApiKeyScope = {
+  access: 'read' | 'write';
+  targets: string[];
+};
+
 /** A page under watch, and the contract describing what to read off it. */
 export const targets = pgTable('targets', {
   targetId: text('target_id').primaryKey(),
@@ -87,7 +92,7 @@ export const fieldRuns = pgTable('field_runs', {
 }));
 
 /**
- * Consumer API keys for the read-only REST surface.
+ * Consumer API keys for the REST surface.
  *
  * Only the hash is stored: a leaked database does not become a set of working
  * credentials. The plaintext is shown once at creation and never again --
@@ -98,6 +103,9 @@ export const apiKeys = pgTable('api_keys', {
   name: text('name').notNull(),
   keyPrefix: text('key_prefix').notNull(),      // first 8 chars, for display only
   hash: text('hash').notNull().unique(),        // sha256 of the full key
+  // Null is the legacy all-access key. A present scope is fail-closed by
+  // src/api/keys.ts and can name only targets plus read/write authority.
+  scope: jsonb('scope').$type<ApiKeyScope>(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
   revokedAt: timestamp('revoked_at', { withTimezone: true }),

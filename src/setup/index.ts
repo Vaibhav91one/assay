@@ -383,9 +383,11 @@ async function lastStatusFor(runId: number | null): Promise<string | null> {
 }
 
 /** Everything under watch, newest first. */
-export async function listTargets(): Promise<{ ok: true; targets: TargetView[] }> {
+export async function listTargets(targetId?: string | null): Promise<{ ok: true; targets: TargetView[] }> {
   const { rows } = await getDb().execute(
-    sql`${VIEW} GROUP BY t.target_id ORDER BY t.created_at DESC`,
+    targetId
+      ? sql`${VIEW} WHERE t.target_id = ${targetId} GROUP BY t.target_id ORDER BY t.created_at DESC`
+      : sql`${VIEW} GROUP BY t.target_id ORDER BY t.created_at DESC`,
   );
   const out: TargetView[] = [];
   for (const r of rows as Row[]) out.push(view(r, await lastStatusFor(r.last_run)));

@@ -27,7 +27,7 @@ const bad = (code: string, detail: string, status = 400): Response =>
 
 /** Wrap a handler in the API-key guard so no config route can forget it. */
 const guarded = (fn: Handler): Handler => async (request, ctx) => {
-  const denied = await requireKey(request);
+  const denied = await requireKey(request, ctx);
   if (denied) return denied;
   try {
     return await fn(request, ctx);

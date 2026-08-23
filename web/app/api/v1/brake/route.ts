@@ -33,7 +33,7 @@ export async function GET(request: Request): Promise<Response> {
   const denied = await requireKey(request);
   if (denied) return denied;
   try {
-    const brakes = await listBrakes();
+    const brakes = await listBrakes(new URL(request.url).searchParams.get('target'));
     return Response.json({
       brakes: brakes.map((b) => ({
         target: b.targetId,

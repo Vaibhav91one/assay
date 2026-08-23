@@ -50,6 +50,13 @@
       "when": 1787424756372,
       "tag": "0006_gray_serpent_society",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787472941908,
+      "tag": "0007_perfect_abomination",
+      "breakpoints": true
     }
   ]
 }

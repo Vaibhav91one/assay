@@ -73,7 +73,7 @@ export const parseBody = async <S extends z.ZodType>(
 
 /** Guard, run, and never let a driver error reach a consumer. */
 export const guarded = (fn: Handler): Handler => async (request, ctx) => {
-  const denied = await requireKey(request);
+  const denied = await requireKey(request, ctx);
   if (denied) return denied;
   try {
     return await fn(request, ctx);
@@ -91,7 +91,9 @@ const send = (r: { ok: true } | { ok: false; error: SetupError }): Response =>
 const idFrom = async (ctx: RouteCtx): Promise<string> => (await ctx.params).target;
 
 /** GET /api/v1/targets -- everything under watch. */
-export const getTargets = guarded(async () => Response.json(await listTargets()));
+export const getTargets = guarded(async (request) => Response.json(
+  await listTargets(new URL(request.url).searchParams.get('target')),
+));
 
 /** POST /api/v1/targets -- create a watch and establish its baseline. */
 export const postTargets = guarded(async (request) => {

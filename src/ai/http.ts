@@ -15,7 +15,7 @@ type RouteCtx = { params: Promise<any> };
 type Handler = (request: Request, ctx: RouteCtx) => Promise<Response>;
 
 const guarded = (fn: Handler): Handler => async (request, ctx) => {
-  const denied = await requireKey(request);
+  const denied = await requireKey(request, ctx);
   if (denied) return denied;
   try {
     return await fn(request, ctx);
