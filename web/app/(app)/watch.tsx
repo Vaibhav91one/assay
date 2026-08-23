@@ -154,11 +154,54 @@ export function Watch({
     setRunning(true);
 
     // The transcript is written before the agent is asked, so a question that
-    // got no answer is still a question this instance was asked. A store that is
-    // down must not stop the agent answering, so this is caught and the turn
-    // continues -- unpersisted, which the operator finds out on reload rather
-    // than being told a lie now.
+    // got no answer is still a question this instance was asked.
     let id = convId;
+
+    /**
+     * A turn that did not land, recorded rather than swallowed.
+     *
+     * Persisted whenever there is a row to persist to -- including when the
+     * turn was aborted, because the abandoned question is still in the
+     * transcript and would otherwise read as merely unanswered forever. Only
+     * rendered when this turn still owns the screen: a newer turn, or another
+     * conversation, must not have someone else's failure appear underneath it.
+     *
+     * `id` is read at call time, not captured: the write below may set it, and
+     * a failure that happens after it did belongs to the row it opened.
+     */
+    const failed = (detail: string) => {
+      const ev = turnFailed(detail);
+      if (abort.current === ctl && !ctl.signal.aborted) setTurns((t) => [...t, ev]);
+      if (id != null) recordTurns(id, [ev]).catch(() => {});
+    };
+
+    /**
+     * The write, and what it says when it cannot happen.
+     *
+     * A STORE THAT IS DOWN MUST NOT STOP THE AGENT ANSWERING -- that much the
+     * old shape had right, and it is why this is caught at all rather than
+     * allowed to abandon the turn. What it had backwards was the rest: it
+     * discarded the error and left the operator with a screen that looked
+     * exactly like a working one. `openConversation` threw `relation
+     * "conversations" does not exist` on an instance whose DATABASE_URL had
+     * fallen back to a database predating that migration, `id` stayed null so
+     * every later message retried into the same throw, and four exchanges
+     * produced no rows and no sentence. The operator found out on reload, by
+     * absence. That is the silent failure this product exists to refuse --
+     * `src/envelope.ts` publishes a labelled hole rather than a plausible
+     * value, and a transcript owes the same.
+     *
+     * So it is said here, in the transcript, at the moment it happens, in the
+     * shape the screen already has for a turn that did not land. Answering
+     * while VISIBLY unsaved is fine; answering while silently unsaved is not.
+     *
+     * IT RETRIES ON EVERY MESSAGE, and the repetition is the point. Each
+     * message is separately lost, so each one says so -- one notice at the top
+     * of a conversation that keeps growing under it would go stale the moment
+     * it scrolled away. Retrying also means a store that comes back mid
+     * conversation starts recording again, instead of the screen staying dead
+     * because of one early failure it decided to remember.
+     */
     try {
       if (id == null) {
         id = await openConversation(message);
@@ -174,24 +217,16 @@ export function Watch({
       } else {
         await recordTurns(id, [asked]);
       }
-    } catch {
+    } catch (e) {
       id = convId;
+      // The driver's own message, not a sentence invented here: "relation
+      // `conversations` does not exist" is the difference between an operator
+      // who reloads and loses the conversation and one who runs the migration.
+      failed(
+        `Assay could not save this message: ${(e as Error).message}. It will still answer, `
+        + 'but this turn is not in the transcript, so a reload will not show it.',
+      );
     }
-
-    /**
-     * A turn that did not land, recorded rather than swallowed.
-     *
-     * Persisted whenever there is a row to persist to -- including when the
-     * turn was aborted, because the abandoned question is still in the
-     * transcript and would otherwise read as merely unanswered forever. Only
-     * rendered when this turn still owns the screen: a newer turn, or another
-     * conversation, must not have someone else's failure appear underneath it.
-     */
-    const failed = (detail: string) => {
-      const ev = turnFailed(detail);
-      if (abort.current === ctl && !ctl.signal.aborted) setTurns((t) => [...t, ev]);
-      if (id != null) recordTurns(id, [ev]).catch(() => {});
-    };
 
     const collected: TraceEvent[] = [];
     try {
@@ -258,8 +293,9 @@ export function Watch({
    * The conversation row is opened for a command exactly as it is for a message,
    * because a transcript that silently drops the first thing an operator did is
    * a transcript with a hole in it. A store that is down does not stop the
-   * listing appearing -- the turn is simply not persisted, which they find out
-   * on reload rather than being told a lie now, the same deal `submit` makes.
+   * listing appearing -- the panel above reads live either way -- and it does
+   * not get to be quiet about it either: the same deal `submit` makes, for the
+   * reason written out there.
    */
   const runCommand = useCallback(async (name: CommandName, args: string) => {
     const asked = commandTurn(name, args);
@@ -276,8 +312,14 @@ export function Watch({
       } else {
         await recordTurns(convId, [asked]);
       }
-    } catch {
-      // Unpersisted, and the panel above still reads live.
+    } catch (e) {
+      // The panel above still reads live, and the transcript says out loud that
+      // this command is not in it. There is no `abort` to check here -- a
+      // command opens no stream, so nothing newer can be running underneath it.
+      setTurns((t) => [...t, turnFailed(
+        `Assay could not save this command: ${(e as Error).message}. What it shows is `
+        + 'read live and is correct, but this turn is not in the transcript.',
+      )]);
     }
   }, [convId, router]);
 
