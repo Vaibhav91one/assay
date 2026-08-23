@@ -1,5 +1,5 @@
-// The skill registry, the consent store, and the one property that makes both
-// safe to put on a screen: nothing here can carry a credential's value.
+// The page-source registry, the consent store, and the one property that makes
+// both safe to put on a screen: nothing here can carry a credential's value.
 //
 // The file leads with that for the same reason `test/connectors.test.ts` leads
 // with its own version of it. Everything else is a shape check; "a state object
@@ -11,9 +11,18 @@
 // WORKS. A connector is consulted only after a direct request has been refused,
 // which is what lets an operator turn one on without wondering whether their
 // existing targets just started going somewhere else.
+//
+// WHAT CHANGED, 2026-08-23. The Skills screen was removed as superseded by
+// `/library`, and it was the only writer the consent store ever had, so
+// `enable()` and `disable()` went with it -- the suite that exercised them is
+// replaced by one asserting the module now has no writer at all. The registry
+// lost its four skills.sh entries, which existed only to be rendered on that
+// screen, and it lost Bright Data, which was the second place in this repository
+// claiming to know a credential's state. There is a named guard for that below:
+// this registry must not grow a Bright Data row again.
 
 import { describe as suite, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { mkdtemp, rm, readFile } from 'node:fs/promises';
+import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -28,7 +37,8 @@ vi.mock('node:dns/promises', () => ({
 }));
 
 import { SKILLS, skillById, stateOf, statesOf } from '../src/skills/index.js';
-import { enabled, enable, disable, STORE_PATH } from '../src/skills/store.js';
+import * as store from '../src/skills/store.js';
+import { enabled, STORE_PATH } from '../src/skills/store.js';
 import { fetchHtml } from '../src/skills/page.js';
 import { loadTools } from '../src/mcp/server.js';
 
@@ -52,6 +62,18 @@ afterEach(async () => {
   else process.env.FIRECRAWL_API_KEY = saved.key;
 });
 
+/**
+ * The consent file, written by hand.
+ *
+ * The store has no writer of its own any more -- this IS how an operator turns
+ * a source on, so a test that used `enable()` would be testing something no one
+ * can do.
+ */
+async function writeStore(ids: string[]) {
+  const { writeFile } = await import('node:fs/promises');
+  await writeFile(STORE_PATH(), JSON.stringify({ enabled: ids }));
+}
+
 /** Every string anywhere in a value, however deeply nested. */
 function strings(v: unknown, out: string[] = []): string[] {
   if (typeof v === 'string') out.push(v);
@@ -63,21 +85,27 @@ function strings(v: unknown, out: string[] = []): string[] {
 suite('the registry', () => {
   it('describes every entry it lists', () => {
     for (const s of SKILLS) {
-      expect(s.id, 'an entry with no id cannot be enabled or disabled').toBeTruthy();
+      expect(s.id, 'an entry with no id cannot be enabled').toBeTruthy();
       expect(s.summary.length, `${s.id} has no summary`).toBeGreaterThan(10);
-      // The invariant the screen depends on: a row that cannot run says why, and
-      // a row that can run does not carry an excuse.
-      if (s.provides === null) expect(s.inert, `${s.id} cannot run and does not say why`).toBeTruthy();
-      else expect(s.inert, `${s.id} runs but carries an inert reason`).toBeNull();
     }
   });
 
-  it('names a documentation section for every credential it declares', () => {
+  it('declares credentials by variable NAME, spelled as the code reads them', () => {
     for (const s of SKILLS) {
-      for (const n of s.needs) {
-        expect(n.var, `${s.id} declares an unnamed variable`).toMatch(/^[A-Z][A-Z0-9_]+$/);
-        expect(n.doc, `${s.id}/${n.var} has no docs link`).toMatch(/^\/docs\//);
+      for (const v of s.needs) {
+        expect(v, `${s.id} declares an unnamed variable`).toMatch(/^[A-Z][A-Z0-9_]+$/);
       }
+    }
+  });
+
+  it('lists only sources this build can actually call', () => {
+    // The four skills.sh entries this registry used to carry could not run here
+    // and were listed so a screen could say why. That screen is gone. A row
+    // nothing can call and nothing renders is dead data, and `fetchHtml` would
+    // silently skip it -- so the registry is now exactly the sources that work.
+    for (const s of SKILLS) {
+      expect(s.always || s.needs.length > 0, `${s.id} is neither always-on nor credentialled`)
+        .toBe(true);
     }
   });
 
@@ -85,7 +113,20 @@ suite('the registry', () => {
     const always = SKILLS.filter((s) => s.always);
     expect(always).toHaveLength(1);
     expect(always[0]!.needs).toHaveLength(0);
-    expect(always[0]!.provides).toBe('page-source');
+  });
+
+  // The regression guard for the bug this registry was half of. Bright Data was
+  // listed here with its own enable flag and its own variable name
+  // (BRIGHT_DATA_TOKEN, which nothing has ever read) while `src/connectors/`
+  // held the real configuration. Two registries for one credential is how
+  // Settings ended up telling an operator who was USING Bright Data that Bright
+  // Data was not connected. It has one owner now.
+  it('does not claim to own Bright Data', () => {
+    const names = JSON.stringify(SKILLS).toLowerCase();
+    expect(names, 'Bright Data belongs to src/connectors, not to this registry')
+      .not.toContain('bright');
+    expect(SKILLS.flatMap((s) => s.needs)).not.toContain('BRIGHT_DATA_TOKEN');
+    expect(SKILLS.flatMap((s) => s.needs)).not.toContain('BRIGHTDATA_API_TOKEN');
   });
 });
 
@@ -114,8 +155,7 @@ suite('presence', () => {
   it('never carries a credential value, anywhere in the object', () => {
     const states = statesOf(SKILLS.map((s) => s.id), {
       FIRECRAWL_API_KEY: SECRET,
-      BRIGHT_DATA_TOKEN: SECRET,
-      SGAI_API_KEY: SECRET,
+      BRIGHTDATA_API_TOKEN: SECRET,
     });
     const all = strings(states);
     expect(all.length).toBeGreaterThan(0);
@@ -127,41 +167,43 @@ suite('presence', () => {
     expect(all).toContain('FIRECRAWL_API_KEY');
   });
 
-  it('reports the always-on source as on without it being stored', async () => {
-    await enable('local-fetch');
-    expect(await enabled(), 'an always-on row must not become a stored choice').toEqual([]);
+  it('reports the always-on source as on whatever the store says', async () => {
+    // No file at all -- the state every clone starts in.
+    expect(await enabled()).toEqual([]);
     expect(stateOf(skillById('local-fetch')!, [], {}).active).toBe(true);
+    // And a file that does not mention it. "Assay can read a page" must not be
+    // something a deleted or hand-edited file can switch off.
+    await writeStore(['firecrawl']);
+    expect(stateOf(skillById('local-fetch')!, await enabled(), {}).active).toBe(true);
   });
 });
 
 suite('the consent store', () => {
-  it('records a yes and takes it back', async () => {
-    expect(await enabled()).toEqual([]);
-    await enable('firecrawl');
+  it('reads the ids the operator wrote', async () => {
+    expect(await enabled(), 'no file means nothing consented to').toEqual([]);
+    await writeStore(['firecrawl']);
     expect(await enabled()).toEqual(['firecrawl']);
-    await enable('firecrawl');
-    expect(await enabled(), 'enabling twice must not duplicate').toEqual(['firecrawl']);
-    await disable('firecrawl');
-    expect(await enabled()).toEqual([]);
-    await disable('firecrawl');
   });
 
-  it('holds ids and nothing else', async () => {
-    await enable('firecrawl');
-    const raw = JSON.parse(await readFile(STORE_PATH(), 'utf8'));
-    expect(raw).toEqual({ enabled: ['firecrawl'] });
-  });
-
-  it('refuses an id this build does not have, and drops one it no longer has', async () => {
-    await expect(enable('not-a-skill')).rejects.toThrow(/no skill/);
+  it('drops an id this build no longer has', async () => {
     await writeStore(['firecrawl', 'removed-in-a-later-build']);
     expect(await enabled()).toEqual(['firecrawl']);
   });
 
-  async function writeStore(ids: string[]) {
+  it('survives a file that is not the shape it expects', async () => {
     const { writeFile } = await import('node:fs/promises');
-    await writeFile(STORE_PATH(), JSON.stringify({ enabled: ids }));
-  }
+    await writeFile(STORE_PATH(), JSON.stringify({ enabled: 'firecrawl' }));
+    expect(await enabled(), 'a hand-edited file must not become a crash').toEqual([]);
+  });
+
+  // The Skills screen was the only thing that ever wrote this file, and it is
+  // gone. Two exported writers with no caller is how a module rots, and a
+  // browser-writable consent file that no browser can reach any more is a
+  // smaller attack surface, so the writers went with the screen. This asserts
+  // the module stays read-only rather than trusting the comment saying so.
+  it('has no writer at all', () => {
+    expect(Object.keys(store).sort()).toEqual(['STORE_PATH', 'enabled']);
+  });
 });
 
 suite('the fetch seam', () => {
