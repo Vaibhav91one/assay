@@ -93,7 +93,18 @@ export function CatalogueSearch() {
         <>
           {res.matches.length === 0 && (
             <p className="meta-12_5 text-[var(--text-secondary)]">
-              Nothing in the catalogue is named that.
+              {/* "Nothing matched" and "everything that matched is somebody's
+                  scratch dataset" are different answers, and only the second
+                  one is true for a query like `uniqlo`. Saying the first would
+                  be the filter deciding what the operator is allowed to know
+                  about the catalogue, which is the thing the count under this
+                  box exists to prevent. */}
+              {res.hiddenMatches > 0
+                ? `${res.hiddenMatches} ${res.hiddenMatches === 1 ? 'entry matches' : 'entries match'} `
+                  + 'that, and every one of them is named as a test, an internal or a deleted '
+                  + 'dataset. Nothing in the catalogue collects that under a name that says what '
+                  + 'it collects.'
+                : 'Nothing in the catalogue is named that.'}
             </p>
           )}
           {res.matches.length > 0 && (
@@ -126,9 +137,11 @@ export function CatalogueSearch() {
           )}
           <p className="meta-12_5 text-[var(--text-muted)]">
             {res.more > 0 && `${res.more} more match. `}
-            {`${res.total.toLocaleString()} scrapers in the catalogue. `}
-            {`${res.hidden} hidden: named test, delete, need_to_edit or internal — somebody's `}
-            scratch datasets, with nothing in the name to say what they collect.
+            {res.matches.length > 0 && res.hiddenMatches > 0
+              && `${res.hiddenMatches} more matched and were hidden. `}
+            {`${res.total.toLocaleString()} scrapers in the catalogue, ${res.hidden} hidden: `}
+            named test, delete, need_to_edit, deprecated or internal — somebody&apos;s scratch
+            datasets, with nothing in the name to say what they collect.
           </p>
         </>
       )}

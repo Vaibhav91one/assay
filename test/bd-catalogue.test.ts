@@ -88,6 +88,27 @@ describe.skipIf(!TOKEN)('the shipped dataset ids exist in the live catalogue', (
     for (const m of r.matches) expect(isJunkName(m.name), m.name).toBe(false);
   }, 60_000);
 
+  it('says when everything that matched was hidden, rather than "nothing"', async () => {
+    // `Plessers Product - test` is a real entry and it is hidden. Reporting
+    // that search as empty would tell the operator the catalogue has nothing of
+    // the sort, when what is true is that what it has was marked as a test by
+    // whoever made it. Different answers, and the second is the one they can
+    // act on.
+    const r = await searchDatasets('plessers');
+    expect(r.matches).toEqual([]);
+    expect(r.hiddenMatches).toBeGreaterThan(0);
+
+    // `uniqlo` is the counter-example, and the reason the patterns are
+    // delimited rather than greedy: `Uniqlo Products - test` is hidden and
+    // `Uniqlo Products` is not, so that search still returns the real one. A
+    // filter that took the brand down with the scratch copy would be doing
+    // more damage than the junk it removes.
+    expect((await searchDatasets('uniqlo')).matches.length).toBeGreaterThan(0);
+    // And a word that genuinely matches nothing reports nothing hidden, so the
+    // two states stay distinguishable.
+    expect((await searchDatasets('zzzznotathing')).hiddenMatches).toBe(0);
+  }, 60_000);
+
   it('resolves a brand to a real id and never to one it made up', async () => {
     const live = new Set((await listDatasets()).map((e) => e.id));
     for (const q of ['LinkedIn people profiles', 'Instagram - Profiles', 'Zillow price history']) {

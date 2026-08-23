@@ -1180,6 +1180,19 @@ export interface DatasetSearch {
   /** How many junk-named entries the catalogue holds, whether or not they
    *  matched. The screen reports this so the filter is visible. */
   hidden: number;
+  /**
+   * How many junk-named entries matched THIS query, and the reason the count
+   * above is not enough on its own.
+   *
+   * `Uniqlo Products - test`, `Cartier Products - test`, `Selfridges Products
+   * - test` are all real entries, and all hidden. Somebody searching "uniqlo"
+   * would otherwise be told the catalogue contains nothing of the sort, which
+   * is false: it contains something, and what is true is that whoever made it
+   * marked it as a test. Those are different answers and the operator is owed
+   * the second one -- a filter that reports its total but not its effect on the
+   * question actually asked is still hiding the thing that mattered.
+   */
+  hiddenMatches: number;
   /** How many entries matched but are not in `matches`, because of `limit`. */
   more: number;
 }
@@ -1206,10 +1219,12 @@ export async function searchDatasets(
   const all = await listDatasets(now);
   const hidden = all.filter((e) => isJunkName(e.name)).length;
   const q = query.trim().toLowerCase();
-  if (!q) return { matches: [], total: all.length, hidden, more: 0 };
+  if (!q) return { matches: [], total: all.length, hidden, hiddenMatches: 0, more: 0 };
 
-  const hits = all.filter((e) =>
-    !isJunkName(e.name) && (e.id.toLowerCase() === q || e.name.toLowerCase().includes(q)));
+  const named = (e: CatalogueEntry): boolean =>
+    e.id.toLowerCase() === q || e.name.toLowerCase().includes(q);
+  const hits = all.filter((e) => named(e) && !isJunkName(e.name));
+  const hiddenMatches = all.filter((e) => named(e) && isJunkName(e.name)).length;
 
   hits.sort((a, b) => {
     const an = a.name.toLowerCase();
@@ -1223,6 +1238,7 @@ export async function searchDatasets(
     matches: hits.slice(0, limit),
     total: all.length,
     hidden,
+    hiddenMatches,
     more: Math.max(0, hits.length - limit),
   };
 }
