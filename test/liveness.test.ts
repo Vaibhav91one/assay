@@ -59,9 +59,10 @@ describe('the worker liveness signal', () => {
     if (!dbUp) return;
     const release = await holdWorkerLock();
     expect(await workersUp()).toBe(1);
-    release();
-    // Released by dropping the connection, so it is gone on the next read --
-    // there is no window in which a stopped worker still reads as present.
+    // Awaited, because the release unlocks server-side before it drops the
+    // connection. That ordering is the whole point: a stopped worker must
+    // never still read as present on the very next check.
+    await release();
     expect(await workersUp()).toBe(0);
   });
 
@@ -72,9 +73,9 @@ describe('the worker liveness signal', () => {
     // Shared, not exclusive: the second worker must be able to say it is up
     // rather than being told the signal is taken.
     expect(await workersUp()).toBe(2);
-    a();
+    await a();
     expect(await workersUp()).toBe(1);
-    b();
+    await b();
     expect(await workersUp()).toBe(0);
   });
 
@@ -88,7 +89,7 @@ describe('the worker liveness signal', () => {
         AND database <> (SELECT oid FROM pg_database WHERE datname = current_database())`);
     // Whatever any other database's worker is doing, it is not ours to count.
     expect((rows as Record<string, any>[])[0]!.n).toBe(0);
-    release();
+    await release();
   });
 });
 

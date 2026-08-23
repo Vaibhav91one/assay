@@ -403,7 +403,7 @@ export const WORKER_LOCK = { classId: 16723, objId: 1 } as const;
  * than left implicit because `pool.end()` waits for checked-out clients, so it
  * has to run before `closeDb()` or shutdown hangs.
  */
-export async function holdWorkerLock(): Promise<() => void> {
+export async function holdWorkerLock(): Promise<() => Promise<void>> {
   getDb();
   const client = await pool!.connect();
   try {
@@ -414,10 +414,23 @@ export async function holdWorkerLock(): Promise<() => void> {
     client.release(true);
     throw e;
   }
-  // `true` destroys the connection rather than returning it to the pool, which
-  // is what releases the lock. Returning it would leave the lock held by an
-  // idle pooled client and the worker would look alive after it had exited.
-  return () => client.release(true);
+  return async () => {
+    // Unlock explicitly first, and await it. Destroying the connection also
+    // drops the lock, but only when the backend reaps the socket -- which is
+    // not ordered against the next `workersUp()` on a different connection, so
+    // a worker that had just exited could still be counted. The unlock query
+    // returns after the server has released it, which closes that window.
+    try {
+      await client.query('SELECT pg_advisory_unlock_shared($1, $2)', [
+        WORKER_LOCK.classId, WORKER_LOCK.objId,
+      ]);
+    } catch {
+      // Already gone -- a dead connection has released the lock by definition.
+    }
+    // `true` destroys rather than returning it to the pool, so a crash between
+    // here and process exit cannot leave the lock held by an idle pooled client.
+    client.release(true);
+  };
 }
 
 /**

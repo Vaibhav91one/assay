@@ -211,7 +211,7 @@ const main = async () => {
 
   // Before closeDb: `pool.end()` waits for checked-out clients, and the lock
   // is held by one.
-  releaseLock();
+  await releaseLock();
   await closeDb();
   console.log('worker down');
 };
