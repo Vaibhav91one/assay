@@ -38,8 +38,11 @@ export default function GlobalError({
         style={{ fontFamily: 'ui-sans-serif, system-ui, sans-serif' }}
       >
         <main className="flex min-h-screen w-full flex-col items-start gap-[10px] px-[56px] pt-[96px]">
-          {/* The one mark that survives when the shell does not. */}
-          <span className="label-10 text-[var(--accent-brand)]">ASSAY</span>
+          {/* The one mark that survives when the shell does not. Set in
+              --text-primary rather than the brand orange: #ff4d00 measures
+              3.33:1 on white, which is a fine reading for a 40px button fill
+              and a failing one for an 11px word. */}
+          <span className="label-10 text-[var(--text-primary)]">ASSAY</span>
           {/* copy(G) */}
           <h1 className="heading-18 pt-[10px] text-[var(--semantic-danger)]">
             Assay could not start this page.
