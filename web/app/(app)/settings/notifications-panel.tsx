@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { SettingRow } from './switch';
 import { setDigest } from './actions';
 import type { AlertsView } from '@/lib/alerts';
+import { t } from '@/lib/copy';
 
 /**
  * Where both environment rows send you.
@@ -71,11 +72,13 @@ export function NotificationsPanel({ view }: { view: AlertsView }) {
   return (
     <div className="w-full">
       <SettingRow
-        label="Weekly digest"
+        label={t('settings.notifications.digest')}
         detail={
           digest.lastSentAt
-            ? `One report per week: what changed, and what was withheld. Last sent ${digest.lastSentAt.toISOString().slice(0, 10)}.`
-            : 'One report per week: what changed, and what was withheld. Never sent yet.'
+            ? t('settings.notifications.digest.sent', {
+              date: digest.lastSentAt.toISOString().slice(0, 10),
+            })
+            : t('settings.notifications.digest.never')
         }
         checked={enabled}
         pending={pending}
@@ -85,13 +88,13 @@ export function NotificationsPanel({ view }: { view: AlertsView }) {
         reason={
           mail.ready
             ? null
-            : `Assay cannot send mail: ${mail.missing} is not set in this process's environment.`
+            : t('settings.notifications.digest.cannotSend', { missing: mail.missing ?? '' })
         }
         onChange={toggle}
       />
       {failure && (
         <p role="alert" className="caption-12 pb-[6px] text-[var(--semantic-danger)]">
-          Not saved — {failure}. The switch has been put back where it was.
+          {t('settings.notifications.digest.notSaved', { detail: failure })}
         </p>
       )}
 
@@ -99,28 +102,31 @@ export function NotificationsPanel({ view }: { view: AlertsView }) {
           environment and read nothing from the store, so neither is a bit
           anything on this screen could flip -- and a switch that will not move
           still asks to be pressed. They report a word and say where the word
-          is set instead. */}
-      {/* copy(G) */}
+          is set instead -- the same pair the Connections tab and the sign-in
+          key panel use, because all three answer "is this credential present".
+          This row said "sending", which was a third vocabulary. */}
       <SettingRow
-        label="Break alerts by email"
-        detail="When a field breaks, one alert per episode — not one per page."
+        label={t('settings.notifications.mail')}
+        detail={t('settings.notifications.mail.detail')}
         checked={mail.ready}
-        value={mail.ready ? 'sending' : 'not configured'}
+        value={mail.ready ? t('common.configured') : t('common.notConfigured')}
         doc={MAIL_DOC}
-        reason={`Set in .env, not here: the worker reads ASSAY_RESEND_KEY, ASSAY_MAIL_FROM and ASSAY_MAIL_TO on each run and nothing from the store.${
-          mail.ready ? '' : ` ${mail.missing} is not set, so a break alert would fall through to the webhook.`
-        }`}
+        reason={[
+          t('settings.notifications.mail.reason'),
+          mail.ready ? '' : t('settings.notifications.mail.unset', { missing: mail.missing ?? '' }),
+        ].filter(Boolean).join(' ')}
       />
 
       <SettingRow
-        label="Webhook fallback"
-        detail="Where a break alert goes when the email fails. The outcome is recorded on the episode either way."
+        label={t('settings.notifications.webhook')}
+        detail={t('settings.notifications.webhook.detail')}
         checked={webhookConfigured}
-        value={webhookConfigured ? 'configured' : 'not configured'}
+        value={webhookConfigured ? t('common.configured') : t('common.notConfigured')}
         doc={MAIL_DOC}
-        reason={`Set in .env, not here: ASSAY_WEBHOOK_URL.${
-          webhookConfigured ? '' : ' Unset, so a failed email is recorded as undelivered and nothing else is tried.'
-        }`}
+        reason={[
+          t('settings.notifications.webhook.reason'),
+          webhookConfigured ? '' : t('settings.notifications.webhook.unset'),
+        ].filter(Boolean).join(' ')}
       />
 
       {/* A design note explaining which switches were not built and why, on

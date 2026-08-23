@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { stamp, when } from '@/lib/when';
+import { t } from '@/lib/copy';
 import { HeldCell } from '../schema-table';
 import { RunNow } from './run-now';
 import { ScraperLifecycle } from '../fields/scraper-lifecycle';
@@ -105,9 +106,9 @@ const TONE: Record<Outcome, string> = {
 };
 
 const SAID: Record<Outcome, string> = {
-  held: 'held a field for review',
-  healed: 'moved, found it again',
-  clean: 'clean',
+  held: t('schedule.said.held'),
+  healed: t('schedule.said.healed'),
+  clean: t('schedule.said.clean'),
 };
 
 export function CalendarView({
@@ -275,10 +276,8 @@ export function CalendarView({
       )}
 
       {marks.length === 0 && (
-        <Empty title={filtered ? 'Nothing matches that.' : emptyTitle(view, data)}>
-          {filtered
-            ? 'The filters above are narrower than what has been read. Clear them to see the rest.'
-            : emptyBody(view, data)}
+        <Empty title={filtered ? t('schedule.empty.filtered.title') : emptyTitle(view, data)}>
+          {filtered ? t('schedule.empty.filtered.body') : emptyBody(view, data)}
         </Empty>
       )}
 
@@ -344,7 +343,7 @@ function Header({
           className={actionVariants({ variant: 'outline' })}
         >
           <CalendarDays size={14} strokeWidth={1.5} aria-hidden />
-          Today
+          {t('schedule.today')}
         </button>
         <IconButton
           label={`Next ${view}`}
@@ -380,7 +379,7 @@ function Header({
         ))}
       </div>
       <label className="sm:hidden">
-        <span className="sr-only">View</span>
+        <span className="sr-only">{t('schedule.view')}</span>
         <select
           value={view}
           onChange={(e) => onView(e.target.value as ViewKind)}
@@ -439,20 +438,20 @@ function Controls({
           type="search"
           value={query}
           onChange={(e) => onQuery(e.target.value)}
-          placeholder="Search a scraper, a field, a value, a run id"
-          aria-label="Search runs"
+          placeholder={t('schedule.search')}
+          aria-label={t('schedule.searchLabel')}
           className="meta-12_5 h-[32px] w-full rounded-[var(--radius-control)] border border-[var(--border-default)] bg-[var(--surface-card)] pl-[30px] pr-[10px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
         />
       </div>
-      <Pick label="Scraper" value={scraper} onChange={onScraper}
-        options={[{ value: ALL, label: 'Every scraper' }, ...scrapers.map((s) => ({ value: s, label: s }))]} />
-      <Pick label="Field" value={field} onChange={onField}
-        options={[{ value: ALL, label: 'Every field' }, ...fields.map((f) => ({ value: f, label: f }))]} />
-      <Pick label="Outcome" value={outcome} onChange={onOutcome} options={[
-        { value: ALL, label: 'Every outcome' },
-        { value: 'held', label: 'Held', tone: 'var(--semantic-warning)' },
-        { value: 'healed', label: 'Healed', tone: 'var(--semantic-success)' },
-        { value: 'clean', label: 'Clean' },
+      <Pick label={t('schedule.pick.scraper')} value={scraper} onChange={onScraper}
+        options={[{ value: ALL, label: t('schedule.pick.everyScraper') }, ...scrapers.map((s) => ({ value: s, label: s }))]} />
+      <Pick label={t('schedule.pick.field')} value={field} onChange={onField}
+        options={[{ value: ALL, label: t('schedule.pick.everyField') }, ...fields.map((f) => ({ value: f, label: f }))]} />
+      <Pick label={t('schedule.pick.outcome')} value={outcome} onChange={onOutcome} options={[
+        { value: ALL, label: t('schedule.pick.everyOutcome') },
+        { value: 'held', label: t('schedule.pick.held'), tone: 'var(--semantic-warning)' },
+        { value: 'healed', label: t('schedule.pick.healed'), tone: 'var(--semantic-success)' },
+        { value: 'clean', label: t('schedule.pick.clean') },
       ]} />
     </div>
   );
@@ -525,7 +524,7 @@ function ActiveFilters({
         onClick={onClear}
         className="caption-11 text-[var(--semantic-link)] underline-offset-2 hover:underline"
       >
-        Clear
+        {t('schedule.clear')}
       </button>
       {hidesFuture && (
         // Said rather than left to be noticed: the marks did not vanish, they
@@ -569,11 +568,11 @@ function Legend({
   return (
     <div className="flex w-full flex-col gap-[5px]">
       <p className="caption-11 flex flex-wrap items-center gap-x-[14px] gap-y-[5px] text-[var(--text-secondary)]">
-        <Key tone={TONE.clean} kind="ran">ran, clean</Key>
-        <Key tone={TONE.healed} kind="ran">moved, found again</Key>
-        <Key tone={TONE.held} kind="ran">held for review</Key>
-        <Key tone="var(--accent-brand)" kind="next">the next run, stored</Key>
-        <Key tone="var(--text-muted)" kind="projected">projected from the cadence</Key>
+        <Key tone={TONE.clean} kind="ran">{t('schedule.legend.clean')}</Key>
+        <Key tone={TONE.healed} kind="ran">{t('schedule.legend.healed')}</Key>
+        <Key tone={TONE.held} kind="ran">{t('schedule.legend.held')}</Key>
+        <Key tone="var(--accent-brand)" kind="next">{t('schedule.legend.next')}</Key>
+        <Key tone="var(--text-muted)" kind="projected">{t('schedule.legend.projected')}</Key>
       </p>
       {grouped && (
         <p className="caption-11 text-[var(--text-muted)]">
@@ -1006,7 +1005,7 @@ function RunList({
             <span className="meta-12_5 flex min-w-0 items-center gap-[7px] text-[var(--text-secondary)]">
               <Dot tone={m.kind === 'ran' ? TONE[m.run.outcome] : 'var(--accent-brand)'} kind={m.kind} />
               <span className="truncate">
-                {m.kind === 'ran' ? SAID[m.run.outcome] : 'due — has not run'}
+                {m.kind === 'ran' ? SAID[m.run.outcome] : t('schedule.due')}
               </span>
             </span>
           </button>
@@ -1155,14 +1154,14 @@ function CellRow({ cell, targetId }: { cell: Cell; targetId: string }) {
         <HeldCell reason={cell.reason} targetId={targetId} />
       ) : (
         <p className="mono-value-12_5 break-words text-[var(--text-secondary)]">
-          {cell.value ?? <span className="caption-12">no value recorded</span>}
+          {cell.value ?? <span className="caption-12">{t('schedule.noValue')}</span>}
         </p>
       )}
       <ProofSheet
         proof={cell.proof}
         className="focus-ring caption-11 w-fit rounded-[var(--radius-control)] text-[var(--semantic-link)] hover:underline"
       >
-        where this came from ›
+        {t('schedule.whereFrom')}
       </ProofSheet>
     </div>
   );
@@ -1194,11 +1193,11 @@ function NextDetail({
       </DialogHeader>
 
       <dl className="grid grid-cols-[110px_minmax(0,1fr)] gap-y-[9px] border-t border-[var(--border-hairline)] pt-[12px]">
-        <dt className="caption-11 text-[var(--text-muted)]">cadence</dt>
+        <dt className="caption-11 text-[var(--text-muted)]">{t('schedule.dialog.cadence')}</dt>
         <dd className="meta-12_5 text-[var(--text-primary)]">every {clock.cadence}</dd>
-        <dt className="caption-11 text-[var(--text-muted)]">fields</dt>
+        <dt className="caption-11 text-[var(--text-muted)]">{t('schedule.dialog.fields')}</dt>
         <dd className="meta-12_5 text-[var(--text-primary)]">{clock.fields} watched on this page</dd>
-        <dt className="caption-11 text-[var(--text-muted)]">after this</dt>
+        <dt className="caption-11 text-[var(--text-muted)]">{t('schedule.dialog.after')}</dt>
         <dd className="meta-12_5 text-[var(--text-secondary)]">
           nothing is stored — the dashed marks are the cadence continued
         </dd>

@@ -1,6 +1,7 @@
 'use client';
 
 import { Popover } from '@base-ui/react/popover';
+import { t } from '@/lib/copy';
 
 /**
  * The `… ›` idiom: `the full record ›`, `what came back ›`, `details ›`.
@@ -98,43 +99,31 @@ export function GateNumbers({ gate }: { gate: GateFigures }) {
   const declared = gate.declared ?? false;
   const n = (v: number) => v.toFixed(4);
   return (
-    /* copy(G) */
-    <Disclosure label="show the numbers">
+    <Disclosure label={t('gate.disclosure')}>
       <div className="flex flex-col gap-[10px]">
-        <p className="label-10 text-[var(--text-muted)]">WHAT THE GATE COMPARED</p>
+        <p className="label-10 text-[var(--text-muted)]">{t('gate.compared')}</p>
         <dl className="mono-value-12_5 grid grid-cols-[auto_1fr] gap-x-[16px] gap-y-[4px]">
-          <dt className="text-[var(--text-muted)]">top score</dt>
+          <dt className="text-[var(--text-muted)]">{t('gate.head.score')}</dt>
           <dd className="text-[var(--text-primary)]">{n(score)}</dd>
-          <dt className="text-[var(--text-muted)]">runner-up</dt>
+          <dt className="text-[var(--text-muted)]">{t('gate.head.runnerUp')}</dt>
           <dd className="text-[var(--text-primary)]">
-            {runnerUp === null ? 'none — it stood alone' : n(runnerUp)}
+            {runnerUp === null ? t('gate.aloneValue') : n(runnerUp)}
           </dd>
-          <dt className="text-[var(--text-muted)]">margin</dt>
+          <dt className="text-[var(--text-muted)]">{t('gate.head.margin')}</dt>
           <dd className="text-[var(--text-primary)]">{n(margin)}</dd>
         </dl>
         <div className="h-px w-full bg-[var(--border-hairline)]" />
         {reproduces ? (
-          /* copy(G) */
           <p className="meta-12_5 text-[var(--text-secondary)]">
-            To publish, a candidate needs a score above {tau.toFixed(2)} (the floor, τ) and a lead
-            above {delta.toFixed(2)} (δ).{' '}
-            {declared
-              ? 'Both are declared on this target’s contract.'
-              : 'This target declares neither, so both are the shipped defaults.'}
+            {t('gate.thresholds', { tau: tau.toFixed(2), delta: delta.toFixed(2) })}{' '}
+            {declared ? t('gate.thresholds.declared') : t('gate.thresholds.defaults')}
           </p>
         ) : (
-          /* copy(G) */
           <p className="meta-12_5 text-[var(--text-secondary)]">
-            The thresholds on hand no longer reproduce the reason recorded against this cell — the
-            contract has been edited since — so they are not drawn against these scores. The scores
-            are what was written at the time.
+            {t('gate.thresholds.unreproducible')}
           </p>
         )}
-        {/* copy(G) */}
-        <p className="meta-12_5 text-[var(--text-muted)]">
-          The band is still the answer. These are what it was read off, and the arithmetic is
-          written out at /docs/assay-score.
-        </p>
+        <p className="meta-12_5 text-[var(--text-muted)]">{t('gate.bandIsTheAnswer')}</p>
       </div>
     </Disclosure>
   );

@@ -1,5 +1,6 @@
 import { TopBar } from '@/components/top-bar';
 import { RouteLoader } from '@/components/motion/route-loader';
+import { t } from '@/lib/copy';
 
 /**
  * One indexed read of thirty rows, so this is short -- but it still gets a
@@ -9,7 +10,7 @@ import { RouteLoader } from '@/components/motion/route-loader';
 export default function TargetValuesLoading() {
   return (
     <>
-      <TopBar title="Values" status="loading…" scraper={null} />
+      <TopBar title={t('values.topbar')} status={t('topbar.loading')} scraper={null} />
       <RouteLoader>Reading what this field has published.</RouteLoader>
     </>
   );

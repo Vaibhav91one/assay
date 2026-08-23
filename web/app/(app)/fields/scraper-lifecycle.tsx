@@ -11,6 +11,12 @@ import {
   deleteScraper, pauseScraper, resumeScraper, scraperState, setCadence,
   type Lifecycle, type ScraperState,
 } from './lifecycle-actions';
+import { t } from '@/lib/copy';
+
+/** `{n} field` / `{n} fields`. The catalogue does not do plurals -- see its header. */
+const fieldsWord = (n: number) => `${n} field${n === 1 ? '' : 's'}`;
+/** `{n} run` / `{n} runs`. Same rule, same reason. */
+const runsWord = (n: number) => `${n} run${n === 1 ? '' : 's'}`;
 
 /**
  * Stop it, start it, change how often, throw it away.
@@ -59,13 +65,16 @@ export function ScraperLifecycle({ slug, className }: { slug: string; className?
     });
 
   if (state === undefined) {
-    return <p className={`caption-11 text-[var(--text-muted)] ${className ?? ''}`}>Reading {slug}…</p>;
+    return (
+      <p className={`caption-11 text-[var(--text-muted)] ${className ?? ''}`}>
+        {t('lifecycle.reading', { slug })}
+      </p>
+    );
   }
   if (state === null) {
     return (
       <p className={`caption-11 text-[var(--text-muted)] ${className ?? ''}`}>
-        {/* copy(G) */}
-        Nothing under watch called {slug} any more.
+        {t('lifecycle.gone', { slug })}
       </p>
     );
   }
@@ -82,23 +91,23 @@ export function ScraperLifecycle({ slug, className }: { slug: string; className?
       <div className="flex flex-wrap items-center gap-[8px]">
         {state.paused ? (
           <Button variant="outline" icon={Play} loading={pending} onClick={() => act(() => resumeScraper(slug))}>
-            Resume {slug}
+            {t('lifecycle.resume', { slug })}
           </Button>
         ) : (
           <Button variant="outline" icon={Pause} loading={pending} onClick={() => act(() => pauseScraper(slug))}>
-            Pause {slug}
+            {t('lifecycle.pause', { slug })}
           </Button>
         )}
 
         <label className="flex items-center gap-[8px]">
-          <span className="caption-11 text-[var(--text-muted)]">every</span>
+          <span className="caption-11 text-[var(--text-muted)]">{t('lifecycle.every')}</span>
           <select
             value={cadence}
             onChange={(e) => setChosen(e.currentTarget.value)}
             aria-label={`How often ${slug} runs`}
             className="meta-12_5 rounded-[var(--radius-control)] border border-[var(--border-default)] bg-[var(--surface-card)] px-[8px] py-[6px] outline-none"
           >
-            {state.cadence === null && <option value="">mixed</option>}
+            {state.cadence === null && <option value="">{t('lifecycle.mixedCadence')}</option>}
             {options.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </label>
@@ -108,7 +117,7 @@ export function ScraperLifecycle({ slug, className }: { slug: string; className?
           disabled={cadence === '' || cadence === state.cadence}
           onClick={() => act(() => setCadence(slug, cadence))}
         >
-          Save cadence
+          {t('lifecycle.saveCadence')}
         </Button>
 
         <DeleteDialog state={state} pending={pending} onConfirm={() => act(() => deleteScraper(slug))} />
@@ -116,8 +125,7 @@ export function ScraperLifecycle({ slug, className }: { slug: string; className?
 
       {state.cadence === null && (
         <p className="caption-11 text-[var(--text-muted)]">
-          {/* copy(G) */}
-          Its fields are on different cadences. Saving one here puts all {state.fields} on it.
+          {t('lifecycle.mixed', { fields: fieldsWord(state.fields) })}
         </p>
       )}
 
@@ -158,24 +166,27 @@ function DeleteDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <Button variant="quiet" icon={Trash2} onClick={() => setOpen(true)}>
-        Delete
+        {t('lifecycle.delete')}
       </Button>
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
           <DialogTitle className="title-20 text-[var(--text-primary)]">
-            {/* copy(G) */}
-            Delete {state.slug}?
+            {t('lifecycle.delete.title', { slug: state.slug })}
           </DialogTitle>
           <DialogDescription className="body-13_5 text-[var(--text-secondary)]">
-            {/* copy(G) */}
             {state.runs === 0
-              ? `This forgets ${state.fields} watched field${state.fields === 1 ? '' : 's'}. It has never run, so there is nothing published to leave behind, and nothing to undo this with.`
-              : `${state.slug} has ${state.runs} run${state.runs === 1 ? '' : 's'} on record. Assay will refuse this: every row it published carries a proof id that has to keep answering for itself. Pause it instead — that stops the scraping and keeps the history.`}
+              ? t('lifecycle.delete.never', {
+                fields: `${state.fields} watched field${state.fields === 1 ? '' : 's'}`,
+              })
+              : t('lifecycle.delete.hasHistory', {
+                slug: state.slug,
+                runs: runsWord(state.runs),
+              })}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="quiet">Leave it</Button>
+            <Button variant="quiet">{t('lifecycle.leaveIt')}</Button>
           </DialogClose>
           <Button
             variant="outline"
@@ -183,8 +194,7 @@ function DeleteDialog({
             loading={pending}
             onClick={() => { setOpen(false); onConfirm(); }}
           >
-            {/* copy(G) */}
-            Delete it
+            {t('lifecycle.deleteIt')}
           </Button>
         </DialogFooter>
       </DialogContent>

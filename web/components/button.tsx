@@ -65,7 +65,27 @@ export const actionVariants = cva(
         /** The outlined right-hand control. Settings, Activity, Check again, a filter. */
         outline:
           'press-row meta-12_5 [--action-gap:8px] gap-[var(--action-gap)] border border-[var(--border-default)] bg-[var(--surface-card)] py-[8px] pl-[12px] pr-[14px] text-[var(--text-primary)] hover:bg-[var(--surface-subtle)]',
-        /** The one orange verb. New scrape, Start watching. Never two at once on a screen. */
+        /**
+         * The one orange verb. New scrape, Start watching. Never two at once on
+         * a screen.
+         *
+         * KNOWN CONTRAST TRADE-OFF, RECORDED RATHER THAN FIXED. White on
+         * `--accent-brand` (#ff4d00) measures 3.33:1. At `body-13_5` that is
+         * under WCAG AA's 4.5:1 for normal text, and every honest fix is a
+         * brand decision this file is not allowed to take:
+         *
+         *   - darkening the fill to ~#d63f00 reaches 4.59:1 and is a different
+         *     orange, on the one control the product's identity lives on;
+         *   - black on #ff4d00 is 6.31:1 and reads as a warning, not a verb;
+         *   - a darker orange only where the text is small is two brand
+         *     oranges in one product, which is worse than one that misses.
+         *
+         * What holds in the meantime: the control is a 40px filled target
+         * carrying a glyph as well as a word, so the label is never the only
+         * signal, and the focus ring is `--accent-brand` on the page ground
+         * rather than on the fill. `--accent-brand` is defined once, in
+         * `app/tokens.css`; changing it is the fix, and it is a design call.
+         */
         primary:
           'press-wide body-13_5 h-[40px] [--action-gap:10px] gap-[var(--action-gap)] bg-[var(--accent-brand)] px-[16px] text-[var(--accent-on-primary)]',
         /** The same wide action where the verb is navigation rather than commitment. */

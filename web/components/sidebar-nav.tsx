@@ -49,13 +49,11 @@ const NAV = [
   // `FileSearch`, not a shield or a tick: an audit here is reading back the
   // record, not certifying it. Nothing on this rail should imply Assay has
   // signed anything off.
-  /* copy(G) */
-  { href: '/audit', label: 'Audit', icon: FileSearch },
+  { href: '/audit', label: t('nav.audit'), icon: FileSearch },
   // The book that `Library` above is deliberately NOT. This one really is
   // documentation to go and read, and it was reachable only from a link in the
   // footer of the sign-in page and from whatever the proof strip on Home says.
-  /* copy(G) */
-  { href: '/docs', label: 'Docs', icon: BookOpen },
+  { href: '/docs', label: t('nav.docs'), icon: BookOpen },
 ] as const satisfies readonly {
   href: string;
   label: string;
@@ -80,8 +78,7 @@ export function SidebarNav({ waiting }: { waiting: number }) {
     // reader's landmark list did not mention the rail at all. The label is
     // what distinguishes it from the filter `nav` on /runs -- two navigations
     // both announced as "navigation" is the same problem one level up.
-    /* copy(G) */
-    <nav aria-label="Main">
+    <nav aria-label={t('nav.label')}>
       <SidebarMenu className="gap-[18px] px-[20px] pb-[32px] group-data-[collapsible=icon]:px-[12px]">
         {NAV.map((item) => {
           const { href, label, icon: Icon } = item;
@@ -145,7 +142,7 @@ export function ScraperList({ scrapers }: { scrapers: { id: string; url: string;
       <ul className="flex flex-col gap-[16px]">
         {shown.map((s) => (
           <li key={s.id} className="relative flex items-center pl-[28px]">
-            <span className="absolute left-[5px] size-[5px] rounded-full bg-[#65676d]" />
+            <span className="absolute left-[5px] size-[5px] rounded-full bg-[#8a8d93]" />
             <span className="body-14 truncate text-[#a3a5a9]">{s.id}</span>
           </li>
         ))}
@@ -160,7 +157,7 @@ export function ScraperList({ scrapers }: { scrapers: { id: string; url: string;
           What is true and useful is how many are not shown. */}
       {scrapers.length > shown.length && (
         <div className="pl-[48px] pt-[22px]">
-          <span className="meta-13 text-[#65676d]">
+          <span className="meta-13 text-[#8a8d93]">
             {scrapers.length - shown.length} more
           </span>
         </div>

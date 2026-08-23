@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { t } from '@/lib/copy';
 
 /**
  * "Ask for a run", from wherever you are.
@@ -72,20 +73,23 @@ export function RunAction({
           variant in components/button.tsx for the green and its contrast. */}
       <DialogTrigger asChild>
         <Button variant="start" icon={Play} iconSize={16}>
-          Ask for a run
+          {/* The words go, the accessible name does not. Below 768 this control
+              shares a 390px bar with the rail trigger, Activity, Settings and
+              the screen's title; `sr-only` gives back ~90px of it and leaves a
+              Play glyph, which is what this button is anyway. `hidden` would
+              have taken the button's only accessible name with it. */}
+          <span className="sr-only md:not-sr-only">{t('schedule.ask.button')}</span>
         </Button>
       </DialogTrigger>
 
       <DialogContent className="max-h-[85vh] gap-[18px] overflow-y-auto sm:max-w-[560px]">
         <DialogHeader>
-          {/* copy(G) */}
           <DialogTitle className="title-20 text-[var(--text-primary)]">
-            {one ? one.slug : 'Which page?'}
+            {one ? one.slug : t('run.action.title')}
           </DialogTitle>
-          {/* copy(G) */}
           <DialogDescription className="body-13_5 text-[var(--text-secondary)]">
-            {one ? 'Moves this page' : 'Moves the page you pick'} to the front of the queue.
-            Assay&apos;s web process never scrapes — a worker claims it.
+            {one ? t('run.action.moves.one') : t('run.action.moves.any')}{' '}
+            {t('run.action.moves.rest')}
           </DialogDescription>
         </DialogHeader>
 
@@ -100,9 +104,8 @@ export function RunAction({
             The calendar is where the one stored next run lives. */}
         <p className="pt-[18px]">
           <DialogClose asChild>
-            {/* copy(G) */}
             <Link href="/schedule" className="meta-12_5 text-[var(--semantic-link)] hover:underline">
-              {one ? 'See when it is due next ›' : 'See when they are due next ›'}
+              {one ? t('run.action.due.one') : t('run.action.due.many')}
             </Link>
           </DialogClose>
         </p>

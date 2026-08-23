@@ -27,6 +27,7 @@ import * as schema from 'assay/engine/store/schema';
 import { Cadence, pauseTarget, resumeTarget, deleteTarget } from 'assay/engine/setup/index';
 import { nextRunAt } from 'assay/engine/schedule';
 import { assertOperator } from '@/lib/auth';
+import { t } from '@/lib/copy';
 
 /** What every control on this file's screen gets back. One sentence, always. */
 export interface Lifecycle {
@@ -94,31 +95,23 @@ export async function scraperState(slug: string): Promise<ScraperState | null> {
 export async function pauseScraper(slug: string): Promise<Lifecycle> {
   await assertOperator();
   const rows = await rowsFor(slug);
-  if (rows.length === 0) return { ok: false, detail: `Nothing under watch called ${slug}.` };
+  if (rows.length === 0) return { ok: false, detail: t('lifecycle.notFound', { slug }) };
 
   const out = await Promise.all(rows.map((r) => pauseTarget(r.id)));
   revalidatePath('/', 'layout');
-  return folded(
-    out,
-    /* copy(G) */
-    `${slug} is paused. Its cadence is remembered, nothing is scheduled, and resuming puts it back.`,
-  );
+  return folded(out, t('lifecycle.paused', { slug }));
 }
 
 export async function resumeScraper(slug: string): Promise<Lifecycle> {
   await assertOperator();
   const rows = await rowsFor(slug);
-  if (rows.length === 0) return { ok: false, detail: `Nothing under watch called ${slug}.` };
+  if (rows.length === 0) return { ok: false, detail: t('lifecycle.notFound', { slug }) };
 
   // `resumeTarget` schedules for NOW rather than now + cadence, deliberately --
   // a scraper paused for a week has missed every run in it. See its header.
   const out = await Promise.all(rows.map((r) => resumeTarget(r.id)));
   revalidatePath('/', 'layout');
-  return folded(
-    out,
-    /* copy(G) */
-    `${slug} is running again, and its next run is due now rather than a cadence away.`,
-  );
+  return folded(out, t('lifecycle.resumed', { slug }));
 }
 
 /**
@@ -132,15 +125,11 @@ export async function resumeScraper(slug: string): Promise<Lifecycle> {
 export async function deleteScraper(slug: string): Promise<Lifecycle> {
   await assertOperator();
   const rows = await rowsFor(slug);
-  if (rows.length === 0) return { ok: false, detail: `Nothing under watch called ${slug}.` };
+  if (rows.length === 0) return { ok: false, detail: t('lifecycle.notFound', { slug }) };
 
   const out = await Promise.all(rows.map((r) => deleteTarget(r.id)));
   revalidatePath('/', 'layout');
-  return folded(
-    out,
-    /* copy(G) */
-    `${slug} is gone. It had never run, so there was nothing published to leave behind.`,
-  );
+  return folded(out, t('lifecycle.deleted', { slug }));
 }
 
 /**
@@ -159,11 +148,11 @@ export async function setCadence(slug: string, cadence: string): Promise<Lifecyc
   await assertOperator();
   const parsed = Cadence.safeParse(cadence);
   if (!parsed.success) {
-    return { ok: false, detail: parsed.error.issues[0]?.message ?? 'That is not a cadence.' };
+    return { ok: false, detail: parsed.error.issues[0]?.message ?? t('lifecycle.cadence.bad') };
   }
 
   const rows = await rowsFor(slug);
-  if (rows.length === 0) return { ok: false, detail: `Nothing under watch called ${slug}.` };
+  if (rows.length === 0) return { ok: false, detail: t('lifecycle.notFound', { slug }) };
 
   const db = getDb();
   const at = new Date();
@@ -184,9 +173,8 @@ export async function setCadence(slug: string, cadence: string): Promise<Lifecyc
   const paused = rows.every((r) => r.nextRunAt === null);
   return {
     ok: true,
-    /* copy(G) */
     detail: paused
-      ? `${slug} will run every ${parsed.data} once it is resumed.`
-      : `${slug} now runs every ${parsed.data}, counting from now.`,
+      ? t('lifecycle.cadence.paused', { slug, cadence: parsed.data })
+      : t('lifecycle.cadence.set', { slug, cadence: parsed.data }),
   };
 }

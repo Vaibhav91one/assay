@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { RotateCw } from 'lucide-react';
 import { Button } from '@/components/button';
 import { StatusLine } from '@/components/status-line';
+import { t } from '@/lib/copy';
 
 /**
  * A screen that threw, said as what it is.
@@ -45,10 +46,9 @@ export default function AppError({
   }, [error]);
 
   return (
-    <div className="flex w-full flex-col items-start gap-[10px] px-[56px] pt-[48px]">
-      {/* copy(G) */}
+    <div className="flex w-full flex-col items-start gap-[10px] px-[20px] md:px-[56px] pt-[48px]">
       <StatusLine tone="danger" type="heading-18" size={18}>
-        This screen did not finish loading.
+        {t('error.screen.title')}
       </StatusLine>
       <p className="body-13_5 max-w-[560px] text-[var(--text-secondary)]">
         Something on the way to it threw, so the part of the page you can see is

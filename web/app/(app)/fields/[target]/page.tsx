@@ -8,8 +8,9 @@ import { actionVariants } from '@/components/button';
 import { targetHistory, type FieldValue } from '@/lib/fields';
 import { HELD_BECAUSE } from 'assay/engine/reports/vocabulary';
 import { stamp } from '@/lib/when';
+import { t } from '@/lib/copy';
 
-export const metadata: Metadata = { title: 'Values · Assay' };
+export const metadata: Metadata = { title: t('title.values') };
 export const dynamic = 'force-dynamic';
 
 const LIMIT = 30;
@@ -48,11 +49,11 @@ export default async function TargetValuesPage({
   return (
     <>
       <TopBar title={history.scraper} status={headline(history.rows.length, held)} scraper={history.scraper} />
-      <div className="flex w-full max-w-[1112px] flex-col items-start gap-[18px] px-[56px] pb-[64px] pt-[26px]">
+      <div className="flex w-full max-w-[1112px] flex-col items-start gap-[18px] px-[20px] md:px-[56px] pb-[64px] pt-[26px]">
         <div className="flex w-full flex-wrap items-center gap-[16px]">
           <span className="mono-value-13 text-[var(--text-secondary)]">{history.targetId}</span>
           <Link href="/fields" className="meta-13 text-[var(--semantic-link)] hover:underline">
-            ‹ All fields
+            {t('values.allFields')}
           </Link>
           {/* A plain link, not a fetch-and-blob: the browser knows how to save
               a response, and a route with a filename header can be
@@ -63,58 +64,59 @@ export default async function TargetValuesPage({
             className={actionVariants({ variant: 'outline', className: 'ml-auto' })}
           >
             <Download size={13} strokeWidth={1.5} aria-hidden />
-            Download CSV
+            {t('values.download')}
           </a>
         </div>
 
         {history.rows.length === 0 ? (
-          /* copy(G) */
-          <Empty title="Nothing has run against this field yet.">
-            A value appears here the first time a run reaches this page.
-          </Empty>
+          <Empty title={t('values.empty.title')}>{t('values.empty.body')}</Empty>
         ) : (
-          <table className="w-full table-fixed border-collapse">
-            <colgroup>
-              <col style={{ width: 90 }} />
-              <col style={{ width: 170 }} />
-              <col style={{ width: 150 }} />
-              <col />
-            </colgroup>
-            <thead>
-              <tr className="border-t border-[var(--border-hairline)] text-left">
-                {['run', 'when', 'field', 'value'].map((h) => (
-                  <th key={h} className="caption-11 py-[7px] font-normal text-[var(--text-muted)]">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {history.rows.map((r) => (
-                <tr key={`${r.runId}:${r.field}`} className="border-t border-[var(--border-hairline)] align-baseline">
-                  <td className="py-[9px]">
-                    <Link
-                      href={`/runs/${r.runId}`}
-                      className="mono-value-12_5 text-[var(--semantic-link)] hover:underline"
-                    >
-                      {r.runId}
-                    </Link>
-                  </td>
-                  <td className="meta-12_5 py-[9px] text-[var(--text-secondary)]">{stamp(r.at)}</td>
-                  <td className="mono-value-12_5 py-[9px] text-[var(--text-secondary)]">{r.field}</td>
-                  <td className="py-[9px] pr-[8px]">
-                    <Value row={r} />
-                  </td>
+          // A scroller, not a stack: `run`, `when`, `field` and `value` are one
+          // reading across, and a held row's whole point is the labelled hole
+          // sitting where the value would be. The wrapper scrolls; the page
+          // body never does.
+          <div className="w-full overflow-x-auto">
+            <table className="w-full min-w-[640px] table-fixed border-collapse">
+              <colgroup>
+                <col style={{ width: 90 }} />
+                <col style={{ width: 170 }} />
+                <col style={{ width: 150 }} />
+                <col />
+              </colgroup>
+              <thead>
+                <tr className="border-t border-[var(--border-hairline)] text-left">
+                  {[t('values.head.run'), t('values.head.when'), t('values.head.field'), t('values.head.value')].map((h) => (
+                    <th key={h} className="caption-11 py-[7px] font-normal text-[var(--text-muted)]">
+                      {h}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {history.rows.map((r) => (
+                  <tr key={`${r.runId}:${r.field}`} className="border-t border-[var(--border-hairline)] align-baseline">
+                    <td className="py-[9px]">
+                      <Link
+                        href={`/runs/${r.runId}`}
+                        className="mono-value-12_5 text-[var(--semantic-link)] hover:underline"
+                      >
+                        {r.runId}
+                      </Link>
+                    </td>
+                    <td className="meta-12_5 py-[9px] text-[var(--text-secondary)]">{stamp(r.at)}</td>
+                    <td className="mono-value-12_5 py-[9px] text-[var(--text-secondary)]">{r.field}</td>
+                    <td className="py-[9px] pr-[8px]">
+                      <Value row={r} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
 
         <p className="caption-11 text-[var(--text-muted)]">
-          {/* copy(G) */}
-          The last {LIMIT} cells recorded for this target, newest first. A withheld run keeps its
-          row: the hole is the record.
+          {t('values.footnote', { limit: LIMIT })}
         </p>
       </div>
     </>
@@ -137,12 +139,16 @@ function Value({ row }: { row: FieldValue }) {
     <span className="flex items-baseline gap-[6px]">
       <Hand size={12} strokeWidth={1.5} className="shrink-0 translate-y-[2px] text-[var(--semantic-warning)]" aria-hidden />
       <span className="caption-12 text-[var(--text-secondary)]">
-        {/* copy(G) */}
         {plain
-          ? `nothing published: ${plain}`
+          ? t('values.nothingPublishedBecause', { plain })
           : row.reason
-            ? <>nothing published; the gate recorded <span className="mono-value-12_5">{row.reason}</span></>
-            : 'nothing published'}
+            ? (
+              <>
+                {t('values.nothingPublishedCode')}{' '}
+                <span className="mono-value-12_5">{row.reason}</span>
+              </>
+            )
+            : t('values.nothingPublished')}
       </span>
     </span>
   );

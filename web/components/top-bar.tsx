@@ -7,6 +7,7 @@ import { runTarget, runTargets } from '@/lib/scrapers';
 import { Settings } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { t } from '@/lib/copy';
 
 /**
  * Screen chrome: what this screen is, and one plain fact about its state.
@@ -78,8 +79,13 @@ export async function TopBar({
         : await runTargets();
 
   return (
-    <header className="flex h-[64px] w-full items-center justify-between pl-[24px] pr-[32px]">
-      <div className="flex min-w-0 items-center gap-[22px]">
+    // BELOW 768 THE BAR IS THE ONLY CHROME THERE IS. The rail is a Sheet at
+    // that width (shadcn's Sidebar swaps itself; `hooks/use-mobile.ts` is the
+    // same 768 Tailwind's `md:` is), so `SidebarTrigger` stops being a collapse
+    // toggle and becomes the way in and out of navigation. It is first in the
+    // row and it never shrinks.
+    <header className="flex h-[64px] w-full items-center justify-between gap-[8px] px-[16px] md:pl-[24px] md:pr-[32px]">
+      <div className="flex min-w-0 items-center gap-[12px] md:gap-[22px]">
         {/* The collapse control the rail's header draws. It lives here because
             it has to stay reachable once the rail is collapsed to icons. */}
         <SidebarTrigger className="-ml-[4px] size-[28px] shrink-0 text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)]" />
@@ -92,9 +98,19 @@ export async function TopBar({
             overflow between both, so the run detail -- short title, long status
             -- spent three of its pixels on "Run 41" and rendered "Run 4...".
             The status is the sentence that can afford to lose its tail. */}
-        {status && <p className="meta-13 shrink-[6] truncate text-[var(--text-secondary)]">{status}</p>}
+        {/* Gone below 768, not truncated to nothing. At 390px the bar holds a
+            56px trigger, three controls and the title; a status squeezed in
+            beside them renders as two words and an ellipsis, which is a
+            sentence that has stopped being one. Every status on this bar is a
+            reading of the screen underneath it, so nothing is lost that is not
+            three inches lower. */}
+        {status && (
+          <p className="meta-13 hidden shrink-[6] truncate text-[var(--text-secondary)] md:block">
+            {status}
+          </p>
+        )}
       </div>
-      <div className="flex shrink-0 items-center gap-[12px]">
+      <div className="flex shrink-0 items-center gap-[8px] md:gap-[12px]">
         {/* Absent, never disabled. A control that is on every screen and dead
             on most of them teaches the reader to stop looking at that corner.
             What is absent is now only the case where there is genuinely
@@ -116,11 +132,11 @@ export async function TopBar({
               <TooltipTrigger
                 render={<Link href="/settings" />}
                 className={actionVariants({ variant: 'icon' })}
-                aria-label="Settings"
+                aria-label={t('nav.settings')}
               >
                 <Settings size={16} strokeWidth={1.5} aria-hidden />
               </TooltipTrigger>
-              <TooltipContent side="bottom">Settings</TooltipContent>
+              <TooltipContent side="bottom">{t('nav.settings')}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         )}

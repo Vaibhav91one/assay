@@ -14,14 +14,15 @@ import {
   type SettingsView,
 } from '@/lib/settings';
 import { alertsView } from '@/lib/alerts';
+import { t } from '@/lib/copy';
 import type { Kind } from 'assay/engine/connectors/config';
 import { SettingsTabs } from './settings-tabs';
 import { isTabId, type TabId } from './tabs';
 import { NotificationsPanel } from './notifications-panel';
 import { DocLink } from './doc-link';
-import { CONNECTOR_DOC, MODEL_DOC } from './docs';
+import { CONNECTOR_DOC, CONNECTOR_NAME, MODEL_DOC } from './docs';
 
-export const metadata: Metadata = { title: 'Settings · Assay' };
+export const metadata: Metadata = { title: t('title.settings') };
 
 // Reads the environment (the capture directory, the connector file path) as
 // well as the store. Static would bake one machine's environment into a build
@@ -39,11 +40,13 @@ export default async function SettingsPage({
   return (
     <>
       <TopBar
-        title="Settings"
+        title={t('settings.heading')}
+        // The plural is assembled here rather than in the catalogue -- see its
+        // header. "1 fields governed" is what a map is for if it is not.
         status={`${v.policies.length} field${v.policies.length === 1 ? '' : 's'} governed`}
         action={null}
       />
-      <div className="flex w-full max-w-[1112px] flex-col items-start px-[56px] pb-[64px] pt-[26px]">
+      <div className="flex w-full max-w-[1112px] flex-col items-start px-[20px] md:px-[56px] pb-[64px] pt-[26px]">
         {/* The panels are built here, on the server, and handed to a client
             component that only decides which one is visible. Postgres, the
             capture directory and the connector file never cross into the
@@ -78,7 +81,7 @@ export default async function SettingsPage({
 function Publishing({ v }: { v: SettingsView }) {
   return (
     <>
-      <Section label="WHAT ASSAY MAY PUBLISH" id="what-assay-may-publish" />
+      <Section label={t('settings.publishing.eyebrow')} id="what-assay-may-publish" />
       <div className="flex w-full items-center pt-[32px]">
         {/* "Change per-field policy in a contract" was the one dead sentence
             on this screen: it named the mechanism and then offered no path to
@@ -86,32 +89,36 @@ function Publishing({ v }: { v: SettingsView }) {
             a control someone had forgotten to draw. There is no such control
             and there is not going to be one -- src/contracts/http.ts records
             the rule as "credentials get pixels, policy gets a PR" -- so the
-            sentence now says where a contract is actually written. copy(G) */}
+            sentence now says where a contract is actually written. */}
         <p className="body-13_5 flex-1 text-[var(--text-primary)]">
-          Calibrated: publishes only a clear winner ({v.defaults.tau.toFixed(2)} floor,{' '}
-          {v.defaults.delta.toFixed(2)} lead). Per-field policy is a YAML contract, checked with{' '}
-          <span className="mono-value-12_5">assay contracts validate</span> and posted to{' '}
-          <span className="mono-value-12_5">/api/v1/contracts</span> — never edited here, so every
-          change to it has a diff.
+          {t('settings.publishing.policy.a', {
+            tau: v.defaults.tau.toFixed(2),
+            delta: v.defaults.delta.toFixed(2),
+          })}{' '}
+          <span className="mono-value-12_5">assay contracts validate</span>{' '}
+          {t('settings.publishing.policy.b')}{' '}
+          <span className="mono-value-12_5">/api/v1/contracts</span>{' '}
+          {t('settings.publishing.policy.c')}
         </p>
         <Copy
           text={policiesAsYaml(v.policies)}
-          receipt="Field contracts copied as YAML"
+          receipt={t('settings.export.receipt')}
           className="meta-12_5 shrink-0 text-[var(--semantic-link)] hover:underline"
         >
-          export as YAML ›
+          {t('settings.export')}
         </Copy>
       </div>
 
-      <Section label="PER-FIELD POLICY" id="per-field-policy" top={43} />
+      <Section label={t('settings.policy.eyebrow')} id="per-field-policy" top={43} />
       <div className="w-full pt-[32px]">
         {v.policies.length === 0 ? (
-          <Empty title="No field has a policy yet.">
-            A field takes a policy the moment a scraper watches it. Until then there is nothing to
-            govern.
-          </Empty>
+          <Empty title={t('settings.policy.empty.title')}>{t('settings.policy.empty.body')}</Empty>
         ) : (
-          <SpecTable head={['field', 'tier', 'on hold']}>
+          <SpecTable head={[
+            t('settings.policy.head.field'),
+            t('settings.policy.head.tier'),
+            t('settings.policy.head.onHold'),
+          ]}>
             {v.policies.map((p) => (
               <SpecRow
                 key={p.targetId + p.field}
@@ -135,11 +142,11 @@ function Publishing({ v }: { v: SettingsView }) {
 function Output({ v }: { v: SettingsView }) {
   return (
     <>
-      <Section label="WHERE THE DATA GOES" id="where-the-data-goes" />
+      <Section label={t('settings.output.eyebrow')} id="where-the-data-goes" />
       <div className="w-full pt-[32px]">
         <SpecTable>
           <SpecRow
-            a="Output"
+            a={t('settings.output.output')}
             b="Postgres"
             c={
               <StatusLine tone={v.store.reachable ? 'success' : 'danger'} size={13} type="caption-12">
@@ -148,18 +155,18 @@ function Output({ v }: { v: SettingsView }) {
             }
           />
           <SpecRow
-            a="Page captures"
+            a={t('settings.output.captures')}
             b={<span className="mono-value-12_5">{v.captures.dir}</span>}
             c={`${v.captures.kept} kept · ${v.captures.pruned} pruned`}
           />
           <SpecRow
-            a="On a held field"
-            b="Leave empty"
-            c="never filled, always labelled"
+            a={t('settings.output.onHeld')}
+            b={t('settings.output.leaveEmpty')}
+            c={t('settings.output.neverFilled')}
           />
           {/* `c` was "not optional", which added nothing to a row already
               stating that every cell carries one. */}
-          <SpecRow a="Proof" b="one proof id per cell, on the published row" />
+          <SpecRow a={t('settings.output.proof')} b={t('settings.output.proofDetail')} />
         </SpecTable>
       </div>
     </>
@@ -176,7 +183,7 @@ function Connections({ v }: { v: SettingsView }) {
           happens to be rendering. The Publishing tab puts `export as YAML ›` in
           the same place for the same reason. */}
       <div className="flex w-full items-center justify-between gap-[16px]">
-        <Section label="MODEL ACCESS" id="model-access" />
+        <Section label={t('settings.model.eyebrow')} id="model-access" />
         <DocLink href={MODEL_DOC} name="model access" />
       </div>
       {/* The probe is behind a boundary because it can now cost seconds again.
@@ -193,7 +200,7 @@ function Connections({ v }: { v: SettingsView }) {
         </Suspense>
       </div>
 
-      <Section label="CONNECTIONS" id="connections" top={52} />
+      <Section label={t('settings.connections.eyebrow')} id="connections" top={52} />
       <div className="w-full pt-[32px]">
         <Connectors v={v} />
       </div>
@@ -217,7 +224,7 @@ async function ModelAccessRow() {
 /** What the row says while the probe is out. Not a spinner over the whole
  *  section: only this line is unknown, and only this line waits. */
 function ModelAccessPending() {
-  return <Working>Checking</Working>;
+  return <Working>{t('model.checking')}</Working>;
 }
 
 /* ------------------------------------------------------------------ pieces */
@@ -237,7 +244,8 @@ const Section = ({ label, id, top = 0 }: { label: string; id?: string; top?: num
  * Both tables on this screen are that same object, so they are the same
  * component. The widths are a prop because their middle columns are not the
  * same size of thing: Publishing's holds a tier and two numbers, Connections'
- * holds two words ("set", "not configured") and was taking 360px to do it while
+ * holds one of one pair ("configured" / "not configured") and was taking
+ * 360px to do it while
  * the note beside it wrapped to six lines. The header row is optional because
  * the second table's left column is already the heading.
  */
@@ -251,28 +259,35 @@ function SpecTable({
   children: React.ReactNode;
 }) {
   return (
-    <table className="w-full table-fixed border-collapse">
-      <colgroup>
-        <col style={{ width: cols[0] }} />
-        <col style={{ width: cols[1] }} />
-        <col />
-      </colgroup>
-      {head && (
-        <thead>
-          <tr>
-            {head.map((h) => (
-              <th
-                key={h}
-                className="meta-12_5 pb-[8px] text-left font-normal text-[var(--text-muted)]"
-              >
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-      )}
-      <tbody>{children}</tbody>
-    </table>
+    // A SCROLLER, NOT A STACK. Both tables here are name / value / note, and
+    // the note only means anything beside the value it qualifies -- stacked,
+    // "Lets Assay call Bright Data..." floats free of the row that is or is not
+    // configured. The colgroup below is fixed px by design, so the wrapper
+    // scrolls and the page body does not.
+    <div className="w-full overflow-x-auto">
+      <table className="w-full min-w-[720px] table-fixed border-collapse">
+        <colgroup>
+          <col style={{ width: cols[0] }} />
+          <col style={{ width: cols[1] }} />
+          <col />
+        </colgroup>
+        {head && (
+          <thead>
+            <tr>
+              {head.map((h) => (
+                <th
+                  key={h}
+                  className="meta-12_5 pb-[8px] text-left font-normal text-[var(--text-muted)]"
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+        )}
+        <tbody>{children}</tbody>
+      </table>
+    </div>
   );
 }
 
@@ -351,10 +366,10 @@ function Connectors({ v }: { v: SettingsView }) {
           ? [
             <ConnectorRow
               key={`${c.kind}-token`}
-              name={`${c.kind} · API token`}
+              name={`${CONNECTOR_NAME[c.kind]} · API token`}
               kind={c.kind}
               on={c.token.set}
-              status={c.token.set ? 'set' : 'not set'}
+              status={c.token.set ? t('common.configured') : t('common.notConfigured')}
               note={
                 c.token.set
                   ? 'Lets Assay call Bright Data. Authenticating is not fetching — the account needs a zone too, and a token answering does not prove it has one.'
@@ -365,10 +380,10 @@ function Connectors({ v }: { v: SettingsView }) {
           : []),
         <ConnectorRow
           key={`${c.kind}-delivery`}
-          name={c.token ? `${c.kind} · delivery webhook` : c.kind}
+          name={c.token ? `${CONNECTOR_NAME[c.kind]} · delivery webhook` : CONNECTOR_NAME[c.kind]}
           kind={c.kind}
           on={c.configured}
-          status={c.configured ? 'configured' : 'not configured'}
+          status={c.configured ? t('common.configured') : t('common.notConfigured')}
           note={
             c.configured && c.updated_at
               ? `set ${c.updated_at.slice(0, 10)}`
@@ -414,7 +429,7 @@ function ConnectorRow({
       c={
         <span className="flex items-baseline justify-between gap-[16px]">
           <span>{note}</span>
-          <DocLink href={CONNECTOR_DOC[kind]} name={kind} />
+          <DocLink href={CONNECTOR_DOC[kind]} name={CONNECTOR_NAME[kind]} />
         </span>
       }
     />

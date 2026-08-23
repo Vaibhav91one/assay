@@ -38,3 +38,21 @@ export const CONNECTOR_DOC: Record<Kind, string> = {
   slack: '/docs/credentials#slack',
   discord: '/docs/credentials#discord',
 };
+
+/**
+ * What each connector kind is CALLED, as its vendor spells it.
+ *
+ * `Kind` is a stored token -- `brightdata`, `slack`, `discord` -- and the
+ * Connections tab was printing it straight into a row label, so the screen said
+ * "brightdata · API token" and "slack" beside prose that said "Bright Data" and
+ * "Slack" two columns over. The token is not the name.
+ *
+ * It lives here rather than in `web/lib/copy.ts` for the reason `CONNECTOR_DOC`
+ * does: `Record<Kind, string>` makes a connector added to `KINDS` and not to
+ * this map a build failure, which a flat string catalogue cannot express.
+ */
+export const CONNECTOR_NAME: Record<Kind, string> = {
+  brightdata: 'Bright Data',
+  slack: 'Slack',
+  discord: 'Discord',
+};

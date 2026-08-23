@@ -2,6 +2,7 @@
 
 import { RotateCw } from 'lucide-react';
 import { Button } from '@/components/button';
+import { t } from '@/lib/copy';
 import './globals.css';
 
 /**
@@ -37,15 +38,14 @@ export default function GlobalError({
         className="bg-[var(--bg-page)] text-[var(--text-primary)]"
         style={{ fontFamily: 'ui-sans-serif, system-ui, sans-serif' }}
       >
-        <main className="flex min-h-screen w-full flex-col items-start gap-[10px] px-[56px] pt-[96px]">
+        <main className="flex min-h-screen w-full flex-col items-start gap-[10px] px-[20px] md:px-[56px] pt-[96px]">
           {/* The one mark that survives when the shell does not. Set in
               --text-primary rather than the brand orange: #ff4d00 measures
               3.33:1 on white, which is a fine reading for a 40px button fill
               and a failing one for an 11px word. */}
           <span className="label-10 text-[var(--text-primary)]">ASSAY</span>
-          {/* copy(G) */}
           <h1 className="heading-18 pt-[10px] text-[var(--semantic-danger)]">
-            Assay could not start this page.
+            {t('error.global.title')}
           </h1>
           <p className="body-13_5 max-w-[560px] text-[var(--text-secondary)]">
             The failure is above every screen, which usually means the process

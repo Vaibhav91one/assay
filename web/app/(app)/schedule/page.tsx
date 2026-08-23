@@ -4,8 +4,9 @@ import { TopBar } from '@/components/top-bar';
 import { CalendarView } from './calendar-view';
 import { calendarData } from './data';
 import { VIEWS, type ViewKind } from './calendar';
+import { t } from '@/lib/copy';
 
-export const metadata: Metadata = { title: 'Schedule · Assay' };
+export const metadata: Metadata = { title: t('title.schedule') };
 export const dynamic = 'force-dynamic';
 
 export default async function SchedulePage({
@@ -37,7 +38,7 @@ export default async function SchedulePage({
           in the bar would be the redundancy every other screen's copy exists
           to remove. */}
       <TopBar
-        title="Schedule"
+        title={t('schedule.heading')}
         status={headline(running, data.clocks.length, ranToday)}
         scraper={null}
       />
@@ -47,7 +48,7 @@ export default async function SchedulePage({
           off. The screen is titled Schedule, the top bar counts what is running
           and what ran today, and the calendar draws both halves of that
           sentence directly below it. */}
-      <div className="flex w-full max-w-[1112px] flex-col items-start gap-[18px] px-[56px] pb-[64px] pt-[26px]">
+      <div className="flex w-full max-w-[1112px] flex-col items-start gap-[18px] px-[20px] md:px-[56px] pb-[64px] pt-[26px]">
         <CalendarView data={data} initialView={initialView} />
       </div>
     </>
@@ -62,12 +63,13 @@ const sameLocalDay = (a: Date, b: Date) =>
  * running. A count of scrapers alone hides a paused one.
  */
 function headline(running: number, total: number, ranToday: number): string {
-  if (total === 0) return 'nothing scheduled';
+  if (total === 0) return t('schedule.none');
   const paused = total - running;
   return [
-    `${running} running`,
-    paused > 0 ? `${paused} paused` : null,
-    `${ranToday} run${ranToday === 1 ? '' : 's'} today`,
+    t('schedule.headline.running', { n: running }),
+    paused > 0 ? t('schedule.headline.paused', { n: paused }) : null,
+    // The plural is decided here, not in the catalogue -- see its header.
+    `${ranToday} ${ranToday === 1 ? t('schedule.headline.run') : t('schedule.headline.runs')}`,
   ]
     .filter(Boolean)
     .join(' · ');

@@ -1,3 +1,5 @@
+import { t } from '@/lib/copy';
+
 /**
  * Which tabs exist, and which one a URL is asking for.
  *
@@ -8,10 +10,10 @@
  * is a very quiet way to ship a broken screen.
  */
 export const TABS = [
-  { id: 'publishing', label: 'Publishing' },
-  { id: 'output', label: 'Output' },
-  { id: 'notifications', label: 'Notifications' },
-  { id: 'connections', label: 'Connections' },
+  { id: 'publishing', label: t('settings.tab.publishing') },
+  { id: 'output', label: t('settings.tab.output') },
+  { id: 'notifications', label: t('settings.tab.notifications') },
+  { id: 'connections', label: t('settings.tab.connections') },
 ] as const;
 
 export type TabId = (typeof TABS)[number]['id'];

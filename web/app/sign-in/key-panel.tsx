@@ -13,6 +13,7 @@ import { Suspense } from 'react';
 import { ArrowRight, ArrowUpRight, Check } from 'lucide-react';
 import { IconAlign, Lockup } from './chrome';
 import { readKeys, type KeyPresence, type ModelAuth } from './keys';
+import { t } from '@/lib/copy';
 
 /**
  * Green and a word, or a way to find out.
@@ -38,8 +39,11 @@ function Presence({ set, doc, name }: Pick<KeyPresence, 'set' | 'doc' | 'name'>)
           className="text-[var(--semantic-success)]"
           aria-hidden
         />
+        {/* One pair for a credential's presence, product-wide: this badge said
+            "Connected" while the Connections tab said "set" and "configured"
+            for the same fact about the same three credentials. */}
         <span className="meta-12_5" style={{ color: 'var(--semantic-success)' }}>
-          Connected
+          {t('common.configured')}
         </span>
       </span>
     );

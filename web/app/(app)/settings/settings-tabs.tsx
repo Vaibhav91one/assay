@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Tabs } from '@base-ui/react/tabs';
 import { Bell, HardDrive, Plug, ShieldCheck } from 'lucide-react';
 import { SECTION_TAB, TABS, type TabId } from './tabs';
+import { t } from '@/lib/copy';
 
 /**
  * Settings, in four groups this product already had names for.
@@ -59,7 +60,15 @@ export function SettingsTabs({
       onValueChange={(v) => select(v as TabId)}
       className="w-full"
     >
-      <Tabs.List className="relative flex items-center gap-[4px]" aria-label="Settings sections">
+      {/* THE FOUR TABS ARE 480px OF CONTROL and the screen can be 390. They
+          scroll rather than wrap: `Tabs.Indicator` is positioned against this
+          element's own box, so a second row would leave the highlight measuring
+          a tab that has moved under it. A scroller keeps one row, keeps the
+          indicator honest, and keeps the fourth tab reachable. */}
+      <Tabs.List
+        className="relative flex items-center gap-[4px] overflow-x-auto"
+        aria-label={t('settings.tabs.label')}
+      >
         {/* One highlight that travels, rather than each tab lighting its own --
             MOTION.md's rule for a moving selection. Base UI measures the active
             tab into these two custom properties; the transition is what makes

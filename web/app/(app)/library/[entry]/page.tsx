@@ -24,7 +24,7 @@ export default async function TrackerPage({ params }: { params: Promise<{ entry:
   return (
     <>
       <TopBar title={t.name} scraper={null} />
-      <div className="flex w-full max-w-[620px] flex-col gap-[16px] pl-[56px] pr-[32px] pb-[64px] pt-[18px]">
+      <div className="flex w-full max-w-[620px] flex-col gap-[16px] px-[20px] md:pl-[56px] md:pr-[32px] pb-[64px] pt-[18px]">
         {/* The mark, and the site it belongs to, as a link out. GitHub's and
             Wikimedia's permissions are both written around a logo that links
             to them, and this is where that link lives -- a card on the

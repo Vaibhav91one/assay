@@ -30,6 +30,14 @@ import { t } from '@/lib/copy';
  * writes eight raw HSL values and a `.dark` block into globals.css; that block
  * was reverted and the names mapped onto our tokens instead, so there is still
  * one palette rather than two free to drift.
+ *
+ * THE RAIL'S QUIET GREY IS #8a8d93 AND IT WAS #65676d. Measured on the rail's
+ * own ground (`--bg-sidebar`, #0e0e0f) the old value is 3.41:1, which fails
+ * WCAG AA for text at any size this rail draws -- and it was carrying the group
+ * labels, the conversation subtitles and the identity line under the avatar,
+ * every one of them 10-12px. #8a8d93 measures 5.80:1 on the same ground. It is
+ * still visibly quieter than `#a3a5a9` (7.82:1), which is what the nav labels
+ * use, so the hierarchy the rail was drawing survives the fix.
  */
 export async function Sidebar({
   waiting = 0,
@@ -134,10 +142,10 @@ export async function Sidebar({
         {/* Conversations first, because a conversation is the thing that makes
             a scraper -- the rail reads in the order the work happens. */}
         <SidebarGroup className="gap-0 pt-[23px] group-data-[collapsible=icon]:hidden">
-          <SidebarGroupLabel className="label-10_5 h-auto px-0 text-[#65676d]">CHATS</SidebarGroupLabel>
+          <SidebarGroupLabel className="label-10_5 h-auto px-0 text-[#8a8d93]">CHATS</SidebarGroupLabel>
           <SidebarGroupAction
             render={<Link href="/" />}
-            className="text-[#65676d] hover:bg-[#292a2e] hover:text-[var(--text-inverse)]"
+            className="text-[#8a8d93] hover:bg-[#292a2e] hover:text-[var(--text-inverse)]"
           >
             <Plus size={14} strokeWidth={1.5} aria-hidden />
             <span className="sr-only">Start a new conversation</span>
@@ -152,7 +160,7 @@ export async function Sidebar({
             one of these has a transcript -- they do not, and none is invented. */}
         {scrapers.length > 0 && (
           <SidebarGroup className="gap-0 pt-[23px] group-data-[collapsible=icon]:hidden">
-            <SidebarGroupLabel className="label-10_5 h-auto px-0 text-[#65676d]">
+            <SidebarGroupLabel className="label-10_5 h-auto px-0 text-[#8a8d93]">
               SCRAPERS WITH NO CHAT
             </SidebarGroupLabel>
             <SidebarGroupContent className="pt-[17px]">
@@ -179,7 +187,7 @@ export async function Sidebar({
           </span>
           <span className="flex min-w-0 flex-col gap-[2px] group-data-[collapsible=icon]:hidden">
             <span className="body-14 truncate text-[var(--text-inverse)]">{label}</span>
-            <span className="caption-12 truncate text-[#65676d]">
+            <span className="caption-12 truncate text-[#8a8d93]">
               {named ? t('nav.signedIn') : t('nav.noAccounts')}
             </span>
           </span>

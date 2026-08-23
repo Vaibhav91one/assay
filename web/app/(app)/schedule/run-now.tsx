@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { HeldCell } from '../schema-table';
 import { askForRun, landedSince, type Asked, type Landed } from './actions';
+import { t } from '@/lib/copy';
 
 /**
  * "Run this now", said honestly.
@@ -39,7 +40,7 @@ export function RunNow({ scrapers, workers }: { scrapers: Scraper[]; workers: nu
 
   return (
     <section className="w-full pt-[36px]">
-      <h2 className="label-10 pb-[10px] text-[var(--text-muted)]">ASK FOR A RUN</h2>
+      <h2 className="label-10 pb-[10px] text-[var(--text-muted)]">{t('schedule.ask.eyebrow')}</h2>
       <WorkerLine workers={workers} />
       <div className="flex w-full flex-col pt-[6px]">
         {scrapers.map((s) => (
@@ -143,10 +144,10 @@ function Row({ scraper }: { scraper: Scraper }) {
           className="meta-12_5 shrink-0 rounded-[var(--radius-control)] border border-[var(--border-default)] px-[10px] py-[4px] text-[var(--text-primary)] transition-colors duration-[var(--duration-tint)] hover:bg-[var(--surface-subtle)] disabled:text-[var(--text-muted)]"
         >
           {phase.kind === 'asking'
-            ? 'Asking…'
+            ? t('schedule.ask.asking')
             : phase.kind === 'watching'
-              ? 'Queued'
-              : 'Ask for a run'}
+              ? t('schedule.ask.queued')
+              : t('schedule.ask.button')}
         </button>
       </div>
       <Said phase={phase} />

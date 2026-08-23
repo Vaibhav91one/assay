@@ -3,8 +3,9 @@ import { TopBar } from '@/components/top-bar';
 import { Empty } from '@/components/empty';
 import { StatusLine } from '@/components/status-line';
 import { auditSnapshot, SNAPSHOT, type Audit, type FieldAudit } from '@/lib/audit';
+import { t } from '@/lib/copy';
 
-export const metadata: Metadata = { title: 'Field audit · Assay' };
+export const metadata: Metadata = { title: t('title.audit') };
 export const dynamic = 'force-dynamic';
 
 /**
@@ -36,34 +37,25 @@ export default async function AuditPage() {
 
   return (
     <>
-      <TopBar title="Field audit" status={a ? headline(a) : 'no snapshot on disk'} scraper={null} />
+      <TopBar title={t('audit.heading')} status={a ? headline(a) : t('audit.noSnapshot.status')} scraper={null} />
 
-      <div className="flex w-full max-w-[1100px] flex-col gap-[28px] px-[56px] pb-[64px] pt-[36px]">
+      <div className="flex w-full max-w-[1100px] flex-col gap-[28px] px-[20px] md:px-[56px] pb-[64px] pt-[36px]">
         {a === null ? (
-          /* copy(G) */
-          <Empty title="No snapshot to audit.">
-            This screen reads <span className="mono-value-12_5">{SNAPSHOT}</span> from the repository
-            root and found nothing there. It is a committed file, not something a run produces —
-            nothing is missing from your database.
+          <Empty title={t('audit.empty.title')}>
+            {t('audit.empty.body.before')} <span className="mono-value-12_5">{SNAPSHOT}</span>{' '}
+            {t('audit.empty.body.after')}
           </Empty>
         ) : (
           <>
             <section className="flex flex-col items-start gap-[12px] rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] p-[24px]">
-              <p className="label-10 text-[var(--text-muted)]">WHAT THE PLATFORM REPORTED</p>
-              {/* copy(G) */}
+              <p className="label-10 text-[var(--text-muted)]">{t('audit.platform.eyebrow')}</p>
               <StatusLine tone="success" type="body-14" size={16}>
-                100% success, 0 failed crawls — {a.rows} records returned.
+                {t('audit.platform.said', { rows: a.rows })}
               </StatusLine>
-              {/* copy(G) */}
               <p className="heading-18 max-w-[900px] text-[var(--text-primary)]">{headline(a)}</p>
-              {/* copy(G) */}
               <p className="meta-13 max-w-[900px] text-[var(--text-secondary)]">
-                This is not a criticism of the crawling, which worked: sixty pages were fetched from
-                a site that fights scrapers and none of them failed. The finding is narrower.{' '}
-                <em>The job succeeded</em> and <em>the data is right</em> are different claims, and
-                the platform can only answer the first one. That gap is the shape of gap Assay
-                fills, and it arrived unprompted from production rather than from a benchmark we
-                wrote.
+                {t('audit.finding')} <em>{t('audit.finding.jobSucceeded')}</em> and{' '}
+                <em>{t('audit.finding.dataIsRight')}</em> {t('audit.finding.rest')}
               </p>
               <p className="meta-12_5 text-[var(--text-muted)]">
                 Bright Data collector{' '}
@@ -74,26 +66,26 @@ export default async function AuditPage() {
             </section>
 
             <section className="flex flex-col gap-[12px]">
-              <h2 className="title-20 text-[var(--text-primary)]">Every promised field</h2>
+              <h2 className="title-20 text-[var(--text-primary)]">{t('audit.everyField')}</h2>
               <Table a={a} />
             </section>
 
             <section className="flex flex-col items-start gap-[8px]">
-              <h2 className="title-20 text-[var(--text-primary)]">The cross-check</h2>
+              <h2 className="title-20 text-[var(--text-primary)]">{t('audit.crossCheck')}</h2>
               {a.crossCheck === null ? (
-                /* copy(G) */
                 <p className="meta-13 max-w-[900px] text-[var(--text-secondary)]">
-                  Unavailable — only one side of the pair was delivered.{' '}
+                  {t('audit.crossCheck.unavailable')}{' '}
                   <span className="mono-value-12_5">recall_title</span> and{' '}
-                  <span className="mono-value-12_5">title_on_detail</span> are the only independent
-                  corroboration between the listing stage and the detail stage. Without both, drift
-                  on the listing template cannot be detected at all.
+                  <span className="mono-value-12_5">title_on_detail</span>{' '}
+                  {t('audit.crossCheck.unavailable.rest')}
                 </p>
               ) : (
-                /* copy(G) */
                 <p className="meta-13 max-w-[900px] text-[var(--text-secondary)]">
-                  {a.crossCheck.comparable} rows carry both titles; {a.crossCheck.agreeing} agree and{' '}
-                  {a.crossCheck.comparable - a.crossCheck.agreeing} disagree.
+                  {t('audit.crossCheck.counts', {
+                    comparable: a.crossCheck.comparable,
+                    agreeing: a.crossCheck.agreeing,
+                    disagreeing: a.crossCheck.comparable - a.crossCheck.agreeing,
+                  })}
                 </p>
               )}
             </section>
@@ -115,28 +107,37 @@ export default async function AuditPage() {
  * one is on disk.
  */
 function headline(a: Audit): string {
-  /* copy(G) */
-  return `${a.unhealthy} of ${a.fields.length} promised fields unhealthy behind a 100%-success run`;
+  return t('audit.headline', { unhealthy: a.unhealthy, total: a.fields.length });
 }
 
 function Table({ a }: { a: Audit }) {
   return (
-    <table className="w-full border-collapse">
-      <thead>
-        <tr className="border-b border-[var(--border-hairline)] text-left">
-          {['field', 'delivered', 'null-rate', 'verdict'].map((h) => (
-            <th key={h} className="caption-12 pb-[8px] font-normal text-[var(--text-muted)]">
-              {h}
-            </th>
+    // A SCROLLER BELOW 768. Somebody else's data, read across: the null-rate and
+    // the verdict only mean anything beside the field they grade. The wrapper
+    // scrolls; the page body never does.
+    <div className="w-full overflow-x-auto">
+      <table className="w-full min-w-[560px] border-collapse">
+        <thead>
+          <tr className="border-b border-[var(--border-hairline)] text-left">
+            {[
+              t('audit.head.field'),
+              t('audit.head.delivered'),
+              t('audit.head.nullRate'),
+              t('audit.head.verdict'),
+            ].map((h) => (
+              <th key={h} className="caption-12 pb-[8px] font-normal text-[var(--text-muted)]">
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {a.fields.map((f) => (
+            <Row key={f.field} f={f} rows={a.rows} />
           ))}
-        </tr>
-      </thead>
-      <tbody>
-        {a.fields.map((f) => (
-          <Row key={f.field} f={f} rows={a.rows} />
-        ))}
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    </div>
   );
 }
 

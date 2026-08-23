@@ -8,6 +8,7 @@ import { StatusLine } from '@/components/status-line';
 import { Toast, TOAST_BUTTON } from '@/components/toast';
 import { DecisionCard } from './decision-card';
 import { undoCell, type Outcome } from './actions';
+import { t } from '@/lib/copy';
 
 /** The receipt for one answer, and the follow-up that answer earns. */
 interface Receipt {
@@ -93,12 +94,9 @@ export function DecisionsList({
                 // conversation on Home -- it is not a fifth answer to this
                 // decision, and giving it a button here would put a control
                 // that leaves the screen next to one that undoes a write.
-                /* copy(G) */
                 <Link href={`/?target=${encodeURIComponent(receipt.reteach)}`} className={TOAST_BUTTON}>
                   <MessageSquare size={14} strokeWidth={1.5} className="text-[var(--text-inverse)]" aria-hidden />
-                  <span className="meta-13 text-[var(--text-inverse)]">
-                    Point this field at the right value
-                  </span>
+                  <span className="meta-13 text-[var(--text-inverse)]">{t('decisions.reteach')}</span>
                 </Link>
               )}
               <button

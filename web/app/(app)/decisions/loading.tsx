@@ -1,5 +1,6 @@
 import { TopBar } from '@/components/top-bar';
 import { RouteLoader } from '@/components/motion/route-loader';
+import { t } from '@/lib/copy';
 
 /**
  * Figma `decisions · loading` (412:2922) drew this as a skeleton of the queue.
@@ -13,7 +14,7 @@ import { RouteLoader } from '@/components/motion/route-loader';
 export default function DecisionsLoading() {
   return (
     <>
-      <TopBar title="Decisions" status="loading…" />
+      <TopBar title={t('nav.decisions')} status={t('topbar.loading')} />
       <RouteLoader>Reading the queue.</RouteLoader>
     </>
   );

@@ -4,6 +4,7 @@ import { Disclosure, GateNumbers } from '@/components/disclosure';
 import { Copy } from '@/components/copy';
 import type { Provenance, Standing } from '@/lib/explain';
 import { stamp } from '@/lib/when';
+import { t } from '@/lib/copy';
 
 /**
  * Where one published value came from -- the whole answer, and the only copy of
@@ -81,13 +82,12 @@ export function ProofDetail({ p }: { p: Provenance }) {
 function Counterfactual({ p }: { p: Provenance }) {
   if (p.standing !== 'held' || !p.wouldHavePublished) return null;
   return (
-    /* copy(G) */
     <p className="meta-13 mt-[20px] max-w-[660px] text-[var(--text-secondary)]">
-      A healer without the gate would have published{' '}
+      {t('counterfactual.before')}{' '}
       <span className="mono-value-12_5 text-[var(--text-primary)]">
         “{p.wouldHavePublished}”
       </span>
-      . Assay published nothing.
+      {t('counterfactual.after')}
     </p>
   );
 }
@@ -127,15 +127,13 @@ function Hole() {
         className="heading-18 rounded-[6px] px-[8px] py-[2px]"
         style={{ color: 'var(--semantic-warning)', background: 'var(--semantic-warning-subtle)' }}
       >
-        held
+        {t('run.cell.held')}
       </span>
-      {/* The same sentence the run canvas's Hold node uses -- copy(G). The two
-          screens describe the same cell and used to disagree about whether
-          anything had been "published": nothing is WRITTEN, and `null` is the
-          labelled hole the output column holds in its place. */}
-      <span className="meta-12_5 text-[var(--text-muted)]">
-        left empty (null) — nothing was written
-      </span>
+      {/* The same sentence the run canvas's Hold node uses. The two screens
+          describe the same cell and used to disagree about whether anything had
+          been "published": nothing is WRITTEN, and `null` is the labelled hole
+          the output column holds in its place. */}
+      <span className="meta-12_5 text-[var(--text-muted)]">{t('explain.hole.note')}</span>
     </span>
   );
 }

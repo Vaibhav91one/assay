@@ -6,8 +6,9 @@ import { actionVariants } from '@/components/button';
 import { Copy } from '@/components/copy';
 import { ProofDetail } from '@/components/proof-detail';
 import { provenance } from '@/lib/explain';
+import { t } from '@/lib/copy';
 
-export const metadata: Metadata = { title: 'Where did this number come from? · Assay' };
+export const metadata: Metadata = { title: t('title.explain') };
 export const dynamic = 'force-dynamic';
 
 /**
@@ -29,7 +30,7 @@ export default async function ExplainPage({ params }: { params: Promise<{ proof:
   return (
     <>
       <TopBar
-        title="Where did this number come from?"
+        title={t('explain.heading')}
         status={`proof ${p.proof}`}
         // The target this value came off. Reading a proof and wanting the page
         // read again is one thought, not two screens.
@@ -41,7 +42,7 @@ export default async function ExplainPage({ params }: { params: Promise<{ proof:
             className={actionVariants({ variant: 'outline' })}
           >
             <CopyIcon size={16} strokeWidth={1.5} aria-hidden />
-            Copy
+            {t('explain.copy')}
           </Copy>
         }
       />
@@ -50,7 +51,7 @@ export default async function ExplainPage({ params }: { params: Promise<{ proof:
           off." came off. The top bar already asks "Where did this number come
           from?" and the two cards below answer it; the sentence between them
           restated the question as a feature description. */}
-      <div className="flex w-full flex-col items-start px-[56px] pb-[48px] pt-[48px]">
+      <div className="flex w-full flex-col items-start px-[20px] md:px-[56px] pb-[48px] pt-[48px]">
         <ProofDetail p={p} />
       </div>
     </>

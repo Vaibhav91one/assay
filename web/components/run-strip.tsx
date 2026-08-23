@@ -60,7 +60,12 @@ export function RunStrip({
   if (bars.length === 0) return null;
 
   return (
-    <div className="flex flex-col gap-[6px]">
+    // `max-w-full` AND `overflow-x-auto`, because the strip's width is a fact
+    // about the data: one 8px anchor per run, so sixty runs is 480px and there
+    // is no width at which that is guaranteed to fit. The whole strip scrolls
+    // -- bars and the from/to labels under them -- so the two cannot come
+    // apart, and the page body is left alone.
+    <div className="flex max-w-full flex-col gap-[6px] overflow-x-auto">
       {label && <p className="label-10 text-[var(--text-muted)]">{label}</p>}
       {/*
         One provider for the whole strip rather than one per bar, so sweeping
