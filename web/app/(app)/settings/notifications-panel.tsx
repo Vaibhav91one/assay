@@ -6,9 +6,22 @@ import { setDigest } from './actions';
 import type { AlertsView } from '@/lib/alerts';
 
 /**
+ * Where both environment rows send you.
+ *
+ * Deliberately NOT in `settings/docs.ts`. That file is the map from a
+ * connector KIND to its heading and is asserted as such by
+ * `test/settings-docs.test.ts`; mail is not a connector kind, and widening
+ * that map to hold one would make the test's "every kind has an href" claim
+ * mean less. One heading covers both rows because one heading documents both
+ * -- credentials.mdx's "Email delivery" carries ASSAY_WEBHOOK_URL too.
+ */
+const MAIL_DOC = '/docs/credentials#email-delivery';
+
+/**
  * What Assay will send you, and which parts of it you can change from here.
  *
- * Three rows, and only one of them is a control. That ratio is the honest one:
+ * Three rows, and only one of them is a control -- the other two are not
+ * drawn as controls at all, because they are not. That ratio is the honest one:
  * the break alert is decided per run from the process environment and reads
  * nothing from the store, so there is no bit on this screen to flip, while the
  * digest has a table, a due query and a worker already wired to each other and
@@ -82,11 +95,19 @@ export function NotificationsPanel({ view }: { view: AlertsView }) {
         </p>
       )}
 
+      {/* Not switches. Both of these are decided per run from the process
+          environment and read nothing from the store, so neither is a bit
+          anything on this screen could flip -- and a switch that will not move
+          still asks to be pressed. They report a word and say where the word
+          is set instead. */}
+      {/* copy(G) */}
       <SettingRow
         label="Break alerts by email"
         detail="When a field breaks, one alert per episode — not one per page."
         checked={mail.ready}
-        reason={`Environment, not a setting: the worker reads ASSAY_RESEND_KEY, ASSAY_MAIL_FROM and ASSAY_MAIL_TO on each run and nothing from the store.${
+        value={mail.ready ? 'sending' : 'not configured'}
+        doc={MAIL_DOC}
+        reason={`Set in .env, not here: the worker reads ASSAY_RESEND_KEY, ASSAY_MAIL_FROM and ASSAY_MAIL_TO on each run and nothing from the store.${
           mail.ready ? '' : ` ${mail.missing} is not set, so a break alert would fall through to the webhook.`
         }`}
       />
@@ -95,7 +116,9 @@ export function NotificationsPanel({ view }: { view: AlertsView }) {
         label="Webhook fallback"
         detail="Where a break alert goes when the email fails. The outcome is recorded on the episode either way."
         checked={webhookConfigured}
-        reason={`Environment, not a setting: ASSAY_WEBHOOK_URL.${
+        value={webhookConfigured ? 'configured' : 'not configured'}
+        doc={MAIL_DOC}
+        reason={`Set in .env, not here: ASSAY_WEBHOOK_URL.${
           webhookConfigured ? '' : ' Unset, so a failed email is recorded as undelivered and nothing else is tried.'
         }`}
       />
