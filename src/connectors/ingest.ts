@@ -63,6 +63,28 @@ function normalise(html: string) {
   return $;
 }
 
+/**
+ * A page parsed once, stripped once, and serialised once.
+ *
+ * Both halves are needed by every run -- `$` to read the field off, the string
+ * to digest, size and store -- and both cost roughly what the page is big. A
+ * caller with more than one field to run over the SAME bytes builds this once
+ * and hands it to each `ingestPage`; `createTarget` is that caller, and doing
+ * it per field is what made a twelve-field watch parse an 8 MiB page thirteen
+ * times inside one server action.
+ */
+export interface NormalisedPage {
+  $: ReturnType<typeof load>;
+  /** `$.html()` -- the form every digest, byte count and capture is taken of. */
+  normalised: string;
+}
+
+/** Parse, strip and serialise a page once. The only way to build one. */
+export function normalisePage(html: string): NormalisedPage {
+  const $ = normalise(html);
+  return { $, normalised: $.html() };
+}
+
 /** The digest recorded as `runs.page_sha` for a given page. */
 export const pageDigest = (html: string): string => digest(normalise(html).html());
 
@@ -167,14 +189,23 @@ export async function ingestPage({
   target,
   html,
   via,
+  page,
 }: {
   target: TargetRow;
   html: string;
   /** Provenance, recorded on the proof record. Never branched on. */
   via: string;
+  /**
+   * `html`, already normalised, when the caller has it. Optional and defaulted,
+   * so no existing caller changes -- but a caller running SEVERAL fields over
+   * one page must pass it, or each field pays for its own parse of the same
+   * bytes. It has to be `normalisePage(html)` for THIS `html`: the digest below
+   * becomes `runs.page_sha`, and a mismatched pair would record one page's
+   * fingerprint against another page's reading.
+   */
+  page?: NormalisedPage;
 }): Promise<IngestResult> {
-  const $ = normalise(html);
-  const normalised = $.html();
+  const { $, normalised } = page ?? normalisePage(html);
   const sha = digest(normalised);
   const last = await lastRunFor(target.targetId);
   const runId = await reserveRunId();
@@ -222,7 +253,9 @@ export async function ingestPage({
       // interstitial happens to contain a heading the field resolver likes.
       const root = $('html').first()[0];
       if (!root) throw new Error(`blocked first page for ${target.targetId} was not parseable HTML`);
-      baseline = establishBaseline({ $, el: root, field: c.field, expected: c.expected });
+      baseline = establishBaseline({
+        $, el: root, field: c.field, expected: c.expected, pageHtml: normalised,
+      });
     } else {
       // pickTarget is how a baseline is CHOSEN, once, from a page believed good.
       // It is not how a later run READS the field -- that is `baseline.selector`,
@@ -238,7 +271,7 @@ export async function ingestPage({
       }
       const golden = await putCapture(normalised);
       baseline = establishBaseline({
-        $, el, field: c.field, expected: c.expected, goldenSha: golden.sha,
+        $, el, field: c.field, expected: c.expected, goldenSha: golden.sha, pageHtml: normalised,
       });
       newBaseline = { capture: golden, selector: baseline.selector };
     }
@@ -259,7 +292,7 @@ export async function ingestPage({
   const result = await runTarget({
     // The bytes are already here, so the seam is satisfied by handing back the
     // parse. No branch inside the engine knows this happened.
-    fetchPage: () => ({ $, receivedHtml: html }),
+    fetchPage: () => ({ $, receivedHtml: html, pageHtml: normalised }),
     baseline,
     history,
     thresholds: c.thresholds ?? { tau: 0.6, delta: 0.16 },

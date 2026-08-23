@@ -37,6 +37,34 @@ export async function closeDb() {
 }
 
 /**
+ * Every error in a `cause` chain, outermost first.
+ *
+ * Drizzle wraps the driver error, and the wrapper is the useless half: it says
+ * "Failed query: CREATE TABLE ..." while the sentence an operator needs --
+ * `column "scope" does not exist` -- and the SQLSTATE that names it are one
+ * `cause` deeper. Two tools already needed to dig for that and one of them had
+ * the loop written out inline; they want different halves of the same walk
+ * (`tools/migrate.ts` prints the messages, `tools/apikey.ts` looks for a code),
+ * so this returns the errors and lets each take what it came for.
+ */
+export function causeChain(e: unknown): Error[] {
+  const chain: Error[] = [];
+  for (let err: unknown = e; err instanceof Error; err = err.cause) chain.push(err);
+  return chain;
+}
+
+/**
+ * The SQLSTATE a failed query carries, from anywhere in the cause chain.
+ *
+ * `42703` is an unknown column and `42P01` an unknown table: between them they
+ * are what "the schema is older than the code" looks like from the driver, and
+ * a tool that recognises them can say so instead of printing the query.
+ */
+export const sqlState = (e: unknown): string | null =>
+  causeChain(e).map((err) => (err as { code?: unknown }).code)
+    .find((c): c is string => typeof c === 'string') ?? null;
+
+/**
  * Reserve the run id BEFORE the run is evaluated.
  *
  * The store's id is the canonical one: it is what REST and MCP publish, so the

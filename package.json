@@ -15,6 +15,7 @@
     "headtohead": "tsx tools/headtohead.ts",
     "bd:heal": "tsx tools/bd-heal.ts",
     "demo": "tsx tools/demo.ts",
+    "seed:demo": "tsx tools/seed-demo.ts",
     "ingest": "tsx tools/ingest.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx tools/migrate.ts",
