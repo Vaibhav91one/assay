@@ -3,6 +3,10 @@
  *   node tools/tokens.js --print   # run the printed script in Figma
  *   node tools/tokens.js dump.json # write this file from the result
  * 20 colours, 3 numbers, 20 text styles.
+ *
+ * 16 text styles ship one step LARGER than the Figma file says --
+ * see SHIPPED in tools/tokens.ts for the sizes and why. The class names
+ * still carry the Figma size, so .caption-11 is 12px here on purpose.
  */
 
 @theme static {
@@ -37,26 +41,26 @@
      colour and caps-with-tracking. Never font-weight. */
   --font-sans: var(--font-questrial), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-roboto-mono), ui-monospace, SFMono-Regular, monospace;
-  --text-body-13_5: 13.5px;
-  --text-body-14: 14px;
-  --text-caption-11: 11px;
-  --text-caption-12: 12px;
+  --text-body-13_5: 14px;
+  --text-body-14: 14.5px;
+  --text-caption-11: 12px;
+  --text-caption-12: 13px;
   --text-display-28: 28px;
   --text-display-44: 44px;
   --text-display-96: 96px;
-  --text-heading-16: 16px;
-  --text-heading-18: 18px;
-  --text-label-10: 10px;
-  --text-label-10_5: 10.5px;
-  --text-meta-12_5: 12.5px;
-  --text-meta-13: 13px;
-  --text-mono-label-10_5: 10.5px;
-  --text-mono-label-12: 12px;
-  --text-mono-value-12_5: 12.5px;
-  --text-mono-value-13: 13px;
+  --text-heading-16: 17px;
+  --text-heading-18: 19px;
+  --text-label-10: 11px;
+  --text-label-10_5: 11.5px;
+  --text-meta-12_5: 13.5px;
+  --text-meta-13: 14px;
+  --text-mono-label-10_5: 11.5px;
+  --text-mono-label-12: 13px;
+  --text-mono-value-12_5: 13.5px;
+  --text-mono-value-13: 14px;
   --text-nav-15: 15px;
-  --text-title-20: 20px;
-  --text-title-22: 22px;
+  --text-title-20: 21px;
+  --text-title-22: 23px;
 
   /* elevation */
   --shadow-elevation-floating: 0px 12px 48px rgb(0 0 0 / 0.2), 0px 2px 6px rgb(0 0 0 / 0.1);
@@ -65,23 +69,23 @@
 
 /* One class per Figma text style. Named by role, not by size, so a
    size change in Figma does not rename anything in the app. */
-.body-13_5 { font-family: var(--font-sans); font-size: 13.5px; line-height: 21px; }
-.body-14 { font-family: var(--font-sans); font-size: 14px; line-height: normal; }
-.caption-11 { font-family: var(--font-sans); font-size: 11px; line-height: normal; }
-.caption-12 { font-family: var(--font-sans); font-size: 12px; line-height: normal; }
+.body-13_5 { font-family: var(--font-sans); font-size: 14px; line-height: 22px; }
+.body-14 { font-family: var(--font-sans); font-size: 14.5px; line-height: normal; }
+.caption-11 { font-family: var(--font-sans); font-size: 12px; line-height: normal; }
+.caption-12 { font-family: var(--font-sans); font-size: 13px; line-height: normal; }
 .display-28 { font-family: var(--font-sans); font-size: 28px; line-height: normal; }
 .display-44 { font-family: var(--font-sans); font-size: 44px; line-height: normal; }
 .display-96 { font-family: var(--font-sans); font-size: 96px; line-height: normal; }
-.heading-16 { font-family: var(--font-sans); font-size: 16px; line-height: normal; }
-.heading-18 { font-family: var(--font-sans); font-size: 18px; line-height: normal; }
-.label-10 { font-family: var(--font-sans); font-size: 10px; line-height: normal; letter-spacing: 0.9px; }
-.label-10_5 { font-family: var(--font-sans); font-size: 10.5px; line-height: normal; letter-spacing: 0.9px; }
-.meta-12_5 { font-family: var(--font-sans); font-size: 12.5px; line-height: normal; }
-.meta-13 { font-family: var(--font-sans); font-size: 13px; line-height: normal; }
-.mono-label-10_5 { font-family: var(--font-mono); font-size: 10.5px; line-height: normal; letter-spacing: 0.9px; }
-.mono-label-12 { font-family: var(--font-mono); font-size: 12px; line-height: normal; }
-.mono-value-12_5 { font-family: var(--font-mono); font-size: 12.5px; line-height: normal; }
-.mono-value-13 { font-family: var(--font-mono); font-size: 13px; line-height: normal; }
+.heading-16 { font-family: var(--font-sans); font-size: 17px; line-height: normal; }
+.heading-18 { font-family: var(--font-sans); font-size: 19px; line-height: normal; }
+.label-10 { font-family: var(--font-sans); font-size: 11px; line-height: normal; letter-spacing: 0.9px; }
+.label-10_5 { font-family: var(--font-sans); font-size: 11.5px; line-height: normal; letter-spacing: 0.9px; }
+.meta-12_5 { font-family: var(--font-sans); font-size: 13.5px; line-height: normal; }
+.meta-13 { font-family: var(--font-sans); font-size: 14px; line-height: normal; }
+.mono-label-10_5 { font-family: var(--font-mono); font-size: 11.5px; line-height: normal; letter-spacing: 0.9px; }
+.mono-label-12 { font-family: var(--font-mono); font-size: 13px; line-height: normal; }
+.mono-value-12_5 { font-family: var(--font-mono); font-size: 13.5px; line-height: normal; }
+.mono-value-13 { font-family: var(--font-mono); font-size: 14px; line-height: normal; }
 .nav-15 { font-family: var(--font-sans); font-size: 15px; line-height: normal; }
-.title-20 { font-family: var(--font-sans); font-size: 20px; line-height: normal; }
-.title-22 { font-family: var(--font-sans); font-size: 22px; line-height: normal; }
+.title-20 { font-family: var(--font-sans); font-size: 21px; line-height: normal; }
+.title-22 { font-family: var(--font-sans); font-size: 23px; line-height: normal; }
