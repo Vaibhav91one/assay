@@ -396,7 +396,11 @@ function Candidates({ gate }: { gate: NonNullable<RunDetail['gate']> }) {
       <table className="w-full border-collapse">
         <thead>
           <tr className="border-b border-[var(--border-hairline)] text-left">
-            {['#', 'element', 'text on the page'].map((h) => (
+            {[
+              t('run.gate.head.rank'),
+              t('run.gate.head.element'),
+              t('run.gate.head.text'),
+            ].map((h) => (
               <th key={h} className="caption-12 pb-[8px] font-normal text-[var(--text-muted)]">
                 {h}
               </th>
@@ -429,7 +433,12 @@ function Evidence({ d }: { d: RunDetail }) {
     <table className="w-full border-collapse">
       <thead>
         <tr className="border-b border-[var(--border-hairline)] text-left">
-          {['stage', 'fact', 'value', 'read from'].map((h) => (
+          {[
+            t('run.evidence.head.stage'),
+            t('run.evidence.head.fact'),
+            t('run.evidence.head.value'),
+            t('run.evidence.head.source'),
+          ].map((h) => (
             <th key={h} className="caption-12 pb-[8px] font-normal text-[var(--text-muted)]">
               {h}
             </th>
