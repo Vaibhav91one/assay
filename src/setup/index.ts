@@ -29,10 +29,9 @@
 // for the machine-to-machine surface and nothing else.
 
 import { z } from 'zod';
-import { load } from 'cheerio';
 import { inArray } from 'drizzle-orm';
 import { fetchHtml } from '../skills/page.js';
-import { ingestPage, type TargetRow } from '../connectors/ingest.js';
+import { ingestPage, normalisePage, type TargetRow } from '../connectors/ingest.js';
 import { nextRunAt, cadenceMs } from '../schedule.js';
 import { getDb, targets, eq, sql } from '../store/index.js';
 
@@ -250,10 +249,17 @@ export async function createTarget(input: CreateInput): Promise<Created | Failur
     return fail('unreachable', `Could not read ${url}: ${(e as Error).message}`);
   }
 
-  // Every field is checked against the page BEFORE anything is written, so a
-  // three-field watch with one bad resolver writes nothing at all.
-  const $ = load(html);
-  $('script,style,noscript').remove();
+  // ONE parse, for every field and for every baseline run below.
+  //
+  // This used to be `load(html)` here plus a `normalise(html)` inside each
+  // field's `ingestPage`: N+1 full parses and N+1 full serialisations of a page
+  // that may be 8 MiB, all synchronous inside one server action, which is what
+  // took the Next dev process down on a many-field proposal. `normalisePage` is
+  // also the strip the engine's own digests are taken of, so doing it here
+  // rather than repeating `$('script,style,noscript').remove()` keeps this
+  // function's idea of the page identical to the runner's by construction.
+  const page = normalisePage(html);
+  const { $ } = page;
   const missing = fields.filter((f) => !pick($, f.resolver)).map((f) => f.name);
   if (missing.length) {
     return fail(
@@ -283,7 +289,7 @@ export async function createTarget(input: CreateInput): Promise<Created | Failur
       const [t] = await d.select().from(targets).where(eq(targets.targetId, ids[i]!)).limit(1);
       row.contract = t!.contract;
       // The shared run path. Not a copy of it.
-      const r = await ingestPage({ target: row, html, via: 'setup' });
+      const r = await ingestPage({ target: row, html, via: 'setup', page });
       out.push({
         id: ids[i]!,
         field: fields[i]!.name,
