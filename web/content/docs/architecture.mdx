@@ -15,11 +15,12 @@ flowchart TB
   end
 
   site["the site being watched"]
-  bd["Bright Data<br/>for pages that refuse a plain request"]
+  bd["Bright Data<br/>scrapes on its own schedule"]
+  fc["Firecrawl<br/>for pages that refuse a plain request"]
 
   worker -->|"http"| site
-  worker -->|"http"| bd
-  bd -.->|"webhook delivery<br/>same ingestPage path"| worker
+  worker -.->|"http, only after a direct<br/>request was refused"| fc
+  bd -.->|"webhook delivery<br/>same ingestPage path<br/>web receives, never fetches"| web
 
   worker -->|"reads and writes"| pg
   worker -->|"writes a capture<br/>once per distinct digest"| caps

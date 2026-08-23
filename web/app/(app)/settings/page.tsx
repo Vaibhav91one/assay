@@ -14,6 +14,7 @@ import {
   type SettingsView,
 } from '@/lib/settings';
 import { alertsView } from '@/lib/alerts';
+import type { Kind } from 'assay/engine/connectors/config';
 import { SettingsTabs } from './settings-tabs';
 import { isTabId, type TabId } from './tabs';
 import { NotificationsPanel } from './notifications-panel';
@@ -221,18 +222,29 @@ const Section = ({ label, id, top = 0 }: { label: string; id?: string; top?: num
 );
 
 /**
- * Three columns, fixed at 312 / 360 / rest.
+ * Three columns: a name, what it is set to, and one quiet note about it.
  *
- * Both tables on this screen are the same object -- a name, what it is set to,
- * and one quiet note about it -- so they are the same component. The header row
- * is optional because the second table's left column is already the heading.
+ * Both tables on this screen are that same object, so they are the same
+ * component. The widths are a prop because their middle columns are not the
+ * same size of thing: Publishing's holds a tier and two numbers, Connections'
+ * holds two words ("set", "not configured") and was taking 360px to do it while
+ * the note beside it wrapped to six lines. The header row is optional because
+ * the second table's left column is already the heading.
  */
-function SpecTable({ head, children }: { head?: [string, string, string]; children: React.ReactNode }) {
+function SpecTable({
+  head,
+  cols = [312, 360],
+  children,
+}: {
+  head?: [string, string, string];
+  cols?: [number, number];
+  children: React.ReactNode;
+}) {
   return (
     <table className="w-full table-fixed border-collapse">
       <colgroup>
-        <col style={{ width: 312 }} />
-        <col style={{ width: 360 }} />
+        <col style={{ width: cols[0] }} />
+        <col style={{ width: cols[1] }} />
         <col />
       </colgroup>
       {head && (
@@ -301,49 +313,100 @@ function Tier({ p }: { p: Policy }) {
 /**
  * Presence, never a secret. `describe()` is the only public read path into the
  * connector file, and it is built that way so a screen cannot leak a token by
- * accident.
+ * accident. `c.token` is a variable NAME and a boolean; there is no value in
+ * the shape to render even by mistake.
+ *
+ * ONE ROW PER CAPABILITY, NOT PER VENDOR. This table used to print one line
+ * per connector reading the delivery file and nothing else, so an operator with
+ * a working BRIGHTDATA_API_TOKEN in `.env`, actively using Bright Data, was
+ * told Bright Data was not configured. The token and the delivery webhook are
+ * different things pointing in opposite directions -- one lets Assay call
+ * Bright Data, the other lets Bright Data call Assay -- and nobody can guess
+ * that from the word "connected". So each is its own row and each says which
+ * direction it buys.
+ *
+ * The empty state that used to sit here was dead code: `describe()` returns one
+ * entry per KIND whether or not anything is configured, so `length === 0` was
+ * unreachable. Its message ("Nothing is connected.") was also the wrong answer
+ * to the question -- a machine with a token is not a machine with nothing.
  */
 function Connectors({ v }: { v: SettingsView }) {
-  if (v.connectors.length === 0) {
-    return (
-      <Empty title="Nothing is connected.">
-        Assay runs with no connectors: it fetches pages itself and writes to its own store. A
-        connector adds a delivery path, never a decision.
-      </Empty>
-    );
-  }
   return (
-    <SpecTable>
-      {v.connectors.map((c) => (
-        <SpecRow
-          key={c.kind}
-          a={c.kind}
-          b={
-            <StatusLine
-              tone={c.configured ? 'success' : 'info'}
-              icon={c.configured ? undefined : null}
-              size={13}
-              type="meta-13"
-            >
-              {c.configured ? 'configured' : 'not configured'}
-            </StatusLine>
+    <SpecTable cols={[248, 168]}>
+      {v.connectors.flatMap((c) => [
+        // The environment half, and only for a kind that has one. Slack and
+        // Discord's webhook URL IS the whole credential, so inventing a token
+        // row for them would be this same bug pointed the other way.
+        ...(c.token
+          ? [
+            <ConnectorRow
+              key={`${c.kind}-token`}
+              name={`${c.kind} · API token`}
+              kind={c.kind}
+              on={c.token.set}
+              status={c.token.set ? 'set' : 'not set'}
+              note={
+                c.token.set
+                  ? 'Lets Assay call Bright Data. Authenticating is not fetching — the account needs a zone too, and a token answering does not prove it has one.'
+                  : `Lets Assay call Bright Data. Set ${c.token.var} where the process that uses it starts, and restart.`
+              }
+            />,
+          ]
+          : []),
+        <ConnectorRow
+          key={`${c.kind}-delivery`}
+          name={c.token ? `${c.kind} · delivery webhook` : c.kind}
+          kind={c.kind}
+          on={c.configured}
+          status={c.configured ? 'configured' : 'not configured'}
+          note={
+            c.configured && c.updated_at
+              ? `set ${c.updated_at.slice(0, 10)}`
+              : c.kind === 'brightdata'
+                ? 'Lets Bright Data deliver a page to Assay. “assay connectors set brightdata” mints the secret; Bright Data then needs a publicly reachable URL, which localhost is not.'
+                : `Set it with “assay connectors set ${c.kind} --url …”, or over the API.`
           }
-          c={
-            <span className="flex items-baseline justify-between gap-[16px]">
-              <span>
-                {c.configured && c.updated_at
-                  ? `set ${c.updated_at.slice(0, 10)}`
-                  : 'set it in the environment or over the API'}
-              </span>
-              {/* Per connector, not one link for the table. A row that says
-                  "not configured" and offers no way to find out what would
-                  configure it is a dead end, and the row that says
-                  "configured" is where someone goes to check what it means. */}
-              <DocLink href={CONNECTOR_DOC[c.kind]} name={c.kind} />
-            </span>
-          }
-        />
-      ))}
+        />,
+      ])}
     </SpecTable>
+  );
+}
+
+/**
+ * One capability: what it is, whether this machine has it, and what it buys.
+ *
+ * The documentation link is per row rather than one for the table. A row that
+ * says "not configured" and offers no way to find out what would configure it
+ * is a dead end, and the row that says it IS configured is where someone goes
+ * to check what that means.
+ */
+function ConnectorRow({
+  name,
+  kind,
+  on,
+  status,
+  note,
+}: {
+  name: string;
+  kind: Kind;
+  on: boolean;
+  status: string;
+  note: string;
+}) {
+  return (
+    <SpecRow
+      a={name}
+      b={
+        <StatusLine tone={on ? 'success' : 'info'} icon={on ? undefined : null} size={13} type="meta-13">
+          {status}
+        </StatusLine>
+      }
+      c={
+        <span className="flex items-baseline justify-between gap-[16px]">
+          <span>{note}</span>
+          <DocLink href={CONNECTOR_DOC[kind]} name={kind} />
+        </span>
+      }
+    />
   );
 }
