@@ -21,7 +21,7 @@ Built for the **Into the Scrape-Verse** hackathon (WeMakeDevs × Bright Data,
 17–23 Aug 2026).
 
 **Demo video:** not recorded yet. Until it is, `npm run demo` is the
-thirty-second version — one `npm run corpus` fetch, then it runs offline.
+thirty-second version and it runs offline.
 <!-- TODO(owner): paste the demo recording link on the line above before submitting. -->
 
 ## The break this exists for
@@ -61,21 +61,15 @@ failure mode that never raises an exception. The cost is honest too — the gate
 arm hands ~24% of breaks to a human instead of automating them.
 
 ```bash
-npm run corpus     # once: fetches the archived captures, digest-pinned
 npm run bench      # reproduces the table from results/bench.json
-npm test           # engine self-test, no database
+npm test           # engine self-test, no database, no network
 npm run replay     # rewrites results/events.jsonl byte-identically
 ```
-
-The corpus is not committed — `npm run corpus` re-fetches every capture pinned
-by timestamp and content digest, so the numbers are still checkable, one fetch
-away instead of one checkout away.
 
 ## Thirty seconds
 
 ```bash
 npm install
-npm run corpus     # fetch the archived pages the demo breaks
 npm run demo
 ```
 
@@ -113,7 +107,7 @@ promised fields unhealthy behind a run the platform called 100% successful.
 
 Built with heavy use of AI assistance (Claude Code) — engine, benchmark
 harness, and this README included. The measurements are real: every number
-comes from code in this repo run over data the repo pins by digest, and `npm run bench`
+comes from code in this repo run over data in this repo, and `npm run bench`
 will reproduce or contradict them on your machine. Claims that could not be
 verified are marked unverified rather than asserted.
 

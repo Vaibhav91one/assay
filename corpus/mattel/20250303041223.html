@@ -1,0 +1,1514 @@
+
+
+<html template="http://www.mattelpartners.com/templates">
+
+  <head>
+    <title>Mattel and Fisher-Price Customer Center</title>
+    <meta content="IE=edge" http-equiv="X-UA-Compatible" />
+
+    <link rel="shortcut icon" href="img/HeaderLogo_new.png" type="image/png" />
+    <link rel="shortcut icon" href="img/HeaderLogo_new.png" type="image/png" />
+
+    <script language="javascript" SRC="/us/include/js/cssSelect.js"></script>
+    <script language="javascript" SRC="/us/include/js/UIValidation.js"></script>
+    <script language="javascript" SRC="/us/include/js/nav.js"></script>
+    <script language="JavaScript" SRC="/us/include/js/webtrends_CSR_US.js"></script>
+    <!--<LINK REL="stylesheet" TYPE="text/css" HREF="/us/include/css/newfooter.css" />-->
+    <LINK REL="stylesheet" TYPE="text/css" HREF="/us/include/css/ServiceNew.css" />
+    <!--[if IE]>
+	<link href="/us/include/css/ServiceNewIE_092613.css?new1" rel="stylesheet" type="text/css">
+	<![endif]-->
+    <!--- Cufon -->
+    <script TYPE="text/javascript" SRC="/us/include/js/jquery-1.8.0.min.js"></script>
+    <script TYPE="text/javascript" SRC="/us/include/js/cufon-yui.js"></script>
+    <script TYPE="text/javascript" SRC="/us/include/Bryant_Medium_500-Bryant_Bold_700.font.js"></script>
+    <script type="text/javascript" src="/us/include/js/css_browser_selector_092613.js"></script>
+    <script TYPE="text/javascript">
+      Cufon.replace('.innerheader-text b, .order-links-text a');
+      $(document).ready(function() {
+      $("#innerheader-nav li#ProductSupport").hover(function() {
+      $(this).addClass("hover-active");
+      },function(){
+      $(this).removeClass("hover-active ");
+      });
+      });
+    </script>
+    <script TYPE="text/javascript" SRC="/us/include/js/curvycorners.js"></script>
+
+  </head>
+
+  <body bgcolor="#ffffff">
+
+    <div class="mainct">
+      <div>
+
+<!DOCTYPE HTML>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<script type="text/javascript">
+    document.title = 'Mattel and Fisher-Price Customer Service - Recall';
+</script>
+<script>
+    $(document).ready(function () {
+
+        $('.row').each(function () {
+            var highestBox = 0;
+            $('.col', this).each(function () {
+                if ($(this).height() > highestBox)
+                    highestBox = $(this).height();
+            });
+
+            $('.col', this).height(highestBox);
+        });
+
+
+
+        $('.row').each(function () {
+
+            if ($('.form-col-third', this).children().length > 0) {
+                var numDivs = $('.form-col-third', this).children().length;
+                var i;
+
+                for (i = 0; i < numDivs; ++i) {
+                    var thirdH = $('.form-col-third > div', this).eq(i).height();
+                    var lastH = $('.form-col-last > div', this).eq(i).height();
+
+                    if (thirdH > lastH) {
+                        $('.form-col-third > div', this).eq(i).css('height', thirdH);
+                        $('.form-col-last > div', this).eq(i).css('height', thirdH);
+                    }
+                    else {
+                        $('.form-col-third > div', this).eq(i).css('height', lastH);
+                        $('.form-col-last > div', this).eq(i).css('height', lastH);
+                    }
+                }
+
+            }
+
+        });
+
+    });
+
+</script>
+
+<div class="recall-container">
+    <div id="Header1_Panel1">
+	
+    <style>
+        .autocomplete_completionListElement {
+            font-family: calibri;
+            font-size: 15px;
+            text-align: left;
+            border: solid 1px #E8E8E8;
+            line-height: 20px;
+            padding: 0px;
+            background-color: #F0F0F0;
+            margin-left: 0px;
+        }
+
+        .autocomplete_highlightedListItem {
+            font-family: calibri;
+            font-size: 15px;
+            text-align: left;
+            background-color: #BEBEBE;
+            cursor: pointer;
+            color: #636363;
+        }
+
+        .autocomplete_listItem {
+            border-bottom: solid 1px #E8E8E8;
+            cursor: pointer;
+            color: #636363;
+            text-align: left;
+            font-family: Calibri;
+            font-size: 15px;
+        }
+        
+    </style>
+    <!--- Cufon -->
+    <script type="text/javascript" src="/us/include/js/jquery-1.8.0.min.js"></script>
+    <script type="text/javascript" src="/us/include/js/cufon-yui.js"></script>
+    <script type="text/javascript" src="/us/include/Bryant_Medium_500-Bryant_Bold_700.font.js"></script>
+    <script type="text/javascript" src="/us/include/js/css_browser_selector.js"></script>
+
+    <script type="text/javascript">
+        Cufon.replace('.innerheader-text b, .order-links-text a');
+        $(document).ready(function () {
+            $("#innerheader-nav li#ProductSupport").hover(function () {
+                $(this).addClass("hover-active");
+            }, function () {
+                $(this).removeClass("hover-active ");
+            });
+        });
+    </script>
+    <script type="text/javascript" src="/us/include/js/curvycorners.js"></script>
+    <script type="text/javascript">
+        if (event.keyCode == 13) {
+            $('#image').click();
+        }
+
+        function redirectTo() {
+            if ($get('Header1_Ntt').value == 'Search all of service.mattel.com' || $get('Header1_Ntt').value == '') {
+                $get('Header1_Ntt').value = 'Enter keyword(s) or item #';
+            }
+
+            else {
+                if ($get('Header1_Ntt').value == 'Enter keyword(s) or item #')
+                    ;
+                else
+
+                    window.location = "/us/results.aspx?Ntt=" + $get('Header1_Ntt').value;
+            }
+        }
+
+        function acePopulated(sender, e) {
+
+            var behavior = $find('AutoCompleteEx');
+            var target = behavior.get_completionList();
+            var children = target.childNodes;
+            var searchText = $get('Header1_Ntt').value;
+
+
+            for (var i = 0; i < children.length; i++) {
+                var child = children[i];
+                var value = child._value;
+
+
+                // Bold the searchText part of the value
+                child.innerHTML = eval("value.replace(/(" + searchText + ")/i, '<b>$1</b>')");
+            }
+
+
+        }
+
+        function aceSelected(sender, e) {
+            var value = e.get_value();
+            if (!value) {
+                if (e._item.parentElement && e._item.parentElement.tagName == "LI")
+                    value = e._item.parentElement.attributes["_value"].value;
+                else if (e._item.parentElement && e._item.parentElement.parentElement.tagName == "LI")
+                    value = e._item.parentElement.parentElement.attributes["_value"].value;
+                else if (e._item.parentNode && e._item.parentNode.tagName == "LI")
+                    value = e._item.parentNode._value;
+                else if (e._item.parentNode && e._item.parentNode.parentNode.tagName == "LI")
+                    value = e._item.parentNode.parentNode._value;
+                else value = "";
+            }
+            var searchText = $get('Header1_Ntt').value;
+            searchText = searchText.replace('null', '');
+
+            sender.get_element().value = value;
+            window.location = "/us/results.aspx?Ntt=" + value;
+        }
+
+    </script>
+    <script type="text/javascript">
+        Cufon.replace('.innerheader-text b, .order-links-text a');
+        $(document).ready(function () {
+            $("#innerheader-nav li#ProductSupport").hover(function () {
+                $(this).addClass("hover-active");
+            }, function () {
+                $(this).removeClass("hover-active ");
+            });
+        });
+    </script>
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-T5P4BTZCVR"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'G-T5P4BTZCVR');
+</script>
+<!-- Google Tag Manager -->
+<script>(function (w, d, s, l, i) {
+    w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+    var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : '';
+    j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+})(window, document, 'script', 'dataLayer', 'GTM-KXRQBMXV');
+</script>
+<!-- End Google Tag Manager -->
+
+
+
+    <link href="/us/include/css/tabs.css" type="text/css" rel="stylesheet">
+ <!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KXRQBMXV"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+    <center>
+      <div style ="height: 142px;	overflow: visible;	background: #fff url(/us/img/home/header_bkgd.jpg) repeat-x 0px 38px;	position: relative;
+	z-index:25;	border-radius: 20px 20px 0 0 ;	-moz-border-radius: 20px 20px 0 0;	-webkit-border-radius: 20px 20px 0 0;" >
+        <div CLASS="innerheader-mattel-logo">
+          <a HREF="/us/home.aspx" title="Home Page" onclick="TrackInterstitial('restofsite', 'Section', 'Header - Homepage')">
+            <img SRC="img/HeaderLogo_new.png" BORDER="0"/>
+          </a>
+        </div>
+        <!--<div CLASS="innerheader-fp-logo">
+          <a HREF="/us/home.aspx" title="Home Page" onclick="TrackInterstitial('restofsite', 'Section', 'Header - Homepage')">
+            <img SRC="img/HeaderLogoFP_new.png" BORDER="0"/>
+          </a>
+        </div>-->
+        <div CLASS="innerheader-text">
+          <!--<b>
+            Mattel &amp; Fisher-Price<br/>Customer Service
+          </b>-->
+	  <b>
+            Mattel Global<br/>Consumer Support
+          </b>
+        </div>
+
+        <div id="innerheader-order-links">
+          <!--<div CLASS="order-links-text">
+            <a HREF="http://www.surveymonkey.com/s/HTWZRPY" title="Web Site Survey" onclick="TrackInterstitial('restofsite', 'Section', 'Web Site Survey')">Web Site Survey</a>
+          </div>
+          &#160; | &#160;-->
+          <div CLASS="order-links-text">
+            <a HREF="/us/partsorder.aspx" title="Track your Parts Order" onclick="TrackInterstitial('restofsite', 'Section', 'Order Status')">Parts Order Status</a>
+          </div>
+          &#160; | &#160;
+          <div CLASS="order-links-text">
+            <a HREF="/us/locator_search.aspx" title="Find a Store Near You" onclick="TrackInterstitial('restofsite', 'Section', 'Store Locator')">Find a Retailer</a>
+          </div>
+          <br />
+          <div class="order-links-img">
+            <!--<a href="http://www.hotwheels.com/faq-id" title="Hot Wheels id FAQs" onclick="TrackInterstitial('restofsite', 'Section', 'Hot Wheels id FAQs');">
+                <img src="img/home/Hot_Wheels_id.png" border="0" style=" width:160px; margin-top: -15px; margin-bottom: 5px" alt="Hot Wheels id FAQs" />
+            </a>-->
+	    <a href="https://shop.mattel.com/pages/safe-start" title="FP_SafeStart_Logo_Banner" onclick="TrackInterstitial('restofsite', 'Section', 'FP_SafeStart_Logo_Banner')">
+              		<img src="img/home/FP_SafeStart_Logo_Banner.png" border="0" style="height: 82px; margin-top: -15px; margin-bottom: 5px" alt="FP_SafeStart_Logo_Banner" />
+            </a>
+          </div>
+          <div CLASS="order-links-img">
+            <a HREF="/us/ContactUs.aspx" title="Self-service, Hours and Contact Information" onclick="TrackInterstitial('restofsite', 'Section', 'ContactUs icon');">
+              <img SRC="img/home/contactUs.png" BORDER="0"/>
+            </a>
+          </div>
+          <div CLASS="order-links-img">
+            <a HREF="https://consumersupport.mattel.com/mattelsupport/s/create-case" title="International Consumers" onclick="TrackInterstitial('restofsite', 'Section', 'International Consumers icon')">
+              <img SRC="img/home/international.png" BORDER="0"/>
+            </a>
+          </div>
+        </div>
+<div style ="height:12px;"></div>
+        <ul id="innerheader-nav">
+          <li id="ProductSupport">
+            <a id="A1" HREF="#"></a>
+            <ul CLASS="list">
+              <li>
+                <a HREF="/us/instruction_sheets.aspx" name="Instruction Sheets" title="Search for Instruction Sheets" onclick="TrackInterstitial('restofsite', 'Section', 'nav Instruction Sheets')">Instruction Sheets</a>
+              </li>
+
+              <li>
+                <a HREF="/us/faq.aspx" name="FAQ Search" title="Find answers to commonly asked questions" onclick="TrackInterstitial('restofsite', 'Section', 'nav FAQs')">FAQs</a>
+              </li>
+
+              <li>
+                <a HREF="/us/powerwheels_info.aspx" name="Power Wheels Service" title="Service Center finder, Instructions and Vehicle Registration" onclick="TrackInterstitial('restofsite', 'Section', 'nav Power Wheels')">Power Wheels Service</a>
+              </li>
+
+              
+              <li>
+                <a HREF="https://consumersupport.mattel.com/mattelsupport/s/product-registration" target="_blank" name="Product Registration" title="Consumer Relations Product Registration" onclick="TrackInterstitial('restofsite', 'Section', 'nav Product Registration')">Product Registration</a>
+              </li>
+
+              <li>
+                <a HREF="https://store.mattel.com/transition.aspx?cmd=new&amp;transitionid=103&amp;cat=139&amp;sec=8713" title="Replacement Parts &amp; Add-ons" onclick="TrackInterstitial('restofsite', 'Section', 'nav Replacement Parts and Add-ons')">Replacement Parts &amp; Add-ons</a>
+              </li>
+
+              <li>
+                <a HREF="/us/TechnicalProductsHome.aspx" name="Technical Support" title="Assistance with PC based USB products, online games, and apps for mobile devices" onclick="TrackInterstitial('restofsite', 'Section', 'nav TechSupport');">Technical Product Support</a>
+              </li>
+            </ul>
+          </li>
+         
+          <li id="RecallSafety">
+            <a id="A2" HREF="/us/recall.aspx" title="Recalls &amp; Safety Alerts" onclick="TrackInterstitial('restofsite', 'Section', 'Recalls &amp; Safety Alerts')"></a>
+          </li> 
+          <li id="Promotions">
+            <a id="A3" HREF="/us/promotions.aspx" title="Promotions" onclick="TrackInterstitial('restofsite', 'Section', 'Promotions')"></a>
+          </li>
+        <li id="Playback">
+        <a id="A4" HREF="/playback/signup.aspx" title="Playback" onclick="TrackInterstitial('restofsite', 'Section', 'Playback')"></a>
+        </li>
+        </ul>
+
+        <div CLASS="innerheader-searchbox">
+        <div style ="width:1px;height:3px;">&nbsp;</div>
+          <form name="aspnetForm" method="post" action="./recall.aspx" id="aspnetForm">
+	<div>
+	<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
+	<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
+	<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="/wEPDwUJODMzNjMwODk3D2QWAgIqD2QWAgIBDw8WAh4EVGV4dAWzAiZuYnNwOzxhIGhyZWY9Jy91cy9ob21lLmFzcHgnIGNsYXNzPSdicmVhZGNydW1iJz5Ib21lPC9hPjxpbWcgc3JjPScvdXMvaW1nL3NwYWNlci5naWYnIGFsdD0nJyB3aWR0aD0nMycgaGVpZ2h0PScxJyBib3JkZXI9JzAnPgo8aW1nIHNyYz0nL3VzL2ltZy9icmVhZGNydW1iX2Fycm93LmdpZicgYWx0PScnIHdpZHRoPSc0JyBoZWlnaHQ9JzcnIGJvcmRlcj0nMCc+CjxpbWcgc3JjPScvdXMvaW1nL3NwYWNlci5naWYnIGFsdD0nJyB3aWR0aD0nMycgaGVpZ2h0PScxJyBib3JkZXI9JzAnPlByb2R1Y3QgUmVjYWxscyAmIFNhZmV0eSBBbGVydHNkZGSGqHTch6gXWfu5PNbwFF+0bqDYtw==" />
+	</div>
+	
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['aspnetForm'];
+	if (!theForm) {
+    theForm = document.aspnetForm;
+}
+	function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+	//]]>
+</script>
+
+	
+<script src="/us/WebResource.axd?d=9DULcjV4uM5Eg6XGPG2Yk0K6AoMCbQH40ZIULqf2NtpsWVP1NQqM66nHU5PjeEN_S0GRWFBI_YTMcJ_aD9Eq29dT7ts1&amp;t=638285827360000000" type="text/javascript"></script>
+
+	
+<script src="/us/ScriptResource.axd?d=Y0mXfAP2WUSNJ13q537D60QXfPrIzG4r4fLXk10X5D-_JtmkJ60897PlMmj9G77hKwZb9sQuuQS512jeMGL4lbM-Lh8A-GYSN_ewxrwthjB4wy_BsEZbaqYwtU23fnjgT5CsCrfTs5Ttn_AHN_jjihK1OTB01pxAIBhTcIzz7VZIh13z0&amp;t=13798092" type="text/javascript"></script>
+<script type="text/javascript">
+//<![CDATA[
+if (typeof(Sys) === 'undefined') throw new Error('ASP.NET Ajax client-side framework failed to load.');
+//]]>
+</script>
+
+<script src="/us/ScriptResource.axd?d=YUP6Ls7MkA5Aen51R4rgckS0Ro48pM0RV5V4c6SzQwEnD-6wlu4ID4U2MITKdY46L_OgYbYEC8ZxN5imHw2neX88aIbN7iPV4yLmJdkxRgcp_Kc27irCnOW8Z83aWSj6PmvpoidgHvj2X8GvPbFYIfgomd-ZN7kdIqLvEWkabvis0Jhf0&amp;t=13798092" type="text/javascript"></script>
+<script src="/us/ScriptResource.axd?d=PFf9C3X48mf8VMUbfOO0ZEKQXADjy5-p4GJPa2mo18qlzM63y5TiyG3QY2Cif53PFayR5lH77VCQsS1OI1Z5o4UXngi2jU95muSwpemZwr9PKiZtLDaU17N4LpKzC38zl8p_jtxLwl28KBFZ8sCBphH7mj41&amp;t=5f6a2d32" type="text/javascript"></script>
+<script src="/us/ScriptResource.axd?d=u_Y4rUwyW-OMUubBjUnwEhpacYf9LSNlgun-yR3cqf74WWHtJ763ARZ0Nd0XURfJwa9yPtDWJZ2yk4W7BnWQfyYwBLo6fBvsRb-wFVCIggzMNEzGe45C6GmZcxpdVvxu_E6I3UQQ2LS77zfAutw6tgYPxqs1&amp;t=5f6a2d32" type="text/javascript"></script>
+<script src="/us/ScriptResource.axd?d=M88T-9JZbD4dyl7gS57PJTC9zsPI1Y1U6YnLotGOqeWtReEWnnMJ0KPskIom2soiHyFdbajF8mItWiRHxK3gktJhR8m8SNzWTgHEA7jSL_B7hPF4pbViLqpsXr9kcx9kCrrWo8Lm_KGpZiW3QT8I_y7p4HQ1&amp;t=5f6a2d32" type="text/javascript"></script>
+<script src="/us/ScriptResource.axd?d=Dfa4uR1uQo_de3SmyOYocJ3Xbw_96uLDwuKnZDMm_X8Ll2PfYVHv89IXNF4BdVYyu6Huoa99-g6MEyNGFUIufE42GuU66VfvsGXtpVtdJHtdz6UgU_aPGJwA9djfz92nsCXpE7n-LYLEpPKnG36-1eM-09g1&amp;t=5f6a2d32" type="text/javascript"></script>
+<script src="/us/ScriptResource.axd?d=TQb8zPLYp8tTdy7LDQb7aM4e_oObUHzQtNUhEifMtd27ARiV7XFZDkbY1G2Xo7CrDJueYbuz20YA3Xt-SQmiLgkcrtVVp5cpPBzMSU3TV9XbKJ46FZhJyioZ1gl03KAriqyisLFswfUS2VoiFemFzQsdYEY1&amp;t=5f6a2d32" type="text/javascript"></script>
+<script src="/us/ScriptResource.axd?d=oUohPWwi-s22LblSBdnBakKJJX6D2PeL_di8cy9eaYjT5KXlXT1XJJZvE2DvQ2q6kLbGH3YsNwl6cp3eQRkv960wqqbN46WBQQFpXsQgI49OYnfGg4p16UPs5Zd1w6U7XnE7QiIOw5t2Na445inJDghTQHk1&amp;t=5f6a2d32" type="text/javascript"></script>
+<script src="/us/ScriptResource.axd?d=Hczf1BpdCrHnN1z9PDUMUvq6_6izAprptsWHjpgEkSm7cy3Zw9kK9pO8xyFUvt-6CT05PLWg2DRw2YOuUaDtkW4_pSHTQCrRJCp0ttECAOrjhU1Ddf0VwJnwcUGbY6XWW_hhSJGh0mKmR-BKTedr7vywvhtK46t9r019dvkvHzlLZw-50&amp;t=5f6a2d32" type="text/javascript"></script>
+            <script type="text/javascript">
+//<![CDATA[
+Sys.WebForms.PageRequestManager._initialize('Header1$ScriptManager1', 'aspnetForm', [], [], [], 90, '');
+	//]]>
+</script>
+
+    
+    
+              <input name="Header1$Ntt" type="text" id="Header1_Ntt" VALUE="Search all of service.mattel.com" name="Ntt" onfocus="if (this.value == &#39;Enter keyword(s) or item #&#39; || this.value == &#39;Search all of service.mattel.com&#39;) this.value=&#39;&#39;;" onblur="if (this.value==&#39;&#39;) this.value=&#39;Search all of service.mattel.com&#39;;" onkeydown="SearchSubmit(event);" style="height:17px;width:240px; vertical-align:bottom; border-style:none;" />
+              
+               <img src="/us/img/home/search_mag.jpg" id="Header1_image" alt="Click Go to Complete Your Search" border="0" onclick="redirectTo();return TrackInterstitial(&#39;restofsite&#39;, &#39;Section&#39;, &#39;Guided search GO button&#39;);" align="absMiddle" tabindex="3" style="padding-top:7px;" />
+					  
+    
+          
+
+          
+	<div>
+
+		<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="0C2FC6E7" />
+		<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="/wEdAAIu8pNub2ZktQDxWADY9Eu1LmcP3vD3q+5gPEhu6RZX0nEpRVAdmeWDiYMKtlXvIpCBbeUM" />
+	</div>
+	
+<script type="text/javascript">
+//<![CDATA[
+Sys.Application.add_init(function() {
+    $create(AjaxControlToolkit.AutoCompleteBehavior, {"completionInterval":0,"completionListCssClass":"autocomplete_completionListElement","completionListItemCssClass":"autocomplete_listItem","delimiterCharacters":"","highlightedItemCssClass":"autocomplete_highlightedListItem","id":"AutoCompleteEx","minimumPrefixLength":1,"serviceMethod":"GetProductList","servicePath":"AutoFill.asmx","showOnlyCurrentWordInCompletionListItem":true}, {"itemSelected":aceSelected,"populated":acePopulated}, null, $get("Header1_Ntt"));
+});
+//]]>
+</script>
+</form>
+        </div>
+      </div>
+      </center>
+    <script>
+        document.addEventListener("click", function (event) {
+            if (event.target.tagname === "A") {
+                gtag('event', 'link_click', {
+                    'link_text': event.target.innerText,
+                    'link_url': event.target.href,
+                    'link_id': event.target.id,
+                    'link_classes': event.target.className,
+                });
+            }
+        });
+</script>
+
+</div>
+
+    
+<script type="text/javascript">
+     //for QM
+     (function () {        
+         var qtm = document.createElement('script'); qtm.type = 'text/javascript'; qtm.async = 1;
+         qtm.src = 'https://cdn.quantummetric.com/qscripts/quantum-mattel.js';
+         var d = document.getElementsByTagName('script')[0];
+         !window.QuantumMetricAPI && d.parentNode.insertBefore(qtm, d);
+     })();
+    </script>
+
+<div align="left" width="705" class="breadcrumb"><span id="Migrated_breadCrumb_lblBreadCrumb">&nbsp;<a href='/us/home.aspx' class='breadcrumb'>Home</a><img src='/us/img/spacer.gif' alt='' width='3' height='1' border='0'>
+<img src='/us/img/breadcrumb_arrow.gif' alt='' width='4' height='7' border='0'>
+<img src='/us/img/spacer.gif' alt='' width='3' height='1' border='0'>Product Recalls & Safety Alerts</span></div>
+
+    <div id="Table1">
+
+        <div class="recall-title-icon">
+            <img src="/us/img/icon-recall-title.png" alt="" title="" />
+            <h2>Recall &amp; Safety Alerts</h2>
+        </div>
+
+        <div class="recall-title-description">
+
+            <p>
+                Please select a recall or safety alert from the list below and follow the link to learn about 
+		    that recall & safety alert. Return to this page if you are interested in learning about additional 
+            recalls & safety alerts. This list includes Mattel recalls & safety alerts announced since August 4, 1998.
+            For general recall information on any consumer product, and for earlier Mattel recalls & safety alerts, 
+            please visit <a href="http://www.recalls.gov" class="bluenav" target="_new"><u>www.recalls.gov</u></a>.
+            <b>The links below service recalls & safety alerts for U.S. and Canadian consumers only.</b>
+            </p>
+            <p>
+                <b><u>Global Recalls &amp; Safety Alerts</u></b>
+            </p>
+            <p>
+                For global recall & safety alert information, please click 
+            <a href="https://consumersupport.mattel.com/mattelsupport/s/create-case" class="bluenav" target="_new"><b><u>here</u></b></a>
+                to look up contact information for your local Mattel office or distributor.
+            </p>
+        </div>
+
+        <div id="recall-info-form">
+            <div class="recall-form-row-title">
+                <div class="form-col-first col">Date of Announcement</div>
+                <div class="form-col-sec col" style="background-color: #cccece;">Description</div>
+                <div class="form-col-third col">Countries Affected</div>
+                <div class="form-col-last col" style="background-color: #cccece;">Product #</div>
+            </div>
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">10/10/2024</div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('Recall', 'BGB32', 'Fisher-Price Snuga Infant Swings')"
+                        href="https://consumersupport.mattel.com/mattelsupport/s/recall?recallnumber=Swings">Fisher-Price Snuga Infant Swings</a>
+                    <a onclick="TrackInterstitial('Recall', 'BGB32', 'Rappel – Tous les modèles de balancelles Fisher-Price Snuga Swings')"
+                        href="/us/recall/Rappel - Tous les modèles de balancelles Fisher-Price Snuga Swings_FINAL.pdf">Rappel – Tous les modèles de balancelles Fisher-Price Snuga Swings</a>
+                    <a onclick="TrackInterstitial('Recall', 'BGB32', 'Retiro - Todos los modelos de Fisher-Price Snuga Swings')"
+                        href="/us/recall/RETIRADA  Todos los modelos de Fisher-Price Snuga Swings_FINAL.pdf">Retiro - Todos los modelos de Fisher-Price Snuga Swings</a>
+                </div>
+                <div class="form-col-third col">U.S. & Canada</div>
+                <div class="form-col-last col">
+                    BGB32, CCF38, CHM56, CHM69, CHM76, CHM78, DRG43, FKL21, GJB53, GKH44, GNG38, GNG40, GVF83, HBM23, HDY10, HGX49, V0099, W9510, X7051, X7345, X7347
+                 
+                    <br />
+                </div>
+            </div>
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">08/29/2024</div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('Recall', 'GJD49', 'The dumbbell toy sold in the Fisher Price Baby Biceps Gift Set')"
+                        href="https://consumersupport.mattel.com/mattelsupport/s/recall?recallnumber=GJD49">The dumbbell toy sold in the Fisher Price Baby Biceps Gift Set</a>
+                    <a onclick="TrackInterstitial('Recall', 'GJD49', 'Fisher-Price rappelle le jouet d'haltère de l'ensemble Coffret Cadeau Bébé à la Gym en raison d'un risque d'étouffement')"
+                        href="/us/recall/Baby_Biceps_GJD49_FRENCH.pdf">Fisher-Price rappelle le jouet d'haltère de l'ensemble Coffret Cadeau Bébé à la Gym en raison d'un risque d'étouffement</a>
+                    <a onclick="TrackInterstitial('Recall', 'GJD49', 'Mancuerna de juguete que se vende en el Conjunto de Regalo Baby Biceps de Fisher-Price®')"
+                        href="/us/recall/Baby_Biceps_GJD49_SPANISH.pdf">Mancuerna de juguete que se vende en el Conjunto de Regalo Baby Biceps de Fisher-Price®</a>
+                </div>
+                <div class="form-col-third col">U.S. & Canada</div>
+                <div class="form-col-last col">
+                    GJD49 
+                 <br />
+                </div>
+            </div>
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">03/21/2024</div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('Recall', 'HPJ88', 'Donald Duck and Daisy Duck figures')"
+                        href="/us/recall/HPJ88_announcement.asp">Donald Duck and Daisy Duck figures from the Fisher-Price Little People® Mickey and Friends figure pack</a>
+                    <a onclick="TrackInterstitial('Recall', 'HPJ88', 'Figurines Donald Duck et Daisy de l'ensemble de figurines Mickey et ses amis Fisher-Price Little People®')"
+                        href="/us/recall/Donald_Duck_French.pdf">Figurines Donald Duck et Daisy de l'ensemble de figurines Mickey et ses amis Fisher-Price Little People®</a>
+                    <a onclick="TrackInterstitial('Recall', 'HPJ88', 'Figuras de Pato Donald y Pata Daisy de Fisher-Price Little People® Mickey and Friends')"
+                        href="/us/recall/Donald_Duck_Spanish.pdf">Figuras de Pato Donald y Pata Daisy de Fisher-Price Little People® Mickey and Friends</a>
+                </div>
+                <div class="form-col-third col">U.S. & Canada</div>
+                <div class="form-col-last col">
+                    HPJ88 and HTW75 (Donald Duck and Daisy Duck figures, only)
+                 <br />
+                </div>
+            </div>
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">10/19/2023</div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('Recall', 'HBJ89', 'Fisher-Price® Thomas & Friends Wooden Railway Troublesome Truck')"
+                        href="/us/recall/HBJ89_announcement.asp">Thomas & Friends Wooden Railway Troublesome Truck & Crates and Troublesome Truck & Paint</a>
+                    <a onclick="TrackInterstitial('Recall', 'HBJ89', 'Thomas_Troublesome_Recall_fre-CA PDF')"
+                        href="/us/recall/Thomas_Troublesome_Recall_fre-CA.pdf">Rappel des Fisher-Price® Thomas & Friends Wooden Railway Troublesome Truck & Crates et
+Troublesome Truck & Paint</a>
+                    <a onclick="TrackInterstitial('Recall', 'HBJ89', 'Thomas_Troublesome Recall_spa-MX PDF')"
+                        href="/us/recall/Thomas_Troublesome Recall_spa-MX.pdf">Retirada de los productos Thomas & Friends Wooden Railway Troublesome Truck
+& Crates y Troublesome Truck & Paint de Fisher-Price®</a>
+                </div>
+                <div class="form-col-third col">US & Canada</div>
+                <div class="form-col-last col">
+                    HBJ89<br />
+                    HBJ90                    
+                </div>
+
+            </div>
+
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">01/09/2023</div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('Recall', 'Section', 'Fisher-Price® Rock 'n Play™ Sleeper')"
+                        href="/us/recall/default.asp?recall_id=52466">Fisher-Price® Rock 'n Play™ Sleeper Recall Reannouncement</a>
+                     <a onclick="TrackInterstitial('Recall', 'Section', 'Rock ‘n Play Sleeper Class Action Settlement')"
+                        href="https://www.fisherpricerocknplaysettlement.com/"><b>Rock ‘n Play Sleeper Class Action Settlement</b></a>
+                </div>
+                <div class="form-col-third col">US</div>
+                <div class="form-col-last col">
+                    Fisher-Price® Rock 'n Play™ Sleeper
+                </div>
+            </div>
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">06/14/2022</div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('Recall', 'Section', 'All Infant-to-Toddler Rockers and Newborn-to-Toddler Rockers')"
+                        href="https://www.cpsc.gov/Newsroom/News-Releases/2022/CPSC-and-Fisher-Price-Warn-Consumers-About-13-Deaths-in-Fisher-Price-Infant-to-Toddler-and-Newborn-to-Toddler-Rockers-Advise-Rockers-Should-Never-Be-Used-for-Sleep">Fisher-Price® Infant-to-Toddler Rocker and Newborn-to-Toddler Rocker Safety Notice</a>
+                </div>
+                <div class="form-col-third col">US & Canada</div>
+                <div class="form-col-last col">
+                    All Infant-to-Toddler Rockers and Newborn-to-Toddler Rockers
+                </div>
+
+            </div>
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">06/04/2021</div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('Recall', 'GGW85', '2-in-1 Soothe ‘n Play Glider')"
+                        href="/us/recall/GGW85_announcement.asp">Fisher-Price® 2-in-1 Soothe ‘n Play Glider</a>
+                    <a onclick="TrackInterstitial('Recall', 'GGW85', '2-in-1 Soothe ‘n Play Glider - FAQ')"
+                        href="/us/recall/2-in-1 Soothe n Play Glider – Frequently Asked Questions.pdf">2-in-1 Soothe ‘n Play Glider Recall - Frequently Asked Questions</a>
+                    <a onclick="TrackInterstitial('Recall', 'GGW85', 'French PDF')"
+                        href="/us/recall/2-in-1 Soothe n Play Glider - French.pdf">Rappel de la Berceuse Détente et jeu 2 en 1 de Fisher-Price® </a>
+                    <a onclick="TrackInterstitial('Recall', 'GGW85', 'Spanish PDF')"
+                        href="/us/recall/2-in-1 Soothe n Play Glider - US Spanish.pdf">Retiro del producto Fisher-Price® Silla mecedora de relajación 2 en 1 </a>
+                </div>
+                <div class="form-col-third col">US & Canada</div>
+                <div class="form-col-last col">
+                    GDD28<br />
+                    GDD39<br />
+                    GDD41<br />
+                    GGW85<br />
+                    GNX43<br />
+                    GVG43<br />
+                    HBD26<br />
+                    HBD27<br />
+                    HBT17
+                </div>
+            </div>
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">06/04/2021</div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('Recall', 'CBT81', 'Rock ‘n Glide Soother')"
+                        href="/us/recall/CBT81_announcement.asp">Fisher-Price® 4-in-1 Rock ‘n Glide Soother</a>
+                    <a onclick="TrackInterstitial('Recall', 'CBT81', 'Rock ‘n Glide Soother - FAQ')"
+                        href="/us/recall/4-in-1 Rock n Glide Soother  - Frequently Asked Questions.pdf">4-in-1 Rock ‘n Glide Soother  - Frequently Asked Questions</a>
+                    <a onclick="TrackInterstitial('Recall', 'CBT81', 'French PDF')"
+                        href="/us/recall/4-in-1 Rock n Glide Soother - French.pdf">Rappel de la Berceuse apaisante 4 en 1 de Fisher-Price® </a>
+                    <a onclick="TrackInterstitial('Recall', 'CBT81', 'Spanish PDF')"
+                        href="/us/recall/4-in-1 Rock n Glide Soother US Spanish.pdf">Retiro de producto Fisher-Price® Silla Mecedora 4 en 1 </a>
+                </div>
+                <div class="form-col-third col">US & Canada</div>
+                <div class="form-col-last col">
+                    CBT81<br />
+                    CHP55<br />
+                    CHP56
+                </div>
+
+            </div>
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">10/01/2020</div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('Recall', 'Section', 'Ashtel Studios Smart Care Barbie and Hot Wheels Hand Sanitizer')"
+                        href="https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/ashtel-studios-issues-voluntary-recall-licensed-hand-sanitizers-packaged-084-fluid-ounce-pouches-due">Ashtel Studios Smart Care Barbie and Hot Wheels Hand Sanitizer</a>
+                </div>
+                <div class="form-col-third col">US & Canada</div>
+                <div class="form-col-last col">Smart Care Barbie and Hot Wheels Hand Sanitizer</div>
+
+            </div>
+
+            <!-- Added by Anusuya on 05/29/2019 for Fisher-Price® Ultra-Lite Day & Night Play Yard -->
+
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">06/27/2019 </div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('Recall', 'CBV60', 'Fisher-Price® Ultra-Lite Day & Night Play Yard')"
+                        href="/us/recall/CBV60_announcement.asp">Fisher-Price® Ultra-Lite Day & Night Play Yard</a>
+                    <a onclick="TrackInterstitial('Recall', 'CBV60', 'French PDF')"
+                        href="/us/recall/Play Yard Recall Notice - French.pdf">Rappel du Fisher-Price® Ultra-Lite Day & Night Play Yard</a>
+                    <a onclick="TrackInterstitial('Recall', 'CBV60', 'Spanish PDF')"
+                        href="/us/recall/Play Yard Recall Notice - Spanish.pdf">Retiro del mercado del Fisher-Price® Ultra-Lite Day & Night Play Yard</a>
+
+                </div>
+                <div class="form-col-third col">US</div>
+                <div class="form-col-last col">
+                    CBV60
+                    <br />
+                    CHP86<br />
+                    CHR06<br />
+                    CJK24
+                    <br />
+                    DJD11
+                    <br />
+                </div>
+            </div>
+            <!-- Added by Gladson on 05/13/2019 for Fisher-Price™ Rock N’ Play Sleeper Canada -->
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">05/15/2019 </div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('Recall', 'R6070', 'Fisher-Price® Rock ‘n Play™ Sleeper Recall')"
+                        href="/us/recall/R6070_announcement.asp">Fisher-Price® Rock ‘n Play™ Sleeper Recall</a>
+
+                </div>
+                <div class="form-col-third col">Canada</div>
+                <div class="form-col-last col">
+                    R6070 Newborn Rock 'n Play™ Sleeper 
+                </div>
+            </div>
+            <!-- End of Fisher-Price™ Rock N’ Play Sleeper Canada-->
+            <!-- Added by Aravind on 4/11/2019 for Fisher-Price™ Rock N’ Play Sleeper -->
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">04/12/2019 </div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Fisher-Price® Rock ‘n Play Sleeper Recall')"
+                        href="/us/recall/default.asp?recall_id=52466">Fisher-Price® Rock 'n Play™ Sleeper Recall</a>
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Fisher-Price® Rock ‘n Play Sleeper Recall - French PDF')" href="/us/recall/Fisher-Price Rock n Play Sleeper Recall - French.pdf">Transat Fisher-Price™ Rock 'n Play Sleeper - Rappel</a>
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Fisher-Price® Rock ‘n Play Sleeper Recall - Spanish PDF')" href="/us/recall/Fisher-Price Rock n Play Sleeper Recall - Spanish.pdf">Retiro del producto Fisher-Price™ Rock 'n Play Sleeper</a>
+                    <!-- <A onclick="TrackInterstitial('restofsite', 'Section', 'Fisher-Price® Rock ‘n Play Sleeper Recall - Spanish PDF')" href="/us/recall/FP_RNP_Spanish.pdf">Retiro del producto Fisher-Price™ Rock 'n Play Sleeper</A>-->
+
+                    <!-- <A onclick="TrackInterstitial('restofsite', 'Section', 'Fisher-Price Newborn Rock N Play Sleeper™-French')"
+                                                        href="#">French PDF</A>
+                    <A onclick="TrackInterstitial('restofsite', 'Section', 'Fisher-Price Newborn Rock N Play Sleeper™-Spanish')"
+                                                        href="#">Spanish PDF</A> -->
+                    <!--SCTASK0747180-->
+
+                    <a style="display: inline;" onclick="TrackInterstitial('restofsite', 'Section', 'Fisher-Price® Rock ‘n Play Sleeper Recall')" href="https://www.youtube.com/watch?v=ReyvVllmzZQ">For more information on the Fisher-Price® Rock &apos;n Play™ Sleeper Recall, see this <b>video</b></a>
+                     <a onclick="TrackInterstitial('Recall', 'Section', 'Rock ‘n Play Sleeper Class Action Settlement')"
+                        href="https://www.fisherpricerocknplaysettlement.com/"><b>Rock ‘n Play Sleeper Class Action Settlement</b></a>
+
+                </div>
+                <div class="form-col-third col">US</div>
+                <div class="form-col-last col">
+                    Fisher-Price® Rock 'n Play™ Sleeper 
+                </div>
+            </div>
+            
+            <!-- Added by Sruthi on 01/23/2019 for Web Wizard - PW Barbie Camper -->
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">02/05/2019</div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Fisher-Price Power Wheels Barbie Dream Camper')" href="/us/recall/default.asp?recall_id=52465">Fisher-Price Power Wheels® Barbie® Dream Camper™</a>
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Fisher-Price Power Wheels Barbie Dream Camper - French')" href="/us/recall/Barbie Dream Camper Recall - French.pdf">Rappel du Fisher-Price® Power Wheels® Barbie® Dream Camper™</a>
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Fisher-Price Power Wheels Barbie Dream Camper - Spanish')" href="/us/recall/Barbie Dream Camper Recall - Spanish.pdf">Retirada del mercado del Fisher-Price® Power Wheels® Barbie® Dream Camper™</a>
+                </div>
+                <div class="form-col-third col">US</div>
+                <div class="form-col-last col">
+                    FRC29
+                    <br />
+                </div>
+            </div>
+            <!-- Web Wizard - PW Barbie Camper Changes End-->
+            <!-- Added by Ananth on 10/09/2017 for Fisher Price Smart Connect Soothing Motions Seats -->
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">10/24/2017</div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Smart Connect Soothing Motions Seats')" href="/us/recall/default.asp?recall_id=52464">Soothing Motions™ Seat Recall</a>
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Smart Connect Soothing Motions Seats - French')" href="/us/recall/Soothing Motions Seat - French PDF.pdf">Rappel du Siège “Soothing Motions”</a>
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Smart Connect Soothing Motions Seats - Spanish')" href="/us/recall/Soothing Motions Seat - Spanish PDF.pdf">Retiro del Mercado del producto Soothing Motions Seat.</a>
+                </div>
+                <div class="form-col-third col">US & Canada</div>
+                <div class="form-col-last col">
+                    CMR35
+                    <br />
+                    CMR36<br />
+                    CMR37<br />
+                    CMR39
+                    <br />
+                    DYH22
+                    <br />
+                </div>
+            </div>
+            <!-- Added by Suganya on 4/4/2016 for Butterfly Friends Safety Alert-->
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">4/14/2016</div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Butterfly Friends Cradle')" href="/us/recall/default.asp?recall_id=52463">Fisher-Price® Soothing Savanna, Sweet Surroundings and Sweet Surroundings Butterfly Friends Cradle ‘n Swings Recall</a>
+
+
+                    <!--<A onclick="TrackInterstitial('restofsite', 'Section', 'Butterfly Friends Cradle - French')" href="/us/recall/Final French Web .pdf">French PDF</A> -->
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Butterfly Friends Cradle - Spanish')" href="/us/img/CMR40safetyalert/Spanish Cradle N Swing pdf.pdf">Retiro en el mercado de cunas mecedoras modelos Soothing Savanna, Sweet Surroundings and Sweet Surrounding Butterfly Friends de Fisher-Price®</a>
+                </div>
+                <div class="form-col-third col">US</div>
+                <div class="form-col-last col">
+                    CMR40
+                    <br />
+                    CMR43<br />
+                    CHM84
+                </div>
+            </div>
+            <!--Butterfly Friends Safety Alert Ends -->
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">08/05/2015</div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Barbie, Ferrari, Fisher-Price, Hot Wheels Booster Seats Manufactured by TEAMTEX – Minimum Height Discrepancy Public Notice')"
+                        href="http://www.cpsc.gov/en/Recalls/2015/MZB-Recalls-Childrens-Watches/">MZB Recalls Children's Watches Due to Risk of Skin Irritation</a>
+                </div>
+                <div class="form-col-third col">US & Canada</div>
+                <div class="form-col-last col">MZB Children's Watches</div>
+
+            </div>
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">11/06/2014</div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Fisher-Price Safe Voyage Grow With Me Manufactured by TEAMTEX – Non Compliance with Flammability Requirements')" href="https://www.tc.gc.ca/eng/motorvehiclesafety/safedrivers-childsafety-1425.html">Fisher-Price Safe Voyage Grow With Me Manufactured by TEAMTEX – Non Compliance with Flammability Requirements</a>
+                </div>
+                <div class="form-col-third col">Can</div>
+                <div class="form-col-last col">Fisher-Price Safe Voyage Grow With Me Car Seats</div>
+
+            </div>
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">10/03/2014</div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Barbie, Ferrari, Fisher-Price, Hot Wheels Booster Seats Manufactured by TEAMTEX – Minimum Height Discrepancy Public Notice')"
+                        href="https://www.tc.gc.ca/eng/motorvehiclesafety/safedrivers-childsafety-1422.html">Barbie, Ferrari, Fisher-Price, Hot Wheels Booster Seats Manufactured by TEAMTEX – Minimum Height Discrepancy Public Notice</a>
+                </div>
+                <div class="form-col-third col">Can</div>
+                <div class="form-col-last col">Barbie, Ferrari, Fisher-Price, Hot Wheels Booster Seats</div>
+
+            </div>
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">04/24/2014</div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Fisher-Price Safe Voyage Grow With Me Manufactured by TEAMTEX Public Notice')"
+                        href="https://www.tc.gc.ca/eng/motorvehiclesafety/safedrivers-childsafety-2014p03-1408.html">Fisher-Price Safe Voyage Grow With Me Manufactured by TEAMTEX Public Notice</a>
+                </div>
+                <div class="form-col-third col">Can</div>
+                <div class="form-col-last col">Team Tex Safe Voyage Grow With Me Car Seat</div>
+
+            </div>
+
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">03/31/2014</div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Fisher-Price Safe Voyage Grow With Me Manufactured by TEAMTEX Harness Position Clarification')"
+                        href="https://www.tc.gc.ca/eng/motorvehiclesafety/safedrivers-childsafety-1402.html">Fisher-Price Safe Voyage Grow With Me Manufactured by TEAMTEX Harness Position Clarification</a>
+                </div>
+                <div class="form-col-third col">Can</div>
+                <div class="form-col-last col">Team Tex Safe Voyage Grow With Me Car Seat</div>
+            </div>
+            <!-- Added by cts on 12/2/2012 for Fisher-Price Rock ‘N Play Sleeper Safety Alert-->
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">01/08/2013</div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Rock N Play Sleeper recall to inspect')" href="/us/recall/rock_sleepernew.asp">Newborn Rock N' Play Sleeper™</a>
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Rock N Play Sleeper recall to inspect - French')" href="/us/recall/Final French Web .pdf">Français Newborn Rock N' Play Sleeper™</a>
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Rock N Play Sleeper recall to inspect - Spanish')" href="/us/recall/US Spanish web_wizard_sp.pdf">Español Newborn Rock N' Play Sleeper™</a>
+                </div>
+                <div class="form-col-third col">US</div>
+                <div class="form-col-last col">Fisher-Price Newborn Rock N' Play Sleeper™</div>
+            </div>
+            <!-- Fisher-Price Rock ‘N Play Sleeper Safety Alert Ends -->
+
+            <!-- Baby Monitor Safety Alert Begins -->
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">07/11/2012</div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Baby Monitor Safety Alert')" href="/us/recall/default.asp?recall_id=52451">CPSC and JPMA Safety Alert:  Baby Audio and Video Monitor Cords Can Present a Strangulation Hazard</a>
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Baby Monitor Safety Alert - French')"
+                        href="/us/recall/French Baby audio and video monitor Web Document (Final).pdf">CPSC et JPMA alerte de sécurité: Audio bébé et les cordons des moniteurs vidéo peuvent présenter un danger d'étranglement</a>
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Baby Monitor Safety Alert - Spanish')"
+                        href="/us/recall/Spanish Baby audio and video monitor Web Document (FINAL).pdf">CPSC y JPMA Aviso de Seguridad: Cordones en los Monitores de Bebe Audio y Video Pueden Presentar Peligro de Estrangulación</a>
+                </div>
+                <div class="form-col-third col">US</div>
+                <div class="form-col-last col">Baby Audio and Video Monitors</div>
+            </div>
+            <!-- Baby monitor safety alert Ends -->
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">04/02/2012</div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'CPSC Safety Alert')"
+                        href="https://www.cpsc.gov/s3fs-public/5220.pdf">CPSC Safety Alert:  Plastic Film on Toys and Other Children’s Products Can Pose Choking Hazard</a>
+                </div>
+                <div class="form-col-third col">US</div>
+                <div class="form-col-last col">Toys and Children’s Products with Protective Plastic Film</div>
+            </div>
+
+            <!-- Added by COGNIZANT on 6/23/2011 for LP Builders Load ‘n Go Wagon Recall-->
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">07/28/2011</div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'LP_Wagon Recall')"
+                        href="/us/recall/default.asp?recall_id=52450">Little People® Builders' Load 'n Go Wagon</a>
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'LP_Wagon_Recall-French')"
+                        href="/us/recall/Canadian French LP Wagon Web Triage.pdf">Rappel du chariot Little People® Builders' Load 'n Go</a>
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'LP_Wagon_Recall-Spanish')"
+                        href="/us/recall/US Spanish LP Wagon web triage.pdf">Retiro del producto F-P Little People®  Carrito de Carga</a>
+                </div>
+                <div class="form-col-third col">US & Canada</div>
+                <div class="form-col-last col">P8977</div>
+            </div>
+            <!-- End of LP Builders Load ‘n Go Wagon Recall-->
+
+            <!-- Added by COGNIZANT on 9/22/2010 for Trike recall-->
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">09/30/2010</div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Trike Recall')"
+                        href="/us/recall/default.asp?recall_id=52447">Trike Recall</a>
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Trike Recall-French')"
+                        href="/us/recall/Canadian French Trike Web.pdf">Rappel des tricycles Fisher-Price® et de tricycles</a>
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Trike Recall-Spanish')"
+                        href="/us/recall/US Spanish Trike.pdf">Retiro de Fisher-Price® Triciclos</a>
+                </div>
+                <div class="form-col-third col">US & Canada</div>
+                <div class="form-col-last col">72633, 72639, 72642, 72643, 72644, 72792, B8775, B8776, K6672, K6673, M5727, N6021, T6209, V4270</div>
+            </div>
+            <!-- End of trike recall-->
+
+            <!-- Added by COGNIZANT on 9/24/2010 for High chair recall-->
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">09/30/2010</div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'High Chair Recall')"
+                        href="/us/recall/default.asp?recall_id=52448">Healthy Care™, Close to Me™, Easy Clean™ High Chair Recall</a>
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'High Chair Recall-French')"
+                        href="/us/recall/Canadian High Chair Web Wizard-fr-T.pdf">Rappel des chaises hautes Healthy Care, Close to Me et Easy Clean</a>
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'High Chair Recall-Spanish')"
+                        href="/us/recall/us spanish High Chair .pdf">Retiro Voluntario de Sillas Altas Healthy Care™, F-P Trona Cerca de Mi, y F-P Silla Alta Limpia Fácil</a>
+                </div>
+                <div class="form-col-third col">US & Canada</div>
+                <div class="form-col-last col">
+                    79638, 79639, 79640, 79641, B0326, B2105, B2875, C4630, C4632, G4406, G8659, 
+                                        H0796, H1152, H4864, H7241, H8906, H9178, J4011, J6292, J8229, K2927, L1912
+                </div>
+            </div>
+            <!-- End of high chair recall-->
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">09/30/2010</div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'LP Raceway Recall')"
+                        href="/us/recall/default.asp?recall_id=52446">Little People® Wheelies™ Stand ‘n Play™ Rampway Recall</a>
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'LP Raceway Recall-French')"
+                        href="/us/recall/Rampway French.pdf">Rappel du garage/stationnement Little People® Wheelies™ Stand ‘n Play™ Rampway</a>
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'LP Raceway Recall-Spanish')"
+                        href="/us/recall/US Spanish Rampway.pdf">Retiro Voluntario de F-P Little People® Wheelies™ Super Rampa de Vueltas.</a>
+                </div>
+                <div class="form-col-third col">US & Canada</div>
+                <div class="form-col-last col">T4261,T5095,V6378</div>
+            </div>
+
+            <!-- Added by COGNIZANT on 9/29/2010 for Inflatable Ball recall-->
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">09/30/2010</div>
+                <div class="form-col-sec col">
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Inflatables Recall')"
+                        href="/us/recall/default.asp?recall_id=52449">Inflatable Ball Recall</a>
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Inflatables Recall-French')"
+                        href="/us/recall/French Inflatable.pdf">Rappel de jouets pour bébés Fisher-Price® comportant des ballons gonflables</a>
+                    <a onclick="TrackInterstitial('restofsite', 'Section', 'Inflatables Recall-Spanish')"
+                        href="/us/recall/US Spanish Inflatables.pdf">Fisher-Price® Retiro de Juguetes Infantiles con Pelotas Infladas con Aire</a>
+                </div>
+                <div class="form-col-third col">US & Canada</div>
+                <div class="form-col-last col">73408, B2408, C3068, H5704, H8094, K0476, J0327</div>
+            </div>
+            <!-- End of Inflatable Ball recall-->
+
+            <!-- added by COGNIZANT ON 22 Jul 2010-->
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">08/05/2010</div>
+                <div class="form-col-sec col">
+                    <a href="/us/recall/default.asp?recall_id=52445">Little People® Play 'n Go Campsite™ Recall</a>
+                    <a href="/us/recall/LP French US. Can Web Triage.pdf">Rappel de Little People® Trousse de Camping<sup>MC</sup></a>
+                    <a href="/us/recall/Spanish Pananma US Puerto Rico Web Triage.pdf">Retirada de juguete Little People® - Campamento Portátil ¡A Jugar!</a>
+                </div>
+                <div class="form-col-third col">US & Canada</div>
+                <div class="form-col-last col">R6935</div>
+            </div>
+
+            <!-- added by COGNIZANT ON 24 Mar 10-->
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">03/25/2010</div>
+                <div class="form-col-sec col">
+                    <a href="http://www.healthycanadians.gc.ca/recall-alert-rappel-avis/hc-sc/2010/13490a-eng.php"
+                        onclick="TrackInterstitial('restofsite', 'Section', 'Recall-LittlePeople');">Health Canada Advisory: Little People</a>
+                    <a href="http://www.hc-sc.gc.ca/ahc-asc/media/advisories-avis/_2010/2010_47-fra.php"
+                        onclick="TrackInterstitial('restofsite', 'Section', 'Recall-LittlePeopleFrench');">Avis de Santé Canada : Little People</a>
+                    <a href="/us/recall/CHIDMS1-2776492-v2-Mattel___Spanish_Version_of_Health_Canada_Advisory.pdf"
+                        onclick="TrackInterstitial('restofsite', 'Section', 'Recall-LittlePeopleSpanish');">Heath Canada Consultivo: Little People</a>
+                </div>
+                <div class="form-col-third col">US & Canada</div>
+                <div class="form-col-last col">Pre-1991 Little People</div>
+            </div>
+
+            <!-- added by COGNIZANT ON 25 nov 09-->
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">11/24/2009</div>
+                <div class="form-col-sec col"><a href="http://www.cpsc.gov/en/recalls/2009/stork-craft-recalls-more-than-500000-cribs-mattress-support-bracket-failures-create-risk-of-entrapment-and-suffocation/">Stork Craft Drop Side Crib Recall Being Conducted By Stork Craft</a></div>
+                <div class="form-col-third col">US & Canada</div>
+                <div class="form-col-last col">Stork Craft</div>
+            </div>
+
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">03/24/2009</div>
+                <div class="form-col-sec col">
+                    <a href="/us/recall/default.asp?recall_id=52443">3 in 1 High Chair to Booster™ Recall</a>
+                    <!--	<A href="/us/recall/3 in 1 High Chair French Notification.pdf">Notification de Rappel 3 in 1 High Chair to Booster<SUP>MC </SUP></A>
+                <A href="/us/recall/3 in 1 High Chair Spanish Notification.pdf">Retirada del mercado del 3 in 1 High Chair to Booster<SUP>TM</SUP></A>-->
+                    <a href="/us/recall/Dwell Web Triage French v2018.doc">Notification de Rappel 3 in 1 High Chair to Booster<sup>MC </sup></a>
+                    <a href="/us/recall/Dwell Web Triage Spanish v2018.doc">Retirada del mercado del 3 in 1 High Chair to Booster<sup>TM</sup></a>
+                </div>
+                <div class="form-col-third col">US</div>
+                <div class="form-col-last col">P5369</div>
+            </div>
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">01/15/2009</div>
+                <div class="form-col-sec col">
+                    <a href="/us/recall/default.asp?recall_id=52442">Rainforest™ Portable Play Yard Recall</a>
+                    <a href="/us/recall/Play Yard French Notification.pdf">Notification de Rappel Parc Portatif Rainforest<sup>MC</sup></a>
+                    <a href="/us/recall/Play Yard Spanish Notification.pdf">Retirada del mercado del Rainforest™ Portable Play Yard</a>
+                </div>
+                <div class="form-col-third col">US & Canada</div>
+                <div class="form-col-last col">5310 RNF, 5310 RNFC, 5310 RNFW, 5310 RFNT</div>
+            </div>
+
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">08/07/2008</div>
+                <div class="form-col-sec col">
+                    <a href="/us/recall/default.asp?recall_id=52441">Learning Pots & Pans™ Recall</a>
+                    <a href="/us/recall/Pots  Pans US_CAN Web Triage_French 3-14-2018.docx">Notification de Rappel Learning Pots & Pans<sup>MD</sup></a>
+                    <a href="/us/recall/Pots  Pans US_CAN Web Triage_Spanish 3-14-2018.docx">Retirada del Mercado de los Learning Pots & Pans™</a>
+                </div>
+                <div class="form-col-third col">US & Canada</div>
+                <div class="form-col-last col">H0680, H0676, H0681, H0677, H2391, H0678, H4879, H0679</div>
+            </div>
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">03/17/2008</div>
+                <div class="form-col-sec col">
+                    <a href="/us/recall/Mega/megadefault.asp?recall_number=MM801">Magtastik and Magnetix Jr. Preschool Magnetic Toys Recall
+                    </a>
+                </div>
+                <div class="form-col-third col">US &amp; Canada</div>
+                <div class="form-col-last col">Magtastik, Magnimals and Magnetix Jr Toys</div>
+            </div>
+
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">03/17/2008</div>
+                <div class="form-col-sec col"><a href="/us/recall/Mega/megadefault.asp?recall_number=MM802">MagnaMan Magnetic Action Figures Recall</a></div>
+                <div class="form-col-third col">US &amp; Canada</div>
+                <div class="form-col-last col">MagnaMan Toys</div>
+            </div>
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col"></div>
+                <div class="form-col-sec col"><a href="/us/recall/cuff.asp">Medical Kit Replacement Program</a></div>
+                <div class="form-col-third col">US</div>
+                <div class="form-col-last col">J2526, K4674, M0533, M1955</div>
+            </div>
+
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">11/06/2007</div>
+                <div class="form-col-sec col">
+                    <a href="/us/recall/default.asp?recall_id=52438">Laugh and Learn™ 2-in-1 Learning Kitchen™ Recall</a>
+                    <a href="/us/recall/Kitchen_Spanish.pdf">Retiro del mercado de juguetes Laugh and Learn™ 2-in-1 Learning Kitchen™</a>
+                    <a href="/us/recall/Kitchen_French.pdf">Rappel du coffret La Cuisine Interactive 2-dans-1 Laugh and Learn<sup>MD</sup></a>
+                </div>
+                <div class="form-col-third col">US & Canada</div>
+                <div class="form-col-last col">L5067, L7137</div>
+            </div>
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">10/25/2007</div>
+                <div class="form-col-sec col">
+                    <a href="/us/recall/default.asp?recall_id=52437">Go Diego Go!™ Animal Rescue Boat Lead Paint Violation Recall</a>
+                    <a href="/us/recall/Diego_Spanish.pdf">GO Diego Go!™ Retiro del mercado de bote de rescate de animales (Animal Rescue Boat) por violación relacionada con el uso de pintura a base de plomo</a>
+                    <a href="/us/recall/Diego_French.pdf">Rappel du canot de sauvetage d’animaux GO Diego Go!™ pour cause de présence de peinture au plomb</a>
+                </div>
+                <div class="form-col-third col">US & Canada</div>
+                <div class="form-col-last col">K3413</div>
+            </div>
+
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">09/04/2007</div>
+                <div class="form-col-sec col">
+                    <a href="/us/recall/default.asp?recall_id=52434">Barbie® Accessory Sets Lead Paint Hazard Recall</a>
+                </div>
+                <div class="form-col-third col">US & Canada</div>
+                <div class="form-col-last col">K8609, K8608, K8607, K8606, K8613, J9485</div>
+            </div>
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">09/04/2007</div>
+                <div class="form-col-sec col">
+                    <a href="/us/recall/default.asp?recall_id=52435">GeoTrax™ Engine Lead Paint Hazard Recall</a>
+                </div>
+                <div class="form-col-third col">US & Canada</div>
+                <div class="form-col-last col">H5705, K3013</div>
+            </div>
+
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">09/04/2007</div>
+                <div class="form-col-sec col">
+                    <a href="/us/recall/default.asp?recall_id=52436">It's a Big Big World™ Lead Paint Hazard Recall</a>
+                </div>
+                <div class="form-col-third col">US</div>
+                <div class="form-col-last col">K9343</div>
+            </div>
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">08/14/2007</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52431">Mattel Playsets with Magnet Hazard Recall</a> </div>
+                <div class="form-col-third col">
+                    <div class="col-subrow">US & Canada</div>
+                    <div class="col-subrow">US</div>
+                    <div class="col-subrow">Canada</div>
+                </div>
+                <div class="form-col-last col">
+                    <div class="col-subrow">
+                        J1944, J1946, J4142, J5114, J5115, G4457, G4458, G4459, G4461, G4462, G4464, G9703, H1530, H1532, H1533,
+                                        B7124, B2632, B3158, B3201, B3203, B3204, B3207, B3209, B3210, B3211, B7078, B7082, B7118, B7125, B7127,
+                                        B7129, B8478, B9521, B9522, B9523, B9525, B9578, B9929, C0504, C0505, C1341, C1342, G8602, G8605, G8612,
+                                        G8614, G8615, H1537, H1538, H1553, H1554, H3211, J1659, J1661, J1662, J1670, J1681, J1687, J1695, J4169,
+                                        J4170, J4171, J4172, J9305, J9306, J9648, J9965, J9966, K3460
+                    </div>
+                    <div class="col-subrow">G4460</div>
+                    <div class="col-subrow">B3396</div>
+                </div>
+            </div>
+
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">08/14/2007</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52432">Barbie® Doll and Tanner™ Magnet Hazard Recall</a></div>
+                <div class="form-col-third col">US & Canada</div>
+                <div class="form-col-last col">J9472, J9560</div>
+            </div>
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">08/14/2007</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52433">Pixar Cars Sarge Lead Paint Hazard Recall</a></div>
+                <div class="form-col-third col">
+                    <div class="col-subrow">US</div>
+                    <div class="col-subrow">Canada</div>
+                </div>
+                <div class="form-col-last col">
+                    <div class="col-subrow">H6414, M1253, K5925, L6294, L4051</div>
+                    <div class="col-subrow">H6414, L6294, L4051</div>
+                </div>
+            </div>
+
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">08/01/2007</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52430">Fisher-Price Toys with Lead Paint Hazard Recall</a></div>
+                <div class="form-col-third col">
+                    <div class="col-subrow">US & Canada</div>
+                    <div class="col-subrow">Canada</div>
+                    <div class="col-subrow">US</div>
+                </div>
+                <div class="form-col-last col">
+                    <div class="col-subrow">
+                        39054, B9620, C6908, C6909, C6910, C6911, G3825, H3343, H3344, H4187, H9124, H9125, J0338, J0343,
+                                    	J0344, J0345, J0346, J2248, K0617, K3414, K3571, K4139, K4140, M0351, M0352
+                    </div>
+                    <div class="col-subrow">H6859, J1136, J9451, K9287, L5342, H4650, H4649, H9203,	K0730, K2448</div>
+                    <div class="col-subrow">
+                        33662, 33663, 33664, 34658, 39038, 87946, 90267, 90609, 90611, 90612, 90613, 90614, 90745, 93068, 
+                                        93107, 93307, 93308, 93492, 93493, 93615, 93780, B7554, B7888, B7987, B7989, G5112, G9717, H2943, 
+                                        H4628, H5569, H5570, H8236, H8237, H8238, H9186, H9188, J5935, J5936, J6537, J6762, J6763, J6765,
+                                        J7983, J9518, J9692, K3580, L0305, L3194, L3215, L3507, L5202, L5813, M0524, M0527, M0732, M2051, M2052
+                    </div>
+                </div>
+            </div>
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">05/30/2007</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52429">Rainforest™ Open Top Take-Along Swing™ Recall</a></div>
+                <div class="form-col-third col">US & Canada</div>
+                <div class="form-col-last col">K7203</div>
+            </div>
+
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">04/19/2007</div>
+                <div class="form-col-sec col"><a href="/us/recall/Mega/megadefault.asp?recall_number=MM800">Magnetix Magnetic Building Set Recall</a></div>
+                <div class="form-col-third col">US &amp; Canada</div>
+                <div class="form-col-last col">Magnetix Toys</div>
+            </div>
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">02/15/2007</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52427">Laugh &amp; Learn™ Learning Bunny™ Recall</a></div>
+                <div class="form-col-third col">
+                    <div class="col-subrow">US</div>
+                    <div class="col-subrow">Canada</div>
+                </div>
+                <div class="form-col-last col">
+                    <div class="col-subrow">K0468, K5862, K6898, K7884, L0327</div>
+                    <div class="col-subrow">K0468, K5862</div>
+                </div>
+            </div>
+
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">11/20/2006</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52431">Polly Pocket!™ Assortments</a></div>
+                <div class="form-col-third col">US &amp; Canada</div>
+                <div class="form-col-last col">B2632, B3201, B3158, G8605, H3211, H1538, H1537, B7118</div>
+            </div>
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">01/18/2006</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52425">Laugh &amp; Learn™ Musical Learning Chair™ Recall</a></div>
+                <div class="form-col-third col">US &amp; Canada</div>
+                <div class="form-col-last col">H4609, H7168</div>
+            </div>
+
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">06/14/2005</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52421">Power Wheels Lightning PAC™ Tire Recall</a></div>
+                <div class="form-col-third col">US</div>
+                <div class="form-col-last col">73530</div>
+            </div>
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">06/14/2005</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52420">Power Wheels MX3™ Mini Bike Tire Recall</a></div>
+                <div class="form-col-third col">
+                    <div class="col-subrow">US</div>
+                    <div class="col-subrow">Canada</div>
+                </div>
+                <div class="form-col-last col">
+                    <div class="col-subrow">73535</div>
+                    <div class="col-subrow">B2222</div>
+                </div>
+            </div>
+
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">05/10/2005</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52419">Grow-To-Pro® Pogo Recall</a></div>
+                <!--Tkt# 9292521 Dt:19/06/2014 -->
+                <div class="form-col-third col">US &amp; Canada</div>
+                <div class="form-col-last col">73386, 77356</div>
+            </div>
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">05/10/2005</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52418">Lil' Wagster Dragster™</a></div>
+                <div class="form-col-third col">US </div>
+                <div class="form-col-last col">B0335</div>
+            </div>
+
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">04/14/2004</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52417">BATMAN™ BATMOBILE™ Vehicle</a></div>
+                <div class="form-col-third col">US &amp; Canada</div>
+                <div class="form-col-last col">B4944</div>
+            </div>
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">11/13/2003</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52416">Power Wheels MX3 Mini Bike</a></div>
+                <div class="form-col-third col">
+                    <div class="col-subrow">US</div>
+                    <div class="col-subrow">Canada</div>
+                </div>
+                <div class="form-col-last col">
+                    <div class="col-subrow">73535</div>
+                    <div class="col-subrow">B2222</div>
+                </div>
+            </div>
+
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">11/13/2003</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52415">Power Wheels Lightning PAC™</a></div>
+                <div class="form-col-third col">US</div>
+                <div class="form-col-last col">73530</div>
+            </div>
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">06/19/2003</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52414">Sparkling Symphony™ Mobile</a></div>
+                <div class="form-col-third col">US &amp; Canada</div>
+                <div class="form-col-last col">71985</div>
+            </div>
+
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">04/23/2003</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52413">Little People® Animal Sounds Farm™</a></div>
+                <div class="form-col-third col">US &amp; Canada</div>
+                <div class="form-col-last col">77973, 77746</div>
+            </div>
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">05/21/2002</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52461">RoseArt Cotton Candy Machine Recall</a></div>
+                <div class="form-col-third col">US &amp; Canada</div>
+                <div class="form-col-last col">DNV10</div>
+            </div>
+
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">04/10/2002</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52412">Smart Response™ Swing</a></div>
+                <div class="form-col-third col">US</div>
+                <div class="form-col-last col">79645, 79647, 79644</div>
+            </div>
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">03/14/2002</div>
+                <div class="form-col-sec col"><a onclick="TrackInterstitial('restofsite', 'Section', 'RoseArt Soap Making Kit Recall')" href="/us/recall/default.asp?recall_id=52462">RoseArt Soap Making Kit Recall</a></div>
+                <div class="form-col-third col">US &amp; Canada</div>
+                <div class="form-col-last col">DNV11</div>
+            </div>
+
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">07/31/2001</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52411">Bassinet</a></div>
+                <div class="form-col-third col">US &amp; Canada</div>
+                <div class="form-col-last col">79336, 79338, 79334</div>
+            </div>
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">07/31/2001</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52410">Grow to Pro® Basketball</a></div>
+                <div class="form-col-third col">US &amp; Canada</div>
+                <div class="form-col-last col">72408</div>
+            </div>
+
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">03/29/2001</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52409">Intelli-Table</a></div>
+                <div class="form-col-third col">US &amp; Canada</div>
+                <div class="form-col-last col">77148</div>
+            </div>
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">08/31/2000</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52408">Power Wheels Harley-Davidson® Motorcycle</a></div>
+                <div class="form-col-third col">US &amp; Canada</div>
+                <div class="form-col-last col">74290, 74293, 74298</div>
+            </div>
+
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">08/23/2000</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52407">Get Up And Go Walker</a></div>
+                <div class="form-col-third col">US &amp; Canada</div>
+                <div class="form-col-last col">71207</div>
+            </div>
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">08/23/2000</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52406">Lock &amp; Lift Swing</a></div>
+                <div class="form-col-third col">
+                    <div class="col-subrow">US</div>
+                    <div class="col-subrow">Canada</div>
+                </div>
+                <div class="form-col-last col">
+                    <div class="col-subrow">75970, 75980, 75973, 72092, 75960</div>
+                    <div class="col-subrow">75970, 75973, 72092</div>
+                </div>
+            </div>
+
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">07/21/2000</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52405">Big Action™ Construction</a></div>
+                <div class="form-col-third col">US &amp; Canada</div>
+                <div class="form-col-last col">72028</div>
+            </div>
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">07/21/2000</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52404">Hop Skip Jumper</a></div>
+                <div class="form-col-third col">US &amp; Canada</div>
+                <div class="form-col-last col">79144, 79146</div>
+            </div>
+
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">04/7/2000</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52403">3-in-1 Cradle Swing</a></div>
+                <div class="form-col-third col">US &amp; Canada</div>
+                <div class="form-col-last col">79322, 79321</div>
+            </div>
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">04/07/2000</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52402">Bounce 'n Play Activity Dome™</a></div>
+                <div class="form-col-third col">US &amp; Canada</div>
+                <div class="form-col-last col">79534</div>
+            </div>
+
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">12/31/1998</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52401">Grow to Pro® Basketball</a></div>
+                <div class="form-col-third col">US &amp; Canada</div>
+                <div class="form-col-last col">72275</div>
+            </div>
+
+            <div class="recall-form-row-white row">
+                <div class="form-col-first col">10/22/1998</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52400">Power Wheels</a></div>
+                <div class="form-col-third col">US &amp; Canada</div>
+                <div class="form-col-last col"></div>
+            </div>
+
+            <div class="recall-form-row-grey row">
+                <div class="form-col-first col">08/04/1998</div>
+                <div class="form-col-sec col"><a href="/us/recall/default.asp?recall_id=52399">Safe Embrace™ Convertible Car Seat</a></div>
+                <div class="form-col-third col">US &amp; Canada</div>
+                <div class="form-col-last col">79700</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<script type="text/javascript">
+    //for QM
+    (function () {
+        var qtm = document.createElement('script'); qtm.type = 'text/javascript'; qtm.async = 1;
+        qtm.src = 'https://cdn.quantummetric.com/qscripts/quantum-mattel.js';
+        var d = document.getElementsByTagName('script')[0];
+        !window.QuantumMetricAPI && d.parentNode.insertBefore(qtm, d);
+    })();
+</script>
+
+        
+        <div style="clear:both"> </div>
+        <div class="footer">
+          <div class="centered clearfix">
+
+            <div class="footer-navigation" style="float: left">
+              <div class="footer-links-holder">
+                <a>
+                  <img src="/us/img/footerimg/Mattelribbon.svg" alt="" width="267" />
+                </a>
+              </div>
+            </div>
+            <div class="social follow-mattel" style="float: right; width: 300px">
+              <a target="_blank" href="http://www.facebook.com/Mattel" class="facebook">
+                <img src="/us/img/footerimg/facebook.svg" alt="" />
+              </a>
+              <a target="_blank" href="http://www.twitter.com/Mattel" class="insta">
+                <img src="/us/img/footerimg/insta.svg" alt="" />
+              </a>
+              <a target="_blank" href="http://www.youtube.com/user/MattelShop" class="youtube">
+                <img src="/us/img/footerimg/youtube.svg" alt="" />
+              </a>
+              <a target="_blank" href="https://www.linkedin.com/company/mattel/" class="linkedin">
+                <img src="/us/img/footerimg/linkedin.svg" alt="" />
+              </a>
+            </div>
+          </div>
+          <div class="centered clearfix">
+            <div class="footer-navigation">
+              <div class="footer-links-holder">
+                <h3>Shop & Learn</h3>
+                <ul class="footer-links">
+                  <li>
+                    <a target="_blank" href="https://shop.mattel.com/?_ga=2.235150600.803367769.1711626307-349098388.1709135742">Shop Mattel</a>
+                  </li>
+                  <li>
+                    <a target="_blank" href="https://www.americangirl.com/">Shop American Girl</a>
+                  </li>
+                  <li>
+                    <a target="_blank" href="https://creations.mattel.com/">Shop Mattel Creations</a>
+                  </li>
+                  <li>
+                    <a target="_blank" href="https://shop.mattel.com/pages/barbie?_ga=2.186405280.803367769.1711626307-349098388.1709135742">Shop Barbie</a>
+                  </li>
+                  <li>
+                    <a target="_blank" href="https://shop.mattel.com/pages/hot-wheels?_ga=2.108065730.1511346186.1715609297-1479241140.1715609297">Shop Hot Wheels</a>
+                  </li>
+                  <li>
+                    <a target="_blank" href="https://shop.mattel.com/pages/fisher-price?_ga=2.7608050.1511346186.1715609297-1479241140.1715609297">Shop Fisher-Price</a>
+                  </li>
+                  <li>
+                    <a target="_blank" href="https://shop.mattel.com/blogs/playroom?_ga=2.82391382.1511346186.1715609297-1479241140.1715609297">Mattel Playroom</a>
+                  </li>
+                </ul>
+              </div>
+              <div class="footer-links-holder mobile-help">
+                <h3>Contact</h3>
+                <ul class="footer-links">
+                  <li>
+                    <a target="_blank" href="https://corporate.mattel.com/contact-us">General Inquiries</a>
+                  </li>
+                  <li>
+                    <a target="_blank" href="https://service.mattel.com/us/home.aspx">Customer Service</a>
+                  </li>
+                  <li>
+                    <a target="_blank" href="https://corporate.mattel.com/contact-us#media-contacts">Corporate Communications</a>
+                  </li>
+                </ul>
+              </div>
+              <div class="footer-links-holder desktop-help">
+                <h3>Helpful Links</h3>
+                <ul class="footer-links">
+                  <li>
+                    <a target="_blank" href="https://www.mymattelideas.com/">Submit Product Ideas</a>
+                  </li>
+                  <li>
+                    <a target="_blank" href="https://store.mattel.com/transition.aspx?cmd=new&transitionid=103&cat=139&sec=8713">Replacement Parts</a>
+                  </li>
+                  <li>
+                    <a target="_blank" href="https://consumersupport.mattel.com/mattelsupport/s/product-registration">Product Registration</a>
+                  </li>
+                  <li>
+                    <a target="_blank" href="https://service.mattel.com/us/recall.aspx?_ga=2.79950231.1631940247.1711955769-349098388.1709135742">Recall & Safety</a>
+                  </li>
+
+                </ul>
+              </div>
+              <div class="footer-links-holder desktop-help">
+                <h3>About Mattel</h3>
+                <ul class="footer-links">
+                  <li>
+                    <a target="_blank" href="https://about.mattel.com/?_ga=2.82575126.1631940247.1711955769-349098388.1709135742">Mattel.com</a>
+                  </li>
+                  <li>
+                    <a target="_blank" href="https://corporate.mattel.com/careers">Careers</a>
+                  </li>
+                  <li>
+                    <a target="_blank" href="https://investors.mattel.com/overview/default.aspx">Investor Relations</a>
+                  </li>
+                </ul>
+              </div>
+              <div class="footer-links-holder">
+                <h3>Legal</h3>
+                <ul class="footer-links">
+                  <li>
+                    <a target="_blank" href="https://shop.mattel.com/pages/terms-conditions">Terms & Conditions</a>
+                  </li>
+                  <li>
+                    <a target="_blank" href="https://shop.mattel.com/pages/privacy-statement?_ga=2.149683766.1631940247.1711955769-349098388.1709135742">Privacy Statement</a>
+                  </li>
+                  <li>
+                    <a target="_blank" href="https://shop.mattel.com/pages/cookies-and-technologies?_ga=2.149683766.1631940247.1711955769-349098388.1709135742">Cookies & Technology</a>
+                  </li>
+                  <li>
+                    <a target="_blank" href="https://corporate.mattel.com/mattel-shopping-terms">Terms of Sale</a>
+                  </li>
+                  <li>
+                    <a id="teconsent"></a>
+                  </li>
+                  <li>
+                    <a id="irmlink"></a>
+                  </li>
+                  <li>
+                    <a target="_blank" href="https://corporate.mattel.com/accessibility-statement">Accessibility Statement</a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="bottom-bar" style="text-align:center">
+            <span>
+              © 2025 Mattel. All Rights Reserved.
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script async="async" src="//consent.truste.com/notice?domain=mattel.com&c=teconsent&js=bb&noticeType=bb&text=true&irmc=irmlink" crossorigin=""></script>
+
+  <script type="text/javascript" src="/_Incapsula_Resource?SWJIYLWA=719d34d31c8e3a6e6fffd425f7e032f3&ns=1&cb=233359585" async></script></body>
+</html>

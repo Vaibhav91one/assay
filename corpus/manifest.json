@@ -1,0 +1,618 @@
+[
+  {
+    "site": "mattel",
+    "timestamp": "20240103235616",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "2N6B6MB24LS65BYKKPQKN5JFCYW3FAWX",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20240103235616.html",
+    "bytes": 85535
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20240204185924",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "JHF6EM76VBQ5I22BFFR2W2743XRDKS5Z",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20240204185924.html",
+    "bytes": 85536
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20240310102914",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "HKLN6QTWDQGCG4KS7IGIWJI3Y5OX5JUH",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20240310102914.html",
+    "bytes": 85520
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20240411081125",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "4GSHQH5VKLRN5KQ4ZIYSS72YUZSU6Y2O",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20240411081125.html",
+    "bytes": 86642
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20240513174908",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "SEXABIOW6ZJ2YQAOPQ4JQETY55CJ6MRF",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20240513174908.html",
+    "bytes": 86791
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20240617172711",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "ISOLLJ5PXGQMVPFTODLWOT5RMFVA3LJX",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20240617172711.html",
+    "bytes": 87268
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20240715044907",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "KL3HSADRAGDYAD64UC3Q23F24PC3UDZQ",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20240715044907.html",
+    "bytes": 87268
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20240812020102",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "G5TM4XIEQNFJZL3QRSDGN25D7JXNJUUX",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20240812020102.html",
+    "bytes": 87269
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20240901082619",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "2CLVDDH4MFJSPK66HY7JQXSQKGMMFE54",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20240901082619.html",
+    "bytes": 89022
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20241005063251",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "4PN7H4FAAHMHBOLTAWYUNEGYHXAM3BTR",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20241005063251.html",
+    "bytes": 89021
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20241110225230",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "WKVZEB7KLKES5TDM5LSWOOUBZYJ2HUDY",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20241110225230.html",
+    "bytes": 91707
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20241216125301",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "7UOMS5IV7B75QZQHNELUOQYALLQBOLYE",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20241216125301.html",
+    "bytes": 91706
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20250103183628",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "UO4HEC56ZULNO2QUNXB4EAUU2BJMISOO",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20250103183628.html",
+    "bytes": 91723
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20250202082531",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "FSJR3X56FYLNCW3TEFMHA5TAURKF7E3W",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20250202082531.html",
+    "bytes": 90942
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20250303041223",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "GX2OCHKTMOSHSQHOKWFG5H7U3GRAM6GF",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20250303041223.html",
+    "bytes": 92158
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20250404214427",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "P4FU2ROTJEBQFEZYAFX4NGTVJP3FU4UU",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20250404214427.html",
+    "bytes": 92159
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20250501132201",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "3SZNBCDI3QHNUMHFCOQ4KKJYJM2RH25S",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20250501132201.html",
+    "bytes": 95212
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20250602103333",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "WE2SEVVYC2R7APMMTRGVEAV4SE2HJSMS",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20250602103333.html",
+    "bytes": 95212
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20250707002442",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "QXOF25SN4OECJUIR3724UVJ3N77U7K6I",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20250707002442.html",
+    "bytes": 95095
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20250803020145",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "TYBW4RK7OO6DJGKNUXDB76J3FMFWHG4Y",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20250803020145.html",
+    "bytes": 95212
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20250904005432",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "IPFUSLCHC73UQCF3DZTJOITOKIU6Z3H7",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20250904005432.html",
+    "bytes": 95079
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20251001025902",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "EM5KACFUGJQ72KX7SWDUX4TR4SO2B23G",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20251001025902.html",
+    "bytes": 95213
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20251102172032",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "GD47JQMRYGO3BKQERPDGJ4WHRW54D73R",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20251102172032.html",
+    "bytes": 95229
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20251201105545",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "MVYTMQJTQKRYTUWWI2LIFY2XT27UXTUJ",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20251201105545.html",
+    "bytes": 95213
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20260101140440",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "J5EC2HA5BOVRW6IC53P2YHE7HMJLH5EE",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20260101140440.html",
+    "bytes": 95213
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20260201015446",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "O5I7UATPEO353BW66FSTHPB6A3TPVIHE",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20260201015446.html",
+    "bytes": 95212
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20260301003042",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "4CPCF2B3Y2MB27PHNQEBVTJLU6SAKSVR",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20260301003042.html",
+    "bytes": 95210
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20260401060632",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "2FY2ONRYUFFN3ZBPUYTRIQS3U3HRC76F",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20260401060632.html",
+    "bytes": 95209
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20260511195130",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "QLVBNQZ7LCXWHANBPL2FV73B4BNKPVE4",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20260511195130.html",
+    "bytes": 95076
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20260603000734",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "R32OYSNKBORXLDERRH2ZZL77K62RPIFS",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20260603000734.html",
+    "bytes": 95209
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20260701033449",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "5HHIPY35CDZMJBAB34FMZS5F5CAV543U",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20260701033449.html",
+    "bytes": 95225
+  },
+  {
+    "site": "mattel",
+    "timestamp": "20260802010212",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "WU7C4UQ62LM5F7H36Z67UDCVQMIM5HEN",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/mattel/20260802010212.html",
+    "bytes": 95226
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20240114015349",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "MDKSLFDSJFFFPFJ4QOTX4VDZWSTYN5TL",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20240114015349.html",
+    "bytes": 230659
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20240215094921",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "J3GEANEYCYEL6DNEQ636SXCJN7R75ZLA",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20240215094921.html",
+    "bytes": 235499
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20240307021544",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "VPJ6UOZZYJNCMHGETU2CVZSNTGXDXX73",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20240307021544.html",
+    "bytes": 237393
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20240406142237",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "DPVBNRJHA2Y6HEG43NIHVZZ5EA54PQAB",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20240406142237.html",
+    "bytes": 237829
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20240509141204",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "4GE3GE2MLDM7C6CKTSSGBOU2YVGIHCOJ",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20240509141204.html",
+    "bytes": 241036
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20240613054549",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "C5ETDCYG5EVZFKTTFBXSGKV3GL4MVCBX",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20240613054549.html",
+    "bytes": 295938
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20240704111454",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "XXKTXQO27KCDSPRGM2BIAGXOQ4E4FRYN",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20240704111454.html",
+    "bytes": 319114
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20240811220042",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "F5IKBMPKHLFDE4TDOYUNVGERPKHW3YAV",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20240811220042.html",
+    "bytes": 314551
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20240902055523",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "6QPCNO46U2MJSD2HLTM4FVZYRBRF743H",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20240902055523.html",
+    "bytes": 314530
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20241004030603",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "PPDZIHFCKDIAAFKCZRYCI7KJYBXQELAU",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20241004030603.html",
+    "bytes": 297518
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20241106212610",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "AHWQLAIM66VHF2KIQOKMPSW5S64LWXH5",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20241106212610.html",
+    "bytes": 306518
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20241205040641",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "DP5KIUWJ3QEX4R3WYMPHQKUFEQ7FQBNC",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20241205040641.html",
+    "bytes": 317780
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20250108195220",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "DY2TX3SW6N56ON3P6IG4UURNW45OJF4D",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20250108195220.html",
+    "bytes": 303772
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20250202201033",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "TLWLUFEFMO3MPVOQH5RNHFDKUQZUTN2B",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20250202201033.html",
+    "bytes": 313893
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20250304113257",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "BAEQHT2635QLPOID4JMAWDPOAIOPD7JO",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20250304113257.html",
+    "bytes": 305355
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20250426213004",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "XTAEV7ORLOGZZLOGEIJOWTY4XGYKEQSM",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20250426213004.html",
+    "bytes": 303852
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20250502095953",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "22INF3T3UTZPOYJ5JR7DIRFDL4PITUD3",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20250502095953.html",
+    "bytes": 304511
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20250731185326",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "A4T7XSNBJGOCITJNKV3IZWHLSB47FK3D",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20250731185326.html",
+    "bytes": 305045
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20250801145132",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "FYGS6FLGYUUY7CT52QRIKT5ACMV3QEO7",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20250801145132.html",
+    "bytes": 305624
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20250906092348",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "YC52DBBQWPF32PJQZYPOM6ZPYW2V4MP3",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20250906092348.html",
+    "bytes": 332335
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20251005125020",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "SOHGV2TCIFXGK3W5I74SBHJYUZNGOCL3",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20251005125020.html",
+    "bytes": 268387
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20251111222002",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "WXAYSDSGZLPJFMEDBS2IHY2XKCPLEIQZ",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20251111222002.html",
+    "bytes": 272845
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20251218005806",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "UPNCYWFEEJHMUPKQXSJF2Z25DYWQWLE7",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20251218005806.html",
+    "bytes": 247946
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20260117092041",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "O2JG2NUKBY3N4TUEKVE6TJGJFOGMNT4C",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20260117092041.html",
+    "bytes": 252312
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20260228015134",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "4XRBIKKZWGWKJOQWSLZ3ZRARVENEBXPN",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20260228015134.html",
+    "bytes": 255187
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20260306022836",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "W66V6YWJWHBDATNWMIC2OYHGSHSX2EA2",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20260306022836.html",
+    "bytes": 255951
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20260409043832",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "JR4H2SAUAC6KFXDW7C73NZQQYOIY5BCY",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20260409043832.html",
+    "bytes": 267751
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20260505195241",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "WLFC6HNGOMEH7AC6VYS6FVQ6ODYFJ4L5",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20260505195241.html",
+    "bytes": 287695
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20260601173910",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "SJMB7D3NQAFCSA6ZVF6MJZPUF4VGA6H7",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20260601173910.html",
+    "bytes": 290723
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20260703035005",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "OBJJYYMJMVFRA6BRNWIWXOMMR22XW2Z6",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20260703035005.html",
+    "bytes": 999892
+  },
+  {
+    "site": "ikea",
+    "timestamp": "20260804061950",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "BIOXXZAGIOWCAHKOYRYYX3NJHELNYTUZ",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/ikea/20260804061950.html",
+    "bytes": 994418
+  },
+  {
+    "site": "chicco",
+    "timestamp": "20240214020149",
+    "original": "https://www.chiccousa.com/child-safety/product-recalls/",
+    "digest": "V6BHWGZQUE2E3FUBW5ZZM6NRZYHMSSKB",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/chicco/20240214020149.html",
+    "bytes": 91889
+  },
+  {
+    "site": "chicco",
+    "timestamp": "20240305140554",
+    "original": "https://www.chiccousa.com/child-safety/product-recalls/",
+    "digest": "IOGMDQI5HC33IVYBDKYLXHR47KKZMQSN",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/chicco/20240305140554.html",
+    "bytes": 91728
+  },
+  {
+    "site": "chicco",
+    "timestamp": "20240408180901",
+    "original": "https://www.chiccousa.com/child-safety/product-recalls/",
+    "digest": "ZGPQAV3ATWPTTMIIKFPENMOSKKF5N4O6",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/chicco/20240408180901.html",
+    "bytes": 91634
+  },
+  {
+    "site": "chicco",
+    "timestamp": "20240910041226",
+    "original": "https://www.chiccousa.com/child-safety/product-recalls/",
+    "digest": "Q5TX5C3HKOFVMSBOII6NCOYQNCRDR4UU",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/chicco/20240910041226.html",
+    "bytes": 92570
+  },
+  {
+    "site": "chicco",
+    "timestamp": "20241214193417",
+    "original": "https://www.chiccousa.com/child-safety/product-recalls/",
+    "digest": "RM6ZLHRWARRR2SGTMJALFR7DVZABLYKB",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/chicco/20241214193417.html",
+    "bytes": 96488
+  },
+  {
+    "site": "chicco",
+    "timestamp": "20250318201107",
+    "original": "https://www.chiccousa.com/child-safety/product-recalls/",
+    "digest": "NT2ERJDE5GONDCME5JP4SLCAY5E2FO45",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/chicco/20250318201107.html",
+    "bytes": 84429
+  },
+  {
+    "site": "chicco",
+    "timestamp": "20250617043426",
+    "original": "https://www.chiccousa.com/child-safety/product-recalls/",
+    "digest": "F4ETKAR4IWCTUR7URZZRCO5ZJUOOGB7P",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/chicco/20250617043426.html",
+    "bytes": 85895
+  },
+  {
+    "site": "chicco",
+    "timestamp": "20250711055850",
+    "original": "https://www.chiccousa.com/child-safety/product-recalls/",
+    "digest": "NAZYWZ4BA57EBH7WB5IEQFRWQSCVWRVM",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/chicco/20250711055850.html",
+    "bytes": 85899
+  },
+  {
+    "site": "chicco",
+    "timestamp": "20250906185020",
+    "original": "https://www.chiccousa.com/child-safety/product-recalls/",
+    "digest": "Z3NF7I65EIBX4A43TTH352XL2JVWQGCW",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/chicco/20250906185020.html",
+    "bytes": 86146
+  },
+  {
+    "site": "chicco",
+    "timestamp": "20251009174525",
+    "original": "https://www.chiccousa.com/child-safety/product-recalls/",
+    "digest": "OEN7GRIPVBMD3J2VE6MGYXTFVOHHSGSA",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/chicco/20251009174525.html",
+    "bytes": 86090
+  },
+  {
+    "site": "chicco",
+    "timestamp": "20251214043919",
+    "original": "https://www.chiccousa.com/child-safety/product-recalls/",
+    "digest": "GCPUBKRB2Y253GW734AKNZU5SIBW6C63",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/chicco/20251214043919.html",
+    "bytes": 86048
+  },
+  {
+    "site": "chicco",
+    "timestamp": "20260309180858",
+    "original": "https://www.chiccousa.com/child-safety/product-recalls/",
+    "digest": "EX5PDPGES7CQIGMV2E5HWNJT3BLBOR2G",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/chicco/20260309180858.html",
+    "bytes": 90209
+  },
+  {
+    "site": "chicco",
+    "timestamp": "20260425175629",
+    "original": "https://www.chiccousa.com/child-safety/product-recalls/",
+    "digest": "JSNKINAIUFMYTEYDWA3I5XI3UOWW6Q2N",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/chicco/20260425175629.html",
+    "bytes": 89462
+  },
+  {
+    "site": "chicco",
+    "timestamp": "20260605224303",
+    "original": "https://www.chiccousa.com/child-safety/product-recalls/",
+    "digest": "KAAJW55CT3S4V2IKGRB7MXUOSWE2ZJ43",
+    "file": "/Users/vaibhavtomar/Desktop/assay/corpus/chicco/20260605224303.html",
+    "bytes": 90582
+  }
+]
