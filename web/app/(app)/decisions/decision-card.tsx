@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import Link from 'next/link';
 import { Check, CircleAlert, Eye } from 'lucide-react';
 import type { Decision } from '@/lib/queue';
 import { StatusLine } from '@/components/status-line';
@@ -48,7 +49,17 @@ export function DecisionCard({
       <div className="flex items-center gap-[12px]">
         <span className="body-14 text-[var(--text-primary)]">{d.target}</span>
         <span className="meta-12_5 flex-1 text-[var(--text-muted)]">
-          run {d.run} · {stamp(d.startedAt)} · field {d.field}
+          {/* The run id is on the Decision, so the reference is the link.
+              It used to be inert text -- or, on the sibling screens, a link to
+              /runs, which is the list this run is one row of. A reader who
+              clicks "run 412" wants run 412. */}
+          <Link
+            href={`/runs/${d.run}`}
+            className="text-[var(--semantic-link)] hover:underline"
+          >
+            run {d.run}
+          </Link>{' '}
+          · {stamp(d.startedAt)} · field {d.field}
         </span>
         <span className="meta-12_5 text-[var(--text-muted)]">held {ago(d.heldAt)}</span>
       </div>
@@ -74,6 +85,33 @@ export function DecisionCard({
             </div>
           </div>
         </div>
+
+        {/*
+          What every other product in this category would have done with this
+          cell, said out loud.
+
+          It is the only place the reader can see the thing they are being
+          asked to spend thirty seconds on. A healer ranks, takes the top of
+          the ranking and publishes it; the gate ranked the same list, found no
+          clear winner and published a labelled hole instead. Without this line
+          the card reads as Assay failing to do its job.
+
+          `candidates[0]` IS that top -- `openDecisions` keeps the gate's own
+          ordering, best first -- so this is a real counterfactual off the
+          stored ranking, not a guess about what a competitor might do. With no
+          candidates there was nothing to publish and the line would be a
+          fabrication, so it is skipped.
+        */}
+        {d.candidates.length > 0 && (
+          /* copy(G) */
+          <p className="meta-12_5 rounded-[var(--radius-control)] bg-[var(--surface-subtle)] px-[14px] py-[10px] text-[var(--text-secondary)]">
+            A healer without the gate would have published{' '}
+            <span className="mono-value-12_5 break-words text-[var(--text-primary)]">
+              “{d.candidates[0].value}”
+            </span>
+            . Assay published nothing.
+          </p>
+        )}
 
         {d.candidates.length > 0 && (
           <div className="flex w-full items-stretch gap-[16px]">

@@ -1,12 +1,21 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Undo2 } from 'lucide-react';
+import Link from 'next/link';
+import { MessageSquare, Undo2 } from 'lucide-react';
 import type { Decision } from '@/lib/queue';
 import { StatusLine } from '@/components/status-line';
 import { Toast, TOAST_BUTTON } from '@/components/toast';
 import { DecisionCard } from './decision-card';
 import { undoCell, type Outcome } from './actions';
+
+/** The receipt for one answer, and the follow-up that answer earns. */
+interface Receipt {
+  proof: string;
+  text: string;
+  /** The scraper to re-teach, on `neither` only. Null on the other three. */
+  reteach: string | null;
+}
 
 /**
  * Owns the undo affordance, and it has to live here rather than on the card.
@@ -29,20 +38,30 @@ export function DecisionsList({
   decisions: Decision[];
   onSettled?: () => void;
 }) {
-  const [receipt, setReceipt] = useState<{ proof: string; text: string } | null>(null);
+  const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
-  function onOutcome(proof: string, o: Outcome) {
+  function onOutcome(d: Decision, o: Outcome) {
     if (!o.ok) { setError(o.detail); return; }
     setError(null);
     onSettled?.();
+    // Undo has its own handler on the toast button, so this only narrows the
+    // union -- there is no path that reaches here with an undo any more.
     if (o.kind === 'undone') { setReceipt(null); return; }
     setReceipt({
-      proof,
+      proof: d.proof,
       text:
         answerSentence(o.resolution) +
         (o.applied > 1 ? ` It settled ${o.applied} cells held for the same reason.` : ''),
+      // "Neither is right" is the one answer that leaves the field WRONG rather
+      // than settled: the operator has just said this field is pointed at
+      // something that is not the value. Undo is the only thing on offer after
+      // it, and undoing puts the cell back on the queue -- so the card
+      // disappears and the reader is left with the same broken field and no
+      // move that improves it. The re-teach link is that move. Only on
+      // `neither`, because the other three answers ARE the fix.
+      reteach: o.resolution === 'neither' ? d.target.split('__')[0] : null,
     });
   }
 
@@ -50,7 +69,7 @@ export function DecisionsList({
     <>
       <div className="flex w-full flex-col gap-[20px]">
         {decisions.map((d) => (
-          <DecisionCard key={d.proof} d={d} onOutcome={(o) => onOutcome(d.proof, o)} />
+          <DecisionCard key={d.proof} d={d} onOutcome={(o) => onOutcome(d, o)} />
         ))}
       </div>
 
@@ -68,15 +87,36 @@ export function DecisionsList({
         <Toast
           message={receipt.text}
           action={
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => start(async () => onOutcome(receipt.proof, await undoCell(receipt.proof)))}
-              className={TOAST_BUTTON}
-            >
-              <Undo2 size={14} strokeWidth={1.5} className="text-[var(--text-inverse)]" aria-hidden />
-              <span className="meta-13 text-[var(--text-inverse)]">{pending ? 'Undoing' : 'Undo'}</span>
-            </button>
+            <span className="flex items-center gap-[4px]">
+              {receipt.reteach && (
+                // A plain link, deliberately. Re-teaching a field is a
+                // conversation on Home -- it is not a fifth answer to this
+                // decision, and giving it a button here would put a control
+                // that leaves the screen next to one that undoes a write.
+                /* copy(G) */
+                <Link href={`/?target=${encodeURIComponent(receipt.reteach)}`} className={TOAST_BUTTON}>
+                  <MessageSquare size={14} strokeWidth={1.5} className="text-[var(--text-inverse)]" aria-hidden />
+                  <span className="meta-13 text-[var(--text-inverse)]">
+                    Point this field at the right value
+                  </span>
+                </Link>
+              )}
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => start(async () => {
+                  const o = await undoCell(receipt.proof);
+                  if (!o.ok) { setError(o.detail); return; }
+                  setError(null);
+                  onSettled?.();
+                  setReceipt(null);
+                })}
+                className={TOAST_BUTTON}
+              >
+                <Undo2 size={14} strokeWidth={1.5} className="text-[var(--text-inverse)]" aria-hidden />
+                <span className="meta-13 text-[var(--text-inverse)]">{pending ? 'Undoing' : 'Undo'}</span>
+              </button>
+            </span>
           }
         />
       )}
