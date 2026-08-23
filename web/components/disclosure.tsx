@@ -116,8 +116,8 @@ export function GateNumbers({ gate }: { gate: GateFigures }) {
         {reproduces ? (
           /* copy(G) */
           <p className="meta-12_5 text-[var(--text-secondary)]">
-            To publish, a candidate needs a score above {tau.toFixed(2)} (the floor, τ) and a lead
-            above {delta.toFixed(2)} (δ).{' '}
+            To publish, a candidate needs a score above {tau.toFixed(2)} — the floor (τ) — and to be
+            ahead of the runner-up by {delta.toFixed(2)} — the lead (δ).{' '}
             {declared
               ? 'Both are declared on this target’s contract.'
               : 'This target declares neither, so both are the shipped defaults.'}

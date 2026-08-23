@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { stamp, when } from '@/lib/when';
+import { t } from '@/lib/copy';
 import { HeldCell } from '../schema-table';
 import { RunNow } from './run-now';
 import { ScraperLifecycle } from '../fields/scraper-lifecycle';
@@ -105,9 +106,9 @@ const TONE: Record<Outcome, string> = {
 };
 
 const SAID: Record<Outcome, string> = {
-  held: 'held a field for review',
-  healed: 'moved, found it again',
-  clean: 'clean',
+  held: t('schedule.said.held'),
+  healed: t('schedule.said.healed'),
+  clean: t('schedule.said.clean'),
 };
 
 export function CalendarView({
@@ -569,11 +570,11 @@ function Legend({
   return (
     <div className="flex w-full flex-col gap-[5px]">
       <p className="caption-11 flex flex-wrap items-center gap-x-[14px] gap-y-[5px] text-[var(--text-secondary)]">
-        <Key tone={TONE.clean} kind="ran">ran, clean</Key>
-        <Key tone={TONE.healed} kind="ran">moved, found again</Key>
-        <Key tone={TONE.held} kind="ran">held for review</Key>
-        <Key tone="var(--accent-brand)" kind="next">the next run, stored</Key>
-        <Key tone="var(--text-muted)" kind="projected">projected from the cadence</Key>
+        <Key tone={TONE.clean} kind="ran">{t('schedule.legend.clean')}</Key>
+        <Key tone={TONE.healed} kind="ran">{t('schedule.legend.healed')}</Key>
+        <Key tone={TONE.held} kind="ran">{t('schedule.legend.held')}</Key>
+        <Key tone="var(--accent-brand)" kind="next">{t('schedule.legend.next')}</Key>
+        <Key tone="var(--text-muted)" kind="projected">{t('schedule.legend.projected')}</Key>
       </p>
       {grouped && (
         <p className="caption-11 text-[var(--text-muted)]">

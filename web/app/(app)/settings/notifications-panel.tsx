@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { SettingRow } from './switch';
 import { setDigest } from './actions';
 import type { AlertsView } from '@/lib/alerts';
+import { t } from '@/lib/copy';
 
 /**
  * Where both environment rows send you.
@@ -99,13 +100,14 @@ export function NotificationsPanel({ view }: { view: AlertsView }) {
           environment and read nothing from the store, so neither is a bit
           anything on this screen could flip -- and a switch that will not move
           still asks to be pressed. They report a word and say where the word
-          is set instead. */}
-      {/* copy(G) */}
+          is set instead -- the same pair the Connections tab and the sign-in
+          key panel use, because all three answer "is this credential present".
+          This row said "sending", which was a third vocabulary. */}
       <SettingRow
         label="Break alerts by email"
         detail="When a field breaks, one alert per episode — not one per page."
         checked={mail.ready}
-        value={mail.ready ? 'sending' : 'not configured'}
+        value={mail.ready ? t('common.configured') : t('common.notConfigured')}
         doc={MAIL_DOC}
         reason={`Set in .env, not here: the worker reads ASSAY_RESEND_KEY, ASSAY_MAIL_FROM and ASSAY_MAIL_TO on each run and nothing from the store.${
           mail.ready ? '' : ` ${mail.missing} is not set, so a break alert would fall through to the webhook.`
@@ -116,7 +118,7 @@ export function NotificationsPanel({ view }: { view: AlertsView }) {
         label="Webhook fallback"
         detail="Where a break alert goes when the email fails. The outcome is recorded on the episode either way."
         checked={webhookConfigured}
-        value={webhookConfigured ? 'configured' : 'not configured'}
+        value={webhookConfigured ? t('common.configured') : t('common.notConfigured')}
         doc={MAIL_DOC}
         reason={`Set in .env, not here: ASSAY_WEBHOOK_URL.${
           webhookConfigured ? '' : ' Unset, so a failed email is recorded as undelivered and nothing else is tried.'

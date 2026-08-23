@@ -14,12 +14,13 @@ import {
   type SettingsView,
 } from '@/lib/settings';
 import { alertsView } from '@/lib/alerts';
+import { t } from '@/lib/copy';
 import type { Kind } from 'assay/engine/connectors/config';
 import { SettingsTabs } from './settings-tabs';
 import { isTabId, type TabId } from './tabs';
 import { NotificationsPanel } from './notifications-panel';
 import { DocLink } from './doc-link';
-import { CONNECTOR_DOC, MODEL_DOC } from './docs';
+import { CONNECTOR_DOC, CONNECTOR_NAME, MODEL_DOC } from './docs';
 
 export const metadata: Metadata = { title: 'Settings · Assay' };
 
@@ -237,7 +238,8 @@ const Section = ({ label, id, top = 0 }: { label: string; id?: string; top?: num
  * Both tables on this screen are that same object, so they are the same
  * component. The widths are a prop because their middle columns are not the
  * same size of thing: Publishing's holds a tier and two numbers, Connections'
- * holds two words ("set", "not configured") and was taking 360px to do it while
+ * holds one of one pair ("configured" / "not configured") and was taking
+ * 360px to do it while
  * the note beside it wrapped to six lines. The header row is optional because
  * the second table's left column is already the heading.
  */
@@ -351,10 +353,10 @@ function Connectors({ v }: { v: SettingsView }) {
           ? [
             <ConnectorRow
               key={`${c.kind}-token`}
-              name={`${c.kind} · API token`}
+              name={`${CONNECTOR_NAME[c.kind]} · API token`}
               kind={c.kind}
               on={c.token.set}
-              status={c.token.set ? 'set' : 'not set'}
+              status={c.token.set ? t('common.configured') : t('common.notConfigured')}
               note={
                 c.token.set
                   ? 'Lets Assay call Bright Data. Authenticating is not fetching — the account needs a zone too, and a token answering does not prove it has one.'
@@ -365,10 +367,10 @@ function Connectors({ v }: { v: SettingsView }) {
           : []),
         <ConnectorRow
           key={`${c.kind}-delivery`}
-          name={c.token ? `${c.kind} · delivery webhook` : c.kind}
+          name={c.token ? `${CONNECTOR_NAME[c.kind]} · delivery webhook` : CONNECTOR_NAME[c.kind]}
           kind={c.kind}
           on={c.configured}
-          status={c.configured ? 'configured' : 'not configured'}
+          status={c.configured ? t('common.configured') : t('common.notConfigured')}
           note={
             c.configured && c.updated_at
               ? `set ${c.updated_at.slice(0, 10)}`
@@ -414,7 +416,7 @@ function ConnectorRow({
       c={
         <span className="flex items-baseline justify-between gap-[16px]">
           <span>{note}</span>
-          <DocLink href={CONNECTOR_DOC[kind]} name={kind} />
+          <DocLink href={CONNECTOR_DOC[kind]} name={CONNECTOR_NAME[kind]} />
         </span>
       }
     />

@@ -472,13 +472,17 @@ function hostOf(url: string | null): string | null {
 
 function headline(d: RunDetail): string {
   const size = d.pageBytes == null ? null : `${(d.pageBytes / 1024).toFixed(1)} kB`;
+  // The same four words /runs and /schedule use for the same four outcomes.
+  // This branch said "held a cell for review" while the table said "held <x>
+  // for review" and the calendar said "held a field for review" -- three names
+  // for the one state, which /docs/glossary settles as "held for review".
   const what =
     d.outcome === 'skipped'
-      ? 'skipped — the page had not changed'
+      ? t('runs.outcome.skipped')
       : d.outcome === 'held'
-        ? 'held a cell for review'
+        ? t('runs.outcome.held')
         : d.outcome === 'healed'
-          ? 'moved, found it again'
-          : 'clean';
+          ? t('runs.outcome.healed')
+          : t('runs.outcome.clean');
   return [d.scraper, stamp(d.startedAt), size, what].filter(Boolean).join(' · ');
 }

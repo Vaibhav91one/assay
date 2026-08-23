@@ -119,7 +119,14 @@ const COPY = {
   'runs.table.head.what': 'what happened',
   'runs.table.open': 'what happened ›',
   'runs.outcome.clean': 'clean',
+  // THE ONE PHRASE FOR A GATE-REFUSED CELL, and the glossary is the contract
+  // for it: /docs/glossary "held for review", shortened to "held" only where
+  // the sentence around it already says what for. It was said four ways --
+  // "held a field for review", "held a cell for review", "held <field> for
+  // review" -- which is four names for the state this product is about.
+  'runs.outcome.held': 'held for review',
   'runs.outcome.healed': 'moved, found it again',
+  'runs.outcome.skipped': 'skipped — page unchanged',
   'runs.summary.none': 'no runs yet',
 
   // -- one run ---------------------------------------------------------------
@@ -352,8 +359,6 @@ const COPY = {
   'settings.connections.empty.title': 'Nothing is connected.',
   'settings.connections.empty.body':
     'Assay runs with no connectors: it fetches pages itself and writes to its own store. A connector adds a delivery path, never a decision.',
-  'settings.connector.configured': 'configured',
-  'settings.connector.notConfigured': 'not configured',
   'settings.connector.setIt': 'set it in the environment or over the API',
   'settings.doc.link': 'See documentation',
   'settings.notSwitch': 'Not a switch position.',
@@ -411,11 +416,11 @@ const COPY = {
   'schedule.ask.asking': 'Asking…',
   'schedule.ask.queued': 'Queued',
   'schedule.legend.clean': 'ran, clean',
-  'schedule.legend.healed': 'moved, found again',
+  'schedule.legend.healed': 'moved, found it again',
   'schedule.legend.held': 'held for review',
   'schedule.legend.next': 'the next run, stored',
   'schedule.legend.projected': 'projected from the cadence',
-  'schedule.said.held': 'held a field for review',
+  'schedule.said.held': 'held for review',
   'schedule.said.healed': 'moved, found it again',
   'schedule.said.clean': 'clean',
   'schedule.table.head.run': 'run',
@@ -445,10 +450,18 @@ const COPY = {
   'signIn.keys.environment':
     'Assay reads these from the environment when it starts. Put what you want in .env and restart; what you leave out stays off.',
   'signIn.keys.open': 'Open Assay',
-  'signIn.keys.connected': 'Connected',
   'signIn.keys.checking': 'Checking',
 
   // -- shared ----------------------------------------------------------------
+  // ONE PAIR FOR "IS THIS CREDENTIAL PRESENT", and it is in `common` because
+  // three surfaces answer that question -- the Connections tab, the
+  // notifications rows and the sign-in key panel -- and they answered it in
+  // three vocabularies: Connected / set / configured against not set / not
+  // configured. Which DIRECTION a connection buys is carried by the row's name
+  // and its note, never by the status word; that was the argument for having
+  // two words and it is answered somewhere the reader can actually see it.
+  'common.configured': 'configured',
+  'common.notConfigured': 'not configured',
   'common.unknownTime': 'unknown time',
   'common.justNow': 'just now',
   'common.none': 'none',

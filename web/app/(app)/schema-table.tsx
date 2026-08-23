@@ -232,7 +232,7 @@ const SPEC_ID = 'schema-table-tier-spec';
  */
 function TierSpec({ field }: { field: Proposal['fields'][number] }) {
   const tier = tierFor(field.confidence);
-  const t = TIER_THRESHOLDS[tier];
+  const th = TIER_THRESHOLDS[tier];
 
   return (
     <dl
@@ -242,8 +242,13 @@ function TierSpec({ field }: { field: Proposal['fields'][number] }) {
       <Spec k="field" v={field.name} mono />
       <Spec k="reads" v={field.selector} mono />
       <Spec k="tier" v={tier} />
-      <Spec k="tau" v={t.tau.toFixed(2)} mono />
-      <Spec k="delta" v={t.delta.toFixed(2)} mono />
+      {/* The glossary's words for these two, not the contract's key names. The
+          rest of this list is already translated -- `on_abstain` reads "on
+          hold" -- so `tau`/`delta` were the only rows quoting the YAML at a
+          reader who never sees the YAML. /docs/glossary: the floor (τ) and the
+          lead (δ). */}
+      <Spec k="floor (τ)" v={th.tau.toFixed(2)} mono />
+      <Spec k="lead (δ)" v={th.delta.toFixed(2)} mono />
       <Spec k="on hold" v={DEFAULT_THRESHOLDS.onAbstain.replace('_', ' ')} />
       <Spec k="auto-approve" v="clear margin" />
       <p className="caption-11 pt-[2px] leading-[1.45] text-[var(--text-secondary)]">

@@ -159,8 +159,13 @@ function Happened({ row }: { row: RunRow }) {
   if (row.outcome === 'held') {
     return (
       <StatusLine tone="warning">
+        {/* The field NAMES the sentence rather than sitting inside it. The
+            phrase is one unit -- /docs/glossary is explicit that "held for
+            review" is not to be lengthened -- and splicing a mono field into
+            the middle of it was how this row came to say something no other
+            screen says. */}
         <span className="text-[var(--text-primary)]">
-          held <span className="mono-value-13">{row.heldField}</span> for review
+          <span className="mono-value-13">{row.heldField}</span> {t('runs.outcome.held')}
         </span>
       </StatusLine>
     );
@@ -179,9 +184,8 @@ function Happened({ row }: { row: RunRow }) {
   if (row.outcome === 'skipped') {
     return (
       // `info`: glyphless by design, for an ambient fact that demands nothing.
-      /* copy(G) */
       <StatusLine tone="info" muted>
-        skipped — page unchanged
+        {t('runs.outcome.skipped')}
       </StatusLine>
     );
   }
