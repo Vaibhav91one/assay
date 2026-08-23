@@ -8,8 +8,9 @@ import { actionVariants } from '@/components/button';
 import { targetHistory, type FieldValue } from '@/lib/fields';
 import { HELD_BECAUSE } from 'assay/engine/reports/vocabulary';
 import { stamp } from '@/lib/when';
+import { t } from '@/lib/copy';
 
-export const metadata: Metadata = { title: 'Values · Assay' };
+export const metadata: Metadata = { title: t('title.values') };
 export const dynamic = 'force-dynamic';
 
 const LIMIT = 30;
@@ -52,7 +53,7 @@ export default async function TargetValuesPage({
         <div className="flex w-full flex-wrap items-center gap-[16px]">
           <span className="mono-value-13 text-[var(--text-secondary)]">{history.targetId}</span>
           <Link href="/fields" className="meta-13 text-[var(--semantic-link)] hover:underline">
-            ‹ All fields
+            {t('values.allFields')}
           </Link>
           {/* A plain link, not a fetch-and-blob: the browser knows how to save
               a response, and a route with a filename header can be
@@ -63,15 +64,12 @@ export default async function TargetValuesPage({
             className={actionVariants({ variant: 'outline', className: 'ml-auto' })}
           >
             <Download size={13} strokeWidth={1.5} aria-hidden />
-            Download CSV
+            {t('values.download')}
           </a>
         </div>
 
         {history.rows.length === 0 ? (
-          /* copy(G) */
-          <Empty title="Nothing has run against this field yet.">
-            A value appears here the first time a run reaches this page.
-          </Empty>
+          <Empty title={t('values.empty.title')}>{t('values.empty.body')}</Empty>
         ) : (
           <table className="w-full table-fixed border-collapse">
             <colgroup>
@@ -82,7 +80,7 @@ export default async function TargetValuesPage({
             </colgroup>
             <thead>
               <tr className="border-t border-[var(--border-hairline)] text-left">
-                {['run', 'when', 'field', 'value'].map((h) => (
+                {[t('values.head.run'), t('values.head.when'), t('values.head.field'), t('values.head.value')].map((h) => (
                   <th key={h} className="caption-11 py-[7px] font-normal text-[var(--text-muted)]">
                     {h}
                   </th>
@@ -112,9 +110,7 @@ export default async function TargetValuesPage({
         )}
 
         <p className="caption-11 text-[var(--text-muted)]">
-          {/* copy(G) */}
-          The last {LIMIT} cells recorded for this target, newest first. A withheld run keeps its
-          row: the hole is the record.
+          {t('values.footnote', { limit: LIMIT })}
         </p>
       </div>
     </>
@@ -137,12 +133,16 @@ function Value({ row }: { row: FieldValue }) {
     <span className="flex items-baseline gap-[6px]">
       <Hand size={12} strokeWidth={1.5} className="shrink-0 translate-y-[2px] text-[var(--semantic-warning)]" aria-hidden />
       <span className="caption-12 text-[var(--text-secondary)]">
-        {/* copy(G) */}
         {plain
-          ? `nothing published: ${plain}`
+          ? t('values.nothingPublishedBecause', { plain })
           : row.reason
-            ? <>nothing published; the gate recorded <span className="mono-value-12_5">{row.reason}</span></>
-            : 'nothing published'}
+            ? (
+              <>
+                {t('values.nothingPublishedCode')}{' '}
+                <span className="mono-value-12_5">{row.reason}</span>
+              </>
+            )
+            : t('values.nothingPublished')}
       </span>
     </span>
   );

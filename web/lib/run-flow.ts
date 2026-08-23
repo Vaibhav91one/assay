@@ -453,7 +453,12 @@ export function flowFor(run: RunRecord): Flow {
           // "The cell was published as null", which is the same word used for
           // both sides of the fork it is describing. Nothing is WRITTEN; the
           // output column holds `null` as the labelled hole. Both nodes now say
-          // that, in those words. /* copy(G) */
+          // that, in those words.
+          //
+          // NOT IN `lib/copy.ts`, and deliberately: that file's header names
+          // this function's node summaries in its exclusion list. A summary's
+          // SHAPE changes with the run -- whether a policy withheld it, whether
+          // a runner-up existed -- and a flat catalogue cannot express that.
           : 'Refused. Nothing was written into this cell.',
       tone: held ? 'warning' : 'success',
       branch: held
@@ -511,7 +516,9 @@ export function flowFor(run: RunRecord): Flow {
     kind: 'outcome',
     title: held ? 'Hold' : 'Publish',
     summary: held
-      ? 'The cell was left empty (null) — nothing was written. The hole is labelled, not filled.' /* copy(G) */
+      // Also a node summary, and out of the catalogue for the same reason as
+      // the gate node above it.
+      ? 'The cell was left empty (null) — nothing was written. The hole is labelled, not filled.'
       : `${cell.field} was published as ${cell.status}.`,
     tone: held ? 'warning' : 'success',
     facts: outcomeFacts,

@@ -6,6 +6,7 @@ import { Hammer } from 'lucide-react';
 import { Button } from '@/components/button';
 import { breakPage, type Broken } from '@/app/(app)/runs/[run]/break-actions';
 import { landedSince, type Landed } from '@/app/(app)/schedule/actions';
+import { t } from '@/lib/copy';
 
 /**
  * "Break this page", for a scraper that watches the testbed.
@@ -73,19 +74,16 @@ export function BreakLive({ slug, variants }: { slug: string; variants: Variant[
 
   return (
     <div className="flex flex-col gap-[10px] rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] p-[20px]">
-      {/* copy(G) */}
       <p className="meta-12_5 max-w-[720px] text-[var(--text-secondary)]">
-        This scraper watches the testbed, which serves the same page mutated nine ways. Pick one and
-        the target is repointed at it — a redesign, on demand — and a run is asked for. It stays on
-        that variant until you pick another; <span className="mono-value-12_5">baseline</span> puts
-        it back.
+        {t('break.explain')} <span className="mono-value-12_5">baseline</span>{' '}
+        {t('break.explain.after')}
       </p>
       <div className="flex flex-wrap items-center gap-[10px]">
         <select
           value={variant}
           onChange={(e) => setVariant(e.target.value)}
           disabled={busy}
-          aria-label="Which mutation to deploy"
+          aria-label={t('break.pick')}
           className="focus-ring mono-value-12_5 rounded-[var(--radius-control)] border border-[var(--border-default)] bg-[var(--surface-card)] px-[10px] py-[7px] text-[var(--text-primary)]"
         >
           {variants.map((v) => (
@@ -95,8 +93,7 @@ export function BreakLive({ slug, variants }: { slug: string; variants: Variant[
           ))}
         </select>
         <Button variant="outline" icon={Hammer} loading={busy} onClick={go}>
-          {/* copy(G) */}
-          Break this page
+          {t('break.button')}
         </Button>
       </div>
       <Said phase={phase} />
@@ -118,9 +115,8 @@ function Said({ phase }: { phase: Phase }) {
 
   if (phase.kind === 'watching') {
     return (
-      /* copy(G) */
       <p className="caption-11 text-[var(--text-secondary)]">
-        {phase.broken.detail} Watching the run record — nothing yet.
+        {phase.broken.detail} {t('break.watching')}
       </p>
     );
   }
@@ -129,12 +125,8 @@ function Said({ phase }: { phase: Phase }) {
 
   if (landed.runs.length === 0) {
     return (
-      /* copy(G) */
       <p role="alert" className="caption-11 text-[var(--semantic-warning)]">
-        {broken.detail}{' '}
-        {timedOut
-          ? 'Nothing had landed after 45 seconds. This screen stopped watching; it did not stop being queued.'
-          : ''}
+        {broken.detail} {timedOut ? t('break.timedOut') : ''}
       </p>
     );
   }
@@ -146,7 +138,7 @@ function Said({ phase }: { phase: Phase }) {
           <Link href={`/runs/${r.run}`} className="mono-value-12_5 text-[var(--semantic-link)] hover:underline">
             run {r.run}
           </Link>
-          {r.field ? <> · {r.field}</> : null} · {r.status === 'quarantined' ? 'held' : r.status}
+          {r.field ? <> · {r.field}</> : null} · {r.status === 'quarantined' ? t('run.cell.held') : r.status}
           {r.reason ? <> · <span className="mono-value-12_5">{r.reason}</span></> : null}
         </p>
       ))}

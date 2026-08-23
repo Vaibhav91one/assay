@@ -7,6 +7,7 @@ import {
   type ClearOutcome, type FieldControls as Controls, type UnhealOutcome,
 } from './brake-actions';
 import { ScraperLifecycle } from './fields/scraper-lifecycle';
+import { t } from '@/lib/copy';
 
 /**
  * The two decisions a person can make about one field, in the chat.
@@ -179,8 +180,7 @@ export function FieldControls({ targetId, field }: { targetId: string; field: st
           {/* --- the scraper ------------------------------------------------ */}
           <div className="flex flex-col gap-[8px] border-t border-[var(--border-hairline)] pt-[10px]">
             <p className="caption-11 text-[var(--text-muted)]">
-              {/* copy(G) */}
-              The whole scraper, not just {field}:
+              {t('lifecycle.wholeScraper', { field })}
             </p>
             <ScraperLifecycle slug={targetId.split('__')[0] ?? targetId} />
           </div>

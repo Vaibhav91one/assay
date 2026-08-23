@@ -9,15 +9,16 @@ import { ProofSheet } from '@/components/proof-sheet';
 import { heldBecause } from 'assay/engine/reports/vocabulary';
 import { stamp, ago } from '@/lib/when';
 import { resolveCell, type Outcome } from './actions';
+import { t } from '@/lib/copy';
 
-const OPTION_LABELS = ['BEST MATCH', 'CLOSE SECOND'] as const;
+const OPTION_LABELS = [t('decisions.card.best'), t('decisions.card.second')] as const;
 
 function Evidence({ e }: { e: Decision['candidates'][number]['evidence'] }) {
   if (!e) {
     // An absence is an absence. "No earlier runs to compare" is a fact;
     // showing nothing would let the reader assume agreement.
     return (
-      <p className="caption-12 text-[var(--text-muted)]">No earlier runs to compare against</p>
+      <p className="caption-12 text-[var(--text-muted)]">{t('decisions.card.noEarlierRuns')}</p>
     );
   }
   return (
@@ -61,7 +62,9 @@ export function DecisionCard({
           </Link>{' '}
           · {stamp(d.startedAt)} · field {d.field}
         </span>
-        <span className="meta-12_5 text-[var(--text-muted)]">held {ago(d.heldAt)}</span>
+        <span className="meta-12_5 text-[var(--text-muted)]">
+          {t('decisions.card.heldAgo', { ago: ago(d.heldAt) })}
+        </span>
       </div>
 
       <div className="flex flex-col gap-[18px]">
@@ -74,7 +77,7 @@ export function DecisionCard({
             className="flex w-fit items-center gap-[6px]"
           >
             <CircleAlert size={13} strokeWidth={1.5} className="text-[var(--semantic-link)]" aria-hidden />
-            <span className="meta-12_5 text-[var(--semantic-link)]">Why this is held</span>
+            <span className="meta-12_5 text-[var(--semantic-link)]">{t('decisions.card.why')}</span>
           </button>
           {/* 0fr -> 1fr so the disclosure animates without a measured height */}
           <div className={`grid transition-[grid-template-rows] duration-200 ${why ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
@@ -103,13 +106,12 @@ export function DecisionCard({
           fabrication, so it is skipped.
         */}
         {d.candidates.length > 0 && (
-          /* copy(G) */
           <p className="meta-12_5 rounded-[var(--radius-control)] bg-[var(--surface-subtle)] px-[14px] py-[10px] text-[var(--text-secondary)]">
-            A healer without the gate would have published{' '}
+            {t('counterfactual.before')}{' '}
             <span className="mono-value-12_5 break-words text-[var(--text-primary)]">
               “{d.candidates[0].value}”
             </span>
-            . Assay published nothing.
+            {t('counterfactual.after')}
           </p>
         )}
 
@@ -121,8 +123,8 @@ export function DecisionCard({
                 className="flex min-w-0 flex-1 flex-col gap-[10px] rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] px-[20px] py-[18px]"
               >
                 <p className="label-10_5 text-[var(--text-muted)]">
-                  {OPTION_LABELS[i] ?? `OPTION ${i + 1}`}
-                  {d.nominated === i && ' · MODEL NOMINATED'}
+                  {OPTION_LABELS[i] ?? t('decisions.card.optionN', { n: i + 1 })}
+                  {d.nominated === i && t('decisions.card.nominated')}
                 </p>
                 <p className="nav-15 break-words text-[var(--text-primary)]">{c.value}</p>
                 <Evidence e={c.evidence} />
@@ -133,7 +135,7 @@ export function DecisionCard({
                   className="mt-auto flex h-[36px] w-fit items-center gap-[8px] rounded-[var(--radius-control)] bg-[var(--semantic-success)] px-[15px] disabled:opacity-60"
                 >
                   <Check size={16} strokeWidth={2} className="text-[var(--accent-on-primary)]" aria-hidden />
-                  <span className="meta-12_5 text-[var(--accent-on-primary)]">Use this</span>
+                  <span className="meta-12_5 text-[var(--accent-on-primary)]">{t('decisions.card.use')}</span>
                 </button>
               </div>
             ))}
@@ -150,7 +152,7 @@ export function DecisionCard({
           onClick={() => act(() => resolveCell(d.proof, 'empty'))}
           className="meta-13 text-[var(--text-primary)] disabled:opacity-60"
         >
-          Leave this field empty
+          {t('decisions.card.empty')}
         </button>
         <button
           type="button"
@@ -158,7 +160,7 @@ export function DecisionCard({
           onClick={() => act(() => resolveCell(d.proof, 'neither'))}
           className="meta-13 flex-1 text-left text-[var(--text-primary)] disabled:opacity-60"
         >
-          Neither is right
+          {t('decisions.card.neither')}
         </button>
         {/* A sheet, not the route. Answering a queue is the one place where
             leaving the screen costs the most: the card you were reading is
@@ -168,7 +170,7 @@ export function DecisionCard({
           className="focus-ring flex items-center gap-[8px] rounded-[var(--radius-control)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
         >
           <Eye size={14} strokeWidth={1.5} aria-hidden />
-          <span className="meta-13">See it on the page</span>
+          <span className="meta-13">{t('decisions.card.seeOnPage')}</span>
         </ProofSheet>
       </div>
 
@@ -178,9 +180,9 @@ export function DecisionCard({
 
 /** The question follows from why the gate refused, not from a template. */
 function question(d: Decision): string {
-  if (d.candidates.length >= 2) return 'Two answers look about equally likely.';
-  if (d.candidates.length === 1) return 'Only one candidate, and not a convincing one.';
-  return 'Nothing on the page looks much like this field any more.';
+  if (d.candidates.length >= 2) return t('decisions.question.two');
+  if (d.candidates.length === 1) return t('decisions.question.one');
+  return t('decisions.question.none');
 }
 
 /**
@@ -205,18 +207,25 @@ function Reason({ d }: { d: Decision }) {
   return (
     <>
       {why?.plain ? (
-        `Nothing was published: ${why.plain}.`
+        t('decisions.reason.plain', { plain: why.plain })
       ) : why ? (
         <>
-          Nothing was published for this cell. The gate recorded{' '}
-          <code className="mono-value-12_5">{why.code}</code>, which this screen has no wording for.
+          {t('decisions.reason.untranslated.before')}{' '}
+          <code className="mono-value-12_5">{why.code}</code>
+          {t('decisions.reason.untranslated.after')}
         </>
       ) : (
-        'Nothing was published for this cell.'
+        t('decisions.reason.none')
       )}
-      {d.heldSinceRun ? ` Held since run ${d.heldSinceRun}.` : ''}
+      {d.heldSinceRun ? t('decisions.reason.heldSince', { run: d.heldSinceRun }) : ''}
+      {/* The count and its verb are assembled here: this catalogue does not do
+          plurals, and "1 published rows depend" is what happens when a map is
+          asked to. */}
       {d.stakesRows > 0
-        ? ` ${d.stakesRows} published row${d.stakesRows === 1 ? '' : 's'} ${d.stakesRows === 1 ? 'depends' : 'depend'} on this field.`
+        ? t('decisions.reason.stakes', {
+          rows: `${d.stakesRows} published row${d.stakesRows === 1 ? '' : 's'}`,
+          verb: d.stakesRows === 1 ? 'depends' : 'depend',
+        })
         : ''}
     </>
   );

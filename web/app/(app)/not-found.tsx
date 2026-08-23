@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { TopBar } from '@/components/top-bar';
 import { StatusLine } from '@/components/status-line';
+import { t } from '@/lib/copy';
 
 /**
  * An id in the URL that resolves to nothing, anywhere under the app shell.
@@ -20,11 +21,10 @@ import { StatusLine } from '@/components/status-line';
 export default function AppNotFound() {
   return (
     <>
-      <TopBar title="Not found" status="nothing at this address" scraper={null} />
+      <TopBar title={t('notFound.topbar')} status={t('notFound.status')} scraper={null} />
       <div className="flex w-full flex-col items-start gap-[10px] px-[56px] pt-[48px]">
-        {/* copy(G) */}
         <StatusLine tone="warning" type="heading-18" size={18}>
-          There is nothing at this address.
+          {t('notFound.title')}
         </StatusLine>
         <p className="body-13_5 max-w-[560px] text-[var(--text-secondary)]">
           Ids in Assay are handed out by the store and never reused, so a URL

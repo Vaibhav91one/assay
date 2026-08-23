@@ -7,6 +7,7 @@ import { runTarget, runTargets } from '@/lib/scrapers';
 import { Settings } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { t } from '@/lib/copy';
 
 /**
  * Screen chrome: what this screen is, and one plain fact about its state.
@@ -116,11 +117,11 @@ export async function TopBar({
               <TooltipTrigger
                 render={<Link href="/settings" />}
                 className={actionVariants({ variant: 'icon' })}
-                aria-label="Settings"
+                aria-label={t('nav.settings')}
               >
                 <Settings size={16} strokeWidth={1.5} aria-hidden />
               </TooltipTrigger>
-              <TooltipContent side="bottom">Settings</TooltipContent>
+              <TooltipContent side="bottom">{t('nav.settings')}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         )}

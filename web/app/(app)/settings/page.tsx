@@ -22,7 +22,7 @@ import { NotificationsPanel } from './notifications-panel';
 import { DocLink } from './doc-link';
 import { CONNECTOR_DOC, CONNECTOR_NAME, MODEL_DOC } from './docs';
 
-export const metadata: Metadata = { title: 'Settings · Assay' };
+export const metadata: Metadata = { title: t('title.settings') };
 
 // Reads the environment (the capture directory, the connector file path) as
 // well as the store. Static would bake one machine's environment into a build
@@ -40,7 +40,9 @@ export default async function SettingsPage({
   return (
     <>
       <TopBar
-        title="Settings"
+        title={t('settings.heading')}
+        // The plural is assembled here rather than in the catalogue -- see its
+        // header. "1 fields governed" is what a map is for if it is not.
         status={`${v.policies.length} field${v.policies.length === 1 ? '' : 's'} governed`}
         action={null}
       />
@@ -79,7 +81,7 @@ export default async function SettingsPage({
 function Publishing({ v }: { v: SettingsView }) {
   return (
     <>
-      <Section label="WHAT ASSAY MAY PUBLISH" id="what-assay-may-publish" />
+      <Section label={t('settings.publishing.eyebrow')} id="what-assay-may-publish" />
       <div className="flex w-full items-center pt-[32px]">
         {/* "Change per-field policy in a contract" was the one dead sentence
             on this screen: it named the mechanism and then offered no path to
@@ -87,32 +89,36 @@ function Publishing({ v }: { v: SettingsView }) {
             a control someone had forgotten to draw. There is no such control
             and there is not going to be one -- src/contracts/http.ts records
             the rule as "credentials get pixels, policy gets a PR" -- so the
-            sentence now says where a contract is actually written. copy(G) */}
+            sentence now says where a contract is actually written. */}
         <p className="body-13_5 flex-1 text-[var(--text-primary)]">
-          Calibrated: publishes only a clear winner ({v.defaults.tau.toFixed(2)} floor,{' '}
-          {v.defaults.delta.toFixed(2)} lead). Per-field policy is a YAML contract, checked with{' '}
-          <span className="mono-value-12_5">assay contracts validate</span> and posted to{' '}
-          <span className="mono-value-12_5">/api/v1/contracts</span> — never edited here, so every
-          change to it has a diff.
+          {t('settings.publishing.policy.a', {
+            tau: v.defaults.tau.toFixed(2),
+            delta: v.defaults.delta.toFixed(2),
+          })}{' '}
+          <span className="mono-value-12_5">assay contracts validate</span>{' '}
+          {t('settings.publishing.policy.b')}{' '}
+          <span className="mono-value-12_5">/api/v1/contracts</span>{' '}
+          {t('settings.publishing.policy.c')}
         </p>
         <Copy
           text={policiesAsYaml(v.policies)}
-          receipt="Field contracts copied as YAML"
+          receipt={t('settings.export.receipt')}
           className="meta-12_5 shrink-0 text-[var(--semantic-link)] hover:underline"
         >
-          export as YAML ›
+          {t('settings.export')}
         </Copy>
       </div>
 
-      <Section label="PER-FIELD POLICY" id="per-field-policy" top={43} />
+      <Section label={t('settings.policy.eyebrow')} id="per-field-policy" top={43} />
       <div className="w-full pt-[32px]">
         {v.policies.length === 0 ? (
-          <Empty title="No field has a policy yet.">
-            A field takes a policy the moment a scraper watches it. Until then there is nothing to
-            govern.
-          </Empty>
+          <Empty title={t('settings.policy.empty.title')}>{t('settings.policy.empty.body')}</Empty>
         ) : (
-          <SpecTable head={['field', 'tier', 'on hold']}>
+          <SpecTable head={[
+            t('settings.policy.head.field'),
+            t('settings.policy.head.tier'),
+            t('settings.policy.head.onHold'),
+          ]}>
             {v.policies.map((p) => (
               <SpecRow
                 key={p.targetId + p.field}
@@ -136,11 +142,11 @@ function Publishing({ v }: { v: SettingsView }) {
 function Output({ v }: { v: SettingsView }) {
   return (
     <>
-      <Section label="WHERE THE DATA GOES" id="where-the-data-goes" />
+      <Section label={t('settings.output.eyebrow')} id="where-the-data-goes" />
       <div className="w-full pt-[32px]">
         <SpecTable>
           <SpecRow
-            a="Output"
+            a={t('settings.output.output')}
             b="Postgres"
             c={
               <StatusLine tone={v.store.reachable ? 'success' : 'danger'} size={13} type="caption-12">
@@ -149,18 +155,18 @@ function Output({ v }: { v: SettingsView }) {
             }
           />
           <SpecRow
-            a="Page captures"
+            a={t('settings.output.captures')}
             b={<span className="mono-value-12_5">{v.captures.dir}</span>}
             c={`${v.captures.kept} kept · ${v.captures.pruned} pruned`}
           />
           <SpecRow
-            a="On a held field"
-            b="Leave empty"
-            c="never filled, always labelled"
+            a={t('settings.output.onHeld')}
+            b={t('settings.output.leaveEmpty')}
+            c={t('settings.output.neverFilled')}
           />
           {/* `c` was "not optional", which added nothing to a row already
               stating that every cell carries one. */}
-          <SpecRow a="Proof" b="one proof id per cell, on the published row" />
+          <SpecRow a={t('settings.output.proof')} b={t('settings.output.proofDetail')} />
         </SpecTable>
       </div>
     </>
@@ -177,7 +183,7 @@ function Connections({ v }: { v: SettingsView }) {
           happens to be rendering. The Publishing tab puts `export as YAML ›` in
           the same place for the same reason. */}
       <div className="flex w-full items-center justify-between gap-[16px]">
-        <Section label="MODEL ACCESS" id="model-access" />
+        <Section label={t('settings.model.eyebrow')} id="model-access" />
         <DocLink href={MODEL_DOC} name="model access" />
       </div>
       {/* The probe is behind a boundary because it can now cost seconds again.
@@ -194,7 +200,7 @@ function Connections({ v }: { v: SettingsView }) {
         </Suspense>
       </div>
 
-      <Section label="CONNECTIONS" id="connections" top={52} />
+      <Section label={t('settings.connections.eyebrow')} id="connections" top={52} />
       <div className="w-full pt-[32px]">
         <Connectors v={v} />
       </div>
@@ -218,7 +224,7 @@ async function ModelAccessRow() {
 /** What the row says while the probe is out. Not a spinner over the whole
  *  section: only this line is unknown, and only this line waits. */
 function ModelAccessPending() {
-  return <Working>Checking</Working>;
+  return <Working>{t('model.checking')}</Working>;
 }
 
 /* ------------------------------------------------------------------ pieces */

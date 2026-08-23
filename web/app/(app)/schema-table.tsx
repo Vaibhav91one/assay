@@ -7,6 +7,7 @@ import { Collapse } from '@/components/motion/collapse';
 import { TIER_THRESHOLDS, DEFAULT_THRESHOLDS } from 'assay/engine/contracts/tiers';
 import { HELD_BECAUSE } from 'assay/engine/reports/vocabulary';
 import type { Proposal } from './watch-actions';
+import { t } from '@/lib/copy';
 
 /**
  * The proposal, as the schema it would become, waiting on a person.
@@ -89,8 +90,10 @@ export function SchemaTable({
   return (
     <div className="w-full rounded-[var(--radius-card)] border border-[var(--border-hairline)]">
       <div className="flex items-baseline gap-[16px] border-b border-[var(--border-hairline)] px-[16px] py-[9px]">
-        <span className="label-10 w-[230px] shrink-0 text-[var(--text-muted)]">FIELD</span>
-        <span className="label-10 text-[var(--text-muted)]">ON THE PAGE, RIGHT NOW</span>
+        <span className="label-10 w-[230px] shrink-0 text-[var(--text-muted)]">
+          {t('build.head.field')}
+        </span>
+        <span className="label-10 text-[var(--text-muted)]">{t('build.head.onThePage')}</span>
       </div>
 
       {/*
@@ -286,9 +289,7 @@ function Cell({ field, on }: { field: Proposal['fields'][number]; on: boolean })
     // carries no text -- that is not the same fact as a held cell, so it does
     // not borrow held's amber.
     return (
-      <span className="caption-12 text-[var(--text-muted)]">
-        the element is there and empty
-      </span>
+      <span className="caption-12 text-[var(--text-muted)]">{t('build.emptyElement')}</span>
     );
   }
   // Two lines, not three: a row per field means the row height is what decides
@@ -327,22 +328,28 @@ export function HeldCell({ reason, targetId }: { reason: string | null; targetId
     <div className="flex flex-col gap-[6px] rounded-[var(--radius-control)] border border-[var(--semantic-warning)] bg-[var(--semantic-warning-subtle)] px-[10px] py-[8px]">
       <span className="flex items-center gap-[6px]">
         <Hand size={13} strokeWidth={1.5} className="shrink-0 text-[var(--semantic-warning)]" aria-hidden />
-        <span className="meta-12_5 text-[var(--text-primary)]">held</span>
+        <span className="meta-12_5 text-[var(--text-primary)]">{t('build.held')}</span>
       </span>
       <span className="caption-11 leading-[1.45] text-[var(--text-secondary)]">
         {plain
-          ? `Nothing was published here: ${plain}.`
+          ? t('build.held.because', { plain })
           : reason
             // No wording for this code. Printed as a code and marked as one,
             // never given an adjective this file made up.
-            ? <>Nothing was published here. The gate recorded <span className="mono-value-12_5">{reason}</span>, which this screen has no wording for.</>
-            : 'Nothing was published here. Assay could not tell what this field is now, so it declined to guess.'}
+            ? (
+              <>
+                {t('build.held.untranslated.before')}{' '}
+                <span className="mono-value-12_5">{reason}</span>
+                {t('build.held.untranslated.after')}
+              </>
+            )
+            : t('build.held.noReason')}
       </span>
       <Link
         href={targetId ? `/decisions?target=${encodeURIComponent(targetId)}` : '/decisions'}
         className="caption-11 self-start text-[var(--semantic-link)] hover:underline"
       >
-        Decide it ›
+        {t('build.decideIt')}
       </Link>
     </div>
   );

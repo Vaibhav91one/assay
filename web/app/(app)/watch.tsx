@@ -330,10 +330,8 @@ export function Watch({
     >
       <PencilLine size={18} strokeWidth={1.5} className="shrink-0 text-[var(--text-primary)]" aria-hidden />
       <span className="flex min-w-0 flex-1 flex-col gap-[2px]">
-        <span className="body-14 text-[var(--text-primary)]">Describe the fields yourself</span>
-        <span className="caption-12 text-[var(--text-secondary)]">
-          a page, and what to watch on it -- no model needed
-        </span>
+        <span className="body-14 text-[var(--text-primary)]">{t('home.manual.title')}</span>
+        <span className="caption-12 text-[var(--text-secondary)]">{t('home.manual.sub')}</span>
       </span>
       <ChevronRight size={16} strokeWidth={1.5} className="shrink-0 text-[var(--text-muted)]" aria-hidden />
     </button>
@@ -359,9 +357,9 @@ export function Watch({
                     what a find-in-page missed, and what any copy of this line
                     pasted anywhere. A trailing space at the end of a flex
                     item's line box is not drawn, so nothing moves. */}
-                What should{' '}
+                {t('home.prompt')}{' '}
                 <Image src="/brand/assay-mark.svg" alt="" width={26} height={26} className="inline-block rounded-[7px]" />
-                Assay watch?
+                {t('home.promptEnd')}
               </h2>
               {/* WHAT THIS IS, under what it asks for. The hero named the box's
                   job and never the product's claim, so the first screen of the
@@ -377,13 +375,15 @@ export function Watch({
                   hardcoded digits is a slogan. Absent entirely when the file
                   is not in the checkout. */}
               {bench && (
-                /* copy(G) */
                 <Link
                   href="/docs"
                   className="caption-12 text-center text-[var(--text-muted)] transition-colors duration-[var(--duration-tint)] hover:text-[var(--text-secondary)]"
                 >
-                  {bench.cases} benchmark cases · {bench.wrong} wrong values published · a naive
-                  scraper would have published {bench.naiveWrong}
+                  {t('home.bench', {
+                    cases: bench.cases,
+                    wrong: bench.wrong,
+                    naive: bench.naiveWrong,
+                  })}
                 </Link>
               )}
             </div>
@@ -929,11 +929,15 @@ function Built({
 
   return (
     <div className="motion-fade-up flex w-full flex-col gap-[16px]">
-      <h2 className="heading-18 text-[var(--text-primary)]">Watching {built.id}.</h2>
+      <h2 className="heading-18 text-[var(--text-primary)]">{t('home.watching', { id: built.id })}</h2>
       <p className="body-13_5 text-[var(--text-secondary)]">
+        {/* The count and its noun are assembled here, not in the catalogue --
+            see its header on plurals. */}
         {held.length === 0
-          ? 'The first run is done and the baseline is what the page said just now. Every run from here is compared against it.'
-          : `The first run is done. ${held.length} field${held.length === 1 ? '' : 's'} came back held -- Assay published nothing there rather than guess, and it is waiting on you.`}
+          ? t('home.built.clean')
+          : t('home.built.held', {
+            fields: `${held.length} field${held.length === 1 ? '' : 's'}`,
+          })}
       </p>
 
       <div className="w-full overflow-x-auto">
@@ -941,7 +945,7 @@ function Built({
           <thead>
             <tr className="border-b border-[var(--border-hairline)]">
               <th scope="col" className="label-10 w-[110px] pb-[10px] pr-[16px] text-left font-normal text-[var(--text-muted)]">
-                BASELINE
+                {t('build.baseline')}
               </th>
               {built.fields.map((f) => (
                 <th key={f.field} scope="col" className="pb-[10px] pr-[16px] text-left align-bottom">

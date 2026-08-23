@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { Flow, FlowNode, StageKey, StageKind, StageTone } from '@/lib/run-flow';
+import { t } from '@/lib/copy';
 
 /**
  * The run, as draggable cards on a dotted canvas with measured connectors.
@@ -231,9 +232,8 @@ export function FlowCanvas({ flow }: { flow: Flow }) {
       {/* Only when there IS more. A permanent "scroll for more" under a canvas
           that fits is the caption every reader learns to stop believing. */}
       {more && (
-        /* copy(G) */
         <p className="caption-11 pt-[8px] text-[var(--text-muted)]" aria-hidden>
-          ↓ more of the pipeline below — scroll the canvas
+          {t('flow.more')}
         </p>
       )}
     </div>

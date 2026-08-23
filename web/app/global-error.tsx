@@ -2,6 +2,7 @@
 
 import { RotateCw } from 'lucide-react';
 import { Button } from '@/components/button';
+import { t } from '@/lib/copy';
 import './globals.css';
 
 /**
@@ -43,9 +44,8 @@ export default function GlobalError({
               3.33:1 on white, which is a fine reading for a 40px button fill
               and a failing one for an 11px word. */}
           <span className="label-10 text-[var(--text-primary)]">ASSAY</span>
-          {/* copy(G) */}
           <h1 className="heading-18 pt-[10px] text-[var(--semantic-danger)]">
-            Assay could not start this page.
+            {t('error.global.title')}
           </h1>
           <p className="body-13_5 max-w-[560px] text-[var(--text-secondary)]">
             The failure is above every screen, which usually means the process

@@ -20,7 +20,7 @@ import { SchemaDiff } from '@/components/diff/schema-diff';
 import { t } from '@/lib/copy';
 import { stamp } from '@/lib/when';
 
-export const metadata: Metadata = { title: 'Run · Assay' };
+export const metadata: Metadata = { title: t('title.run') };
 export const dynamic = 'force-dynamic';
 
 /**
@@ -108,7 +108,7 @@ export default async function RunPage({ params }: { params: Promise<{ run: strin
 
         {d.cells.length > 0 && (
           <section className="flex flex-col gap-[12px]">
-            <Heading>Fields</Heading>
+            <Heading>{t('run.section.fields')}</Heading>
             <Fields cells={d.cells} />
             {/* THE COUNTERFACTUAL, under the row it is about.
                 `gate.candidates[0]` is the element that WOULD have been
@@ -119,13 +119,12 @@ export default async function RunPage({ params }: { params: Promise<{ run: strin
                 written. One sentence, no box: it is a fact about a decision,
                 not a boast about one. */}
             {counterfactual && (
-              /* copy(G) */
               <p className="meta-13 max-w-[820px] text-[var(--text-secondary)]">
-                A healer without the gate would have published{' '}
+                {t('counterfactual.before')}{' '}
                 <span className="mono-value-12_5 text-[var(--text-primary)]">
                   “{counterfactual}”
                 </span>
-                . Assay published nothing.
+                {t('counterfactual.after')}
               </p>
             )}
           </section>
@@ -189,13 +188,12 @@ export default async function RunPage({ params }: { params: Promise<{ run: strin
                 cannot reach. */}
             {sameExtractor ? (
               <div className="flex w-full flex-col gap-[12px]">
-                {/* copy(G) */}
                 <p className="meta-13 text-[var(--text-secondary)]">
-                  The selector did not change —{' '}
+                  {t('run.selector.same.before')}{' '}
                   <span className="mono-value-12_5 text-[var(--text-primary)]">
-                    {selector.after.selector ?? 'none recorded'}
+                    {selector.after.selector ?? t('run.selector.none')}
                   </span>{' '}
-                  reads the cell on both sides. What it points at on the page is what moved.
+                  {t('run.selector.same.after')}
                 </p>
               </div>
             ) : (
@@ -283,7 +281,13 @@ function Fields({ cells }: { cells: CellSummary[] }) {
     <table className="w-full border-collapse">
       <thead>
         <tr className="border-b border-[var(--border-hairline)] text-left">
-          {['field', 'status', 'value', 'reason', ''].map((h, i) => (
+          {[
+            t('run.table.head.field'),
+            t('run.table.head.status'),
+            t('run.table.head.value'),
+            t('run.table.head.reason'),
+            '',
+          ].map((h, i) => (
             <th key={h + i} className="caption-12 pb-[8px] font-normal text-[var(--text-muted)]">
               {h}
             </th>
@@ -300,7 +304,7 @@ function Fields({ cells }: { cells: CellSummary[] }) {
               </td>
               <td className="w-[140px] py-[12px]">
                 <StatusLine tone={TONE[c.status] ?? 'info'} muted={c.status === 'live'}>
-                  {c.status === 'quarantined' ? 'held' : c.status}
+                  {c.status === 'quarantined' ? t('run.cell.held') : c.status}
                 </StatusLine>
               </td>
               <td className="body-13_5 py-[12px] text-[var(--text-primary)]">
@@ -320,7 +324,7 @@ function Fields({ cells }: { cells: CellSummary[] }) {
                       background: 'var(--semantic-warning-subtle)',
                     }}
                   >
-                    held
+                    {t('run.cell.held')}
                   </span>
                 ) : (
                   c.value
@@ -337,11 +341,11 @@ function Fields({ cells }: { cells: CellSummary[] }) {
                     proof={c.proofId}
                     className="focus-ring meta-13 rounded-[var(--radius-control)] text-[var(--semantic-link)]"
                   >
-                    proof ›
+                    {t('run.link.proof')}
                   </ProofSheet>
                   {c.status === 'quarantined' && (
                     <Link href="/decisions" className="meta-13 text-[var(--semantic-link)]">
-                      decide ›
+                      {t('run.link.decide')}
                     </Link>
                   )}
                 </span>

@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
+import { t } from '@/lib/copy';
 import Link from 'next/link';
 import { MailCheck } from 'lucide-react';
 import { CardHalf, Headline } from '../chrome';
 
-export const metadata: Metadata = { title: 'Check your email · Assay' };
+export const metadata: Metadata = { title: t('title.checkEmail') };
 
 /**
  * The link has been sent. Its own route rather than a flag on /sign-in,

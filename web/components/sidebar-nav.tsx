@@ -49,13 +49,11 @@ const NAV = [
   // `FileSearch`, not a shield or a tick: an audit here is reading back the
   // record, not certifying it. Nothing on this rail should imply Assay has
   // signed anything off.
-  /* copy(G) */
-  { href: '/audit', label: 'Audit', icon: FileSearch },
+  { href: '/audit', label: t('nav.audit'), icon: FileSearch },
   // The book that `Library` above is deliberately NOT. This one really is
   // documentation to go and read, and it was reachable only from a link in the
   // footer of the sign-in page and from whatever the proof strip on Home says.
-  /* copy(G) */
-  { href: '/docs', label: 'Docs', icon: BookOpen },
+  { href: '/docs', label: t('nav.docs'), icon: BookOpen },
 ] as const satisfies readonly {
   href: string;
   label: string;
@@ -80,8 +78,7 @@ export function SidebarNav({ waiting }: { waiting: number }) {
     // reader's landmark list did not mention the rail at all. The label is
     // what distinguishes it from the filter `nav` on /runs -- two navigations
     // both announced as "navigation" is the same problem one level up.
-    /* copy(G) */
-    <nav aria-label="Main">
+    <nav aria-label={t('nav.label')}>
       <SidebarMenu className="gap-[18px] px-[20px] pb-[32px] group-data-[collapsible=icon]:px-[12px]">
         {NAV.map((item) => {
           const { href, label, icon: Icon } = item;

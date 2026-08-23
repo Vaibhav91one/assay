@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { t } from '@/lib/copy';
 import { modelAuth } from 'assay/engine/ai/model';
 import { TopBar } from '@/components/top-bar';
 import { RunStrip } from '@/components/run-strip';
@@ -8,7 +9,7 @@ import { waitingCount } from '@/lib/queue';
 import { getConversation, listConversations } from 'assay/engine/store/conversations';
 import { Watch } from './watch';
 
-export const metadata: Metadata = { title: 'Assay' };
+export const metadata: Metadata = { title: t('title.home') };
 export const dynamic = 'force-dynamic';
 
 /**

@@ -240,8 +240,7 @@ const emptyTitle = (f: FieldFilter) =>
     // Was `t('fields.empty.held')` -- "No field is waiting on you.", which is
     // the Decisions screen's sentence about a queue. This is a table filtered
     // to a column, and the honest thing it can say is that the column is empty.
-    /* copy(G) */
-    ? 'No held fields right now.'
+    ? t('fields.empty.heldFilter')
     : f === 'fragile'
       ? t('fields.empty.fragile')
       : t('fields.empty.all');

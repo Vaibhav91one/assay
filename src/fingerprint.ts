@@ -243,7 +243,10 @@ export const MAX_CANDIDATE_ELEMENTS = 20000;
 export function candidates($: Cheerio, root?: string | null): El[] {
   const all = $(root || 'body').find('*');
   if (all.length > MAX_CANDIDATE_ELEMENTS) {
-    /* copy(G) */
+    // Engine-side, and it stays engine-side: `web/lib/copy.ts` is imported by
+    // screens and nothing under `src/` imports it, which is what stops the
+    // worker, the CLI and the MCP server depending on a UI catalogue. This
+    // message reaches all four.
     throw new Error(
       `this page has ${all.length} elements; Assay considers at most `
       + `${MAX_CANDIDATE_ELEMENTS}. Point the watch at a narrower page.`,

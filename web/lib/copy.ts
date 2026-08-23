@@ -60,6 +60,12 @@ const COPY = {
   'nav.schedule': 'Schedule',
   'nav.library': 'Library',
   'nav.settings': 'Settings',
+  'nav.audit': 'Audit',
+  'nav.docs': 'Docs',
+  // The rail's accessible name. It is what tells a landmark list this nav apart
+  // from the filter nav on /runs -- two navigations both announced as
+  // "navigation" is the same problem one level up.
+  'nav.label': 'Main',
   'nav.newScrape': 'New scrape',
   'nav.chats': 'CHATS',
   'nav.scrapersNoChat': 'SCRAPERS WITH NO CHAT',
@@ -80,6 +86,9 @@ const COPY = {
   'title.schedule': 'Schedule · Assay',
   'title.settings': 'Settings · Assay',
   'title.explain': 'Where did this number come from? · Assay',
+  'title.library': 'Library · Assay',
+  'title.audit': 'Field audit · Assay',
+  'title.values': 'Values · Assay',
   'title.signIn': 'Sign in · Assay',
   'title.configureKey': 'Configure your key · Assay',
   'title.checkEmail': 'Check your email · Assay',
@@ -109,6 +118,19 @@ const COPY = {
   'decisions.answered.empty': 'You said this field is genuinely empty.',
   'decisions.answered.neither': 'You said neither candidate is right, so the cell stays held.',
   'decisions.notFourAnswers': 'Not one of the four answers.',
+  'decisions.reteach': 'Point this field at the right value',
+  'decisions.card.optionN': 'OPTION {n}',
+  'decisions.card.heldAgo': 'held {ago}',
+  // The reason, in the words the rest of the product uses. A code with no
+  // wording is printed AS a code and this sentence says so -- never an
+  // invented adjective. src/reports/vocabulary.ts.
+  'decisions.reason.plain': 'Nothing was published: {plain}.',
+  'decisions.reason.untranslated.before': 'Nothing was published for this cell. The gate recorded',
+  'decisions.reason.untranslated.after': ', which this screen has no wording for.',
+  'decisions.reason.none': 'Nothing was published for this cell.',
+  'decisions.reason.heldSince': ' Held since run {run}.',
+  // `{rows}` and the verb arrive assembled -- the catalogue does not do plurals.
+  'decisions.reason.stakes': ' {rows} {verb} on this field.',
 
   // -- runs ------------------------------------------------------------------
   'runs.heading': 'Runs',
@@ -128,8 +150,16 @@ const COPY = {
   'runs.outcome.healed': 'moved, found it again',
   'runs.outcome.skipped': 'skipped — page unchanged',
   'runs.summary.none': 'no runs yet',
+  // The noun on its own, singular and plural, because the count in front of it
+  // is assembled in code -- this map does not do plurals. `healed` and `held`
+  // are participles and never take one.
+  'runs.summary.run': 'run',
+  'runs.summary.runs': 'runs',
+  'runs.summary.healed': '{n} healed',
+  'runs.summary.held': '{n} with a held cell',
 
   // -- one run ---------------------------------------------------------------
+  'run.topbar': 'Run',
   'run.section.fields': 'Fields',
   'run.section.gate': 'The gate',
   'run.section.history': 'History',
@@ -157,6 +187,25 @@ const COPY = {
   'run.evidence.head.fact': 'fact',
   'run.evidence.head.value': 'value',
   'run.evidence.head.source': 'read from',
+  'run.selector.same.before': 'The selector did not change —',
+  'run.selector.same.after': 'reads the cell on both sides. What it points at on the page is what moved.',
+  'run.selector.none': 'none recorded',
+
+  // -- the gate's numbers, behind `show the numbers` --------------------------
+  'gate.disclosure': 'show the numbers',
+  'gate.compared': 'WHAT THE GATE COMPARED',
+  'gate.head.score': 'top score',
+  'gate.head.runnerUp': 'runner-up',
+  'gate.head.margin': 'margin',
+  'gate.aloneValue': 'none — it stood alone',
+  // The glossary's words for the two tests: the floor (τ), the lead (δ).
+  'gate.thresholds': 'To publish, a candidate needs a score above {tau} — the floor (τ) — and to be ahead of the runner-up by {delta} — the lead (δ).',
+  'gate.thresholds.declared': 'Both are declared on this target’s contract.',
+  'gate.thresholds.defaults': 'This target declares neither, so both are the shipped defaults.',
+  'gate.thresholds.unreproducible':
+    'The thresholds on hand no longer reproduce the reason recorded against this cell — the contract has been edited since — so they are not drawn against these scores. The scores are what was written at the time.',
+  'gate.bandIsTheAnswer':
+    'The band is still the answer. These are what it was read off, and the arithmetic is written out at /docs/assay-score.',
 
   // -- the Assay Score -------------------------------------------------------
   //
@@ -169,6 +218,14 @@ const COPY = {
   // about `HELD_BECAUSE` already refuses.
   'assayScore.more': 'How the gate decided ›',
 
+  // THE COUNTERFACTUAL, drawn on three surfaces -- the decision card, the run
+  // page and the proof -- and it was written out three times. Split around the
+  // quoted value the way `home.prompt`/`home.promptEnd` are split around the
+  // brand mark, because the value in the middle is mono and the sentence is
+  // not.
+  'counterfactual.before': 'A healer without the gate would have published',
+  'counterfactual.after': '. Assay published nothing.',
+
   // -- the two diffs on the run page -----------------------------------------
   //
   // These used to carry a line of numbers -- a score against tau, a margin
@@ -176,6 +233,13 @@ const COPY = {
   // the data. It no longer exists: the band says which test the gate applied
   // and the rivals below say what was at stake, so what is left is fixed
   // labels, which is what this file is for.
+  'flow.more': '↓ more of the pipeline below — scroll the canvas',
+  'run.action.title': 'Which page?',
+  'run.action.moves.one': 'Moves this page',
+  'run.action.moves.any': 'Moves the page you pick',
+  'run.action.moves.rest': 'to the front of the queue. Assay’s web process never scrapes — a worker claims it.',
+  'run.action.due.one': 'See when it is due next ›',
+  'run.action.due.many': 'See when they are due next ›',
   'run.section.selector': 'The selector',
   'run.section.record': 'The record',
   'diff.pane.before': 'before',
@@ -215,6 +279,33 @@ const COPY = {
     'Every cell the gate looked at was either published or is still being watched.',
   'fields.empty.all.body': 'A field appears here once a scraper has run against it at least once.',
   'fields.headline.none': 'nothing tracked yet',
+  // The Decisions screen's "No field is waiting on you." is a sentence about a
+  // queue. This is a table filtered to a column, and the honest thing it can
+  // say is that the column is empty.
+  'fields.empty.heldFilter': 'No held fields right now.',
+  // What to do about a fragility grade, derived from the anchors that produced
+  // it. `sturdy` and `insufficient_history` get nothing, deliberately.
+  'fields.suggest.fragile.noAnchors':
+    'Nothing identifies this element but where it sits on the page. A stable id or a data-testid on it would anchor it.',
+  'fields.suggest.fragile.generated':
+    'Everything holding this up is generated by the build. A stable id or a data-testid on this element would anchor it.',
+  'fields.suggest.serviceable':
+    'It is standing on anchors the site never chose deliberately. An id, a data-testid or a role would survive the next redesign.',
+
+  // -- one field's values ----------------------------------------------------
+  'values.topbar': 'Values',
+  'values.allFields': '‹ All fields',
+  'values.download': 'Download CSV',
+  'values.empty.title': 'Nothing has run against this field yet.',
+  'values.empty.body': 'A value appears here the first time a run reaches this page.',
+  'values.footnote': 'The last {limit} cells recorded for this target, newest first. A withheld run keeps its row: the hole is the record.',
+  'values.head.run': 'run',
+  'values.head.when': 'when',
+  'values.head.field': 'field',
+  'values.head.value': 'value',
+  'values.nothingPublished': 'nothing published',
+  'values.nothingPublishedBecause': 'nothing published: {plain}',
+  'values.nothingPublishedCode': 'nothing published; the gate recorded',
 
   // -- compare ---------------------------------------------------------------
   'compare.heading': 'Compare',
@@ -254,6 +345,82 @@ const COPY = {
   'explain.notFound.body':
     'Proof ids are written once, on the run that published the cell, and never reused. A missing one means the id was mistyped or the store it came from is not this one.',
   'explain.notFound.back': 'Back to runs ›',
+  // The same sentence the run canvas's Hold node uses. Nothing is WRITTEN, and
+  // `null` is the labelled hole the output column holds in its place.
+  'explain.hole.note': 'left empty (null) — nothing was written',
+
+  // -- field audit -----------------------------------------------------------
+  'audit.heading': 'Field audit',
+  'audit.noSnapshot.status': 'no snapshot on disk',
+  'audit.empty.title': 'No snapshot to audit.',
+  'audit.empty.body.before': 'This screen reads',
+  'audit.empty.body.after':
+    'from the repository root and found nothing there. It is a committed file, not something a run produces — nothing is missing from your database.',
+  'audit.platform.eyebrow': 'WHAT THE PLATFORM REPORTED',
+  'audit.platform.said': '100% success, 0 failed crawls — {rows} records returned.',
+  // Counted, never typed: if the snapshot is replaced the sentence changes with it.
+  'audit.headline': '{unhealthy} of {total} promised fields unhealthy behind a 100%-success run',
+  'audit.finding':
+    'This is not a criticism of the crawling, which worked: sixty pages were fetched from a site that fights scrapers and none of them failed. The finding is narrower.',
+  'audit.finding.jobSucceeded': 'The job succeeded',
+  'audit.finding.dataIsRight': 'The data is right',
+  'audit.finding.rest':
+    'are different claims, and the platform can only answer the first one. That gap is the shape of gap Assay fills, and it arrived unprompted from production rather than from a benchmark we wrote.',
+  'audit.everyField': 'Every promised field',
+  'audit.crossCheck': 'The cross-check',
+  'audit.crossCheck.unavailable': 'Unavailable — only one side of the pair was delivered.',
+  'audit.crossCheck.unavailable.rest':
+    'are the only independent corroboration between the listing stage and the detail stage. Without both, drift on the listing template cannot be detected at all.',
+  'audit.crossCheck.counts': '{comparable} rows carry both titles; {agreeing} agree and {disagreeing} disagree.',
+  'audit.head.field': 'field',
+  'audit.head.delivered': 'delivered',
+  'audit.head.nullRate': 'null-rate',
+  'audit.head.verdict': 'verdict',
+
+  // -- a scraper's life ------------------------------------------------------
+  'lifecycle.gone': 'Nothing under watch called {slug} any more.',
+  'lifecycle.reading': 'Reading {slug}…',
+  'lifecycle.notFound': 'Nothing under watch called {slug}.',
+  'lifecycle.every': 'every',
+  'lifecycle.mixedCadence': 'mixed',
+  'lifecycle.saveCadence': 'Save cadence',
+  'lifecycle.pause': 'Pause {slug}',
+  'lifecycle.resume': 'Resume {slug}',
+  'lifecycle.delete': 'Delete',
+  'lifecycle.deleteIt': 'Delete it',
+  'lifecycle.leaveIt': 'Leave it',
+  'lifecycle.delete.title': 'Delete {slug}?',
+  // `{fields}` arrives already pluralised -- see the header: this map does not
+  // do plurals, the call site assembles the noun.
+  'lifecycle.delete.never':
+    'This forgets {fields}. It has never run, so there is nothing published to leave behind, and nothing to undo this with.',
+  'lifecycle.delete.hasHistory':
+    '{slug} has {runs} on record. Assay will refuse this: every row it published carries a proof id that has to keep answering for itself. Pause it instead — that stops the scraping and keeps the history.',
+  'lifecycle.mixed': 'Its fields are on different cadences. Saving one here puts all {fields} on it.',
+  'lifecycle.paused': '{slug} is paused. Its cadence is remembered, nothing is scheduled, and resuming puts it back.',
+  'lifecycle.resumed': '{slug} is running again, and its next run is due now rather than a cadence away.',
+  'lifecycle.deleted': '{slug} is gone. It had never run, so there was nothing published to leave behind.',
+  'lifecycle.cadence.paused': '{slug} will run every {cadence} once it is resumed.',
+  'lifecycle.cadence.set': '{slug} now runs every {cadence}, counting from now.',
+  'lifecycle.cadence.bad': 'That is not a cadence.',
+  'lifecycle.wholeScraper': 'The whole scraper, not just {field}:',
+
+  // -- the testbed --------------------------------------------------------
+  'break.explain':
+    'This scraper watches the testbed, which serves the same page mutated nine ways. Pick one and the target is repointed at it — a redesign, on demand — and a run is asked for. It stays on that variant until you pick another;',
+  'break.explain.after': 'puts it back.',
+  'break.button': 'Break this page',
+  'break.pick': 'Which mutation to deploy',
+  'break.watching': 'Watching the run record — nothing yet.',
+  'break.timedOut':
+    'Nothing had landed after 45 seconds. This screen stopped watching; it did not stop being queued.',
+
+  // -- errors ----------------------------------------------------------------
+  'error.global.title': 'Assay could not start this page.',
+  'error.screen.title': 'This screen did not finish loading.',
+  'notFound.title': 'There is nothing at this address.',
+  'notFound.topbar': 'Not found',
+  'notFound.status': 'nothing at this address',
 
   // -- home / watch ----------------------------------------------------------
   'home.prompt': 'What should',
@@ -271,6 +438,15 @@ const COPY = {
   'home.conversation.none': 'No scraper from this conversation yet',
   'home.conversation.export': 'Export as Markdown',
   'home.conversation.new': 'Start a new conversation',
+  // The benchmark, counted from `results/bench.json` on every render -- never a
+  // number typed into a file.
+  'home.bench': '{cases} benchmark cases · {wrong} wrong values published · a naive scraper would have published {naive}',
+  'home.watching': 'Watching {id}.',
+  'home.built.clean':
+    'The first run is done and the baseline is what the page said just now. Every run from here is compared against it.',
+  // `{fields}` arrives pluralised; the map does not do plurals.
+  'home.built.held':
+    'The first run is done. {fields} came back held — Assay published nothing there rather than guess, and it is waiting on you.',
   'home.composer.placeholder': 'Paste a URL, or describe what you want to keep an eye on',
   'home.composer.label': 'What should Assay watch?',
   'home.composer.send': 'Read this page',
@@ -298,6 +474,15 @@ const COPY = {
   'command.open': 'Open the full screen ›',
 
   // -- build / proposal ------------------------------------------------------
+  'build.head.field': 'FIELD',
+  'build.head.onThePage': 'ON THE PAGE, RIGHT NOW',
+  // The held cell's own sentence, on the proposal table and the run watcher.
+  // A code with no wording is printed AS a code and the sentence says so.
+  'build.held.because': 'Nothing was published here: {plain}.',
+  'build.held.untranslated.before': 'Nothing was published here. The gate recorded',
+  'build.held.untranslated.after': ', which this screen has no wording for.',
+  'build.held.noReason':
+    'Nothing was published here. Assay could not tell what this field is now, so it declined to guess.',
   'build.onThePage': 'ON THE PAGE',
   'build.rightNow': 'right now',
   'build.baseline': 'BASELINE',
@@ -337,6 +522,13 @@ const COPY = {
   'settings.tab.connections': 'Connections',
   'settings.tabs.label': 'Settings sections',
   'settings.publishing.eyebrow': 'WHAT ASSAY MAY PUBLISH',
+  // Split around the two mono identifiers the way `home.prompt`/`home.promptEnd`
+  // are split around the brand mark: a command name has to stay mono, and this
+  // map holds text rather than markup.
+  'settings.publishing.policy.a':
+    'Calibrated: publishes only a clear winner ({tau} floor, {delta} lead). Per-field policy is a YAML contract, checked with',
+  'settings.publishing.policy.b': 'and posted to',
+  'settings.publishing.policy.c': '— never edited here, so every change to it has a diff.',
   'settings.policy.eyebrow': 'PER-FIELD POLICY',
   'settings.policy.empty.title': 'No field has a policy yet.',
   'settings.policy.empty.body':
@@ -363,6 +555,25 @@ const COPY = {
   'settings.doc.link': 'See documentation',
   'settings.notSwitch': 'Not a switch position.',
   'settings.loading': 'Reading what is actually in force.',
+  'settings.notifications.digest': 'Weekly digest',
+  'settings.notifications.digest.sent':
+    'One report per week: what changed, and what was withheld. Last sent {date}.',
+  'settings.notifications.digest.never':
+    'One report per week: what changed, and what was withheld. Never sent yet.',
+  'settings.notifications.digest.cannotSend':
+    'Assay cannot send mail: {missing} is not set in this process’s environment.',
+  'settings.notifications.digest.notSaved': 'Not saved — {detail}. The switch has been put back where it was.',
+  'settings.notifications.mail': 'Break alerts by email',
+  'settings.notifications.mail.detail': 'When a field breaks, one alert per episode — not one per page.',
+  'settings.notifications.mail.reason':
+    'Set in .env, not here: the worker reads ASSAY_RESEND_KEY, ASSAY_MAIL_FROM and ASSAY_MAIL_TO on each run and nothing from the store.',
+  'settings.notifications.mail.unset': '{missing} is not set, so a break alert would fall through to the webhook.',
+  'settings.notifications.webhook': 'Webhook fallback',
+  'settings.notifications.webhook.detail':
+    'Where a break alert goes when the email fails. The outcome is recorded on the episode either way.',
+  'settings.notifications.webhook.reason': 'Set in .env, not here: ASSAY_WEBHOOK_URL.',
+  'settings.notifications.webhook.unset':
+    'Unset, so a failed email is recorded as undelivered and nothing else is tried.',
 
   // -- model access ----------------------------------------------------------
   'model.checkAgain': 'Check again',
@@ -386,6 +597,12 @@ const COPY = {
   'schedule.heading': 'Schedule',
   'schedule.loading': 'Reading the clock.',
   'schedule.none': 'nothing scheduled',
+  'schedule.headline.running': '{n} running',
+  'schedule.headline.paused': '{n} paused',
+  // The noun alone: the count in front of it is assembled in code, because
+  // this map does not do plurals.
+  'schedule.headline.run': 'run today',
+  'schedule.headline.runs': 'runs today',
   'schedule.today': 'Today',
   'schedule.view': 'View',
   'schedule.search': 'Search a scraper, a field, a value, a run id',

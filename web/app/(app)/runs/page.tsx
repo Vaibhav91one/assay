@@ -204,8 +204,15 @@ function Happened({ row }: { row: RunRow }) {
 // rail were the same product disagreeing with itself. It counts runs that
 // CARRY a held cell, answered or not, so it now says so. What is waiting on a
 // person is the banner below, and that number comes from the queue.
-/* copy(G) */
+//
+// Assembled here rather than held as one string: the catalogue does not do
+// plurals, by its own header, so `run`/`runs` is decided in code and the three
+// clauses are joined the way every other status line on this app joins them.
 const summary = (total: number, healed: number, held: number) =>
   total === 0
     ? t('runs.summary.none')
-    : `${total} run${total === 1 ? '' : 's'} · ${healed} healed · ${held} with a held cell`;
+    : [
+      `${total} ${total === 1 ? t('runs.summary.run') : t('runs.summary.runs')}`,
+      t('runs.summary.healed', { n: healed }),
+      t('runs.summary.held', { n: held }),
+    ].join(' · ');
