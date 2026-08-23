@@ -5,7 +5,7 @@ import * as schema from 'assay/engine/store/schema';
 import { assessField, knownFields } from 'assay/engine/health/observe';
 import type { FragilityGrade, DriftState } from 'assay/engine/health/index';
 import { asc, desc, eq, inArray } from 'drizzle-orm';
-import { t } from './copy';
+import { t } from './copy.js';
 
 /**
  * What each field looks like when it is right, and how reliably it has been
