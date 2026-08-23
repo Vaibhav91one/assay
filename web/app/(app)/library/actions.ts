@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { scraperTracker, type Tracker } from 'assay/engine/library/index';
+import { scraperTracker, urlComplaint, type Tracker } from 'assay/engine/library/index';
 import {
   DatasetId, fieldNameFor, fieldsFromRecord, libraryTrackerById, scrape, scraperById,
 } from 'assay/engine/connectors/scrapers';
@@ -192,6 +192,13 @@ type Read =
  * record shape acquires its fields HERE, from the record this call returned.
  */
 async function read(t: Tracker, url: string, datasetId?: string): Promise<Read> {
+  // Before the fetch, and in `read` rather than in `inspect`, so `approve` --
+  // which re-fetches and re-analyses rather than trusting the browser -- is
+  // covered by the same line. A tracker whose priors only parse one page shape
+  // refuses the others instead of reading them and proposing whatever matched.
+  const complaint = urlComplaint(t, url);
+  if (complaint) return { ok: false, detail: complaint };
+
   if (t.kind === 'page') {
     try {
       const { html } = await fetchHtml(url);
