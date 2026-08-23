@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { scraperTracker, urlComplaint, type Tracker } from 'assay/engine/library/index';
 import {
   DatasetId, fieldNameFor, fieldsFromRecord, libraryTrackerById, scrape, scraperById,
+  searchDatasets, type DatasetSearch,
 } from 'assay/engine/connectors/scrapers';
 import { recordToHtml } from 'assay/engine/connectors/record';
 import { analyse } from 'assay/engine/library/analyse';
@@ -210,11 +211,30 @@ async function read(t: Tracker, url: string, datasetId?: string): Promise<Read> 
     }
   }
 
-  // A card with a null `datasetId` is the one that covers Bright Data's other
-  // thousand scrapers, and the id is the operator's to supply. A card with one
-  // ignores whatever arrived from the browser rather than letting it override --
-  // the shipped id is a verified fact and the request is not.
-  const supplied = t.datasetId ?? (datasetId ?? '').trim();
+  const entry = scraperById(t.id);
+  if (!entry) return { ok: false, detail: 'No such tracker.' };
+
+  // WHICH DATASET, AND WHY THE BROWSER GETS A SAY AT ALL.
+  //
+  // This used to read `t.datasetId ?? supplied` and ignore whatever arrived
+  // from the browser on a card that had an id of its own, because "the shipped
+  // id is a verified fact and the request is not". That reasoning is still
+  // right and this is still it -- what changed is that a brand card now ships
+  // several verified facts instead of one. LinkedIn's card offers people
+  // profiles, company information, job listings and posts; all four came out of
+  // `/datasets/list`, all four are pinned by a test, and the operator picking
+  // between them is not the browser supplying an id.
+  //
+  // SO THE REQUEST SELECTS, IT NEVER SUPPLIES. `chosen` only ever returns an id
+  // that this server already shipped on this card -- an unrecognised one falls
+  // back to the card's default rather than being called. The single exception
+  // is the open card, which has no ids of its own and whose entire job is to
+  // take one; that one is validated by `DatasetId` before it is put in a URL,
+  // exactly as before.
+  const offered = entry.datasets.find((d) => d.id === (datasetId ?? '').trim());
+  const supplied = entry.datasetId === null
+    ? (datasetId ?? '').trim()
+    : (offered?.id ?? entry.datasetId);
   if (!supplied) {
     return { ok: false, detail: 'Paste the Bright Data dataset ID for the scraper you want.' };
   }
@@ -231,13 +251,15 @@ async function read(t: Tracker, url: string, datasetId?: string): Promise<Read> 
     return { ok: false, detail: `Could not read ${url}: ${(e as Error).message}` };
   }
 
-  const entry = scraperById(t.id);
-  if (!entry) return { ok: false, detail: 'No such tracker.' };
-
-  // Named scrapers keep the fields taken from their documented example record,
-  // so what the operator saw before pressing Run is what gets proposed. The
-  // undocumented card has nothing to keep and takes them from the record.
-  const tracker = t.datasetId
+  // THE DOCUMENTED FIELD LIST BELONGS TO ONE DATASET, NOT TO THE CARD.
+  // Instagram's and LinkedIn's `fields` were read off an example record for
+  // their DEFAULT dataset. Pick `Instagram - Reels` on the same card and there
+  // is no documented record for it, so keeping the profile fields would promise
+  // `followers` and `posts_count` on a record that has neither. Every other
+  // path -- another dataset, another brand, the open card -- takes its fields
+  // from the record this call actually returned.
+  const documented = entry.fields.length > 0 && id.data === entry.datasetId;
+  const tracker = documented
     ? t
     : scraperTracker(
       entry,
@@ -247,6 +269,38 @@ async function read(t: Tracker, url: string, datasetId?: string): Promise<Read> 
     );
 
   return { ok: true, tracker, analysis: analyse(tracker, recordToHtml(record)) };
+}
+
+/**
+ * Search Bright Data's whole catalogue by name.
+ *
+ * A SERVER ACTION RATHER THAN A PROP, and that is the entire point. There are
+ * 1,744 entries; shipping them to the browser so a text box could filter them
+ * would put roughly a hundred kilobytes of a third party's product names into
+ * every load of `/library`, to answer a question most visits never ask. This
+ * sends a query and gets back at most twenty-five rows.
+ *
+ * IT SPENDS NO BRIGHT DATA CREDIT. `/datasets/list` is a management endpoint --
+ * it returns what the account HAS, not a collection run -- and `listDatasets`
+ * caches it for six hours besides. `inspect` is the call that costs money and it
+ * is a different button. Nothing on this path can be made to run a scraper.
+ *
+ * `assertOperator` all the same: it reads the account's inventory with the
+ * account's own token, which is not something an anonymous POST gets to do.
+ */
+export async function searchCatalogue(query: string): Promise<
+  ({ ok: true } & DatasetSearch) | { ok: false; detail: string }
+> {
+  await assertOperator();
+  try {
+    return { ok: true, ...await searchDatasets(query) };
+  } catch (e) {
+    // Said out loud rather than returned as an empty result. "Bright Data did
+    // not answer" and "Bright Data has no scraper by that name" are different
+    // facts, and a search box that renders the first as the second has told the
+    // operator something untrue about a third party's catalogue.
+    return { ok: false, detail: (e as Error).message };
+  }
 }
 
 /**
