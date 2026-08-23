@@ -85,7 +85,11 @@ describe('the measured corpus', () => {
       const files = (await readdir(`corpus/${site}`)).filter((file) => file.endsWith('.html'));
       for (const file of files) {
         const html = await readFile(`corpus/${site}/${file}`, 'utf8');
-        const reason = detectBlockedPage(html, { baselineBytes: html.length });
+        // `html.length` would make `short` false for every page, and the two
+        // short-body rules unreachable -- a guard that cannot fail. A baseline
+        // 5x the page puts every capture inside the 40% window, so all five
+        // rules are live against all 77 pages.
+        const reason = detectBlockedPage(html, { baselineBytes: html.length * 5 });
         if (reason) classified.push(`${site}/${file}: ${reason}`);
       }
     }
