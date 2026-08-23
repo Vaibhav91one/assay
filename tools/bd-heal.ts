@@ -26,6 +26,8 @@
 import { writeFile, readFile, mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
+import { diffGate, type DiffGateResult } from '../src/bd/diffgate.js';
+
 const API = 'https://api.brightdata.com/dca/collectors';
 const POLL_MS = 20_000;
 const MAX_MS = 25 * 60_000;
@@ -37,14 +39,17 @@ bright data self-healing driver -- capture mode, never auto-approves
       start a heal, poll to the approval gate, write the transcript, print the
       preview, exit. Does not approve. Cannot approve.
 
-  node tools/bd-heal.js --collector <id> --approve [--no-save]
+  node tools/bd-heal.js --collector <id> --approve [--no-save] [--force]
       approve the pending heal.  {"message": true, "auto_save": true}
+      REFUSED if the captured preview fails the code gate (src/bd/diffgate.ts).
+      --force approves over that refusal.
 
   node tools/bd-heal.js --collector <id> --reject
       reject the pending heal.   {"message": false}
 
   node tools/bd-heal.js --verify [--out <path>]
-      apply the acceptance check to the preview captured in a transcript.
+      apply BOTH checks to the preview captured in a transcript: the output
+      acceptance rules, and the code gate over the proposed diff.
 
   --out <path>   transcript file. default: results/bd-heal-transcript.json
   --poll-ms N    override poll interval (default ${POLL_MS})
@@ -211,6 +216,33 @@ function report(row: any, indent: any) {
   return { failed, na };
 }
 
+/**
+ * Print the code gate. Separate from `report()` because the two answer different
+ * questions off different evidence: `report()` reads the row the proposal
+ * produced, this reads the proposal itself. See src/bd/diffgate.ts.
+ */
+function reportDiff(g: DiffGateResult, indent: string) {
+  console.log(`${indent}${g.decision === 'approve' ? 'PASS' : 'FAIL'}  code gate (${g.findings.length} finding(s))`);
+  if (g.newlyPiped.length) {
+    console.log(`${indent}      newly piped between stages: ${g.newlyPiped.join(', ')}`);
+  }
+  for (const f of g.findings) {
+    console.log(`${indent}      ${f.rule}${f.field ? ` [${f.field}]` : ''}`);
+    console.log(`${indent}        ${f.detail}`);
+  }
+  return g;
+}
+
+/** The saved transcript, or null. Both `--verify` and `--approve` need it, and
+ *  approving without one means approving something nobody captured. */
+async function loadTranscript() {
+  try {
+    return JSON.parse(await readFile(OUT, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
 // --- commands ---------------------------------------------------------------
 
 async function cmdHeal() {
@@ -315,6 +347,8 @@ async function cmdHeal() {
     console.log(`    ${considered} candidate row(s) considered, ${schema} rejected as schema rather than data`);
     if (!row) console.log('    no data row with a recall_title key found in the preview');
     else report(row, '    ');
+    console.log(`\n  code gate:`);
+    reportDiff(diffGate(transcript.preview, { prompt }), '    ');
     console.log(
       `\n  NOT approved. Nothing was changed on the collector.\n` +
         `  To approve:  node tools/bd-heal.js --collector ${COLLECTOR} --approve\n` +
@@ -328,6 +362,37 @@ async function cmdHeal() {
 async function resume(message: any) {
   requireToken();
   requireCollector();
+
+  // Rejecting is always safe -- it leaves the collector as it is -- so only the
+  // approval path is gated. The gate reads the transcript rather than re-polling:
+  // the preview it judges must be the same bytes the operator read.
+  if (message) {
+    const t = await loadTranscript();
+    if (!t?.preview) {
+      console.error(
+        `\nerror: no captured preview at ${OUT}.\n` +
+          `  Approving means committing a code change nobody looked at. Run the heal first:\n` +
+          `    node tools/bd-heal.js --collector ${COLLECTOR} --prompt "..."\n` +
+          `  or pass --force to approve without a captured preview.\n`
+      );
+      if (!flag('force')) process.exit(2);
+    } else {
+      const g = diffGate(t.preview, { prompt: t.prompt || '' });
+      console.log(`\ncode gate on ${OUT}:`);
+      reportDiff(g, '  ');
+      if (g.decision === 'reject' && !flag('force')) {
+        console.error(
+          `\n  REFUSED. Not approving: the proposal fails the code gate above.\n` +
+            `  This is a fact about the proposed code, not about the row it produced.\n` +
+            `  To reject it on the collector:  node tools/bd-heal.js --collector ${COLLECTOR} --reject\n` +
+            `  To override this gate:          add --force\n`
+        );
+        process.exit(1);
+      }
+      if (g.decision === 'reject') console.log('\n  --force given: approving over the code gate.');
+    }
+  }
+
   const body = message ? { message: true, auto_save: !flag('no-save') } : { message: false };
   console.log(`\n${message ? 'APPROVING' : 'REJECTING'} collector ${COLLECTOR}  ${JSON.stringify(body)}`);
   const r = await call('POST', 'resume_automation_job', body);
@@ -336,11 +401,9 @@ async function resume(message: any) {
 }
 
 async function cmdVerify() {
-  let transcript;
-  try {
-    transcript = JSON.parse(await readFile(OUT, 'utf8'));
-  } catch (err) {
-    console.error(`\nerror: cannot read transcript ${OUT}: ${(err as Error).message}\n`);
+  const transcript = await loadTranscript();
+  if (!transcript) {
+    console.error(`\nerror: cannot read transcript ${OUT}\n`);
     process.exit(2);
   }
   const { row, considered, schema } = findRow(transcript.preview ?? transcript);
@@ -356,11 +419,18 @@ async function cmdVerify() {
   );
   const { failed, na } = report(row, '  ');
   const tally = `${4 - failed - na} pass, ${failed} fail, ${na} not evaluable`;
-  console.log(`\n  ${failed ? 'DO NOT ACCEPT' : 'ACCEPT'}  (${tally})`);
-  if (na) console.log(`  ${na} rule(s) were not evaluable here, so this verdict rests on ${4 - na}.`);
+
+  // The two verdicts are printed separately and ANDed. Collapsing them into one
+  // number would hide which kind of evidence lost, and they are not commensurable:
+  // one is about a value, the other about the code that produced it.
+  console.log(`\n  code gate:`);
+  const g = reportDiff(diffGate(transcript.preview ?? transcript, { prompt: transcript.prompt || '' }), '  ');
+  const blocked = failed > 0 || g.decision === 'reject';
+  console.log(`\n  ${blocked ? 'DO NOT ACCEPT' : 'ACCEPT'}  (output: ${tally}; code: ${g.decision})`);
+  if (na) console.log(`  ${na} rule(s) were not evaluable here, so this output verdict rests on ${4 - na}.`);
   console.log('');
   // N/A is not a failure. Only a rule that was evaluated and lost blocks acceptance.
-  process.exit(failed ? 1 : 0);
+  process.exit(blocked ? 1 : 0);
 }
 
 // --- dispatch ---------------------------------------------------------------
