@@ -142,7 +142,7 @@ export function ScraperList({ scrapers }: { scrapers: { id: string; url: string;
       <ul className="flex flex-col gap-[16px]">
         {shown.map((s) => (
           <li key={s.id} className="relative flex items-center pl-[28px]">
-            <span className="absolute left-[5px] size-[5px] rounded-full bg-[#65676d]" />
+            <span className="absolute left-[5px] size-[5px] rounded-full bg-[#8a8d93]" />
             <span className="body-14 truncate text-[#a3a5a9]">{s.id}</span>
           </li>
         ))}
@@ -157,7 +157,7 @@ export function ScraperList({ scrapers }: { scrapers: { id: string; url: string;
           What is true and useful is how many are not shown. */}
       {scrapers.length > shown.length && (
         <div className="pl-[48px] pt-[22px]">
-          <span className="meta-13 text-[#65676d]">
+          <span className="meta-13 text-[#8a8d93]">
             {scrapers.length - shown.length} more
           </span>
         </div>
