@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Plus, ChevronsUpDown, Server } from 'lucide-react';
+import { Plus, Server } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth';
 import {
   Sidebar as Rail,
@@ -16,6 +16,7 @@ import {
 import { SidebarNav, ScraperList } from './sidebar-nav';
 import { ConversationList } from './conversation-list';
 import { actionVariants } from './button';
+import { t } from '@/lib/copy';
 
 /**
  * The app's left rail, on shadcn's Sidebar.
@@ -44,7 +45,7 @@ export async function Sidebar({
   // reports what lib/auth.ts actually knows. The Figma frame shows a personal
   // name, which is a hosted-case artifact sitting in the self-hosted baseline.
   const user = await getCurrentUser();
-  const label = user?.label ?? 'Self-hosted';
+  const label = user?.label ?? t('nav.selfHosted');
   // Initials of a label are not initials of a person: "Self-hosted" gives
   // "SE", which means nothing. Only a real identity gets initials.
   const named = user?.mode === 'clerk';
@@ -179,15 +180,19 @@ export async function Sidebar({
           <span className="flex min-w-0 flex-col gap-[2px] group-data-[collapsible=icon]:hidden">
             <span className="body-14 truncate text-[var(--text-inverse)]">{label}</span>
             <span className="caption-12 truncate text-[#65676d]">
-              {named ? 'Signed in' : 'No accounts on this instance'}
+              {named ? t('nav.signedIn') : t('nav.noAccounts')}
             </span>
           </span>
-          <ChevronsUpDown
-            size={14}
-            strokeWidth={1.5}
-            className="ml-auto shrink-0 text-[#65676d] group-data-[collapsible=icon]:hidden"
-            aria-hidden
-          />
+          {/* THE CHEVRON CAME OFF, and this is the whole change: a
+              `ChevronsUpDown` sat here, which is the account-switcher glyph in
+              every product that has one. There is no account switcher. There
+              are no accounts -- the line directly above it says so in as many
+              words -- so the row was drawing the affordance for a menu that
+              cannot exist, on a self-hosted instance where the offer is not
+              merely unbuilt but meaningless. `docs/STATES.md` 1 #11: everything
+              that looks clickable has a defined consequence, or it does not
+              exist. What is left is an identity read off `lib/auth.ts`, which
+              is a fact and not a control, and it now looks like one. */}
         </div>
       </SidebarFooter>
     </Rail>
