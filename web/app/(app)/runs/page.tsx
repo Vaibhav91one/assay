@@ -42,7 +42,7 @@ export default async function RunsPage({
           ))}
         </nav>
 
-        {v.needsYou.length > 0 && <NeedsYou items={v.needsYou} />}
+        {v.waiting > 0 && <NeedsYou count={v.waiting} items={v.needsYou} />}
 
         {v.recent.length > 0 && (
           <RunStrip
@@ -63,14 +63,28 @@ export default async function RunsPage({
   );
 }
 
-function NeedsYou({ items }: { items: NonNullable<Awaited<ReturnType<typeof runsView>>['needsYou']> }) {
+/**
+ * The banner counts OPEN QUEUE ITEMS, not the rows it lists.
+ *
+ * `items` comes off the last 400 runs, so it is a preview and can be shorter
+ * than the truth -- a cell held five hundred runs ago is still waiting on
+ * somebody. `count` is the uncapped number the rail, Home and the bell all
+ * show, and this is the sentence that states it.
+ */
+function NeedsYou({
+  count,
+  items,
+}: {
+  count: number;
+  items: NonNullable<Awaited<ReturnType<typeof runsView>>['needsYou']>;
+}) {
   return (
     <div className="flex items-center gap-[24px] rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] px-[24px] py-[18px]">
       <div className="flex min-w-0 flex-1 flex-col gap-[6px]">
         <p className="flex items-center gap-[8px]">
           <CircleAlert size={16} strokeWidth={1.5} className="text-[var(--semantic-warning)]" aria-hidden />
           <span className="body-14 text-[var(--text-primary)]">
-            {items.length} need{items.length === 1 ? 's' : ''} you
+            {count} need{count === 1 ? 's' : ''} you
           </span>
         </p>
         <p className="meta-12_5 flex flex-wrap gap-x-[24px] gap-y-[4px] text-[var(--text-secondary)]">
@@ -83,7 +97,7 @@ function NeedsYou({ items }: { items: NonNullable<Awaited<ReturnType<typeof runs
       </div>
       <Link href="/decisions" className={actionVariants({ variant: 'link' })}>
         <ArrowRight size={16} strokeWidth={1.5} aria-hidden />
-        Open the decision{items.length === 1 ? '' : 's'}
+        Open the decision{count === 1 ? '' : 's'}
       </Link>
     </div>
   );
@@ -158,6 +172,19 @@ function Happened({ row }: { row: RunRow }) {
       </StatusLine>
     );
   }
+  // A skipped run fetched a page byte-identical to the last one and stopped
+  // there: no baseline resolved, no gate, nothing published. It read "clean",
+  // which is a claim about an evaluation that never happened -- and on a
+  // stable page most rows in this table were making it.
+  if (row.outcome === 'skipped') {
+    return (
+      // `info`: glyphless by design, for an ambient fact that demands nothing.
+      /* copy(G) */
+      <StatusLine tone="info" muted>
+        skipped — page unchanged
+      </StatusLine>
+    );
+  }
   return (
     <StatusLine tone="success" muted>
       {t('runs.outcome.clean')}
@@ -168,7 +195,13 @@ function Happened({ row }: { row: RunRow }) {
 // `${total} run${...}`, not `${total} runs`: a fresh instance with one run in it
 // read "1 runs · 0 healed · 0 held" in the top bar. `healed` and `held` are
 // participles and do not take one.
+// `${held} held` was a number labelled with the word the QUEUE uses, sitting
+// beside a rail that read it off the queue -- so "3 held" here and "1" on the
+// rail were the same product disagreeing with itself. It counts runs that
+// CARRY a held cell, answered or not, so it now says so. What is waiting on a
+// person is the banner below, and that number comes from the queue.
+/* copy(G) */
 const summary = (total: number, healed: number, held: number) =>
   total === 0
     ? t('runs.summary.none')
-    : `${total} run${total === 1 ? '' : 's'} · ${healed} healed · ${held} held`;
+    : `${total} run${total === 1 ? '' : 's'} · ${healed} healed · ${held} with a held cell`;

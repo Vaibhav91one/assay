@@ -3,6 +3,7 @@
 import { getDb } from 'assay/store';
 import * as schema from 'assay/engine/store/schema';
 import { and, desc, eq, gte, isNull } from 'drizzle-orm';
+import { waitingCount } from './queue.js';
 
 /**
  * What is waiting for a person's attention, newest first.
@@ -29,7 +30,7 @@ export interface Notice {
 
 const WINDOW_DAYS = 7;
 
-export async function notices(limit = 12): Promise<Notice[]> {
+async function allNotices(): Promise<Notice[]> {
   const db = getDb();
   const since = new Date(Date.now() - WINDOW_DAYS * 86_400_000);
 
@@ -112,7 +113,14 @@ export async function notices(limit = 12): Promise<Notice[]> {
       text: open
         ? `${short(e.targetId)} broke on ${e.field}, from run ${e.openedRun}`
         : `${short(e.targetId)} recovered on ${e.field} at run ${e.closedRun}`,
-      href: '/runs',
+      // The run the sentence NAMES, not the list of every run there has ever
+      // been. A notice that says "broke from run 412" and then lands on a
+      // table of four hundred rows has made the reader do the lookup itself,
+      // and on a busy instance run 412 is not on the first page of it.
+      // `closedRun ?? openedRun` IS `open ? opened : closed` -- `open` is
+      // defined as `closedRun === null` three lines up -- and it is the form
+      // that cannot produce `/runs/null` if that ever stops being true.
+      href: `/runs/${e.closedRun ?? e.openedRun}`,
       at: null,
       outstanding: open,
     });
@@ -125,15 +133,40 @@ export async function notices(limit = 12): Promise<Notice[]> {
       // Named by run: the same target and field heal repeatedly, and without
       // the run number consecutive rows looked like the list repeating itself.
       text: `${short(h.target)} moved and was found again on ${h.field}, run ${h.run}`,
-      href: `/runs`,
+      href: `/runs/${h.runId}`,
       at: h.at as Date,
       outstanding: false,
     });
   }
 
-  return out
-    .sort((a, b) => Number(b.outstanding) - Number(a.outstanding) || when(b.at) - when(a.at))
-    .slice(0, limit);
+  return out.sort(
+    (a, b) => Number(b.outstanding) - Number(a.outstanding) || when(b.at) - when(a.at),
+  );
+}
+
+/** The rows to draw, newest first, cut to what a popover can hold. */
+export async function notices(limit = 12): Promise<Notice[]> {
+  return (await allNotices()).slice(0, limit);
+}
+
+/**
+ * The bell, in one read: the rows AND the number on the badge.
+ *
+ * The badge used to be `outstandingCount(notices(12))` -- outstanding items
+ * counted off a list that had already been cut to twelve rows, so an instance
+ * with forty held cells wore a badge saying twelve while the rail beside it
+ * said forty. The held-cell portion now comes from `waitingCount()`, the same
+ * uncapped count the rail, Home and /runs read, and only the other kinds are
+ * counted off the list -- from the FULL list, not the twelve rows drawn, or
+ * an open break would vanish from the number the moment thirteen decisions
+ * pushed it off the panel.
+ */
+export async function activity(limit = 12): Promise<{ items: Notice[]; count: number }> {
+  const [all, waiting] = await Promise.all([allNotices(), waitingCount()]);
+  return {
+    items: all.slice(0, limit),
+    count: waiting + all.filter((n) => n.outstanding && n.kind !== 'decision').length,
+  };
 }
 
 /** The badge. Outstanding only -- history is not a number anyone must act on. */

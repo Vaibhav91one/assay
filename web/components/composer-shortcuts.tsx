@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Braces, ChevronDown, Eye, Globe, Sparkles, Telescope, Zap, type LucideIcon,
 } from 'lucide-react';
-import { SHORTCUTS, type ShortcutId } from '@/lib/composer-menu';
+import { SHORTCUTS, visibleShortcuts, type ShortcutId } from '@/lib/composer-menu';
 
 /**
  * Which mode the composer is in, as a dropdown.
@@ -82,7 +82,12 @@ export function ComposerShortcuts({
     return () => { document.removeEventListener('mousedown', shut); document.removeEventListener('keydown', esc); };
   }, [open]);
 
+  // `SHORTCUTS`, not the filtered list: a conversation carried in with a mode
+  // that is no longer offered still has to render its own label rather than
+  // silently reading "Mode".
   const current = SHORTCUTS.find((s) => s.id === selected) ?? null;
+  // What the menu OFFERS. Two of the six ship; see `visibleShortcuts`.
+  const shown = visibleShortcuts();
   const look = current ? LOOK[current.id] : null;
 
   return (
@@ -117,7 +122,7 @@ export function ComposerShortcuts({
           style={{ transformOrigin: 'top left' }}
           className="motion-pop-in absolute left-0 top-[calc(100%+8px)] z-30 w-[240px] overflow-hidden rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] p-[6px] shadow-[var(--shadow-elevation-floating)]"
         >
-          {SHORTCUTS.map((shortcut) => {
+          {shown.map((shortcut) => {
             const { Icon, tone } = LOOK[shortcut.id];
             return (
               <button

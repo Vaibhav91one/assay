@@ -36,6 +36,44 @@ export interface RunTarget {
  * stale link must not aim a button at a different site than the one named.
  */
 export async function runTarget(slug?: string | null): Promise<RunTarget | null> {
+  const bySlug = await grouped();
+
+  const pick = slug ?? (bySlug.size === 1 ? [...bySlug.keys()][0]! : null);
+  const found = pick === null ? undefined : bySlug.get(pick);
+  if (pick === null || !found) return null;
+
+  return { slug: pick, fields: found.fields, paused: found.paused, workers: await workersUp() };
+}
+
+/**
+ * Every scraper this instance watches, for a control that can offer a choice.
+ *
+ * The paragraph at the top of this file is still true and this does not soften
+ * it: nothing here PICKS a scraper. Two scrapers and no name given used to draw
+ * no control at all, so the commonest action on the product -- ask for a run --
+ * was reachable from Home and from a run detail and nowhere else, and an
+ * instance watching four pages had it nowhere but Schedule. Offering all four
+ * and letting a person press one is not a guess with a side effect; it is the
+ * same refusal, moved from "no button" to "say which".
+ *
+ * Ordered by slug, like `runTarget`'s query, so the rows do not shuffle between
+ * renders. `workersUp()` is read ONCE for the whole list rather than per row:
+ * it is a fact about the database, not about a scraper.
+ */
+export async function runTargets(): Promise<RunTarget[]> {
+  const [bySlug, workers] = await Promise.all([grouped(), workersUp()]);
+  return [...bySlug].map(([slug, f]) => ({ slug, fields: f.fields, paused: f.paused, workers }));
+}
+
+/**
+ * Target rows folded to one entry per scraper.
+ *
+ * A target row is one FIELD (`{slug}__{field}`), so counting rows counts fields
+ * and grouping them is what makes "a scraper" exist at all. Null `next_run_at`
+ * on every row IS pause -- one row with a date is enough to make the scraper
+ * live -- so `paused` starts true and is cleared, never accumulated.
+ */
+async function grouped(): Promise<Map<string, { fields: number; paused: boolean }>> {
   const rows = await getDb()
     .select({ id: schema.targets.targetId, nextRunAt: schema.targets.nextRunAt })
     .from(schema.targets)
@@ -50,10 +88,5 @@ export async function runTarget(slug?: string | null): Promise<RunTarget | null>
     if (r.nextRunAt !== null) seen.paused = false;
     bySlug.set(s, seen);
   }
-
-  const pick = slug ?? (bySlug.size === 1 ? [...bySlug.keys()][0]! : null);
-  const found = pick === null ? undefined : bySlug.get(pick);
-  if (pick === null || !found) return null;
-
-  return { slug: pick, fields: found.fields, paused: found.paused, workers: await workersUp() };
+  return bySlug;
 }
