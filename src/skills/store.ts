@@ -1,25 +1,30 @@
-// Which skills the operator has said yes to.
+// Which page sources the operator has said yes to.
 //
-// A FILE, NOT A TABLE, and for the same reason `src/connectors/config.ts` is a
-// file: the chat-session feature owns the schema this wave and is adding a
-// conversations table, so a competing migration from here would be two branches
-// writing 0005. This holds no secret and no user data -- it is a list of ids the
-// operator ticked -- so a 0600 JSON file beside the connector config is the
-// whole requirement.
+// READ ONLY SINCE THE SKILLS SCREEN WENT. `enable()` and `disable()` lived here
+// to serve one caller -- `web/app/(app)/skills/actions.ts` -- and that screen
+// was removed as superseded by `/library`. Keeping two exported writers with no
+// writer left is how a module rots, so the write path went with the screen and
+// the file is now what the operator hands Assay rather than what a browser
+// causes Assay to write.
 //
-// IT HOLDS IDS AND NOTHING ELSE. There is no config blob per skill and no slot
-// for one. A skill's credential lives in the environment and is read by the code
-// that uses it; this file records consent, which is a different fact and the
-// only one a browser is allowed to change. Writing "enabled" is therefore not a
-// write of anything sensitive, and reading it back cannot disclose anything.
+// The consent gate itself is NOT removed, and must not be. `./page.ts` reaches
+// a fallback source only when the id is in this file AND the credential is in
+// the environment, and those are two separate facts on purpose: a key sitting
+// in a shell is not permission to send someone's traffic to a third party. To
+// turn Firecrawl on, write the file (or point ASSAY_SKILLS at one):
+//
+//   echo '{"enabled":["firecrawl"]}' > data/skills.json
+//
+// A FILE, NOT A TABLE, for the same reason `src/connectors/config.ts` is a
+// file: it holds no secret and no user data -- it is a list of ids -- so a JSON
+// file beside the connector config is the whole requirement.
 //
 // An unknown id is DROPPED on read rather than kept. A build that removes a
-// skill should not leave the store quietly re-enabling it if the id ever comes
+// source should not leave the store quietly re-enabling it if the id ever comes
 // back, and a hand-edited file naming something that does not exist should not
 // become an error the operator has to find.
 
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { readFile } from 'node:fs/promises';
 import { skillById } from './index.js';
 
 export const STORE_PATH = (): string => process.env.ASSAY_SKILLS || 'data/skills.json';
@@ -41,32 +46,4 @@ export async function enabled(): Promise<string[]> {
     ? (parsed as { enabled: unknown[] }).enabled
     : [];
   return ids.filter((v): v is string => typeof v === 'string' && Boolean(skillById(v)));
-}
-
-/** Turn one on. Refuses an id this build does not have. Idempotent. */
-export async function enable(id: string): Promise<string[]> {
-  const skill = skillById(id);
-  if (!skill) throw new Error(`no skill "${id}"`);
-  // `always` is not a choice and must not become a stored one: a row written
-  // here could later be removed, and the removal would read as "the operator
-  // turned off fetching". `stateOf` reports it on regardless.
-  if (skill.always) return enabled();
-  const now = await enabled();
-  return write(now.includes(id) ? now : [...now, id]);
-}
-
-/** Turn one off. Removing what is not there is not an error. */
-export async function disable(id: string): Promise<string[]> {
-  return write((await enabled()).filter((v) => v !== id));
-}
-
-async function write(ids: string[]): Promise<string[]> {
-  const path = STORE_PATH();
-  await mkdir(dirname(path), { recursive: true });
-  // 0600 to match the connector config beside it. Nothing secret is in here,
-  // but a file the browser can cause to be written is a file worth keeping to
-  // the owner, and two files in `data/` with different modes invite the question
-  // of which rule is the real one.
-  await writeFile(path, `${JSON.stringify({ enabled: ids }, null, 2)}\n`, { mode: 0o600 });
-  return ids;
 }

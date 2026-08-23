@@ -5,7 +5,8 @@
 // IS the password, and anyone holding it can post as you. So the read path
 // reports PRESENCE and nothing else -- no value, no prefix, no masked tail, no
 // hostname. `describe()` is the only exported reader, and it cannot return a
-// secret because it never receives one.
+// secret because it never receives one. The same rule covers the environment
+// token `describe()` now also reports: a variable NAME and a boolean.
 //
 // APP-DESIGN 6b: "the key is the user's own, shown by presence only."
 //
@@ -96,12 +97,60 @@ export type ConnectorConfig = {
   discord: z.infer<typeof DiscordConfig>;
 };
 
+/**
+ * The API token a kind reads from the ENVIRONMENT, as opposed to the delivery
+ * credential it stores in this file. Null for kinds that have no such token.
+ *
+ * Bright Data is the only one, and it is the reason this field exists. There
+ * are two unrelated Bright Data mechanisms and this module only ever knew about
+ * one of them:
+ *
+ *   BRIGHTDATA_API_TOKEN, in the environment -- lets ASSAY CALL BRIGHT DATA.
+ *     `tools/bd-heal.ts` and `tools/bd-status.sh` read it.
+ *   the delivery secret, in this file -- lets BRIGHT DATA CALL ASSAY, by
+ *     POSTing a scraped page to `/api/v1/connectors/brightdata/delivery/:target`.
+ *
+ * Settings, `/api/v1/connectors`, `assay connectors list` and the
+ * `assay_connectors` MCP tool all read `describe()`, and all four therefore
+ * used to report "not configured" at an operator who had a working token in
+ * `.env` and was actively using Bright Data. Every statement they made was
+ * true; together they were misleading, which is the failure class this product
+ * refuses -- and it is the same bug that was fixed on the sign-in screen the
+ * same week, where a credential was reported unset because one process's
+ * environment was checked instead of the capability.
+ *
+ * The fix is here rather than on the screen ON PURPOSE. Four readers route
+ * through `describe()`; patching the one the report named would have left the
+ * other three saying the old thing, and two surfaces disagreeing about one
+ * credential is the bug, not the symptom.
+ */
+const TOKEN_VAR: Record<Kind, string | null> = {
+  brightdata: 'BRIGHTDATA_API_TOKEN',
+  // Slack and Discord have no second half: an incoming-webhook URL is the whole
+  // credential and it lives in this file. A row claiming an absent environment
+  // variable for them would be the same lie pointed the other way.
+  slack: null,
+  discord: null,
+};
+
 /** What a reader is allowed to know. Deliberately has nowhere to put a secret. */
 export interface Presence {
   kind: Kind;
+  /** The DELIVERY credential is in this file. Says nothing about the token. */
   configured: boolean;
   updated_at: string | null;
+  /**
+   * The API token, by NAME and by presence. Never its value, not masked, not a
+   * prefix -- there is nowhere in this shape to put one.
+   */
+  token: { var: string; set: boolean } | null;
 }
+
+/** Presence of the environment half, for one kind. A name and a boolean. */
+const tokenPresence = (kind: Kind): Presence['token'] => {
+  const name = TOKEN_VAR[kind];
+  return name ? { var: name, set: Boolean(process.env[name]) } : null;
+};
 
 const Stored = z.object({
   kind: z.enum(KINDS),
@@ -138,7 +187,7 @@ export async function put<K extends Kind>(kind: K, config: unknown): Promise<Pre
   // 0600 at create time rather than a chmod afterwards: between the two there
   // is a window in which the secret is world-readable.
   await writeFile(path, JSON.stringify(all, null, 2), { mode: 0o600 });
-  return { kind, configured: true, updated_at };
+  return { kind, configured: true, updated_at, token: tokenPresence(kind) };
 }
 
 /** Forget one connector. Idempotent: removing what is not there is not an error. */
@@ -148,7 +197,7 @@ export async function remove(kind: Kind): Promise<Presence> {
   const path = CONFIG_PATH();
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, JSON.stringify(all, null, 2), { mode: 0o600 });
-  return { kind, configured: false, updated_at: null };
+  return { kind, configured: false, updated_at: null, token: tokenPresence(kind) };
 }
 
 /**
@@ -169,5 +218,6 @@ export async function describe(kind?: Kind): Promise<Presence[]> {
     kind: k,
     configured: Boolean(all[k]),
     updated_at: all[k]?.updated_at ?? null,
+    token: tokenPresence(k),
   }));
 }

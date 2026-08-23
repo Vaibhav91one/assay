@@ -50,7 +50,6 @@ const COMMANDS: Command[] = [
   { name: 'held', hint: 'every field currently holding a cell', href: '/fields?show=held' },
   { name: 'runs', hint: 'what every scraper did last', href: '/runs' },
   { name: 'fields', hint: 'everything under watch', href: '/fields' },
-  { name: 'skills', hint: 'what Assay can be given, and what each one needs', href: '/skills' },
 ];
 
 export function Composer({

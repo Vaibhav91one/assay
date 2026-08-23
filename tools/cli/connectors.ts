@@ -29,8 +29,18 @@ command
   .description('Which connectors are configured. Never what they are configured with.')
   .action(async () => {
     for (const p of await describe()) {
+      // The token half first, and only for a kind that has one. Bright Data's
+      // two mechanisms point in opposite directions and printing only the
+      // delivery one said "not configured" at operators who were using it.
+      if (p.token) {
+        line(
+          `  ${`${p.kind} token`.padEnd(24)} ${p.token.set ? 'set' : 'not set'}` +
+            `  (${p.token.var}; lets Assay call ${p.kind})`,
+        );
+      }
       line(
-        `  ${p.kind.padEnd(11)} ${p.configured ? 'configured' : 'not configured'}` +
+        `  ${(p.token ? `${p.kind} delivery` : p.kind).padEnd(24)}` +
+          ` ${p.configured ? 'configured' : 'not configured'}` +
           (p.updated_at ? `  (${p.updated_at})` : ''),
       );
     }

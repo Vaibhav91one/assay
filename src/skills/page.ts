@@ -21,8 +21,9 @@
 // existing install -- this does exactly what the two copies did: read the newest
 // committed capture for `corpus://`, and otherwise one ordinary fetch with the
 // same user-agent. A connector is consulted only AFTER a direct request has
-// already failed. That is the same shape the product already describes for
-// Bright Data ("fetches pages that refuse a plain request"), and it means
+// already failed. Firecrawl is the only fallback wired here -- Bright Data
+// reaches Assay the other way round, by POSTing a delivery to
+// `src/connectors/brightdata.ts`, and nothing in this file calls it. It means
 // enabling one cannot change what happens on a page that was working, cannot
 // route traffic somewhere the operator did not expect, and cannot cost money on
 // a page a plain request can read.
@@ -326,7 +327,7 @@ export async function fetchHtml(url: string, enabledIds?: readonly string[]): Pr
 
     const ids = enabledIds ?? (await enabled());
     const fallbacks = SKILLS
-      .filter((s) => s.provides === 'page-source' && !s.always && SOURCES[s.id])
+      .filter((s) => !s.always && SOURCES[s.id])
       .filter((s) => stateOf(s, ids).active);
     for (const s of fallbacks) {
       try {

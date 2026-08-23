@@ -58,8 +58,51 @@ suite('a stored secret never comes back out', () => {
     await put('slack', { url: SLACK_URL });
     const [row] = await describe('slack');
     expect(row!.configured).toBe(true);
-    expect(Object.keys(row!).sort()).toEqual(['configured', 'kind', 'updated_at']);
+    // An exhaustive key list, not a spot check: the property is that there is
+    // NOWHERE in this shape to put a secret, and a field added without thinking
+    // about that has to come here and be argued for.
+    expect(Object.keys(row!).sort()).toEqual(['configured', 'kind', 'token', 'updated_at']);
     expect(JSON.stringify(row)).not.toContain('hooks.slack.com');
+    // Slack's webhook URL IS its whole credential; it has no environment half,
+    // and inventing a variable for it would be a row telling an operator to set
+    // something nothing reads.
+    expect(row!.token).toBeNull();
+  });
+
+  // Bright Data is two unrelated mechanisms pointing in opposite directions: a
+  // token in the environment that lets ASSAY CALL BRIGHT DATA, and a delivery
+  // secret in this file that lets BRIGHT DATA CALL ASSAY. `describe()` reported
+  // only the second, so Settings, `/api/v1/connectors`, `assay connectors list`
+  // and the MCP tool all said "not configured" to an operator who had a working
+  // token in `.env` and was actively using Bright Data. Every one of those
+  // statements was true; together they were misleading.
+  it('reports both halves of Bright Data, and neither as a value', async () => {
+    const saved = process.env.BRIGHTDATA_API_TOKEN;
+    const CANARY = 'bd-token-that-must-never-be-rendered';
+    try {
+      delete process.env.BRIGHTDATA_API_TOKEN;
+      const [absent] = await describe('brightdata');
+      expect(absent!.token).toEqual({ var: 'BRIGHTDATA_API_TOKEN', set: false });
+      expect(absent!.configured, 'no delivery webhook has been written').toBe(false);
+
+      process.env.BRIGHTDATA_API_TOKEN = CANARY;
+      const [present] = await describe('brightdata');
+      // The whole point: a token set and a webhook absent is a real, reportable
+      // state, and it is not "nothing is connected".
+      expect(present!.token).toEqual({ var: 'BRIGHTDATA_API_TOKEN', set: true });
+      expect(present!.configured).toBe(false);
+      // Presence only, on the new field as on every other one.
+      expect(JSON.stringify(present)).not.toContain(CANARY);
+
+      // And every reader that goes through describe() says both, so two
+      // surfaces cannot disagree about one credential again.
+      const mcp = JSON.stringify(await (await loadTools()).assay_connectors!.run({}));
+      expect(mcp).toContain('BRIGHTDATA_API_TOKEN');
+      expect(mcp).not.toContain(CANARY);
+    } finally {
+      if (saved === undefined) delete process.env.BRIGHTDATA_API_TOKEN;
+      else process.env.BRIGHTDATA_API_TOKEN = saved;
+    }
   });
 
   it('the write response echoes nothing back', async () => {

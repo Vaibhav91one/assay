@@ -59,7 +59,6 @@ const COPY = {
   'nav.fields': 'Fields',
   'nav.schedule': 'Schedule',
   'nav.library': 'Library',
-  'nav.skills': 'Skills',
   'nav.settings': 'Settings',
   'nav.newScrape': 'New scrape',
   'nav.chats': 'CHATS',
@@ -80,7 +79,6 @@ const COPY = {
   'title.compare': 'Compare · Assay',
   'title.schedule': 'Schedule · Assay',
   'title.settings': 'Settings · Assay',
-  'title.skills': 'Skills · Assay',
   'title.explain': 'Where did this number come from? · Assay',
   'title.signIn': 'Sign in · Assay',
   'title.configureKey': 'Configure your key · Assay',
@@ -365,21 +363,6 @@ const COPY = {
   'schedule.dialog.cadence': 'cadence',
   'schedule.dialog.fields': 'fields',
   'schedule.dialog.after': 'after this',
-
-  // -- skills ----------------------------------------------------------------
-  'skills.heading': 'Skills',
-  'skills.builtIn': 'built in',
-  'skills.turnOff': 'Turn off',
-  'skills.enable': 'Enable…',
-  'skills.cancel': 'Cancel',
-  'skills.review.heading': 'Before you turn this on',
-  'skills.status.cannotRun': 'cannot run here',
-  'skills.status.inUse': 'in use',
-  'skills.status.waiting': 'waiting on a key',
-  'skills.status.off': 'off',
-  'skills.needs.set': 'set in this process’s environment',
-  'skills.needs.notSet': 'not set',
-  'skills.docs': 'docs',
 
   // -- notifications ---------------------------------------------------------
   'notifications.waiting': 'WAITING ON YOU',

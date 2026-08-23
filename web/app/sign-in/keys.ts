@@ -123,8 +123,19 @@ export const readKeys = (auth: ModelAuth): KeyPresence[] => [
     doc: '/docs/credentials#model-access',
   },
   {
+    // WHAT THIS ROW USED TO SAY, AND WHY IT WAS WRONG. "Fetches pages that
+    // refuse a plain request" is Firecrawl's job, and it is the row below.
+    // Nothing in this build fetches a page through Bright Data --
+    // `src/skills/page.ts` has exactly one fallback source and it is Firecrawl.
+    // Bright Data goes the other way: it POSTs a scraped page to Assay, which
+    // is the DELIVERY WEBHOOK on Settings and is not this variable. The token
+    // is what lets Assay call Bright Data's own API, which is what
+    // `tools/bd-heal.ts` and `tools/bd-status.sh` do with it. Naming the
+    // direction is the whole point -- an operator cannot tell these two apart
+    // from the word "connected", and a panel that collapsed them is what told
+    // someone using Bright Data that Bright Data was not connected.
     name: 'Bright Data',
-    buys: 'Fetches pages that refuse a plain request.',
+    buys: 'Lets Assay call Bright Data. Bright Data delivering to Assay is a separate webhook, set on Settings.',
     vars: ['BRIGHTDATA_API_TOKEN'],
     set: Boolean(process.env.BRIGHTDATA_API_TOKEN),
     via: process.env.BRIGHTDATA_API_TOKEN ? 'with a token set in this process’s environment' : '',
