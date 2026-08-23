@@ -1,0 +1,248 @@
+---
+title: API reference
+description: The 28 routes under /api/v1, the key that opens them, and the error envelope every one of them returns.
+---
+
+Assay's consumer surface is 28 route files under `web/app/api/v1/`. Almost every
+one is a four-line re-export of a handler in `src/`, so the logic is testable
+without booting Next and the route file has nowhere to hide a second code path.
+
+Everything here requires a key. Nothing here is public.
+
+---
+
+## Authenticating
+
+```
+Authorization: Bearer ak_<48 hex characters>
+```
+
+A bearer header and nothing else. Not a query parameter — that would put the
+credential in access logs and browser history.
+
+Mint a key from the repository:
+
+```bash
+npm run apikey -- "warehouse etl"                    # unscoped, all access
+npm run apikey -- "warehouse etl" --read mattel,ikea # read-only, two targets
+npm run apikey -- "operator" --write mattel          # read and write, one target
+```
+
+It prints the key **once**. Only a SHA-256 hash is stored, so a leaked database
+is not a set of working credentials and there is no way to read a key back out of
+Assay. Comparison is constant-time even though the hash is the indexed lookup.
+
+### Scopes
+
+A key is either **scoped** or **legacy unscoped**.
+
+- **Unscoped** (`--read`/`--write` omitted) keeps the original all-access
+  behaviour, unchanged.
+- **Scoped** carries an access level (`read` or `write`) and a list of targets.
+  A `GET` or `HEAD` needs `read`; anything else needs `write`.
+
+A scoped key **fails closed**. `src/api/keys.ts` resolves which target a request
+addresses — from the path, from `?target=`, from a proof id looked up through
+`field_runs`, from an episode id, or from the `target` inside a posted contract's
+YAML — and if it cannot tie the request to one of the key's targets, the answer
+is `403`. A route with no target boundary at all is also a `403` for a scoped
+key, deliberately: a key restricted to one shop should not be able to read a
+list of every shop.
+
+---
+
+## The error envelope
+
+Two shapes, and only two.
+
+```json
+{ "error": "not_found", "detail": "No row with that id." }
+```
+
+```json
+{ "error": "invalid_config", "issues": ["url: invalid_string — must be an https URL on one of: hooks.slack.com"] }
+```
+
+`error` is a stable code you can branch on. `detail` is a sentence for a human.
+`issues` appears instead of `detail` when the fault is a body that failed
+validation and there is more than one thing wrong with it.
+
+<Callout title="Why the issues array carries codes as well as messages">
+  Zod 4's messages come from a locale table that Next's production bundle drops,
+  so the same rejected body reads `must be an https URL on one of: …` in process
+  and a bare `Invalid input` over HTTP. `code` and `path` are structural and
+  always survive, so they lead and the message trails. A 400 nobody can debug is
+  a 400 that gets retried for ever.
+</Callout>
+
+### Status codes
+
+| Code | When |
+|---|---|
+| `200` | Done. `201` on `POST /api/v1/targets`. |
+| `400` | The query string or body did not parse. `error` is `bad_request`, `invalid`, `invalid_request` or `unparseable`. |
+| `401` | No bearer, or a key that does not verify. Carries `WWW-Authenticate: Bearer`. |
+| `403` | A valid key without authority over this target or this capability. |
+| `404` | No such row, proof, episode, contract version — or an unknown connector kind. |
+| `405` | The path exists and that method does not. Next answers this; no handler is reached. |
+| `409` | The state refuses: `already_exists`, `has_history`, `not_schedulable`, `already_resolved`, `not_held`. |
+| `422` | Well-formed and unacceptable: an invalid contract, or a selector that matched no element. |
+| `500` | `{"error":"internal"}` and nothing more. Driver errors name tables and columns, so they go to the server log and never to you. |
+| `502` | `unreachable` — Assay tried to fetch the page you asked it to watch and could not. |
+
+---
+
+## Worked examples
+
+### Standing field health
+
+```bash
+curl -sH "Authorization: Bearer $ASSAY_KEY" \
+  'http://localhost:3000/api/v1/health-fields?target=mattel'
+```
+
+```json
+{
+  "vocabularies": {
+    "fragility_grade": ["sturdy", "serviceable", "fragile", "insufficient_history"],
+    "drift_state": ["steady", "drifting", "settled", "never_agreed", "insufficient_history"]
+  },
+  "fields": [ … ]
+}
+```
+
+The closed vocabularies ship **with** the data. A consumer branching on these
+words needs to know what the whole set is, and an undeclared enum is how a fifth
+state reaches production as an unhandled string.
+
+This is *not* `/api/health`. That route is the deployment liveness probe and
+answers a completely different question; the two share a word and nothing else.
+
+### Provenance for one cell
+
+```bash
+curl -sH "Authorization: Bearer $ASSAY_KEY" \
+  http://localhost:3000/api/v1/explain/pr_9f21c4a8b3
+```
+
+Returns the run, the capture, the anchors, whether the value was healed, and —
+for a held cell — the ranked candidate list the gate abstained on. A proof id
+that does not exist is:
+
+```json
+{ "error": "not_found", "detail": "No proof with that id." }
+```
+
+### A request a scoped key refuses
+
+```bash
+# key minted with --read mattel
+curl -sH "Authorization: Bearer $ASSAY_KEY" \
+  'http://localhost:3000/api/v1/runs?target=ikea'
+```
+
+```json
+{ "error": "forbidden", "detail": "This API key does not grant access to that target or capability." }
+```
+
+---
+
+## The routes
+
+### Reading what happened
+
+| Method | Path | Returns |
+|---|---|---|
+| `GET` | `/api/v1/rows/:proof` | The warehouse join for one published row, rebuilt from the store. |
+| `GET` | `/api/v1/explain/:proof` | Full provenance for one cell. |
+| `GET` | `/api/v1/held` | Every held cell. `?target=` |
+| `GET` | `/api/v1/runs` | Run history, newest first. `?target=` `?limit=` (default 50, max 500) |
+| `GET` | `/api/v1/queue` | Open decisions the gate refused to make. `?target=` `?limit=` |
+| `GET` | `/api/v1/health-fields` | Standing per-field fragility and drift. `?target=` |
+
+### Decisions
+
+| Method | Path | Body / query |
+|---|---|---|
+| `POST` | `/api/v1/decisions/resolve` | `{ "proof", "resolution" }` — the resolution is one of `first`, `second`, `empty`, `neither`. Strict: an unrecognised key is a `400`, not a silent success. |
+| `POST` | `/api/v1/decisions/undo` | `{ "proof" }` |
+
+### Targets
+
+| Method | Path | Body / query |
+|---|---|---|
+| `GET` | `/api/v1/targets` | `?target=` |
+| `POST` | `/api/v1/targets` | `{ "url", "fields", "cadence"?, "id"? }` — 1–12 fields, cadence defaults `6h`. **`201`** on success. `url` may also be `corpus://<id>` or `brightdata://gd_<dataset>/<encoded url>`. |
+| `GET` | `/api/v1/targets/:target` | One target with its run and held counts. |
+| `DELETE` | `/api/v1/targets/:target` | Only ever a target that never ran; one with history is `409 has_history`. |
+| `POST` | `/api/v1/targets/:target/pause` | Keeps the cadence and the whole history. |
+| `POST` | `/api/v1/targets/:target/resume` | Due **immediately**, not one cadence from now. |
+
+### Contracts
+
+| Method | Path | Body / query |
+|---|---|---|
+| `GET` | `/api/v1/contracts/:target` | `?history=1` for every version, `?version=<n>` for one. |
+| `POST` | `/api/v1/contracts` | `{ "yaml": "<the contract>" }` and nothing else. A contract that parses but does not validate is `422 invalid_contract` with an `issues` array. |
+
+### Blast radius and retraction
+
+| Method | Path | Body / query |
+|---|---|---|
+| `GET` | `/api/v1/blast` | `?target=` `?field=` `?at_run=` `?from_run=` — the affected window plus the re-scrape list. |
+| `GET` | `/api/v1/blast/retraction` | The list, without filing it. Same query as `/blast`; `?format=csv` returns the CSV as an attachment rather than JSON. |
+| `POST` | `/api/v1/blast/retraction` | File it. `{ …the same query fields, "exported"? }` — `exported` records that the list left the building. |
+
+### Brakes
+
+| Method | Path | Body / query |
+|---|---|---|
+| `GET` | `/api/v1/brake` | Every field currently held by a brake. `?target=` |
+| `POST` | `/api/v1/brake` | Clear one — the field name has to be typed out. A `POST` and not a `DELETE`: the brake becomes inactive and keeps a record of who made it so. |
+
+### Reports
+
+| Method | Path | Body / query |
+|---|---|---|
+| `GET` | `/api/v1/reports/incidents` | `?target=` `?limit=` |
+| `GET` | `/api/v1/reports/incidents/:episode` | `?format=md` returns the sendable Markdown file itself — the artefact *is* a file someone forwards. |
+| `GET` | `/api/v1/reports/diff` | `?target=` `?field=` `?limit=` — value history with three states: changed, unchanged, **withheld**. A withheld run carries no value and no before/after pair. |
+| `GET` | `/api/v1/reports/digest` | `?since=` `?until=`, both required. Neither is defaulted: "this week" is a decision the caller makes, and inventing one would put a made-up period in a document whose whole claim is that it invents nothing. `since` after `until` is a `400`. |
+
+### Connectors
+
+| Method | Path | Body / query |
+|---|---|---|
+| `GET` | `/api/v1/connectors` | Presence for all three kinds. Never a value — the response shape has nowhere to put one. |
+| `PUT` | `/api/v1/connectors/:kind` | `{ "url" }` for `slack`/`discord`, `{ "secret" }` for `brightdata`. Unknown kind is `404`. |
+| `DELETE` | `/api/v1/connectors/:kind` | Idempotent. |
+| `POST` | `/api/v1/connectors/test` | One test message to every configured chat connector. |
+| `POST` | `/api/v1/connectors/:kind/delivery/:target` | **The one route that does not take an Assay key.** Bright Data POSTs a scraped page here and authenticates with the delivery secret Assay minted. It is not unauthenticated: it is authenticated as a different principal, and it fails closed when no connector is configured. |
+
+### AI
+
+Every route here is read-only by construction, and none of them accepts a value.
+
+| Method | Path | Body / query |
+|---|---|---|
+| `GET` | `/api/v1/ai/status` | Whether a model is configured. Assay runs with none; every AI path degrades to the non-AI behaviour. |
+| `POST` | `/api/v1/ai/nominate` | `{ "proof", "candidate_index", "model_pick"?, "tau"?, "delta"? }` — scores a candidate **index** against the ranked list persisted when the gate abstained. Returns `decision: null`. `404` for an unknown proof, `409 not_held` for a cell that is not held. |
+| `POST` | `/api/v1/ai/discover` | `{ "intent", "targets" }` — orders candidate targets by operator intent, and always says in `source` whether the ordering came from a model or from word overlap. |
+
+<Callout type="warn" title="A candidate index, never a string">
+  `POST /api/v1/ai/nominate` takes an index into a list Assay already built and
+  already scored. It does not re-fetch the page — that would score a *different*
+  page and be silently wrong — and there is no route anywhere on this surface
+  that lets a caller hand Assay a value to publish. The equivalent restriction on
+  the [MCP server](/docs/mcp) is enforced at boot.
+</Callout>
+
+---
+
+## Where to go next
+
+<Cards>
+  <Card title="The CLI" href="/docs/cli" description="assay run, worker, explain, and the feature commands." />
+  <Card title="MCP" href="/docs/mcp" description="The same store, over a protocol an agent speaks." />
+  <Card title="Glossary" href="/docs/glossary" description="What quarantined, benign_tie and proof id mean in a response body." />
+</Cards>
