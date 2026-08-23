@@ -34,6 +34,7 @@ import { timingSafeEqual, createHash } from 'node:crypto';
 import { getDb, sql, targets, eq } from '../store/index.js';
 import { secretFor, issueDetail } from './config.js';
 import { ingestPage, pageDigest, type TargetRow } from './ingest.js';
+import { recordToHtml, isRecord } from './record.js';
 import type { Announcement } from './deliver.js';
 
 /** How long after acceptance an identical body is treated as a replay. */
@@ -143,7 +144,27 @@ export function decodeDelivery(raw: Buffer): unknown[] {
   return r.data;
 }
 
-/** The page bytes out of the first row that carries them. */
+/**
+ * The page bytes out of the first row that carries them, or the first row
+ * rendered as one.
+ *
+ * HTML FIRST AND UNCHANGED. A Scraper Studio collector that emits page bytes
+ * under one of `HTML_KEYS` takes exactly the path it took before this second
+ * branch existed, byte for byte -- the precedence is not a preference, it is
+ * the guarantee that adding a source did not move an existing one.
+ *
+ * THE SECOND BRANCH CLOSES A REAL HOLE. Bright Data's 1000+ PREBUILT scrapers
+ * return structured JSON records, never page HTML
+ * (https://docs.brightdata.com/datasets/scrapers/overview, fetched 2026-08-23).
+ * Pointed at this endpoint they carried no `HTML_KEYS` key and were refused
+ * 422 -- so the vendor's own headline product could not reach the receiver
+ * built for that vendor. A record is now rendered through `recordToHtml` and
+ * ingested like any other document; `./record.ts` argues why that is a real
+ * document and not a wrapper, and the engine is never told which branch ran.
+ *
+ * A row that is neither is still refused, and the message now names both ways
+ * in rather than only the one.
+ */
 export function pageFrom(rows: unknown[]): string {
   for (const row of rows) {
     for (const k of HTML_KEYS) {
@@ -151,11 +172,15 @@ export function pageFrom(rows: unknown[]): string {
       if (typeof v === 'string' && v.length > 0) return v;
     }
   }
+  for (const row of rows) {
+    if (isRecord(row)) return recordToHtml(row);
+  }
   throw new DeliveryError(
     422,
     'no_page',
-    `no row carried page bytes under any of: ${HTML_KEYS.join(', ')}. ` +
-      'Configure the collector to emit the page HTML under one of those keys.',
+    `no row carried page bytes under any of: ${HTML_KEYS.join(', ')}, ` +
+      'and no row was a structured record. Configure the collector to emit the page HTML ' +
+      'under one of those keys, or deliver a prebuilt scraper’s records unchanged.',
   );
 }
 

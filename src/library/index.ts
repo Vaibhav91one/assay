@@ -33,11 +33,17 @@
 // docs/LIMITATIONS.md 5 is why: tau 0.60 and delta 0.16 are fitted to that
 // corpus and there is no evidence they transfer.
 
-// The ONLY import, and it must stay that way -- `../contracts/tiers.js` imports
-// nothing at all, which is the property it was split out for. These screens are
-// client components, so anything heavier reached from here lands in the browser
-// bundle. The YAML serialiser lives in `./contract.js`, cheerio in `./analyse.js`.
+// THE IMPORT RULE, WHICH IS A PROPERTY AND NOT A COUNT. Everything reached from
+// here must itself import nothing, because these screens are client components
+// and anything heavier lands in the browser bundle. `../contracts/tiers.js` was
+// split out to have that property; `../connectors/record.js` has it too, and
+// carries the one function that has to agree between the renderer and the
+// priors written against it -- see `scraperTracker`. Two modules that import
+// nothing weigh what one does. The YAML serialiser stays in `./contract.js`,
+// cheerio in `./analyse.js`, and zod and `fetch` stay in
+// `../connectors/scrapers.js`, which a server component imports directly.
 import { TIER_THRESHOLDS, type Tier } from '../contracts/tiers.js';
+import { keyClass, fieldNameFor } from '../connectors/record.js';
 
 /**
  * How to recognise one value on a page.
@@ -76,10 +82,11 @@ export const GROUPS = [
   { id: 'shops', label: 'Shops' },
   { id: 'code', label: 'Code' },
   { id: 'reference', label: 'Reference' },
+  { id: 'scrapers', label: 'Prebuilt scrapers' },
   { id: 'other', label: 'Anything else' },
 ] as const;
 
-export interface Tracker {
+interface TrackerBase {
   id: string;
   /** Which shelf. Must be a `GROUPS` id or the card renders nowhere. */
   group: string;
@@ -94,6 +101,34 @@ export interface Tracker {
   cadence: string;
   fields: readonly TrackerField[];
 }
+
+/**
+ * WHERE THE BYTES COME FROM, and the only thing a caller has to branch on.
+ *
+ * A `page` tracker is the original seven: the operator pastes a link and Assay
+ * reads that page with its own guarded fetcher. A `scraper` tracker asks Bright
+ * Data's prebuilt scraper for the dataset named by `datasetId` and renders the
+ * JSON record it answers with into a document -- see `../connectors/record.ts`.
+ *
+ * A REAL DISCRIMINATOR RATHER THAN AN OPTIONAL FIELD, because everything after
+ * the fetch is genuinely identical and the difference has to be impossible to
+ * forget: `analyse` takes HTML and does not know which produced it, `approve`
+ * calls the same `build`, and the engine sees one shape of run. The only code
+ * that may look at `kind` is the code that decides how to get the bytes.
+ */
+export type Tracker =
+  | (TrackerBase & { kind: 'page' })
+  | (TrackerBase & {
+    kind: 'scraper';
+    /**
+     * Bright Data's dataset_id, or null for the card that takes one from the
+     * operator. Null is not "unknown" -- it is "the operator will say", and the
+     * screens branch on it to ask.
+     */
+    datasetId: string | null;
+    /** The page the dataset_id and the example record were read off. */
+    docUrl: string;
+  });
 
 // --- shared priors ----------------------------------------------------------
 // Written once because three trackers want the same idea of "a price". The
@@ -121,6 +156,7 @@ const NOT_VERSION = String.raw`[$£€¥₹]|\bUSD\b|\bEUR\b|\bGBP\b|%|\b(?:MB|K
 export const TRACKERS: readonly Tracker[] = [
   {
     id: 'amazon',
+    kind: 'page',
     group: 'shops',
     name: 'Amazon',
     subheading: 'Price and stock on one product page.',
@@ -158,6 +194,7 @@ export const TRACKERS: readonly Tracker[] = [
   },
   {
     id: 'github',
+    kind: 'page',
     group: 'code',
     name: 'GitHub',
     subheading: 'The newest release on a repository.',
@@ -193,6 +230,7 @@ export const TRACKERS: readonly Tracker[] = [
   },
   {
     id: 'pypi',
+    kind: 'page',
     group: 'code',
     name: 'PyPI',
     subheading: 'The current version of a Python package.',
@@ -220,6 +258,7 @@ export const TRACKERS: readonly Tracker[] = [
   },
   {
     id: 'arxiv',
+    kind: 'page',
     group: 'reference',
     name: 'arXiv',
     subheading: 'The newest preprint in a category.',
@@ -247,6 +286,7 @@ export const TRACKERS: readonly Tracker[] = [
   },
   {
     id: 'mdn',
+    kind: 'page',
     group: 'reference',
     name: 'MDN Web Docs',
     subheading: 'When a reference page was last revised.',
@@ -270,6 +310,7 @@ export const TRACKERS: readonly Tracker[] = [
   },
   {
     id: 'wikipedia',
+    kind: 'page',
     group: 'reference',
     name: 'Wikipedia',
     subheading: 'When an article was last edited.',
@@ -288,6 +329,7 @@ export const TRACKERS: readonly Tracker[] = [
   },
   {
     id: 'any',
+    kind: 'page',
     group: 'other',
     name: 'Any site',
     subheading: 'Assay looks for a price, stock, a version and a date.',
@@ -325,6 +367,117 @@ export const TRACKERS: readonly Tracker[] = [
     ],
   },
 ];
+
+// --- prebuilt scrapers -------------------------------------------------------
+//
+// A scraper tracker's priors are GENERATED rather than written, and that is the
+// difference in kind between these and the seven above. A page tracker's
+// `select` is a judgement about somebody else's markup -- `a-color-price` is
+// what tells Amazon's selling price from its list price, and it was found by
+// looking. A record has no markup to judge: `../connectors/record.ts` writes the
+// document, so the identity of every leaf is known exactly, and a hand-written
+// hint here would be a second copy of a rule that already lives there.
+//
+// WHICH MEANS THE `select` IS NOT A SEED HERE, IT IS EXACT. `keyClass` is
+// imported from the renderer rather than reimplemented, so the two cannot drift:
+// if the class scheme ever changes, these priors change with it in the same
+// commit. Everything after the first run is unchanged -- the hint is spent at
+// baseline and the fingerprint scorer and the gate take over, exactly as the
+// note at the top of this file says.
+
+/**
+ * One field, watching one key of the rendered record.
+ *
+ * The label is the key PATH as the vendor sent it -- `current_company.name`,
+ * not "Current company name". Prettifying it would put Assay's word for the
+ * field on the screen instead of Bright Data's, and when the vendor renames a
+ * key the operator needs to be reading the name that changed.
+ *
+ * `\S` as the pattern, because nothing is known about the shape of the value
+ * and inventing a shape is how a prior starts refusing real data. The identity
+ * carries this field entirely, which is the same thing Amazon's `#availability`
+ * does and for the same reason: the wording is what changes.
+ *
+ * The band is `candidatesOn`'s own 2..200, so a field is offered exactly when
+ * the engine could see it -- there is no width here that promises more than the
+ * enumeration behind it delivers.
+ */
+function scraperField(path: string, name: string): TrackerField {
+  return {
+    name,
+    label: path,
+    // `strict` throughout: a wrong value from a scraper is published under a
+    // vendor's name against a real person's profile, and there is no page an
+    // operator can eyeball to catch it. docs/LIMITATIONS.md 5 still applies --
+    // tau and delta are fitted to the recall corpus and this is not that corpus.
+    policy: 'strict',
+    match: {
+      pattern: String.raw`\S`,
+      // Anchored at the end, against `tag#id.class` -- so `k-followers` does not
+      // also match `k-followers-dup-1`, and `k-following` does not match at all.
+      // The slug is `[a-z0-9-]` only, so there is nothing in it to escape.
+      select: `\\.${keyClass(path)}$`,
+      tags: ['dd'],
+      minLen: 2,
+      maxLen: 200,
+    },
+  };
+}
+
+/** The shape `scraperTracker` needs. Structural, so `PrebuiltScraper` satisfies
+ *  it without this module importing `../connectors/scrapers.js` -- which pulls
+ *  zod and `fetch` and is the reason for the import rule at the top. */
+export interface ScraperEntry {
+  id: string;
+  datasetId: string | null;
+  name: string;
+  site: string;
+  placeholder: string;
+  fields: readonly string[];
+  docUrl: string;
+}
+
+/**
+ * A prebuilt scraper as a tracker.
+ *
+ * `fields` OVERRIDES the entry's own list, and that parameter is the whole
+ * reason this is a function rather than a table. The two named scrapers have a
+ * documented example record, so their keys are known before anything is
+ * fetched. The operator-supplied-dataset card has no documented record at all,
+ * so its fields can only come from the record its first Run actually returned --
+ * and that read happens server-side, on every call, which is what keeps the
+ * proposal from being trusted back out of the browser.
+ *
+ * `daily` rather than the 6h the shop trackers use: every run of one of these
+ * is a billable request to Bright Data, and a default that quietly spends four
+ * times as much is not a default to pick on the operator's behalf.
+ */
+export function scraperTracker(
+  entry: ScraperEntry,
+  // A path that cannot become a column name is dropped rather than carried
+  // through to be refused by `createTarget` at the last step -- `FieldName` is
+  // `/^[a-z][a-z0-9_]{0,30}$/`, so `current_company.name` is watched as
+  // `current_company_name` and a key beginning with a digit is not watched.
+  fields: readonly { path: string; name: string }[] = entry.fields.flatMap((path) => {
+    const name = fieldNameFor(path);
+    return name ? [{ path, name }] : [];
+  }),
+): Tracker {
+  return {
+    id: entry.id,
+    kind: 'scraper',
+    group: 'scrapers',
+    name: entry.name,
+    subheading: entry.datasetId
+      ? `What Bright Data's scraper returns for one ${entry.site} link.`
+      : 'Paste a Bright Data dataset ID and a link.',
+    placeholder: entry.placeholder,
+    cadence: 'daily',
+    fields: fields.map((f) => scraperField(f.path, f.name)),
+    datasetId: entry.datasetId,
+    docUrl: entry.docUrl,
+  };
+}
 
 export const trackerById = (id: string): Tracker | undefined =>
   TRACKERS.find((t) => t.id === id);
