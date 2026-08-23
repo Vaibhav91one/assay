@@ -8,6 +8,7 @@ import {
   CircleAlert, Eye, Hammer, Shapes, Split, ChevronRight, PencilLine, RotateCw, Scissors,
 } from 'lucide-react';
 import { turn, type TraceEvent } from '@/lib/chat-stream';
+import { t } from '@/lib/copy';
 import { Button } from '@/components/button';
 import { DEFAULT_MODEL } from 'assay/engine/agent/models';
 import {
@@ -60,7 +61,7 @@ export interface OpenConversation {
 }
 
 export function Watch({
-  waiting, auth, conversation, stats,
+  waiting, auth, conversation, stats, bench,
 }: {
   waiting: number;
   auth: string;
@@ -68,6 +69,16 @@ export function Watch({
   conversation: OpenConversation | null;
   /** The statistics band, rendered on the server. Shown only in the empty state. */
   stats: React.ReactNode;
+  /**
+   * `results/bench.json`, counted on the server. Null when the file is absent,
+   * and the strip is then not drawn at all -- see `web/lib/bench.ts`.
+   *
+   * The shape is spelled out rather than imported from `@/lib/bench`, for the
+   * reason `web/components/run-action.tsx` gives at length: that module reads
+   * `node:fs`, and a type-only import of a server module is one refactor away
+   * from a value import that breaks the browser bundle.
+   */
+  bench: { cases: number; wrong: number; naiveWrong: number } | null;
 }) {
   // Seeded from the server ONCE. After that this component owns the transcript:
   // it is the thing that appended the turn, and re-reading the row it just wrote
@@ -333,11 +344,49 @@ export function Watch({
       <div className="flex flex-1 flex-col">
         <div className="flex flex-1 items-center justify-center px-[32px] py-[48px]">
           <div className="flex w-full max-w-[700px] flex-col items-center gap-[28px]">
-            <h1 className="display-28 flex flex-wrap items-center justify-center gap-[12px] text-center text-[var(--text-primary)]">
-              What should
-              <Image src="/brand/assay-mark.svg" alt="" width={26} height={26} className="inline-block rounded-[7px]" />
-              Assay watch?
-            </h1>
+            <div className="flex flex-col items-center gap-[12px]">
+              {/* An h2, not an h1. The top bar above this already renders the
+                  screen's h1 -- "Home", or the conversation's own title -- and
+                  Home was the only screen in the product with two, so its
+                  heading outline named the page twice. The display class stays
+                  exactly as it was: this is still the biggest thing on the
+                  screen, it has simply stopped claiming to be the page name. */}
+              <h2 className="display-28 flex flex-wrap items-center justify-center gap-[12px] text-center text-[var(--text-primary)]">
+                {/* The `{' '}` is not decoration and is not what draws the gap
+                    -- `gap-[12px]` does that. JSX drops the newline between a
+                    text node and the element after it, so the DOM text read
+                    "What shouldAssay watch?": what a screen reader announced,
+                    what a find-in-page missed, and what any copy of this line
+                    pasted anywhere. A trailing space at the end of a flex
+                    item's line box is not drawn, so nothing moves. */}
+                What should{' '}
+                <Image src="/brand/assay-mark.svg" alt="" width={26} height={26} className="inline-block rounded-[7px]" />
+                Assay watch?
+              </h2>
+              {/* WHAT THIS IS, under what it asks for. The hero named the box's
+                  job and never the product's claim, so the first screen of the
+                  app was the one place that did not say what Assay is. The
+                  sign-in page's own words, through the same two keys rather
+                  than a second copy of the sentence free to drift from it. */}
+              <p className="body-14 text-center text-[var(--text-secondary)]">
+                {t('signIn.headline.before')} {t('signIn.headline.after')}
+              </p>
+              {/* And the evidence for it, counted from `results/bench.json` on
+                  every render -- never a number typed into this file. A claim
+                  with a link to the working is a claim; the same sentence with
+                  hardcoded digits is a slogan. Absent entirely when the file
+                  is not in the checkout. */}
+              {bench && (
+                /* copy(G) */
+                <Link
+                  href="/docs"
+                  className="caption-12 text-center text-[var(--text-muted)] transition-colors duration-[var(--duration-tint)] hover:text-[var(--text-secondary)]"
+                >
+                  {bench.cases} benchmark cases · {bench.wrong} wrong values published · a naive
+                  scraper would have published {bench.naiveWrong}
+                </Link>
+              )}
+            </div>
             {composer}
             {manualPath}
             {!manual && <StartFrom waiting={waiting} />}
@@ -871,6 +920,9 @@ function Built({
   proposal: Proposal;
 }) {
   const held = built.fields.filter((f) => f.status === 'quarantined');
+  // The baseline run every cell in the table below was recorded on. Same value
+  // the row header prints, so the link and the label cannot name different runs.
+  const baselineRun = built.fields[0]?.baseline_run ?? null;
 
   return (
     <div className="motion-fade-up flex w-full flex-col gap-[16px]">
@@ -920,7 +972,16 @@ function Built({
       </div>
 
       <div className="flex gap-[16px] pt-[4px]">
-        <Link href="/runs" className="meta-13 text-[var(--semantic-link)]">See the run ›</Link>
+        {/* THE run, not the list of them. This said "See the run" and went to
+            /runs, which on an instance with four scrapers is a table where the
+            run just made is one row among four hundred. The id is right here on
+            the baseline cell the table above draws. */}
+        <Link
+          href={baselineRun === null ? '/runs' : `/runs/${baselineRun}`}
+          className="meta-13 text-[var(--semantic-link)]"
+        >
+          See the run ›
+        </Link>
         {held.length > 0 && (
           <Link href="/decisions" className="meta-13 text-[var(--semantic-link)]">
             Decide the held {held.length === 1 ? 'field' : 'fields'} ›

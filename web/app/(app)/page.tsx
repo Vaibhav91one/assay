@@ -2,8 +2,9 @@ import type { Metadata } from 'next';
 import { modelAuth } from 'assay/engine/ai/model';
 import { TopBar } from '@/components/top-bar';
 import { RunStrip } from '@/components/run-strip';
+import { bench } from '@/lib/bench';
 import { homeStats } from '@/lib/home';
-import { openDecisions } from '@/lib/queue';
+import { waitingCount } from '@/lib/queue';
 import { getConversation } from 'assay/engine/store/conversations';
 import { Watch } from './watch';
 
@@ -30,9 +31,11 @@ export default async function HomePage({
   const { c } = await searchParams;
   const wanted = c && /^\d+$/.test(c) ? Number(c) : null;
 
-  const [stats, queue, conversation] = await Promise.all([
+  const [stats, waiting, conversation] = await Promise.all([
     homeStats(),
-    openDecisions(),
+    // The same `cache()`d count the rail reads, so the badge on the left and
+    // the row in the middle of this screen cannot disagree.
+    waitingCount(),
     // A `?c=` naming a conversation that is not there resolves to null and the
     // screen is Home. Better than a 404 on a link to something deleted.
     wanted == null ? Promise.resolve(null) : getConversation(wanted),
@@ -54,7 +57,7 @@ export default async function HomePage({
           the contract's word for "this screen offers the control itself". */}
       <TopBar title={conversation?.title ?? 'Home'} scraper={conversation?.scraperSlug ?? undefined} />
       <Watch
-        waiting={queue.length}
+        waiting={waiting}
         auth={auth}
         conversation={
           conversation && {
@@ -68,6 +71,10 @@ export default async function HomePage({
         // component reading the store, and the client only decides whether the
         // screen still has room for it.
         stats={<StatsBand stats={stats} />}
+        // Read on the server, off `results/bench.json`. Numbers, not a node:
+        // three integers cross the boundary rather than markup, and the hero
+        // decides how to say them. Null when the file is not in the checkout.
+        bench={bench()}
       />
     </>
   );
