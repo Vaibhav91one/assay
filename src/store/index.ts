@@ -95,6 +95,13 @@ export async function recordRun({
       pageSha: result.event.capture_sha256 ?? null,
     }).returning({ runId: schema.runs.runId });
 
+    // A blocked response is a run-level fact about the fetch, not an observed
+    // field. Writing a degraded `field_runs` row would make reports, history,
+    // and exports treat the provider's interstitial as a value-bearing page.
+    // The capture and run above are retained for proof; the field is absent
+    // because it was never seen, not quarantined because it broke.
+    if (!result.observed) return run!.runId;
+
     const field = result.event.field;
     await tx.insert(schema.fieldRuns).values({
       runId: run.runId,
@@ -356,6 +363,7 @@ export async function historyFor(targetId: string, limit = 6) {
     SELECT r.run_id, r.status, r.page_bytes, fr.value IS NULL AS is_null, fr.run_id IS NOT NULL AS evaluated
     FROM runs r LEFT JOIN field_runs fr ON fr.run_id = r.run_id
     WHERE r.target_id = ${targetId} AND r.page_bytes IS NOT NULL
+      AND r.status <> 'blocked'
     ORDER BY r.run_id DESC LIMIT ${limit}`);
   // A LEFT JOIN, not an inner one: a skipped run has no field_runs row, and an
   // inner join would silently drop it -- leaving robustZ a series with holes in

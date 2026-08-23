@@ -45,14 +45,21 @@ export interface DetectInput {
   anchors?: Record<string, unknown>;
   anchorsBefore?: Record<string, unknown> | null;
   pageBytes?: number | null;
+  /** The response body before parsing or script removal. Block markers live in
+   *  exactly the bytes a normal extractor quite reasonably throws away. */
+  receivedHtml?: string | null;
+  baselinePageBytes?: number | null;
 }
 
 /** Attribution. Not every signal means the selector broke -- see below. */
-export type Cause = 'ok' | 'semantic_drift' | 'wrong_value' | 'selector_break' | 'unknown';
+export type Cause = 'ok' | 'blocked' | 'semantic_drift' | 'wrong_value' | 'selector_break' | 'unknown';
 
 export interface Detection {
   field: string;
+  /** False for a blocked fetch: no field was observed, so there is no field
+   *  break to heal, queue, or use as a new baseline. */
   broken: boolean;
+  blocked: boolean;
   cause: Cause;
   signals: string[];
   context: string[];
@@ -72,6 +79,48 @@ export function robustZ(series: readonly number[], x: number): RobustZ {
 }
 
 const PLACEHOLDERS = new Set(['', '-', '--', 'n/a', 'na', 'null', 'undefined', 'tbd', '0', 'none']);
+
+/**
+ * Identify a response body that is a provider or verification interstitial.
+ *
+ * The narrowness is intentional. We do NOT match the words `captcha`, `access
+ * denied`, `Cloudflare`, or `sign in` on their own: documentation, incident
+ * reports, and ordinary account pages contain all four. Even Cloudflare's
+ * challenge-platform script is not sufficient -- the measured IKEA pages load
+ * it as ordinary site furniture -- so it needs the interstitial title too.
+ * Generic login/challenge language is accepted only on a body under 40% of the
+ * stored healthy page. A false
+ * positive here makes a watched field silently disappear, which is worse than
+ * one missed block becoming a visible quarantine.
+ */
+export function detectBlockedPage(
+  html: string,
+  { baselineBytes = null }: { baselineBytes?: number | null } = {},
+): string | null {
+  if (/<title[^>]*>\s*just a moment(?:\.\.\.)?\s*<\/title>/i.test(html)
+      && /\/cdn-cgi\/challenge-platform\/(?:h\/|scripts\/jsd\/main\.js)/i.test(html)) {
+    return 'cloudflare_challenge_script';
+  }
+  if (/<title[^>]*>\s*access to this page has been denied\s*<\/title>/i.test(html)
+      && /\bid=["']px-captcha["']/i.test(html)) {
+    return 'perimeterx_interstitial';
+  }
+  if (/captcha-delivery\.com\/captcha\//i.test(html) && /\bdatadome\b/i.test(html)) {
+    return 'datadome_challenge_script';
+  }
+
+  const short = baselineBytes != null && baselineBytes > 0 && html.length < baselineBytes * 0.4;
+  if (!short) return null;
+  if (/<title[^>]*>\s*sign in to continue\s*<\/title>/i.test(html)
+      && /<input\b[^>]*\btype=["']password["']/i.test(html)) {
+    return 'short_login_wall';
+  }
+  if (/(?:verify you are human|checking your browser)/i.test(html)
+      && /(?:captcha|challenge|cf-chl-)/i.test(html)) {
+    return 'short_verification_interstitial';
+  }
+  return null;
+}
 
 /** A value that is present but meaningless is a break, not a success. */
 export function isPlaceholder(v: unknown): boolean {
@@ -100,7 +149,25 @@ export function detect({
   // rate; only SHRINKAGE fires (a page that grows is content, a page that
   // loses a third of itself is a template failure or a block page).
   pageBytes = null,
+  receivedHtml = null,
+  baselinePageBytes = null,
 }: DetectInput): Detection {
+  const blockedReason = receivedHtml
+    ? detectBlockedPage(receivedHtml, { baselineBytes: baselinePageBytes })
+    : null;
+  if (blockedReason) {
+    return {
+      field,
+      broken: false,
+      blocked: true,
+      cause: 'blocked',
+      signals: [`fetch_blocked:${blockedReason}`],
+      context: [],
+      corroborated: false,
+      diagnosis: `${field}: observation withheld (fetch blocked: ${blockedReason})`,
+    };
+  }
+
   const signals: string[] = [];
 
   if (value === null || value === undefined) signals.push('value_missing');
@@ -198,6 +265,7 @@ export function detect({
   return {
     field,
     broken,
+    blocked: false,
     cause,
     signals,
     context,

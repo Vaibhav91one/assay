@@ -25,7 +25,9 @@ import { HELD_BECAUSE, heldBecause } from '../src/reports/vocabulary.js';
 
 import { tail, turnFailed, toMarkdown, type Turn } from '../src/store/conversation-log.js';
 
-import { menuAt, applyChoice, insertSigil } from '../web/lib/composer-menu.js';
+import {
+  SHORTCUTS, applyChoice, insertSigil, menuAt, shortcutMessage,
+} from '../web/lib/composer-menu.js';
 import { frames } from '../web/lib/chat-stream.js';
 
 // --- the leaf modules the browser imports -------------------------------------
@@ -100,6 +102,43 @@ describe('a held cell never gets an adjective the engine did not say', () => {
 });
 
 // --- the composer's keyboard model -------------------------------------------
+
+describe('composer shortcuts', () => {
+  it('offers exactly the six approved presentation modes', () => {
+    expect(SHORTCUTS.map((s) => s.label)).toEqual([
+      'Watch', 'Research', 'Build API', 'Automate', 'Compare locations', 'AI visibility',
+    ]);
+  });
+
+  it('adjusts the existing message string rather than creating a request shape', () => {
+    for (const shortcut of SHORTCUTS) {
+      expect(shortcutMessage('Keep my typed words', shortcut.id))
+        .toBe(`${shortcut.label}: Keep my typed words`);
+    }
+    expect(shortcutMessage('Keep my typed words', null)).toBe('Keep my typed words');
+  });
+
+  it('keeps the shortcut row free of navigation and preserves composer focus structurally', async () => {
+    const { readFile } = await import('node:fs/promises');
+    const src = await readFile(
+      new URL('../web/components/composer-shortcuts.tsx', import.meta.url),
+      'utf8',
+    );
+    expect(src).not.toMatch(/(?:useRouter|router\.|history\.|href=|<Link)/);
+    expect(src).toContain('type="button"');
+    expect(src).toContain('aria-pressed={selected === shortcut.id}');
+    expect(src).toContain('e.preventDefault()');
+
+    const composer = await readFile(
+      new URL('../web/app/(app)/composer.tsx', import.meta.url),
+      'utf8',
+    );
+    const selection = composer.slice(composer.indexOf('function selectShortcut'));
+    expect(selection).toContain('box.current?.focus()');
+    expect(selection).not.toContain('setText(');
+    expect(selection).not.toContain('router.');
+  });
+});
 
 describe('menuAt', () => {
   it('opens on a sigil at the start of the box', () => {

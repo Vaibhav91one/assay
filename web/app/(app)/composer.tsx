@@ -4,8 +4,12 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, AtSign, Check, ChevronDown, KeyRound, Slash, Terminal } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useGlide } from '@/components/motion/glide';
+import { ComposerShortcuts } from '@/components/composer-shortcuts';
 import { MODELS, MODEL_LABEL } from 'assay/engine/agent/models';
-import { menuAt, applyChoice, insertSigil, type Menu } from '@/lib/composer-menu';
+import {
+  SHORTCUTS, applyChoice, insertSigil, menuAt, shortcutMessage,
+  type Menu, type ShortcutId,
+} from '@/lib/composer-menu';
 import { sources as loadSources, type Source } from './watch-actions';
 
 /**
@@ -71,6 +75,7 @@ export function Composer({
   const [menu, setMenu] = useState<Menu | null>(null);
   const [active, setActive] = useState(0);
   const [sources, setSources] = useState<Source[] | null>(null);
+  const [mode, setMode] = useState<ShortcutId | null>(null);
   const router = useRouter();
 
   // Fetched when `@` is first typed, not at mount: a menu nobody opens should
@@ -128,9 +133,9 @@ export function Composer({
   }
 
   function send() {
-    const message = text.trim();
-    if (!message || busy) return;
-    onSubmit(message);
+    const written = text.trim();
+    if (!written || busy) return;
+    onSubmit(shortcutMessage(written, mode));
     setText('');
     setMenu(null);
     if (box.current) box.current.style.height = 'auto';
@@ -150,7 +155,8 @@ export function Composer({
           rows={2}
           value={text}
           disabled={busy}
-          placeholder="Paste a URL, or describe what you want to keep an eye on"
+          placeholder={SHORTCUTS.find((shortcut) => shortcut.id === mode)?.placeholder
+            ?? 'Paste a URL, or describe what you want to keep an eye on'}
           aria-label="What should Assay watch?"
           aria-expanded={menu != null}
           aria-controls={menu ? 'composer-menu' : undefined}
@@ -161,6 +167,8 @@ export function Composer({
           onBlur={() => setMenu(null)}
           onKeyDown={keyDown}
         />
+
+        <ComposerShortcuts selected={mode} onSelect={selectShortcut} />
 
         <div className="flex items-center gap-[10px] pt-[10px]">
           <Sigil icon={<AtSign size={14} strokeWidth={1.5} aria-hidden />} label="data source" onClick={() => insert('@')} />
@@ -202,6 +210,18 @@ export function Composer({
       el.setSelectionRange(caret, caret);
       setMenu(menuAt(value, caret));
     });
+  }
+
+  /**
+   * Change only the instruction layered over the text already in the box.
+   * `setText` is deliberately absent: choosing a mode is not editing. The
+   * microtask covers keyboard and touch activation, while the chip's prevented
+   * mousedown keeps pointer focus from leaving the textarea in the first place.
+   */
+  function selectShortcut(shortcut: ShortcutId) {
+    setMode(shortcut);
+    setMenu(null);
+    queueMicrotask(() => box.current?.focus());
   }
 }
 

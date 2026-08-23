@@ -18,6 +18,7 @@ import { z } from 'zod';
 import { load } from 'cheerio';
 import { createHash } from 'node:crypto';
 import { establishBaseline, runTarget, digest, type Baseline, type Evaluation } from '../runner.js';
+import { detectBlockedPage } from '../detect.js';
 import { pickTarget } from '../target.js';
 import { putCapture, getCapture, CAPTURE_DIR, type StoredCapture } from '../store/captures.js';
 import { openEpisode, closeEpisode } from '../api/webhooks.js';
@@ -211,23 +212,36 @@ export async function ingestPage({
   if (prior) {
     baseline = await rebuild(prior, target.targetId, c);
   } else {
-    // pickTarget is how a baseline is CHOSEN, once, from a page believed good.
-    // It is not how a later run READS the field -- that is `baseline.selector`,
-    // inside evaluate() -- so it is deliberately not consulted again below. A
-    // resolver that stops matching on a later page is a break for the engine to
-    // diagnose, not a reason to re-derive what "working" looked like.
-    const el = pickTarget($, c.resolver);
-    if (!el) {
-      throw new Error(
-        `no target element in the first page for ${target.targetId}/${c.field}, `
-        + 'and no baseline to hold it against',
-      );
+    const blocked = detectBlockedPage(html);
+    if (blocked) {
+      // Detection normally runs against a healthy baseline. On the first fetch
+      // there is no such thing yet, but a vendor-specific block signature is
+      // already enough to refuse the page. Use <html> only as a transient
+      // engine input so the ordinary run/proof path records what arrived; it is
+      // deliberately not assigned to `newBaseline`, regardless of whether the
+      // interstitial happens to contain a heading the field resolver likes.
+      const root = $('html').first()[0];
+      if (!root) throw new Error(`blocked first page for ${target.targetId} was not parseable HTML`);
+      baseline = establishBaseline({ $, el: root, field: c.field, expected: c.expected });
+    } else {
+      // pickTarget is how a baseline is CHOSEN, once, from a page believed good.
+      // It is not how a later run READS the field -- that is `baseline.selector`,
+      // inside evaluate() -- so it is deliberately not consulted again below. A
+      // resolver that stops matching on a later page is a break for the engine to
+      // diagnose, not a reason to re-derive what "working" looked like.
+      const el = pickTarget($, c.resolver);
+      if (!el) {
+        throw new Error(
+          `no target element in the first page for ${target.targetId}/${c.field}, `
+          + 'and no baseline to hold it against',
+        );
+      }
+      const golden = await putCapture(normalised);
+      baseline = establishBaseline({
+        $, el, field: c.field, expected: c.expected, goldenSha: golden.sha,
+      });
+      newBaseline = { capture: golden, selector: baseline.selector };
     }
-    const golden = await putCapture(normalised);
-    baseline = establishBaseline({
-      $, el, field: c.field, expected: c.expected, goldenSha: golden.sha,
-    });
-    newBaseline = { capture: golden, selector: baseline.selector };
   }
 
   const history = await historyFor(target.targetId);
@@ -245,7 +259,7 @@ export async function ingestPage({
   const result = await runTarget({
     // The bytes are already here, so the seam is satisfied by handing back the
     // parse. No branch inside the engine knows this happened.
-    fetchPage: () => ({ $ }),
+    fetchPage: () => ({ $, receivedHtml: html }),
     baseline,
     history,
     thresholds: c.thresholds ?? { tau: 0.6, delta: 0.16 },
@@ -282,7 +296,7 @@ export async function ingestPage({
   if (result.status.status === 'healed' && result.event.healed_to && capture) {
     newBaseline = { capture, selector: result.event.healed_to.selector };
   }
-  if (newBaseline) {
+  if (newBaseline && result.observed) {
     await setBaseline({
       targetId: target.targetId,
       field: baseline.field,
@@ -326,7 +340,7 @@ export async function ingestPage({
       runId,
     });
     episodeId = ep?.episodeId ?? null;
-  } else {
+  } else if (result.observed) {
     await closeEpisode({ targetId: target.targetId, field: baseline.field, runId });
   }
 

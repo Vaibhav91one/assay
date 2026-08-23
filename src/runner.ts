@@ -36,6 +36,9 @@ export interface Baseline {
   value: string | null;
   skeleton: string;
   anchors: Record<string, string | null>;
+  /** Parsed healthy page size. Used only to corroborate generic challenge
+   *  markers; vendor-specific markers do not need a size heuristic. */
+  pageBytes: number;
 }
 
 // TODO(types): the proof record's shape is defined by results/events.jsonl,
@@ -45,6 +48,8 @@ export type ProofEvent = Record<string, any>;
 
 export interface Evaluation {
   sample: { nullRate: number; pageBytes: number };
+  /** Whether the response contained an observation of this field at all. */
+  observed: boolean;
   gate: HealGateResult | null;
   event: ProofEvent;
   status: FieldVerdict;
@@ -120,6 +125,7 @@ export function establishBaseline({
     value: target.text,
     skeleton: skeletonHash($).hash,
     anchors: readAnchors($),
+    pageBytes: $.html().length,
   };
 }
 
@@ -139,6 +145,7 @@ export function evaluate({
   contract,
   healBlock = null,
   meta = {},
+  receivedHtml = null,
 }: {
   $: CheerioAPI;
   baseline: Baseline;
@@ -166,6 +173,7 @@ export function evaluate({
    */
   healBlock?: string | null;
   meta?: Record<string, any>;
+  receivedHtml?: string | null;
 }): Evaluation {
   const policy = contract ? thresholdsFor(contract, baseline.field) : null;
   const { tau, delta } = policy ?? thresholds;
@@ -183,6 +191,8 @@ export function evaluate({
     anchors: baseline.readAnchors($),
     anchorsBefore: baseline.anchors,
     pageBytes,
+    receivedHtml,
+    baselinePageBytes: baseline.pageBytes,
   });
 
   const base = {
@@ -203,9 +213,33 @@ export function evaluate({
 
   const sample = { nullRate: value == null ? 1 : 0, pageBytes };
 
+  if (diag.blocked) {
+    return {
+      sample,
+      observed: false,
+      gate: null,
+      event: {
+        ...base,
+        event: 'blocked',
+        diagnosis: diag.diagnosis,
+        attributed_cause: 'blocked',
+        signals: diag.signals,
+        decision: 'withheld',
+        reason: 'fetch_blocked',
+      },
+      // `degraded` is already part of the closed publication vocabulary and
+      // means the fetch could not support an observation. `quarantined` would
+      // falsely say the field broke and would put a block page in the heal
+      // queue, which is the exact state this branch exists to refuse.
+      status: { status: 'degraded', reason: 'fetch_blocked' },
+      publishedValue: null,
+    };
+  }
+
   if (!diag.broken) {
     return {
       sample,
+      observed: true,
       gate: null,
       event: { ...base, event: 'ok', decision: 'no_action',
         diagnosis: diag.diagnosis, attributed_cause: 'ok' },
@@ -241,6 +275,7 @@ export function evaluate({
 
   return {
     sample,
+    observed: true,
     gate: g,
     event: {
       ...base,
@@ -281,7 +316,10 @@ export async function runTarget({
   meta,
   proofId,
 }: {
-  fetchPage: () => Promise<{ $: CheerioAPI }> | { $: CheerioAPI };
+  fetchPage: () => Promise<{ $: CheerioAPI; receivedHtml?: string }> | {
+    $: CheerioAPI;
+    receivedHtml?: string;
+  };
   baseline: Baseline;
   history?: HistoryPoint[];
   thresholds: { tau: number; delta: number };
@@ -290,8 +328,11 @@ export async function runTarget({
   meta: Record<string, any>;
   proofId: unknown;
 }): Promise<Evaluation & { row: Record<string, unknown> }> {
-  const { $ } = await fetchPage();
-  const r = evaluate({ $, baseline, history, thresholds, contract, healBlock, meta });
+  const { $, receivedHtml } = await fetchPage();
+  const r = evaluate({
+    $, baseline, history, thresholds, contract, healBlock, meta,
+    receivedHtml: receivedHtml ?? null,
+  });
   const row = publishRow({
     values: { [baseline.field]: r.publishedValue },
     statuses: { [baseline.field]: r.status },

@@ -183,6 +183,43 @@ suite('the live path holds a page against the page it last worked on', () => {
 
     expect(await storedBaseline()).toEqual(first);
   });
+
+  it('records a blocked fetch without recording or advancing the field', async () => {
+    if (!dbUp) return;
+    await ingestPage({ target, html: page, via: 'test' });
+    const first = await storedBaseline();
+    const blocked = await readFile('test/fixtures/blocked/cloudflare.html', 'utf8');
+
+    const r = await ingestPage({ target, html: blocked, via: 'test' });
+
+    expect(r.result!.event.event).toBe('blocked');
+    expect(r.result!.observed).toBe(false);
+    expect(await storedBaseline()).toEqual(first);
+
+    const { rows } = await getDb().execute(sql`
+      SELECT r.status AS run_status, fr.run_id AS field_run
+      FROM runs r LEFT JOIN field_runs fr ON fr.run_id = r.run_id
+      WHERE r.run_id = ${r.runId}`);
+    expect(rows).toEqual([{ run_status: 'blocked', field_run: null }]);
+
+    // A provider outage neither opens a structural incident nor closes one
+    // that was already open. Both would turn fetch uncertainty into a claim
+    // about the field, just in opposite directions.
+    const { rows: episodes } = await getDb().execute(sql`
+      SELECT episode_id FROM episodes WHERE target_id = ${TARGET}`);
+    expect(episodes).toEqual([]);
+  });
+
+  it('does not establish a baseline from a blocked first fetch', async () => {
+    if (!dbUp) return;
+    const blocked = await readFile('test/fixtures/blocked/cloudflare.html', 'utf8');
+
+    const r = await ingestPage({ target, html: blocked, via: 'test' });
+
+    expect(r.result!.event.event).toBe('blocked');
+    expect(r.result!.observed).toBe(false);
+    expect(await storedBaseline()).toBeNull();
+  });
 });
 
 suite('the field is gone', () => {

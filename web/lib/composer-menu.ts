@@ -5,6 +5,31 @@
 // composer, and it is the part that breaks silently when someone types an email
 // address or pastes a URL with a path in it.
 
+export const SHORTCUTS = [
+  { id: 'watch', label: 'Watch', placeholder: 'Paste a URL, or describe what you want to keep an eye on' },
+  { id: 'research', label: 'Research', placeholder: 'Describe the question you want researched' },
+  { id: 'build-api', label: 'Build API', placeholder: 'Describe the web data you want kept available as an API' },
+  { id: 'automate', label: 'Automate', placeholder: 'Describe the verified condition and what should follow it' },
+  { id: 'compare-locations', label: 'Compare locations', placeholder: 'Describe what to compare, and in which countries' },
+  { id: 'ai-visibility', label: 'AI visibility', placeholder: 'Describe the brand, topic, and answers you want observed' },
+] as const;
+
+export type ShortcutId = (typeof SHORTCUTS)[number]['id'];
+
+/**
+ * Put the shortcut into the message channel the composer already owns.
+ *
+ * This returns one string because there must not be a second agent request
+ * shape hiding behind the chips. The readable prefix is also what the
+ * transcript records, so a later reader can see the instruction the agent was
+ * actually given rather than infer it from vanished client state.
+ */
+export function shortcutMessage(text: string, selected: ShortcutId | null): string {
+  if (!selected) return text;
+  const shortcut = SHORTCUTS.find((item) => item.id === selected);
+  return shortcut ? `${shortcut.label}: ${text}` : text;
+}
+
 /** Where the caret is, and what the menus need to know about it. */
 export interface Menu {
   sigil: '@' | '/';
