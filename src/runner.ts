@@ -261,7 +261,7 @@ export function evaluate({
     },
     // A held cell is quarantined, never filled. envelope.js enforces the null.
     status: healed
-      ? { status: 'healed' }
+      ? { status: 'healed', reason }
       : { status: 'quarantined', reason, held_since_run: meta.run },
     publishedValue: healed ? clean(g.fingerprint.text) : null,
   };

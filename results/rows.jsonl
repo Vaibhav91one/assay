@@ -2,73 +2,73 @@
 {"recall_title":"Recall & Safety Alerts","_assay":{"run":2,"proof":"pr_3582de8f5c542473","fields":{"recall_title":{"status":"live"}}}}
 {"recall_title":"Recall & Safety Alerts","_assay":{"run":3,"proof":"pr_d11ced4941227b5a","fields":{"recall_title":{"status":"live"}}}}
 {"recall_title":"Recall & Safety Alerts","_assay":{"run":4,"proof":"pr_43c2cd99011d1642","fields":{"recall_title":{"status":"live"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":5,"proof":"pr_81f38b991f3a0849","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":6,"proof":"pr_30d258886b5276f8","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":7,"proof":"pr_6bdcdc4fb2f269b3","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":8,"proof":"pr_fe6b541fdddd0b0b","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":9,"proof":"pr_695bc42bc82ad7ef","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":10,"proof":"pr_4e5ffae1856007ed","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":11,"proof":"pr_cce794f6f958ac55","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":12,"proof":"pr_18627d6144a0b75f","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":13,"proof":"pr_20ae6f7aafda3818","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":14,"proof":"pr_628378ce2e2fdda9","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":15,"proof":"pr_f7f7ffc2afad7dd4","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":16,"proof":"pr_fde236324c4dadfd","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":17,"proof":"pr_477021f7871c7de6","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":18,"proof":"pr_ff184c8c64f61a94","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":19,"proof":"pr_c2b35c11226faf0c","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":20,"proof":"pr_f1eb5c159dc413a5","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":21,"proof":"pr_c266f99c54738bf3","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":22,"proof":"pr_6ae4177c08a1ddac","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":23,"proof":"pr_3cfe93d1f63e38e8","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":24,"proof":"pr_c0c6a75b82370d1b","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":25,"proof":"pr_3abaece649d1ee95","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":26,"proof":"pr_0c7918c4d64f4d3d","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":27,"proof":"pr_d03b72c2cbc1a664","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":28,"proof":"pr_9e1f9028cd168142","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":29,"proof":"pr_67e1d06acb0c35e8","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":30,"proof":"pr_fc60f56eac8053d9","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Recall & Safety Alerts","_assay":{"run":31,"proof":"pr_a8f3339f48c50ccc","fields":{"recall_title":{"status":"healed"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":5,"proof":"pr_81f38b991f3a0849","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":6,"proof":"pr_30d258886b5276f8","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":7,"proof":"pr_6bdcdc4fb2f269b3","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":8,"proof":"pr_fe6b541fdddd0b0b","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":9,"proof":"pr_695bc42bc82ad7ef","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":10,"proof":"pr_4e5ffae1856007ed","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":11,"proof":"pr_cce794f6f958ac55","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":12,"proof":"pr_18627d6144a0b75f","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":13,"proof":"pr_20ae6f7aafda3818","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":14,"proof":"pr_628378ce2e2fdda9","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":15,"proof":"pr_f7f7ffc2afad7dd4","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":16,"proof":"pr_fde236324c4dadfd","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":17,"proof":"pr_477021f7871c7de6","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":18,"proof":"pr_ff184c8c64f61a94","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":19,"proof":"pr_c2b35c11226faf0c","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":20,"proof":"pr_f1eb5c159dc413a5","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":21,"proof":"pr_c266f99c54738bf3","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":22,"proof":"pr_6ae4177c08a1ddac","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":23,"proof":"pr_3cfe93d1f63e38e8","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":24,"proof":"pr_c0c6a75b82370d1b","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":25,"proof":"pr_3abaece649d1ee95","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":26,"proof":"pr_0c7918c4d64f4d3d","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":27,"proof":"pr_d03b72c2cbc1a664","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":28,"proof":"pr_9e1f9028cd168142","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":29,"proof":"pr_67e1d06acb0c35e8","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":30,"proof":"pr_fc60f56eac8053d9","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Recall & Safety Alerts","_assay":{"run":31,"proof":"pr_a8f3339f48c50ccc","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
 {"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":32,"proof":"pr_bc4d49496dc9e399","fields":{"recall_title":{"status":"live"}}}}
 {"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":33,"proof":"pr_56ed1bf25d975ea0","fields":{"recall_title":{"status":"live"}}}}
 {"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":34,"proof":"pr_d0168fc579768cd6","fields":{"recall_title":{"status":"live"}}}}
 {"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":35,"proof":"pr_9a35dbf44b6201ae","fields":{"recall_title":{"status":"live"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":36,"proof":"pr_94e324913b396760","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":37,"proof":"pr_fcde3e77505f078b","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":38,"proof":"pr_6e481546a9cd0801","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":39,"proof":"pr_a039344d184adda6","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":40,"proof":"pr_7207597affc227ce","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":41,"proof":"pr_482b18b9267ca0f7","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":42,"proof":"pr_43e4182008b5ac93","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":43,"proof":"pr_b8032787a42871d2","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":44,"proof":"pr_7a440e58caa9fa53","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":45,"proof":"pr_f37568cb07c8abf2","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":46,"proof":"pr_24b2e56676fe86de","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":47,"proof":"pr_db8472def82df648","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":48,"proof":"pr_6f6622aaabcfca15","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":49,"proof":"pr_2ea774ce9f6d6711","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":50,"proof":"pr_e402659c38905c6b","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":51,"proof":"pr_0be71771921b2b95","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":52,"proof":"pr_667c353e7fc9b6b8","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":53,"proof":"pr_62269715e2abd489","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":54,"proof":"pr_da73d3e23cf4112a","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":55,"proof":"pr_6732687f69f65f5d","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":56,"proof":"pr_982db59b48f06266","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":57,"proof":"pr_3e6ada5af676f7c1","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":58,"proof":"pr_a4f5e8d6c17e7c46","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":59,"proof":"pr_d6fe77ea2ed0fb7a","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":60,"proof":"pr_63f60031a5929ddd","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":61,"proof":"pr_c4b8a163f7894aaf","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":62,"proof":"pr_c7106d90b8045d1f","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":63,"proof":"pr_b82531a6fc1f1b1f","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":64,"proof":"pr_f44ebe4e7cb3c641","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":65,"proof":"pr_0a68174820f61550","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":66,"proof":"pr_fb473d37e0d1b916","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":67,"proof":"pr_5cf77f6926d81c0e","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":68,"proof":"pr_d2a4746b380d625e","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":69,"proof":"pr_f04037a16778fdb4","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":70,"proof":"pr_7449a581b4377fa1","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":71,"proof":"pr_583c3fa53babbaff","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":72,"proof":"pr_4286e5744a3c8054","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":73,"proof":"pr_e5fb3fbd97fface8","fields":{"recall_title":{"status":"healed"}}}}
-{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":74,"proof":"pr_ac6a5c79370b8274","fields":{"recall_title":{"status":"healed"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":36,"proof":"pr_94e324913b396760","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":37,"proof":"pr_fcde3e77505f078b","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":38,"proof":"pr_6e481546a9cd0801","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":39,"proof":"pr_a039344d184adda6","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":40,"proof":"pr_7207597affc227ce","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":41,"proof":"pr_482b18b9267ca0f7","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":42,"proof":"pr_43e4182008b5ac93","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":43,"proof":"pr_b8032787a42871d2","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":44,"proof":"pr_7a440e58caa9fa53","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":45,"proof":"pr_f37568cb07c8abf2","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":46,"proof":"pr_24b2e56676fe86de","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":47,"proof":"pr_db8472def82df648","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":48,"proof":"pr_6f6622aaabcfca15","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":49,"proof":"pr_2ea774ce9f6d6711","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":50,"proof":"pr_e402659c38905c6b","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":51,"proof":"pr_0be71771921b2b95","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":52,"proof":"pr_667c353e7fc9b6b8","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":53,"proof":"pr_62269715e2abd489","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":54,"proof":"pr_da73d3e23cf4112a","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":55,"proof":"pr_6732687f69f65f5d","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":56,"proof":"pr_982db59b48f06266","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":57,"proof":"pr_3e6ada5af676f7c1","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":58,"proof":"pr_a4f5e8d6c17e7c46","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":59,"proof":"pr_d6fe77ea2ed0fb7a","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":60,"proof":"pr_63f60031a5929ddd","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"A reminder about our 2016 Chest of Drawers recall","_assay":{"run":61,"proof":"pr_c4b8a163f7894aaf","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":62,"proof":"pr_c7106d90b8045d1f","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":63,"proof":"pr_b82531a6fc1f1b1f","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":64,"proof":"pr_f44ebe4e7cb3c641","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":65,"proof":"pr_0a68174820f61550","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":66,"proof":"pr_fb473d37e0d1b916","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":67,"proof":"pr_5cf77f6926d81c0e","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":68,"proof":"pr_d2a4746b380d625e","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":69,"proof":"pr_f04037a16778fdb4","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":70,"proof":"pr_7449a581b4377fa1","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":71,"proof":"pr_583c3fa53babbaff","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":72,"proof":"pr_4286e5744a3c8054","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":73,"proof":"pr_e5fb3fbd97fface8","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
+{"recall_title":"Chicco Polly Highchair Recall","_assay":{"run":74,"proof":"pr_ac6a5c79370b8274","fields":{"recall_title":{"status":"healed","reason":"clear_margin"}}}}
