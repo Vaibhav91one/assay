@@ -5,7 +5,7 @@ import { RunStrip } from '@/components/run-strip';
 import { bench } from '@/lib/bench';
 import { homeStats } from '@/lib/home';
 import { waitingCount } from '@/lib/queue';
-import { getConversation } from 'assay/engine/store/conversations';
+import { getConversation, listConversations } from 'assay/engine/store/conversations';
 import { Watch } from './watch';
 
 export const metadata: Metadata = { title: 'Assay' };
@@ -26,10 +26,20 @@ export const dynamic = 'force-dynamic';
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ c?: string }>;
+  searchParams: Promise<{ c?: string; target?: string }>;
 }) {
-  const { c } = await searchParams;
-  const wanted = c && /^\d+$/.test(c) ? Number(c) : null;
+  const { c, target } = await searchParams;
+  let wanted = c && /^\d+$/.test(c) ? Number(c) : null;
+
+  // `?target=<slug>` is the decisions screen's re-teach link: "neither
+  // candidate is right" means the field points at the wrong thing, and the
+  // place to say so is the conversation that built the scraper. Resolve the
+  // slug to that conversation; a scraper built without one falls back to
+  // plain Home, where the composer is.
+  if (wanted == null && target) {
+    const owned = (await listConversations()).find((s) => s.scraperSlug === target);
+    if (owned) wanted = owned.id;
+  }
 
   const [stats, waiting, conversation] = await Promise.all([
     homeStats(),

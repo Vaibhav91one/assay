@@ -81,11 +81,10 @@ export const actionVariants = cva(
          * same box. Green rather than `primary`'s orange because orange is the
          * one verb per screen and Home already spends it on New scrape.
          *
-         * White on #16a34a is 3.30:1 -- measured, not assumed. That clears
-         * WCAG's 3:1 for a user-interface component and does NOT clear 4.5:1
-         * for body text, which is the same reading `success` has carried since
-         * it shipped; the label is never the only signal, since the control
-         * also has a Play glyph and its own words.
+         * White on `--semantic-success` is 5.02:1 -- measured, not assumed,
+         * since the a11y override in globals.css moved the token to #15803d.
+         * That clears 4.5:1 for body text outright; the Play glyph and the
+         * words remain so the label is still never the only signal.
          */
         start:
           'press-row meta-12_5 [--action-gap:8px] gap-[var(--action-gap)] border border-[var(--semantic-success)] bg-[var(--semantic-success)] py-[8px] pl-[12px] pr-[14px] text-[var(--accent-on-primary)]',

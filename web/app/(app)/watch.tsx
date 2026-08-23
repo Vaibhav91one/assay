@@ -846,7 +846,10 @@ function ProposalView({
   const [built, setBuilt] = useState<Awaited<ReturnType<typeof build>> | null>(null);
   const [pending, start] = useTransition();
 
-  const unsure = p.fields.filter((f) => f.confidence !== 'high');
+  // The same mapping the chips use. `!== 'high'` here once called every
+  // medium-confidence field strict while its own chip said normal, four
+  // centimetres apart.
+  const unsure = p.fields.filter((f) => tierFor(f.confidence) === 'strict');
 
   if (built?.ok) return <Built built={built} proposal={p} />;
 
