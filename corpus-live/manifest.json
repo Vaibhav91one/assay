@@ -1,0 +1,29 @@
+[
+  {
+    "site": "chicco",
+    "timestamp": "2026-08-23T07:15:24.336Z",
+    "original": "https://www.chiccousa.com/child-safety/product-recalls/",
+    "digest": "0a3ade4371ccbebf07c09ad0b674958b04af8608f3820334d81cd4800ab996c9",
+    "file": "corpus-live/chicco/2026-08-23.html",
+    "bytes": 90410,
+    "zone": "cli_unlocker"
+  },
+  {
+    "site": "ikea",
+    "timestamp": "2026-08-23T07:15:17.555Z",
+    "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "digest": "538b697b26fff0e832f7d03ebeb1a059407cb5b18881bf18795aa331bbf3f924",
+    "file": "corpus-live/ikea/2026-08-23.html",
+    "bytes": 998180,
+    "zone": "cli_unlocker"
+  },
+  {
+    "site": "mattel",
+    "timestamp": "2026-08-23T07:15:13.913Z",
+    "original": "https://service.mattel.com/us/recall.aspx",
+    "digest": "c42dfb912d9f3cc2dbc96a36bfc0588f476a38e6745e06755ea3d71f77e5b5bc",
+    "file": "corpus-live/mattel/2026-08-23.html",
+    "bytes": 95576,
+    "zone": "cli_unlocker"
+  }
+]

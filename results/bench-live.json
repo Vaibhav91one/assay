@@ -1,0 +1,765 @@
+{
+  "arms": {
+    "naive": {
+      "correct": 11,
+      "wrong": 13,
+      "value_ok": 11,
+      "value_wrong": 13,
+      "abstain_right": 1,
+      "abstain_wrong": 1,
+      "n": 26
+    },
+    "plain": {
+      "correct": 19,
+      "wrong": 7,
+      "value_ok": 20,
+      "value_wrong": 6,
+      "abstain_right": 0,
+      "abstain_wrong": 0,
+      "n": 26
+    },
+    "gated": {
+      "correct": 16,
+      "wrong": 1,
+      "value_ok": 17,
+      "value_wrong": 0,
+      "abstain_right": 3,
+      "abstain_wrong": 6,
+      "n": 26
+    }
+  },
+  "byMutation": {
+    "wrapper_div": {
+      "label": "insert wrapper div",
+      "expect": "target",
+      "plain": {
+        "correct": 3,
+        "wrong": 0,
+        "value_ok": 3,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 3
+      },
+      "gated": {
+        "correct": 3,
+        "wrong": 0,
+        "value_ok": 3,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 3
+      }
+    },
+    "swap_tag": {
+      "label": "swap tag (h2 -> div, a -> span)",
+      "expect": "target",
+      "plain": {
+        "correct": 3,
+        "wrong": 0,
+        "value_ok": 3,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 3
+      },
+      "gated": {
+        "correct": 2,
+        "wrong": 0,
+        "value_ok": 2,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 1,
+        "n": 3
+      }
+    },
+    "strip_id": {
+      "label": "strip id and data attributes",
+      "expect": "target",
+      "plain": {
+        "correct": 3,
+        "wrong": 0,
+        "value_ok": 3,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 3
+      },
+      "gated": {
+        "correct": 3,
+        "wrong": 0,
+        "value_ok": 3,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 3
+      }
+    },
+    "translate_text": {
+      "label": "translate visible text",
+      "expect": "target",
+      "plain": {
+        "correct": 3,
+        "wrong": 0,
+        "value_ok": 3,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 3
+      },
+      "gated": {
+        "correct": 3,
+        "wrong": 0,
+        "value_ok": 3,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 3
+      }
+    },
+    "remove_field": {
+      "label": "remove the field entirely",
+      "expect": "none",
+      "plain": {
+        "correct": 0,
+        "wrong": 3,
+        "value_ok": 0,
+        "value_wrong": 3,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 3
+      },
+      "gated": {
+        "correct": 0,
+        "wrong": 0,
+        "value_ok": 0,
+        "value_wrong": 0,
+        "abstain_right": 3,
+        "abstain_wrong": 0,
+        "n": 3
+      }
+    },
+    "duplicate_similar": {
+      "label": "duplicate a near-identical decoy",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": 2,
+        "wrong": 1,
+        "value_ok": 2,
+        "value_wrong": 1,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 3
+      },
+      "gated": {
+        "correct": 0,
+        "wrong": 0,
+        "value_ok": 0,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 3,
+        "n": 3
+      }
+    },
+    "duplicate_longtail": {
+      "label": "decoy identical for 200 chars, divergent after",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": 1,
+        "wrong": 2,
+        "value_ok": 1,
+        "value_wrong": 2,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 3
+      },
+      "gated": {
+        "correct": 1,
+        "wrong": 0,
+        "value_ok": 1,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 2,
+        "n": 3
+      }
+    },
+    "combo_redesign": {
+      "label": "combo: wrapper + class rename + tag swap",
+      "expect": "target",
+      "plain": {
+        "correct": 2,
+        "wrong": 1,
+        "value_ok": 3,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 3
+      },
+      "gated": {
+        "correct": 2,
+        "wrong": 1,
+        "value_ok": 3,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 3
+      }
+    },
+    "rename_class": {
+      "label": "rename class",
+      "expect": "target",
+      "plain": {
+        "correct": 1,
+        "wrong": 0,
+        "value_ok": 1,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 1
+      },
+      "gated": {
+        "correct": 1,
+        "wrong": 0,
+        "value_ok": 1,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 1
+      }
+    },
+    "reorder_siblings": {
+      "label": "reorder siblings",
+      "expect": "target",
+      "plain": {
+        "correct": 1,
+        "wrong": 0,
+        "value_ok": 1,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 1
+      },
+      "gated": {
+        "correct": 1,
+        "wrong": 0,
+        "value_ok": 1,
+        "value_wrong": 0,
+        "abstain_right": 0,
+        "abstain_wrong": 0,
+        "n": 1
+      }
+    }
+  },
+  "events": [
+    {
+      "site": "mattel",
+      "capture": "2026-08-23",
+      "mutation": "wrapper_div",
+      "expect": "target",
+      "plain": {
+        "correct": true,
+        "score": 0.9511,
+        "margin": 0.3562
+      },
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true,
+        "score": 0.9511,
+        "margin": 0.3562
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "2026-08-23",
+      "mutation": "swap_tag",
+      "expect": "target",
+      "plain": {
+        "correct": true,
+        "score": 0.6959,
+        "margin": 0.1385
+      },
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false,
+        "score": 0.6959,
+        "margin": 0.1385
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "2026-08-23",
+      "mutation": "strip_id",
+      "expect": "target",
+      "plain": {
+        "correct": true,
+        "score": 0.8491,
+        "margin": 0.4244
+      },
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true,
+        "score": 0.8491,
+        "margin": 0.4244
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "2026-08-23",
+      "mutation": "translate_text",
+      "expect": "target",
+      "plain": {
+        "correct": true,
+        "score": 0.8544,
+        "margin": 0.3876
+      },
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true,
+        "score": 0.8544,
+        "margin": 0.3876
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "2026-08-23",
+      "mutation": "remove_field",
+      "expect": "none",
+      "plain": {
+        "correct": false,
+        "score": 0.5575,
+        "margin": 0.0137
+      },
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false,
+        "score": 0.5575,
+        "margin": 0.0137
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "2026-08-23",
+      "mutation": "duplicate_similar",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": true,
+        "score": 0.7361,
+        "margin": 0.1257
+      },
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false,
+        "score": 0.7361,
+        "margin": 0.1257
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "2026-08-23",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": false,
+        "score": 0.5575,
+        "margin": 0.0137
+      },
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false,
+        "score": 0.5575,
+        "margin": 0.0137
+      }
+    },
+    {
+      "site": "mattel",
+      "capture": "2026-08-23",
+      "mutation": "combo_redesign",
+      "expect": "target",
+      "plain": {
+        "correct": true,
+        "score": 0.9722,
+        "margin": 0.3773
+      },
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true,
+        "score": 0.9722,
+        "margin": 0.3773
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "2026-08-23",
+      "mutation": "rename_class",
+      "expect": "target",
+      "plain": {
+        "correct": true,
+        "score": 0.8889,
+        "margin": 0.5168
+      },
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true,
+        "score": 0.8889,
+        "margin": 0.5168
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "2026-08-23",
+      "mutation": "wrapper_div",
+      "expect": "target",
+      "plain": {
+        "correct": true,
+        "score": 0.7507,
+        "margin": 0.0524
+      },
+      "gated": {
+        "decision": "heal",
+        "reason": "benign_tie",
+        "correct": true,
+        "score": 0.7507,
+        "margin": 0.0524
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "2026-08-23",
+      "mutation": "swap_tag",
+      "expect": "target",
+      "plain": {
+        "correct": true,
+        "score": 0.8094,
+        "margin": 0.4374
+      },
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true,
+        "score": 0.8094,
+        "margin": 0.4374
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "2026-08-23",
+      "mutation": "strip_id",
+      "expect": "target",
+      "plain": {
+        "correct": true,
+        "score": 1,
+        "margin": 0.628
+      },
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true,
+        "score": 1,
+        "margin": 0.628
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "2026-08-23",
+      "mutation": "translate_text",
+      "expect": "target",
+      "plain": {
+        "correct": true,
+        "score": 0.9159,
+        "margin": 0.5293
+      },
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true,
+        "score": 0.9159,
+        "margin": 0.5293
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "2026-08-23",
+      "mutation": "remove_field",
+      "expect": "none",
+      "plain": {
+        "correct": false,
+        "score": 0.3785,
+        "margin": 0.0064
+      },
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false,
+        "score": 0.3785,
+        "margin": 0.0064
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "2026-08-23",
+      "mutation": "duplicate_similar",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": false,
+        "score": 0.933,
+        "margin": 0.1207
+      },
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false,
+        "score": 0.933,
+        "margin": 0.1207
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "2026-08-23",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": true,
+        "score": 0.748,
+        "margin": 0.1873
+      },
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true,
+        "score": 0.748,
+        "margin": 0.1873
+      }
+    },
+    {
+      "site": "ikea",
+      "capture": "2026-08-23",
+      "mutation": "combo_redesign",
+      "expect": "target",
+      "plain": {
+        "correct": false,
+        "score": 0.6983,
+        "margin": 0.0518
+      },
+      "gated": {
+        "decision": "heal",
+        "reason": "benign_tie",
+        "correct": false,
+        "score": 0.6983,
+        "margin": 0.0518
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "2026-08-23",
+      "mutation": "wrapper_div",
+      "expect": "target",
+      "plain": {
+        "correct": true,
+        "score": 0.7626,
+        "margin": 0.1752
+      },
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true,
+        "score": 0.7626,
+        "margin": 0.1752
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "2026-08-23",
+      "mutation": "swap_tag",
+      "expect": "target",
+      "plain": {
+        "correct": true,
+        "score": 0.8206,
+        "margin": 0.4226
+      },
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true,
+        "score": 0.8206,
+        "margin": 0.4226
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "2026-08-23",
+      "mutation": "reorder_siblings",
+      "expect": "target",
+      "plain": {
+        "correct": true,
+        "score": 0.7816,
+        "margin": 0.3086
+      },
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true,
+        "score": 0.7816,
+        "margin": 0.3086
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "2026-08-23",
+      "mutation": "strip_id",
+      "expect": "target",
+      "plain": {
+        "correct": true,
+        "score": 1,
+        "margin": 0.602
+      },
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true,
+        "score": 1,
+        "margin": 0.602
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "2026-08-23",
+      "mutation": "translate_text",
+      "expect": "target",
+      "plain": {
+        "correct": true,
+        "score": 0.9782,
+        "margin": 0.5926
+      },
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true,
+        "score": 0.9782,
+        "margin": 0.5926
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "2026-08-23",
+      "mutation": "remove_field",
+      "expect": "none",
+      "plain": {
+        "correct": false,
+        "score": 0.398,
+        "margin": 0.0181
+      },
+      "gated": {
+        "decision": "abstain",
+        "reason": "below_tau",
+        "correct": false,
+        "score": 0.398,
+        "margin": 0.0181
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "2026-08-23",
+      "mutation": "duplicate_similar",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": true,
+        "score": 1,
+        "margin": 0.0953
+      },
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false,
+        "score": 1,
+        "margin": 0.0953
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "2026-08-23",
+      "mutation": "duplicate_longtail",
+      "expect": "ambiguous",
+      "plain": {
+        "correct": false,
+        "score": 0.7284,
+        "margin": 0.0005
+      },
+      "gated": {
+        "decision": "abstain",
+        "reason": "thin_margin",
+        "correct": false,
+        "score": 0.7284,
+        "margin": 0.0005
+      }
+    },
+    {
+      "site": "chicco",
+      "capture": "2026-08-23",
+      "mutation": "combo_redesign",
+      "expect": "target",
+      "plain": {
+        "correct": true,
+        "score": 0.7713,
+        "margin": 0.184
+      },
+      "gated": {
+        "decision": "heal",
+        "reason": "clear_margin",
+        "correct": true,
+        "score": 0.7713,
+        "margin": 0.184
+      }
+    }
+  ],
+  "config": {
+    "tau": 0.6,
+    "delta": 0.16,
+    "sites": [
+      "mattel",
+      "ikea",
+      "chicco"
+    ],
+    "n": 26,
+    "source": "brightdata",
+    "zone": "cli_unlocker",
+    "endpoint": "https://api.brightdata.com/request",
+    "captures": [
+      {
+        "site": "mattel",
+        "timestamp": "2026-08-23T07:15:13.913Z",
+        "original": "https://service.mattel.com/us/recall.aspx",
+        "digest": "c42dfb912d9f3cc2dbc96a36bfc0588f476a38e6745e06755ea3d71f77e5b5bc",
+        "file": "corpus-live/mattel/2026-08-23.html",
+        "bytes": 95576,
+        "zone": "cli_unlocker"
+      },
+      {
+        "site": "ikea",
+        "timestamp": "2026-08-23T07:15:17.555Z",
+        "original": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+        "digest": "538b697b26fff0e832f7d03ebeb1a059407cb5b18881bf18795aa331bbf3f924",
+        "file": "corpus-live/ikea/2026-08-23.html",
+        "bytes": 998180,
+        "zone": "cli_unlocker"
+      },
+      {
+        "site": "chicco",
+        "timestamp": "2026-08-23T07:15:24.336Z",
+        "original": "https://www.chiccousa.com/child-safety/product-recalls/",
+        "digest": "0a3ade4371ccbebf07c09ad0b674958b04af8608f3820334d81cd4800ab996c9",
+        "file": "corpus-live/chicco/2026-08-23.html",
+        "bytes": 90410,
+        "zone": "cli_unlocker"
+      }
+    ]
+  }
+}
