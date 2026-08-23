@@ -26,8 +26,11 @@ separate things, and they are worth keeping separate:
    `tools/headtohead.ts` takes a decision, a published value and the truth. It
    has no parameter for who is being scored — §4 and §7 spell that out, and it is
    checkable in about thirty seconds.
-2. **One arm, run.** Assay over 9 pre-registered variants on a deployed testbed.
-   The results are in §5a, and two of the nine are unflattering.
+2. **One arm, run.** Assay over 9 pre-registered variants on a deployed testbed
+   (<https://assay-testbed.vercel.app>, which anyone can hit). The results are in
+   §5a: 7 published correct, 2 abstained correctly, 0 wrong. That table used to
+   carry two unflattering abstentions; §5a records what changed and what the
+   change is and is not evidence for.
 3. **One qualitative case study, not scored.** A single real Bright Data heal was
    driven end to end against a real collector and the transcript is committed —
    `results/bd-heal-transcript.json`, collector `c_mt1nrjboski90goqc`. It was
@@ -153,13 +156,16 @@ Two deliberate asymmetries, both stated so they can be argued with:
 
 ## 5. Running it
 
+The testbed is live at `https://assay-testbed.vercel.app` and needs no
+credentials, so every command here is runnable by a stranger with this repo.
+
 ```bash
-# Assay, all variants in truth.json
-npm run headtohead -- --origin https://<testbed>.vercel.app
+# Assay, all variants in truth.json -- writes to a scratch file, see below
+npm run headtohead -- --origin https://assay-testbed.vercel.app --out /tmp/verify.jsonl
 
 # a subset
-npm run headtohead -- --origin https://<testbed>.vercel.app \
-  --variants remove_field,duplicate_similar
+npm run headtohead -- --origin https://assay-testbed.vercel.app \
+  --variants remove_field,duplicate_similar --out /tmp/verify.jsonl
 
 # re-print the table without re-fetching (reads whatever systems are in the file)
 npm run headtohead -- --summary-only
@@ -167,6 +173,10 @@ npm run headtohead -- --summary-only
 # the classifier's own check
 npm run headtohead -- --selftest
 ```
+
+`--out` defaults to `results/headtohead.jsonl`, which is **committed** and is the
+file §5a is read off. Verifying a claim should not rewrite the evidence for it, so
+pass `--out /tmp/...` unless you mean to record a new measurement.
 
 The harness fetches `<origin>/truth.json` for the scoring key and
 `<origin>/v/<variant>/` for each page, with a 15s timeout. It appends one JSON
@@ -216,33 +226,53 @@ deployed testbed. Read off `results/headtohead.jsonl`:
 
 | outcome | n | variants |
 | --- | --- | --- |
-| `published_correct` | 5 | `rename_class`, `swap_tag`, `reorder_siblings`, `strip_id`, `translate_text` |
+| `published_correct` | 7 | `rename_class`, `wrapper_div`, `swap_tag`, `reorder_siblings`, `strip_id`, `translate_text`, `combo_redesign` |
 | `abstained_correct` | 2 | `remove_field`, `duplicate_similar` |
-| `abstained_unnecessary` | **2** | `wrapper_div`, `combo_redesign` |
+| `abstained_unnecessary` | 0 | — |
 | `published_wrong` | 0 | — |
 
 Nine cases is nine cases. It is an anecdote with a scoring rule, and the sample is
-far too small to carry a rate — the useful content is the two abstentions in the
-third row, not the zero in the fourth, because the zero is what a system that
-refuses everything also scores.
+far too small to carry a rate. Two things in particular do not follow from this
+table. The zero in the fourth row is not the 153-case corpus result restated — it
+is nine hand-built pages, and a system that refused all nine would score the same
+zero; the third row is what rules that system out here, and nine cases is a weak
+place to rule anything out. And the testbed is a page we wrote, deployed and
+mutate ourselves, so it is not an independent adversary. There is still no Bright
+Data arm (§5b), so this table compares Assay to nothing.
 
-`wrapper_div` and `combo_redesign` were both recoverable and both went to a human.
-`docs/LIMITATIONS.md` §1 is the diagnosis: the benign-tie escape hatch did not
-fire, because a third candidate inside the delta band carried different text.
+### The prediction in `5a16b6f`, and how it resolved
 
-**As of commit `5a16b6f` the gate no longer works that way.** `benign_tie` now
-asks about the two candidates the margin actually compared, so a third candidate
-that was never part of the margin can no longer veto the answer. On both of these
-cases the top two carry identical text, so the change is *expected* to flip both
-to `published_correct`.
+`wrapper_div` and `combo_redesign` used to land in the third row —
+`abstained_unnecessary`, 2 of 9 recoverable fields sent to a human queue for no
+reason. `docs/LIMITATIONS.md` §1 is the diagnosis: the benign-tie escape hatch did
+not fire, because a third candidate inside the delta band carried different text.
 
-**It has not been re-measured, and nothing here should be read as saying it has.**
-The testbed named by `ASSAY_TESTBED` is not deployed, so the 9 variants could not
-be re-run. The 2-in-9 figure above is what the old gate did; what the new gate
-does on these variants is a prediction. The evidence that the *mechanism* changed
-is `test/benign-tie.test.ts`, which fails on the previous implementation and
-passes on this one — the revert was run to confirm it bites. That is a test, not
-a measurement of these nine pages.
+`5a16b6f` changed that. `benign_tie` now asks about the two candidates the margin
+actually compared, so a third candidate that was never part of the margin can no
+longer veto the answer. At the time of that commit this document said the flip to
+`published_correct` was *expected* and had not been measured, because whoever
+wrote it concluded from `ASSAY_TESTBED` being unset in `.env` that the testbed was
+not deployed. That conclusion was wrong: <https://assay-testbed.vercel.app> was
+serving `truth.json` then and serves it now, and `README.md` says CI has been
+pointing at it daily throughout. An unset local environment variable is not a
+statement about a deployment, and this document should not have read it as one.
+
+**The variants have since been re-run, and the prediction held.** Both now come
+back `publish` / `benign_tie` / `published_correct`, at the same margins that used
+to fail — 0.0446 for `wrapper_div`, 0.0537 for `combo_redesign`. Reproduce it
+without touching the committed records:
+
+```bash
+npm run headtohead -- --origin https://assay-testbed.vercel.app --out /tmp/verify.jsonl
+```
+
+What that is worth is bounded. It confirms one predicted mechanism change on the
+two pages it was predicted for; `test/benign-tie.test.ts` is still the evidence
+that the mechanism itself changed, since it fails on the previous implementation
+and passes on this one. It is not evidence that the loosening is safe in general —
+that argument rests on the corpus, where §1.1 of `docs/LIMITATIONS.md` records the
+old and new gates deciding identically across all 153 mutation cases and all 74
+replay runs.
 
 ## 5b. The arm that was not run, and why
 
@@ -283,9 +313,10 @@ scored as such anywhere.
 
 Concretely, and it is not much:
 
-1. **Deploy the testbed.** Nine variants at stable paths plus `truth.json`; set
-   `ASSAY_TESTBED` and re-run `npm run headtohead -- --origin ...` to refresh the
-   Assay arm on the current gate (which also settles §5a's prediction).
+1. **The testbed is already deployed** — nine variants at stable paths plus
+   `truth.json`, at <https://assay-testbed.vercel.app>, which CI points at daily.
+   This step is done: the Assay arm in §5a is a run against it on the current
+   gate. Nothing below is blocked on infrastructure.
 2. **Nine collectors, or one collector healed nine times.** Each configured
    against `/v/baseline/`, then pointed at one variant. The Self-Healing tool
    works on a scraper *saved in development mode*, so the baseline has to live
@@ -384,9 +415,9 @@ parameter for who is being scored.
   protocol; this one is a limit of the evidence.
 - **Nine cases.** Even the arm that ran is nine cases on one field. No rate
   computed from it means anything, in either direction.
-- **Stale on the current gate.** Those 9 records were produced before `5a16b6f`
-  and the testbed is not deployed, so they describe a gate the repository no
-  longer ships. See §5a.
+- **Self-owned target.** The testbed is deployed and reproducible, but we wrote
+  it, we host it and we choose its mutations. It removes the excuse of "could not
+  re-run"; it does not make the nine cases independent evidence.
 - **Synthetic target.** The testbed is a page we wrote. The mutations are real
   patterns from Wayback diffs, but the page is not.
 - **One field.** `recall_title`. A broader field set would be a stronger result.

@@ -17,7 +17,12 @@ page that is shorter than the feature page is a marketing document.
 
 ## It abstained when it did not need to, on wrapper mutations
 
-`results/headtohead.jsonl` is a run against a testbed that is no longer deployed:
+**This section is history now, and the section below it is the resolution.** It is
+kept because the diagnosis is the interesting part, and because a limitations page
+that quietly deletes its fixed entries is not one.
+
+`results/headtohead.jsonl` was a run against the testbed at
+[assay-testbed.vercel.app](https://assay-testbed.vercel.app):
 nine variants, one field, one system, all nine records `system: "assay"`. Assay
 published five correct values, published nothing wrong, and abstained four times.
 Two of those four abstentions were right — `remove_field`, where nothing was
@@ -89,10 +94,24 @@ and `results/rows.jsonl` byte-identical. So there is **no corpus evidence that
 this helps**. The benchmark's near-ties are twin decoys, where the top two
 themselves disagree, and that is the case this branch still refuses.
 
-**It has not been re-measured on the cases it was meant to fix.** The testbed
-named by `ASSAY_TESTBED` is not deployed, so the nine variants could not be
-re-run. The table above is what the old gate did. What the new gate does on those
-nine pages is a prediction, written here as one.
+**It has now been re-measured on the cases it was meant to fix, and the prediction
+held.** Both variants come back `publish` / `benign_tie` / `published_correct`, at
+the same margins that used to fail — 0.0446 and 0.0537. The testbed arm is 7
+published correct, 2 abstained correctly, 0 wrong, 0 unnecessary:
+
+```bash
+npm run headtohead -- --origin https://assay-testbed.vercel.app --out /tmp/verify.jsonl
+```
+
+This page previously said the re-run was impossible because the testbed was not
+deployed. That was false and was never true — the deployment has been up
+throughout, and CI has been pointing at it daily. The error was reading an unset
+`ASSAY_TESTBED` in a local `.env` as a fact about the world.
+
+What the re-run settles is narrow: two predicted flips, on the two pages they were
+predicted for, on a testbed this project writes and hosts itself. Nine cases still
+do not carry a rate, and the paragraph above — no corpus evidence either way — is
+still the load-bearing one.
 
 **The evidence is a test.** `test/benign-tie.test.ts` fails on the previous
 implementation and passes on this one; the revert was run to confirm it bites.
@@ -153,7 +172,9 @@ margin — run 51 is typical, 0.8787 against a runner-up of 0.3763, a margin of
 So on the only real-world data in this repository, **the margin gate is inert**.
 It costs nothing and it catches nothing. Every abstention the project has ever
 recorded comes from a manufactured near-tie: 54 from the benchmark's deliberate
-mutations, 4 from the testbed variants. The claim "the gate prevents wrong
+mutations, and 2 from the testbed variants (`remove_field` and
+`duplicate_similar`; the other two testbed abstentions were the unnecessary ones
+the first section's fix removed). The claim "the gate prevents wrong
 values" is supported by constructed cases and by **no observed production
 incident**.
 
@@ -317,9 +338,10 @@ npx tsx tools/bd-heal.ts --verify
 - That the gate improves outcomes on any corpus other than this one.
 - That 0.6 / 0.16 are correct for any field other than `recall_title`.
 - That zero wrong values is achievable without the abstention rate above.
-- That the two unnecessary abstentions in the first section have been
-  re-measured. The mechanism that caused them changed in `5a16b6f`; the nine
-  variants could not be re-run, so "fixed" is a prediction.
+- That the re-measured testbed arm in the first section is corpus-strength
+  evidence. It is nine cases on a testbed this project writes, hosts and mutates
+  itself, and zero wrong values there is not the same claim as zero wrong values
+  over the 153-case corpus.
 - That anything here measures Assay against Bright Data. Nothing does —
   `results/headtohead.jsonl` is 9 records and all 9 are `system: "assay"`.
 - That the three code-gate rules generalise. They are fitted to one transcript.

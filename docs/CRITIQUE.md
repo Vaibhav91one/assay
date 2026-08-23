@@ -277,9 +277,13 @@ the work": after the store exists, the app is server components over SQL.
 > **UPDATE 2026-08-23 — partly addressed, by none of the three fixes below.**
 > `5a16b6f` narrowed `benign_tie` to the two candidates the margin actually
 > compared, so the sibling card at 0.6314 can no longer veto an answer about the
-> top two. On both live cases the top two carry identical text, so both are
-> *expected* to flip to `published_correct` — expected, not measured: the testbed
-> is not deployed and the nine variants could not be re-run. The band-conflation
+> top two. On both live cases the top two carry identical text, so both were
+> *expected* to flip to `published_correct`. **They have since been re-run against
+> the deployed testbed (<https://assay-testbed.vercel.app>) and both did flip** —
+> `benign_tie` / `published_correct`, at the same margins, 0.0446 and 0.0537. This
+> block previously said the testbed was not deployed and the variants could not be
+> re-run; that was wrong, and read an unset `ASSAY_TESTBED` as a fact about the
+> world. The band-conflation
 > claim below is untouched and still stands; what changed is which set the
 > benign-tie question is asked of. `test/benign-tie.test.ts` is the evidence, and
 > the corpus arms are byte-identical across the change, meaning the 153 benchmark

@@ -9,13 +9,18 @@ in this document.
 
 ---
 
-## 1. It abstained when it did not need to, on wrapper mutations — mechanism changed, not re-measured
+## 1. It abstained when it did not need to, on wrapper mutations — fixed, and re-measured
 
-`results/headtohead.jsonl` is a run against a testbed that is no longer deployed:
-nine variants, one field, one system, all nine records `system: "assay"`. Assay
-published five correct values, published nothing wrong, and abstained four times.
-Two of those four abstentions were right — `remove_field`, where nothing was
-recoverable, and `duplicate_similar`, marked `ambiguous`. Two were not:
+**This section is history now, and §1.1 is the resolution.** It is kept because
+the diagnosis is the interesting part and because a limitations document that
+quietly deletes its fixed entries is not one.
+
+`results/headtohead.jsonl` was a run against the testbed at
+<https://assay-testbed.vercel.app>: nine variants, one field, one system, all nine
+records `system: "assay"`. Assay published five correct values, published nothing
+wrong, and abstained four times. Two of those four abstentions were right —
+`remove_field`, where nothing was recoverable, and `duplicate_similar`, marked
+`ambiguous`. Two were not:
 
 | variant | expect | score | runner-up | margin | delta |
 |---|---|---|---|---|---|
@@ -88,10 +93,26 @@ So there is no corpus evidence that this helps. That is not a hedge, it is the
 measurement: the benchmark's near-ties are twin decoys, where the top two
 themselves disagree, and that is the case this branch still refuses.
 
-**It has not been re-measured on the cases it was meant to fix.** The testbed
-named by `ASSAY_TESTBED` is not deployed, so the 9 variants could not be re-run.
-The table above this section is what the old gate did. What the new gate does on
-those nine pages is a prediction and is written here as one.
+**It has now been re-measured on the cases it was meant to fix, and the
+prediction held.** Both variants come back `publish` / `benign_tie` /
+`published_correct`, at the same margins that used to fail — 0.0446 and 0.0537.
+The testbed arm is 7 published correct, 2 abstained correctly, 0 wrong, 0
+unnecessary. Re-run it without disturbing the committed records:
+
+```bash
+npm run headtohead -- --origin https://assay-testbed.vercel.app --out /tmp/verify.jsonl
+```
+
+This document previously said the re-run was impossible because the testbed was
+not deployed. That was false and was never true: the deployment has been up
+throughout, and CI has been pointing at it daily. The error was reading an unset
+`ASSAY_TESTBED` in a local `.env` as a fact about the world. Recording it here
+because a claim of "could not measure" is exactly the kind of thing this
+repository is supposed to be hard on.
+
+What the re-run settles is narrow: two predicted flips, on the two pages they
+were predicted for, on a testbed we write and host ourselves. Nine cases still do
+not carry a rate, and the paragraph below is still the load-bearing one.
 
 **The evidence is a test, and the test was built by measuring rather than by
 assuming.** `test/benign-tie.test.ts` fails on the previous implementation and
@@ -158,9 +179,11 @@ margin — run 51 is typical, 0.8787 against a runner-up of 0.3763, a margin of
 
 So on the only real-world data in this repo, the margin gate is inert. It costs
 nothing and it catches nothing. Every abstention the project has ever recorded
-comes from a manufactured near-tie: 54 from the benchmark's deliberate
-mutations, 4 from the testbed variants. The claim "the gate prevents wrong
-values" is supported by constructed cases and by no observed production incident.
+comes from a manufactured near-tie: 54 from the benchmark's deliberate mutations,
+and 2 from the testbed variants (`remove_field` and `duplicate_similar` — the
+other two testbed abstentions were the unnecessary ones §1.1 removed). The claim
+"the gate prevents wrong values" is supported by constructed cases and by no
+observed production incident.
 
 ---
 
@@ -384,9 +407,10 @@ npx tsx tools/bd-heal.ts --verify
 - That the gate improves outcomes on any corpus other than this one.
 - That 0.6 / 0.16 are correct for any field other than `recall_title`.
 - That zero wrong values is achievable without the abstention rate in section 2.
-- That the two unnecessary abstentions in section 1 have been re-measured. The
-  mechanism that caused them was changed in `5a16b6f`; the nine variants could not
-  be re-run, so "fixed" is a prediction and is written as one.
+- That the re-measured testbed arm in section 1.1 is corpus-strength evidence. It
+  is nine cases on a testbed this project writes, hosts and mutates itself, and
+  `published_wrong: 0` there is not the same claim as `published_wrong: 0` over
+  the 153-case corpus in section 2.
 - That anything in this repository measures Assay against Bright Data. Nothing
   does — `results/headtohead.jsonl` is 9 records and all 9 are `system: "assay"`.
   `docs/HEADTOHEAD.md` §0 is the full statement.
