@@ -93,8 +93,17 @@ const config: NextConfig = {
   // when it is absent and its default is `['mdx', 'md', 'jsx', 'js', 'tsx',
   // 'ts']` -- which would make every `.md` file anywhere under `app/` a route.
   // Documentation lives in `content/docs`, is read through `lib/source.ts`, and
-  // is never a page module, so `app/` has no business compiling markdown.
-  pageExtensions: ['ts', 'tsx', 'js', 'jsx'],
+  // is never a page module, so `app/` has no business compiling markdown --
+  // hence no `md` here.
+  //
+  // `mdx` IS here, and not so `.mdx` files can become routes (there are none
+  // under `app/`). Next applies the RSC layer's `react-server` resolve
+  // condition only to files matching pageExtensions; without `mdx`, every
+  // compiled docs page pulled the CLIENT jsx-dev-runtime into the server
+  // graph and dev rendering of /docs died on
+  // `undefined.recentlyCreatedOwnerStacks` (prod was fine -- its runtime never
+  // touches owner stacks).
+  pageExtensions: ['ts', 'tsx', 'js', 'jsx', 'mdx'],
 
   // The root `exports` map makes `assay/engine/*` and `assay/store` real
   // specifiers, so no `externalDir` escape hatch is needed. Since the migration
