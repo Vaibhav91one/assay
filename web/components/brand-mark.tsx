@@ -68,14 +68,19 @@ const FALLBACK: Record<string, LucideIcon> = {
  * WHAT CHANGED. This screen used to hold seven cards and three of them earned a
  * real mark, each after its owner's published policy was read and quoted in
  * TRADEMARKS.md. It now holds twenty-eight more -- LinkedIn, TikTok, Zillow,
- * Shopee -- and the same standard applied to those would mean twenty-eight more
- * policy reads before anything shipped. The three that were done say the answer
- * is usually no: Amazon requires prior written approval and a mark "by itself",
- * arXiv permits its logo for one purpose this app is not, the PSF attaches a
- * condition a 38px glyph cannot carry. Shipping twenty-eight marks on the
- * assumption that the rest would say yes is a confident claim about somebody
- * else's rights made because checking was inconvenient, which is the exact
- * failure the rest of this codebase is built to refuse.
+ * Shopee. Twenty-five of those policies were read and every verdict is in
+ * TRADEMARKS.md. NONE of them clears.
+ *
+ * Twenty of the twenty-five require prior written permission in so many words,
+ * which settles those. The interesting three are the ones that DO permit this
+ * -- Instagram, Threads, Yelp -- and they fail on a condition that is easy to
+ * read past: the permission is a licence to use THE OWNER'S ASSET, not a licence
+ * to draw the shape. "Anyone using Instagram's assets should only use the logos
+ * found on our Brand Resource Center site". This file ships path data copied
+ * from simple-icons, which is a monochrome redrawing and not that asset, so a
+ * grant conditioned on using the owner's file does not reach it. YouTube's
+ * grant is scoped to API clients and Assay is not one; Google's excludes
+ * business use, which this is.
  *
  * SO THE CARD CARRIES A LETTER, NOT A LOGO. An initial in a tinted tile is
  * Assay's own artwork. It borrows no trade dress, needs no permission and
@@ -93,9 +98,10 @@ const FALLBACK: Record<string, LucideIcon> = {
  *
  * A REAL MARK STILL WINS. `MARKS` is checked first: `bd-github` and
  * `bd-wikipedia` fall through to the GitHub and Wikipedia glyphs that were
- * already cleared, because it is the same brand and the same permission. If any
- * other owner's policy is read and quoted in TRADEMARKS.md, adding it to
- * `MARKS` retires that brand's letter with no other change.
+ * already cleared, because it is the same brand and the same permission. If a
+ * verdict in TRADEMARKS.md is ever settled the other way -- by obtaining the
+ * owner's own asset file, or by asking them -- adding that brand to `MARKS`
+ * retires its letter with no other change.
  */
 function Lettermark({ id, name, size }: { id: string; name: string; size: number }) {
   // FNV-1a over the id. Any stable hash would do; this one is four lines and
