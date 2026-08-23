@@ -1,0 +1,131 @@
+---
+title: The CLI
+description: One binary over what used to be twenty scripts, its exit codes, and the commands features add to it.
+---
+
+```bash
+npx tsx bin/assay.ts --help
+```
+
+`assay` is a commander binary with two halves. The **core** commands wrap the
+existing tools in `tools/` as child processes; the **feature** commands are
+globbed out of `tools/cli/` at startup and attached to the binary.
+
+The wrapping is deliberate. Those tools read `process.argv` at module scope, and
+two of them — `bench` and `replay` — produce the invariants this project's whole
+argument rests on. A subprocess cannot change what they measure; an import that
+rewrites `process.argv` eventually can.
+
+---
+
+## Exit codes
+
+Because this runs in cron:
+
+| Code | Meaning |
+|---|---|
+| `0` | The command did its work. |
+| `2` | The invocation was wrong — unknown command, bad argument, missing value. |
+| `1` | The work failed, or a wrapped tool exited non-zero (its code passes through). |
+
+A failure is always a non-zero exit with the reason on **stderr**. Never a zero
+exit with an apology on stdout.
+
+<Callout title="Why 2 and not 1 for a typo">
+  Commander exits `1` for an unknown command, which is the same code a wrapped
+  tool uses to say the work failed. A pipeline that has to tell "you typed it
+  wrong" from "the scrape broke" cannot read that. `bin/assay.ts` overrides it
+  before any subcommand is declared, and copies the setting onto every feature
+  command it attaches — a person typing `assay unheal` cannot be expected to know
+  which half of the surface is core.
+</Callout>
+
+Everything an operator types is parsed at the boundary, so the error names what
+was typed and what was allowed:
+
+```
+assay: from "2024-01" — a capture month looks like 202401 (YYYYMM)
+```
+
+Without that, the bad value reaches `readdir` and comes back as `ENOENT` on a
+path nobody wrote.
+
+---
+
+## Run it
+
+| Command | What it does |
+|---|---|
+| `assay run [site] [from] [to]` | The whole pipeline over two real captures: detect, decide, prove. Defaults `ikea 202401 202608`. **Appends one proof record to `results/events.jsonl`**, which is committed and checked byte for byte — so this leaves a clone with a dirty working tree. |
+| `assay demo` | Thirty seconds. Two breaks, two outcomes: one heals, one publishes a labelled hole. |
+| `assay ingest [site] [--mutate <id>]` | Run a site through the pipeline and write every run to Postgres. `--mutate` plants a break to exercise the gate. |
+| `assay worker [--once] [--poll <seconds>]` | The long-running loop: claim a due target, run it, schedule the next. `--once` takes one due target and exits — the cron shape. |
+
+## Look at what happened
+
+| Command | What it does |
+|---|---|
+| `assay explain <proof_id>` | Where one published cell came from: value, status, and what the gate ranked. Takes a `pr_…` id off the published row's `_assay` block. Exits `1` if no cell has that id. |
+| `assay diagnose [--captures <n>]` | Where the healer loses, measured over the corpus rather than argued. |
+
+## Operate it
+
+| Command | What it does |
+|---|---|
+| `assay apikey <name…> [--read\|--write <targets>]` | Mint a consumer API key. Printed once, stored hashed, never recoverable. See [API reference](/docs/api-reference#authenticating). |
+
+---
+
+## Feature commands
+
+These come from `tools/cli/*.ts`. A feature adds a file; nobody edits the binary.
+
+| Command | What it does |
+|---|---|
+| `assay watch` | Put a page under watch, and list, pause or forget what is watched. |
+| `assay blast <target/field>` | Which rows a wrong value covers, and how far back. |
+| `assay correct <proof> <value>` | Publish a corrected value as a new row that supersedes the wrong one. |
+| `assay brake` | Fields where healing has been stopped because the selector oscillates. `clear` requires typing the field name. |
+| `assay unheal <ref>` | Revert a field to its last verified selector and re-open its blast radius. |
+| `assay connectors` | Bright Data delivery, Slack and Discord. See [Configuring credentials](/docs/credentials#slack). |
+| `assay contracts` | Field contracts: per-field thresholds, checked before they reach a scrape. |
+| `assay decisions` | The abstain queue: what is waiting on a human, and answering it. |
+| `assay fragility [target]` | Per-field fragility grade and drift state, from the pages the store still has. |
+| `assay incident` | Incident records, field diffs, and the digest — composed, never sent. |
+
+<Callout title="A missing tools/cli is a fresh worktree, not a fault">
+  With that directory absent or empty the binary still runs and still helps. A
+  file that is *present and malformed* stops the binary by name, because a
+  feature that merged and then quietly failed to appear in `--help` is the harder
+  bug by a long way — nobody goes looking for a command they were told exists.
+  Two modules cannot claim the same command name either, and neither can shadow a
+  core command.
+</Callout>
+
+Each feature module also runs on its own, before the binary exists:
+
+```bash
+npx tsx tools/cli/connectors.ts list
+```
+
+---
+
+## What the CLI can do that the API cannot
+
+`assay decisions resolve` settles a held cell. So does
+`POST /api/v1/decisions/resolve`. **No [MCP tool](/docs/mcp) does**, and that is
+enforced at boot rather than left to convention.
+
+Clearing a brake is the same shape: it exists on the CLI and on the API, and it
+requires the field name typed out, because clearing a brake resumes publishing
+from a field that was oscillating.
+
+---
+
+## Where to go next
+
+<Cards>
+  <Card title="API reference" href="/docs/api-reference" description="The same store over HTTP, with a bearer key." />
+  <Card title="MCP" href="/docs/mcp" description="The same store over a protocol an agent speaks." />
+  <Card title="Getting started" href="/docs/self-host" description="Two processes, Postgres, and the captures volume." />
+</Cards>

@@ -1,0 +1,210 @@
+---
+title: MCP
+description: 27 tools that hand an agent the list of calls a scraper refused to make, and four that are deliberately absent.
+---
+
+The headline is not "let an agent scrape things" — every MCP server can do that.
+It is that this one hands an agent **the list of calls a scraper refused to
+make**, and gives it no way to settle them.
+
+The agent's inbox is the Decisions screen.
+
+---
+
+## Running it
+
+```bash
+npm run mcp        # tsx src/mcp/server.ts, on stdio
+```
+
+Keys stay on the machine, which is the correct BYOK default. The server reads the
+same `DATABASE_URL` everything else does.
+
+### Claude Code
+
+```bash
+claude mcp add assay \
+  --env DATABASE_URL=postgres://localhost:5432/assay \
+  -- npx tsx /absolute/path/to/assay/src/mcp/server.ts
+```
+
+### Codex
+
+`~/.codex/config.toml`:
+
+```toml
+[mcp_servers.assay]
+command = "npx"
+args = ["tsx", "/absolute/path/to/assay/src/mcp/server.ts"]
+
+[mcp_servers.assay.env]
+DATABASE_URL = "postgres://localhost:5432/assay"
+```
+
+<Callout type="warn" title="One transport, not two">
+  `docs/APP-DESIGN.md` §6 describes "one MCP server, two transports" — stdio for
+  Claude Code and Codex, HTTP for the claude.ai remote connector. **Only stdio is
+  built.** `src/mcp/server.ts` connects a `StdioServerTransport` and there is no
+  route handler serving MCP over HTTP anywhere in `web/app/`.
+
+  The design note is a plan; this page is what exists. When the HTTP transport
+  lands it will serve the same 27 tools from the same directory, because the tool
+  surface is loaded rather than listed.
+</Callout>
+
+---
+
+## The tool surface is a directory
+
+`src/mcp/tools/*.ts` is globbed at startup and everything each module exports as
+`TOOLS` is registered. That is not architecture for its own sake: nine features
+were being built in parallel, and a single tools file would have been the one
+place all nine had to write.
+
+Two rules are enforced at boot rather than trusted to nine authors, and both
+**stop the server** rather than quietly dropping something:
+
+1. A module exporting a **refused** tool name (below) fails the boot, loudly.
+2. Two modules cannot claim the same tool name. A silent last-file-wins merge is
+   how one feature shadows another's tool and nobody finds out until production.
+
+Files load in sorted order, so a boot failure is reproducible rather than
+filesystem-order-dependent.
+
+---
+
+## The 27 tools
+
+### Core — `tools/core.ts`
+
+| Tool | Returns |
+|---|---|
+| `assay_status` | What is watching, what is held, and what is waiting on a human. |
+| `assay_held` | Every held cell: null, labelled, and never filled. |
+| `assay_decisions` | The queue. Each item carries both answers, the evidence, and what it is holding. |
+| `assay_propose` | Nominate an element for a held field, **by index** into the candidate list from `assay_decisions`. Scored against the same gate as any other candidate and may still be held. |
+| `assay_runs` | Run history for a target, newest first. |
+| `assay_blast` | Which rows a break covers and how far back — the boundary between the last clean run and detection. |
+| `assay_explain` | Where a published value came from: run, capture, anchors, and whether it was healed. |
+| `assay_watch` | Emits a target contract **for review**. It does not write to the store, because policy belongs in a reviewed change. |
+
+### Setting a page up — `tools/setup.ts`
+
+| Tool | Returns |
+|---|---|
+| `assay_create_watch` | Actually starts watching: writes the target and establishes its baseline through the same pipeline the worker uses. Unlike `assay_watch`, this one takes effect. A resolver pattern is a **string**, never a `/regex/` literal. |
+| `assay_targets` | Every page under watch, with its cadence, next run and held count. |
+| `assay_pause_watch` | Stop running a target without forgetting it. Keeps the cadence and the whole history; reversible. |
+| `assay_delete_watch` | Forget a target that never ran. One **with** history is refused — deleting its runs would break the proof id on every row already published from it. |
+
+### Reports — `tools/reports.ts`
+
+| Tool | Returns |
+|---|---|
+| `assay_incidents` | Break episodes on record: what opened them, what closed them, which are still open. |
+| `assay_incident` | The incident record for one episode: what broke, what was changed, what was **held**, what was retracted, what is still suspect, and who decided. The refusals are part of it, because a report of fixes alone is marketing. |
+| `assay_diff` | Value history for one field. Three states: changed, unchanged, **withheld** — and a withheld run carries no value and no before/after pair, so it cannot be read as "nothing changed". |
+| `assay_digest` | The periodic report over a window. The header is "N changes, M withheld", never a bare change count. Composes only; it does not send. |
+
+### Health — `tools/health.ts`
+
+| Tool | Returns |
+|---|---|
+| `assay_field_health` | Recomputes standing per-field fragility and drift from the stored pages, and persists it. Grades come from a closed vocabulary; there is no score. `insufficient_history` is a real answer, not a missing one. |
+| `assay_field_health_stored` | The same, already on record, without recomputing. Never-assessed fields come back with nulls rather than being omitted — an absent row and an assessed-as-fine row are different facts. |
+
+### Contracts — `tools/contracts.ts`
+
+| Tool | Returns |
+|---|---|
+| `assay_contract` | The contract in force for a target: what the operator wrote, and the τ/δ each field is gated at. A field the contract does not mention is gated at the engine defaults, and that is stated rather than left blank. |
+| `assay_contract_history` | Every version, newest first, with the YAML as written. Answers "what did the contract say when that cell was published". |
+
+### Brakes — `tools/brake.ts`
+
+| Tool | Returns |
+|---|---|
+| `assay_brakes` | Fields where healing has been **stopped** because the selector is oscillating. |
+| `assay_heal_history` | Every heal recorded for one field, oldest first, including reverted ones, plus whether the sequence counts as thrashing. Reverted rows are kept on purpose: the oscillation pattern is the evidence. |
+
+### Blast radius — `tools/blast.ts`
+
+| Tool | Returns |
+|---|---|
+| `assay_blast_radius` | What was already published that is now suspect: the affected runs, row proof ids and re-scrape list. Says "at least" rather than a total when history cannot show the clean run before the boundary. Files nothing and corrects nothing. |
+
+### AI — `tools/ai.ts`
+
+| Tool | Returns |
+|---|---|
+| `assay_model_status` | Whether a model is configured. Assay runs with none: every AI path degrades to the non-AI behaviour. |
+| `assay_score_nomination` | Scores a candidate index against the ranked list persisted when the gate abstained. Records nothing and resolves nothing. Takes a reference, never a value. |
+
+### Connections — `tools/connectors.ts`, `tools/skills.ts`
+
+| Tool | Returns |
+|---|---|
+| `assay_connectors` | Where Assay can announce a held field, and Bright Data in both directions. Whether each is configured, never what it is configured with. |
+| `assay_skills` | Every way Assay can turn a URL into bytes: which are in use and which are off, with the environment variables each declares **by name** and whether they are set — never what they are set to. |
+
+---
+
+## The four tools that do not exist
+
+This is the part worth reading.
+
+### `assay_resolve` — refused at boot
+
+Not merely absent. `src/mcp/server.ts` carries the name in `REFUSED_TOOLS`, and
+if any module in `src/mcp/tools/` ever exports a tool called `assay_resolve`, the
+server **throws on startup** with the reason rather than quietly dropping it.
+
+Resolving a decision is a human act. A model **nominates**; it never settles a
+queue item. A nomination enters as a candidate and clears the same two gates as
+anything else, or the cell stays held.
+
+That is not a policy bolted on afterwards. The product already draws the rule
+elsewhere: when the scorer and the model disagree, *neither wins*. An MCP tool
+that let the model decide would contradict a screen that already exists.
+
+### `assay_clear_brake` — and there will not be one
+
+A brake exists because a field is publishing values from the wrong variant and
+nobody noticed. Clearing it resumes exactly that. Handing a model a tool that
+turns the warning off is the same mistake as `assay_resolve`, one table over.
+
+What a model *can* do is the useful half: see which fields are braked, read the
+sequence of heals that tripped it, and explain it to the person who has to decide.
+
+### `assay_contract_write`
+
+A threshold is policy, and policy changes in a pull request with a reviewer, not
+in a tool call nobody diffed. An agent can read the contract and say the tier is
+wrong. Changing it is a human's commit.
+
+### `assay_skill_enable`
+
+Enabling a page source is a **grant** — a host to reach, a credential to read —
+and an agent driven by untrusted page text is the last principal that should be
+able to make one. `src/skills/store.ts` has no writer at all.
+
+---
+
+## No tool on this server accepts a value
+
+The model returns element **references** and Assay reads the DOM itself. The MCP
+server is where untrusted page text actually meets a model, so the invariant is
+enforced there and not merely intended: `assay_propose` and
+`assay_score_nomination` both take an **index** into a candidate list Assay
+built, and there is no argument anywhere on this surface into which a caller
+could put a string to be published.
+
+---
+
+## Where to go next
+
+<Cards>
+  <Card title="API reference" href="/docs/api-reference" description="The same store over HTTP, where resolve does exist." />
+  <Card title="The CLI" href="/docs/cli" description="Where a human settles what the agent could only nominate." />
+  <Card title="Glossary" href="/docs/glossary" description="Held, band, episode, proof id." />
+</Cards>

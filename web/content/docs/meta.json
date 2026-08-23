@@ -8,6 +8,10 @@
     "architecture",
     "run-flow",
     "assay-score",
+    "glossary",
+    "api-reference",
+    "cli",
+    "mcp",
     "limitations"
   ]
 }
