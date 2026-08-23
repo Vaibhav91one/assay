@@ -286,7 +286,13 @@ function Evidence({ d }: { d: RunDetail }) {
               <td className="meta-12_5 w-[190px] py-[8px] text-[var(--text-secondary)]">
                 {n.title}
               </td>
-              <td className="meta-12_5 w-[150px] py-[8px] text-[var(--text-muted)]">{f.label}</td>
+              {/* 110, not 150. `read from` is the only column here that has to
+                  hold a sentence, and at the larger mono label its longest one
+                  -- "field_runs joined runs, earlier run_id for this target and
+                  field" -- came up five pixels short and wrapped, which cost
+                  the row its 34px and broke the table's rhythm. The forty
+                  pixels come from `fact`, whose widest label is 72px wide. */}
+              <td className="meta-12_5 w-[110px] py-[8px] text-[var(--text-muted)]">{f.label}</td>
               <td className="mono-value-12_5 max-w-[260px] truncate py-[8px] text-[var(--text-primary)]">
                 {f.value}
               </td>

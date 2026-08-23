@@ -97,7 +97,12 @@ function ChangedTable({ v }: { v: CompareView }) {
         <col style={{ width: 172 }} />
         <col style={{ width: 180 }} />
         <col />
-        <col style={{ width: 94 }} />
+        {/* 108, not 94. The widest thing `when` can return is `yesterday 18:48`,
+            which at the larger meta measures 98px and used to measure 92 -- so
+            the timestamp wrapped onto a second line and took the whole row with
+            it. The fourteen pixels come off `what changed`, which is the auto
+            column and has three hundred to spare. */}
+        <col style={{ width: 108 }} />
       </colgroup>
       <thead>
         <tr>

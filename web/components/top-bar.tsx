@@ -74,7 +74,11 @@ export async function TopBar({
             title is the operator's own first sentence, and an unshrinkable one
             pushed straight through Activity and Settings on a narrow window. */}
         <h1 className="nav-15 min-w-0 truncate text-[var(--text-primary)]">{title}</h1>
-        {status && <p className="meta-13 truncate text-[var(--text-secondary)]">{status}</p>}
+        {/* Shrinks ahead of the title, not alongside it. Flex divides an
+            overflow between both, so the run detail -- short title, long status
+            -- spent three of its pixels on "Run 41" and rendered "Run 4...".
+            The status is the sentence that can afford to lose its tail. */}
+        {status && <p className="meta-13 shrink-[6] truncate text-[var(--text-secondary)]">{status}</p>}
       </div>
       <div className="flex shrink-0 items-center gap-[12px]">
         {/* Absent, never disabled. A control that is on every screen and dead

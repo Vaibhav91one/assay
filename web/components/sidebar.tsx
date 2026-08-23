@@ -163,7 +163,14 @@ export async function Sidebar({
 
       <SidebarFooter className="p-0">
         <div className="h-px w-full bg-[#292a2e]" />
-        <div className="flex items-center gap-[12px] px-[20px] py-[13px] group-data-[collapsible=icon]:px-[12px]">
+        {/* One space unit between the avatar and the name, not one and a half.
+            The rail is a fixed 272px and the identity block is the only row in
+            it that has to fit three things side by side; at the larger caption
+            "No accounts on this instance" needed 168px of a 162px column and
+            lost its last word. The four pixels come from here rather than from
+            the 20px inset, which is the rail's left edge and lines up with
+            every label above it. */}
+        <div className="flex items-center gap-[8px] px-[20px] py-[13px] group-data-[collapsible=icon]:px-[12px]">
           <span className="flex size-[32px] shrink-0 items-center justify-center rounded-full bg-[#292a2e]">
             {initials
               ? <span className="caption-12 text-[var(--text-inverse)]">{initials}</span>
