@@ -37,13 +37,20 @@
 // a day does not need the diagram to explain its own construction, and a screen
 // that does reads as talking down to them.
 //
-// Scores are the one derivation here, and only where the arithmetic is
-// checkable: `field_runs.ranked` is the list `healGated` ranked, so
-// `ranked[0].score` is its `score` and `ranked[0] - ranked[1]` is its `margin`
-// (src/heal.ts:236). `gateCheck` re-runs the decision on those numbers and
-// compares it to the stored `reason`; if they disagree the thresholds are not
-// shown, because a threshold that does not explain the recorded outcome is not
-// the threshold that produced it.
+// NO FACT ON THIS DIAGRAM IS A SCORE, A MARGIN OR A THRESHOLD, and four of them
+// were. The gate node carried `score`, `runner-up`, `margin` and `τ 0.6 · δ
+// 0.16`, and the search node's `best` fact and its outgoing edge label both
+// quoted `ranked[0].score` -- so the Sources table at the bottom of the run
+// screen was a per-cell confidence float, printed to four places, which
+// docs/FEATURES.md §4 refuses. They are gone. What the gate decided is now one
+// word, drawn by `web/components/assay-score.tsx` from `field_runs.reason`, and
+// the arithmetic behind it is written out at /docs/assay-score rather than
+// scattered across a screen. See the amendment to §4 dated 2026-08-23.
+//
+// `gateNumbers` and `gateCheck` are still here and still exported. They are the
+// derivation and the honesty check `web/lib/run-detail.ts` uses -- the numbers
+// stay in the store and stay available to whatever needs them -- and nothing in
+// this file renders their output any more.
 
 export type StageKey =
   | 'fetch'
@@ -166,7 +173,10 @@ const sha = (s: string | null | undefined): string => (s ? s.slice(0, 12) : '—
 const bytes = (n: number | null): string =>
   n == null ? '—' : n < 1024 ? `${n} B` : `${(n / 1024).toFixed(1)} kB`;
 
-const score = (n: number): string => n.toFixed(4);
+// A `score(n) => n.toFixed(4)` formatter used to live here. It was the only
+// reason this file could render a float at all, and deleting it is what makes
+// the rule at the top of the file mechanically true rather than a convention:
+// there is now nothing here that turns a number into a string for a screen.
 
 /** `score` and `margin` as `healGated` computed them, recovered from `ranked`. */
 export function gateNumbers(
@@ -337,7 +347,6 @@ export function flowFor(run: RunRecord): Flow {
   if (!broken) {
     edges.push({ from: 'evaluate', to: 'outcome', label: 'intact' });
   } else {
-    const n = gateNumbers(cell.ranked);
     const searchFacts: Fact[] = [];
     if (cell.ranked) {
       searchFacts.push({
@@ -345,9 +354,13 @@ export function flowFor(run: RunRecord): Flow {
         value: String(cell.ranked.length),
         source: 'field_runs.ranked',
       });
+      // The selector alone. This used to read `h2 — 0.9990`, and a count of
+      // candidates beside a score out of one is the confidence column §4
+      // refuses. Which element came first is a fact about the ordering; the
+      // number that put it there is the thing the band replaced.
       searchFacts.push({
         label: 'best',
-        value: `${cell.ranked[0]!.selector} — ${score(cell.ranked[0]!.score)}`,
+        value: cell.ranked[0]!.selector,
         source: 'field_runs.ranked[0]',
       });
     }
@@ -376,7 +389,10 @@ export function flowFor(run: RunRecord): Flow {
         facts: searchFacts,
       });
       edges.push({ from: 'evaluate', to: 'search', label: 'broken' });
-      edges.push({ from: 'search', to: 'gate', label: n ? `best ${score(n.score)}` : 'candidate' });
+      // `best 0.9990` before. An edge label is the least defensible place on the
+      // screen for a score: no threshold beside it, no room for the sentence
+      // that would make it mean anything.
+      edges.push({ from: 'search', to: 'gate', label: 'candidates' });
     } else {
       // Nothing records what was considered: `ranked` is kept only on an
       // abstain, and this run left no heal_history row either. Skip the node
@@ -386,38 +402,16 @@ export function flowFor(run: RunRecord): Flow {
 
     /* ---- the gate. */
     const held = cell.status === 'quarantined';
-    const checks = gateCheck(cell, run.thresholds);
+    // ONE FACT. `score`, `runner-up`, `margin` and `thresholds` used to follow
+    // it, and together they were a confidence float with its cut-off printed
+    // beside it -- the anti-feature in docs/FEATURES.md §4, on the screen. The
+    // reason code stays because it is the machine token, in the machine-token
+    // column, sourced to the column it was read from; the word a reader gets
+    // instead of it is drawn by `AssayScore` on the page, from this same
+    // string. One fact, one rendering.
     const gateFacts: Fact[] = [
       { label: 'reason', value: cell.reason || '—', source: 'field_runs.reason' },
     ];
-    if (n) {
-      gateFacts.push({ label: 'score', value: score(n.score), source: 'field_runs.ranked[0].score' });
-      gateFacts.push({
-        label: 'runner-up',
-        value: n.runnerUp == null ? 'none' : score(n.runnerUp),
-        source: 'field_runs.ranked[1].score',
-      });
-      gateFacts.push({
-        label: 'margin',
-        value: score(n.margin),
-        source: 'ranked[0].score − ranked[1].score',
-      });
-    }
-    if (checks) {
-      gateFacts.push({
-        label: 'thresholds',
-        value: `τ ${run.thresholds.tau} · δ ${run.thresholds.delta}`,
-        source: run.thresholdsDeclared
-          ? 'targets.contract.thresholds'
-          : 'ingestPage default, targets.contract declares none',
-      });
-    } else if (n) {
-      gateFacts.push({
-        label: 'thresholds',
-        value: 'not shown',
-        source: 'the target\'s thresholds no longer reproduce the recorded reason',
-      });
-    }
 
     // A brake or an auto-approve floor is a POLICY withholding a heal the gate
     // allowed. src/runner.ts distinguishes the two and so does this.
@@ -439,13 +433,14 @@ export function flowFor(run: RunRecord): Flow {
       // machine-token column, sourced to `field_runs.reason`. So the code was
       // being rendered twice, once as a fact and once as English. One fact, one
       // rendering: the prose keeps the decision, the fact keeps the code.
+      // `Refused. Score 0.7354, margin 0.1258.` before, which put the two
+      // numbers on the card as well as in the facts. The word for what the gate
+      // decided is the band, and it is drawn once, beside the candidates.
       summary: !held
-        ? 'The replacement cleared both thresholds, so it was published.'
+        ? 'The replacement cleared the gate, so it was published.'
         : withheld
           ? 'A policy withheld the heal.'
-          : n
-            ? `Refused. Score ${score(n.score)}, margin ${score(n.margin)}.`
-            : 'Refused.',
+          : 'Refused. Nothing was published into this cell.',
       tone: held ? 'warning' : 'success',
       branch: held
         ? { taken: 'refused — hold the cell', notTaken: 'cleared — publish the replacement' }

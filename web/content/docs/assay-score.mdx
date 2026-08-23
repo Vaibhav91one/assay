@@ -1,0 +1,211 @@
+---
+title: The Assay Score
+description: The gate's decision as one word, the arithmetic behind each word, and why the product shows the word and not the number.
+---
+
+Wherever Assay held a cell or published a heal, it shows one word: **CLEAR**,
+**AGREED**, **THIN**, **WEAK**, **GONE**, **POLICY** or **BRAKED**. That word is
+the Assay Score.
+
+It is not a rating and it is not a score out of anything. It names which branch
+of one two-part test the run took. This page is the whole of that test, with the
+measured numbers, so that a word on a screen can always be turned back into
+arithmetic you can check.
+
+---
+
+## The gate
+
+Every heal Assay publishes has to pass both halves of one condition:
+
+```
+score > tau (0.60)   AND   score − runner_up > delta (0.16)
+```
+
+`score` is the weighted similarity between the element Assay lost and the best
+candidate it found on the changed page, in `[0, 1]`. `runner_up` is the same
+number for the second-best candidate. The subtraction between them is the
+**margin**.
+
+**Both conditions, not either.** They guard different failures, and each one is
+blind to the other's:
+
+| | guards against | fails when |
+|---|---|---|
+| `tau` | *the element is gone.* Nothing on the page is a plausible replacement, so the best candidate is merely the least bad one | the page dropped the field, or redesigned it past recognition |
+| `delta` | *two things look equally right.* Something is a plausible replacement — and so is something else | a decoy appeared: a second price, an archived copy of the headline, a duplicated card |
+
+A candidate can look very much like the thing you lost and still be the wrong
+answer, if something else looks nearly as much like it. When two candidates are
+that close, picking one is a coin flip, and a coin flip is not a heal.
+
+`delta` is the cheap one and the one nobody else has. Scrapling has a floor and
+no margin; Healenium has a cap and no margin; COLOR suggests a fix for every
+broken locator. Comparing the top two costs one subtraction.
+
+### 0.60 and 0.16 are fitted, not chosen
+
+`npm run sweep` fits them. It ranks each benchmark case once and then replays a
+grid of threshold pairs over the stored ranking: 11 values of `tau` from 0.30 to
+0.85, 10 values of `delta` from 0 to 0.40, **110 points**, each scored over all
+153 cases. `results/sweep.json` holds the whole surface, and `0.60 / 0.16` is
+the point it recommends.
+
+They are therefore **arguments to every tool, not constants**. There is no
+evidence they transfer to another vertical, another field type, or another
+site's markup conventions — see
+[Limitations §5](/docs/limitations#the-thresholds-are-calibrated-on-this-corpus-and-nowhere-else).
+A field contract can set its own pair; `field_runs.ranked` keeps the scores the
+run was actually judged on either way.
+
+---
+
+## The seven words
+
+Five come from the gate itself. `healGated` in `src/heal.ts` returns exactly
+five reasons and no others.
+
+| Word | Reason code | What happened | Published? |
+|---|---|---|---|
+| **CLEAR** | `clear_margin` | One candidate cleared `tau` and was more than `delta` ahead of the next. | yes |
+| **AGREED** | `benign_tie` | The top two were within `delta` of each other — but they carried **the same text**, so it does not matter which node the value was read off. | yes |
+| **THIN** | `thin_margin` | The top two were within `delta` and carried **different** values. A coin flip. | no |
+| **WEAK** | `below_tau` | The best candidate on the page did not clear `tau`. Nothing looked enough like this field to be a candidate at all. | no |
+| **GONE** | `no_candidates` | There was nothing to rank. The gate abstained before anything was weighed, so there is genuinely no score and no margin. | no |
+
+Two more come from a **policy** overriding a heal the gate allowed. These are
+the cases where the arithmetic said yes and something else said no, and they are
+kept separate on purpose: an operator reading `THIN` on a field they themselves
+set to `auto_approve: never` is being told the wrong thing about their own
+configuration.
+
+| Word | Reason code | What happened | Published? |
+|---|---|---|---|
+| **POLICY** | `auto_approve_floor:<n>` | The gate cleared it, and the field contract's `auto_approve` floor asks for a person above that score. | no — it is queued |
+| **BRAKED** | `brake_engaged` | Healing is stopped on this field by an operator, or by the ping-pong detector. Nothing is attempted. | no |
+
+The brake is checked **before** the floor. An operator saying "stop healing this
+field" outranks an arithmetic threshold, and reporting the threshold when a
+brake is what stopped it would send them to tune the wrong number.
+
+<Callout type="warn" title="Some held cells show no word at all, and that is deliberate">
+  Two cases produce no band, and in both the raw reason code is printed instead:
+
+  **A reason this build does not know.** A code added to the engine can reach a
+  screen whose table predates it. Rather than fall back to the nearest word,
+  Assay shows nothing — a confident wrong word is worse than a code you can
+  search for. `src/reports/vocabulary.ts` has drawn this line for reason wording
+  since before the band existed.
+
+  **`brake_unreadable:<message>`.** The brake table could not be *read*, so the
+  run failed closed and withheld the heal. That is not the same fact as a brake
+  being *set*: nobody may have stopped this field, and **BRAKED** would send an
+  operator to clear a brake that does not exist while the real fault — an
+  unreachable database — went unnamed.
+</Callout>
+
+<Callout title="A published heal currently shows the diff and no word">
+  `src/runner.ts` writes `{ status: 'healed' }` with no reason, so
+  `clear_margin` and `benign_tie` live on the proof record in
+  `results/events.jsonl` and never reach the `field_runs.reason` column the band
+  is read from. **CLEAR** and **AGREED** are defined here, and are what
+  `assay_propose` reports over MCP, but the run screen draws the before/after
+  selector diff for a heal and claims nothing about which of the two it was. It
+  will, unchanged, the day that reason is persisted.
+</Callout>
+
+---
+
+## What the gate is worth, measured
+
+`npm run bench` mutates three archived recall pages — mattel, ikea and chicco,
+six captures each, ten mutations — for **153 cases** with exact ground truth. It
+runs three arms over the same cases:
+
+| arm | n | exact | value OK | **value wrong** | abstained |
+|---|---|---|---|---|---|
+| naive (first tag match) | 153 | 31.4% | 31.4% | 60.8% | 7.8% |
+| similarity, no gate | 153 | 72.5% | 76.5% | **23.5%** | 0.0% |
+| margin gate (τ 0.60 / δ 0.16) | 153 | 60.8% | 64.7% | **0.0%** | 35.3% |
+
+**Value wrong** is a confidently incorrect value returned as though it were
+right. It is the number nobody in this field publishes and it is the whole point
+of the project. The gate takes it from 23.5% to zero, and the price is 35.3%
+abstentions — 54 cases of the 153, of which `results/sweep.json` counts 18 as
+necessary and 36 as unnecessary.
+
+That is the trade in full: **a hole instead of a lie, and about a third of the
+holes did not need to be there.** Both halves are on this page because both are
+true.
+
+<Callout type="warn" title="Every abstention ever recorded came from a manufactured case">
+  `npm run replay` runs the real archived drift — 74 runs across the three
+  sites, two and a half years of it — and produces **8 clean runs, 66 heals and
+  zero abstentions**. When those pages actually moved, the right answer won by a
+  wide margin.
+
+  So on the only real-world data in this repository the margin gate is inert: it
+  costs nothing and it catches nothing. The claim "the gate prevents wrong
+  values" rests on constructed cases and on no observed production incident. See
+  [Limitations](/docs/limitations).
+</Callout>
+
+---
+
+## Why a word and not a number
+
+The obvious thing to build is a confidence percentage on every cell.
+`docs/FEATURES.md` §4 refuses it, on three grounds, and the band was designed to
+answer all three rather than to get around them.
+
+**1. A float lets every downstream team pick its own threshold.** That relocates
+the abstain decision to whoever cares least about it — someone filtering
+`confidence > 0.8` in a warehouse query, months later, who has never seen this
+page. There is nothing to re-threshold in a closed set of seven words. The
+decision stays where the evidence is.
+
+**2. `0.94` on everything trains people to ignore the column.** A number that is
+always high is furniture. The band is not printed on every cell: it appears only
+where the gate reached a decision worth reading, and four of the seven words
+mean *this one is waiting on you*.
+
+**3. The gate already made the decision; exporting the raw score asks the user
+to make it again with less information.** The gate had the ranked list, the full
+element text, the thresholds in force and the tie check. A reader given `0.7354`
+has one of those four. The band reports the conclusion; this page holds the
+evidence.
+
+So what the product shows is a word, and what it shows beside the word is the
+thing a person can actually act on. On a **THIN** refusal that is the two rival
+selectors **and the values they carry** — a human can look at
+`Recall & Safety Alerts` beside `Recall & Safety Alerts (archived)` and answer in
+five seconds. The scores that failed to separate them cannot be judged that way,
+which is why they are not there.
+
+### What is still refused
+
+The amendment to `docs/FEATURES.md` §4, dated 2026-08-23, overturns exactly one
+thing — the band word — and nothing else:
+
+- **No float, anywhere in the UI.** No percentage, no progress bar, no gauge, no
+  ring, no score column, no per-cell confidence.
+- **Nothing added to the export.** `_assay.fields[].status` still carries only
+  the closed vocabulary `live` / `stale` / `healed` / `degraded` /
+  `quarantined`. The REST envelope and the proof record are unchanged: the band
+  is a rendering, not a field.
+- **No band on a cell the gate did not decide.** A clean read is `live`, and
+  that is all it is.
+
+### The numbers did not go anywhere
+
+They are in the store and they are in this repository. `field_runs.ranked` holds
+every candidate the gate weighed with its score, written at abstain time and
+never recomputed. `results/events.jsonl` holds one proof record per run with the
+candidates, the scores, the runner-up, the margin and the thresholds in force.
+`results/sweep.json` holds all 110 threshold pairs.
+
+The band is derived from `field_runs.reason` and from nothing else — never
+recomputed from the score and the thresholds. A band worked out by re-running
+the arithmetic would be a second thing that can be wrong: it disagrees with the
+row it is printed on the moment a contract is edited underneath it. One
+decision, recorded once, rendered once.

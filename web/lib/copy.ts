@@ -135,21 +135,40 @@ const COPY = {
   'run.table.head.reason': 'reason',
   'run.link.proof': 'proof ›',
   'run.link.decide': 'decide ›',
+  // What the section is, now that it no longer states a verdict. The verdict is
+  // the band, drawn once on the selector diff above it -- see the note at the
+  // gate section in `runs/[run]/page.tsx`.
+  'run.gate.caption': 'The elements the gate weighed against the lost one, best first.',
   'run.gate.head.rank': '#',
   'run.gate.head.element': 'element',
   'run.gate.head.text': 'text on the page',
-  'run.gate.head.score': 'score',
+  // `run.gate.head.score` was here. The gate table has no score column any
+  // more -- see the amendment to docs/FEATURES.md §4 dated 2026-08-23 -- and a
+  // catalogue entry naming a column nothing draws is a string waiting to be
+  // put back on a screen by someone who assumed it was in use.
   'run.evidence.head.stage': 'stage',
   'run.evidence.head.fact': 'fact',
   'run.evidence.head.value': 'value',
   'run.evidence.head.source': 'read from',
 
+  // -- the Assay Score -------------------------------------------------------
+  //
+  // ONLY THE LINK LABEL IS HERE. The seven band words and the sentence each one
+  // means live in `src/reports/assay-score.ts`, beside the mapping that
+  // produces them -- because `/docs/assay-score` renders the same table, and
+  // the whole justification for showing a word instead of a number is that the
+  // badge and the page cannot disagree about what the word means. A second
+  // catalogue in front of that table would be the drift this file's own rule
+  // about `HELD_BECAUSE` already refuses.
+  'assayScore.more': 'How the gate decided ›',
+
   // -- the two diffs on the run page -----------------------------------------
   //
-  // Only the labels are here. The line of numbers under a selector diff is
-  // assembled from the score, the margin and the two thresholds, and by the
-  // rule at the top of this file that makes it prose whose SHAPE changes with
-  // the data, not copy with a hole in it. It lives in the component.
+  // These used to carry a line of numbers -- a score against tau, a margin
+  // against delta -- assembled in the component because its SHAPE changed with
+  // the data. It no longer exists: the band says which test the gate applied
+  // and the rivals below say what was at stake, so what is left is fixed
+  // labels, which is what this file is for.
   'run.section.selector': 'The selector',
   'run.section.record': 'The record',
   'diff.pane.before': 'before',
@@ -162,7 +181,14 @@ const COPY = {
   'diff.pane.takenBack': 'taken back',
   'diff.nothingPublished': 'Nothing was published into this cell.',
   'diff.held': 'held',
-  'diff.tooClose': 'the gap between them',
+  'diff.moved': 'The gate cleared this, so the selector moved.',
+  'diff.movedThenTakenBack': 'The gate cleared this and the selector moved. It was taken back later.',
+  // The pair the refusal was ABOUT, and what each of them holds. The values are
+  // the half a person can judge -- "£4.99" against "Add to basket" is a
+  // question anyone can answer in five seconds -- and the scores are the half
+  // they cannot, which is why only one of the two is on the screen.
+  'diff.rivals.eyebrow': 'THE TWO IT COULD NOT SEPARATE',
+  'diff.rivals.disagree': 'They do not carry the same value, so neither was published.',
 
   // -- fields ----------------------------------------------------------------
   'fields.heading': 'Fields',

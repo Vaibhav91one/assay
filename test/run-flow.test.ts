@@ -190,14 +190,33 @@ describe('a held run', () => {
     expect(gateCheck(held.cell!, { tau: 0.6, delta: 0.16 })).toBe(true);
   });
 
-  it('refuses the thresholds when they no longer explain the row', () => {
+  it('still knows when the thresholds no longer explain the row', () => {
     // A contract edited since the run. 0.9 would have produced `below_tau`, and
     // the row says `thin_margin`, so these are not the numbers it was judged by.
+    //
+    // `gateCheck` is no longer consulted by `flowFor` -- the diagram draws no
+    // threshold, so it has none to withhold -- but `web/lib/run-detail.ts` still
+    // calls it, and it is the check that has to come back the day a number
+    // returns to a screen. Asserted here rather than deleted with its caller.
     expect(gateCheck(held.cell!, { tau: 0.9, delta: 0.16 })).toBe(false);
-    const gate = flowFor({ ...held, thresholds: { tau: 0.9, delta: 0.16 } }).nodes.find(
-      (n) => n.id === 'gate',
-    )!;
-    expect(gate.facts.find((f) => f.label === 'thresholds')!.value).toBe('not shown');
+  });
+
+  it('draws the gate with one fact and no arithmetic', () => {
+    // The gate node used to carry `score`, `runner-up`, `margin` and
+    // `thresholds` beside the reason -- a confidence float with its cut-off
+    // printed next to it, which docs/FEATURES.md §4 refuses. What a reader gets
+    // instead is the band, drawn on the page from this same reason string.
+    const gate = flowFor(held).nodes.find((n) => n.id === 'gate')!;
+    expect(gate.facts.map((f) => f.label)).toEqual(['reason']);
+    expect(gate.facts[0]!.value).toBe('thin_margin');
+    expect(gate.summary).not.toMatch(/\d\.\d/);
+  });
+
+  it('names the best candidate without quoting what scored it', () => {
+    // `h2 — 0.7354` before, on the card and again on the outgoing edge.
+    const search = flowFor(held).nodes.find((n) => n.id === 'search')!;
+    expect(search.facts.find((f) => f.label === 'best')!.value).toBe('h2');
+    expect(flowFor(held).edges).toContainEqual({ from: 'search', to: 'gate', label: 'candidates' });
   });
 
   it('ends at a hold, with the queue item and the null said out loud', () => {
@@ -279,16 +298,16 @@ describe('every fact cites a real column', () => {
     'field_runs.held_since_run',
     'field_runs.ranked',
     'field_runs.ranked[0]',
-    'field_runs.ranked[0].score',
-    'field_runs.ranked[1].score',
-    'ranked[0].score − ranked[1].score',
     'heal_history.from_selector',
     'heal_history.to_selector',
     'queue_items.resolved_by',
     'episodes.opened_run',
-    'targets.contract.thresholds',
-    'ingestPage default, targets.contract declares none',
-    "the target's thresholds no longer reproduce the recorded reason",
+    // `field_runs.ranked[0].score`, `field_runs.ranked[1].score`,
+    // `ranked[0].score − ranked[1].score`, `targets.contract.thresholds` and
+    // the two sentences about them were here. Every one of them sourced a
+    // NUMBER onto the screen, and they are removed from the allowlist rather
+    // than left in it -- an allowlist that still permits the thing the feature
+    // removed would let it come back without failing anything.
   ]);
 
   const cases: RunRecord[] = [
