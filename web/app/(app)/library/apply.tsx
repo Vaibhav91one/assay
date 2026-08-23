@@ -24,9 +24,20 @@ import { approve, inspect, type ApproveResult, type InspectResult } from './acti
  * A ROW THAT FOUND NOTHING IS SHOWN, NOT HIDDEN, and comes back unticked --
  * `createTarget` refuses the whole watch if any kept field resolves to nothing,
  * so leaving it ticked would cost the operator the fields that did work.
+ *
+ * THE ROWS COME FROM THE READ ONCE THERE HAS BEEN ONE. A named tracker knows
+ * its fields before you press Run and the table lists them; the card that takes
+ * a Bright Data dataset ID does not -- nobody has documented that record's
+ * shape -- so its table is empty until a record has been read and then holds
+ * the keys that record actually carried. Both are the same table. Neither
+ * promises a field it has not seen.
  */
 export function Apply({ tracker: t }: { tracker: Tracker }) {
   const [url, setUrl] = useState('');
+  // Only ever sent by the one card that has no dataset_id of its own. It is an
+  // address -- which of Bright Data's scrapers to ask -- and the server
+  // validates it before it goes anywhere near a URL. No selector travels here.
+  const [dataset, setDataset] = useState('');
   const [read, setRead] = useState<InspectResult | null>(null);
   const [keep, setKeep] = useState<string[]>([]);
   const [result, setResult] = useState<ApproveResult | null>(null);
@@ -34,11 +45,14 @@ export function Apply({ tracker: t }: { tracker: Tracker }) {
   const [saving, startSave] = useTransition();
 
   const built = result?.build.ok ? result.build : null;
+  const needsDataset = t.kind === 'scraper' && t.datasetId === null;
+  const ready = url.trim().length > 0 && (!needsDataset || dataset.trim().length > 0);
+  const rows = read?.ok ? read.fields : t.fields;
 
   const run = () =>
     startRead(async () => {
       setResult(null);
-      const r = await inspect(t.id, url);
+      const r = await inspect(t.id, url, dataset.trim() || undefined);
       setRead(r);
       if (r.ok) setKeep(r.fields.filter((f) => f.value !== null).map((f) => f.name));
     });
@@ -47,12 +61,22 @@ export function Apply({ tracker: t }: { tracker: Tracker }) {
     <div className="flex flex-col gap-[16px]">
       {!built && (
         <div className="flex flex-wrap items-center gap-[10px]">
+          {needsDataset && (
+            <input
+              type="text"
+              value={dataset}
+              onChange={(e) => setDataset(e.currentTarget.value)}
+              placeholder="gd_l1vikfch901nx3by4"
+              aria-label="Bright Data dataset ID"
+              className="body-13_5 w-[196px] rounded-[var(--radius-control)] border border-[var(--border-default)] bg-[var(--surface-card)] px-[12px] py-[9px] outline-none transition-colors duration-[var(--duration-tint)] placeholder:text-[var(--text-muted)] focus:border-[var(--semantic-link)]"
+            />
+          )}
           <input
             type="url"
             value={url}
             onChange={(e) => setUrl(e.currentTarget.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && url.trim()) { e.preventDefault(); run(); }
+              if (e.key === 'Enter' && ready) { e.preventDefault(); run(); }
             }}
             placeholder={t.placeholder}
             aria-label="Link"
@@ -62,7 +86,7 @@ export function Apply({ tracker: t }: { tracker: Tracker }) {
             variant="primary"
             icon={Play}
             loading={reading}
-            disabled={url.trim().length === 0}
+            disabled={!ready}
             onClick={run}
           >
             Run
@@ -72,7 +96,7 @@ export function Apply({ tracker: t }: { tracker: Tracker }) {
 
       <table className="w-full border-collapse">
         <tbody>
-          {t.fields.map((f) => {
+          {rows.map((f) => {
             const hit = read?.ok ? read.fields.find((x) => x.name === f.name) : undefined;
             const row = built?.fields.find((x) => x.field === f.name);
             const missing = read?.ok && hit?.value == null;
@@ -133,7 +157,11 @@ export function Apply({ tracker: t }: { tracker: Tracker }) {
             onClick={() =>
               startSave(async () =>
                 setResult(await approve({
-                  trackerId: t.id, url: read.url, keep, cadence: t.cadence,
+                  trackerId: t.id,
+                  url: read.url,
+                  keep,
+                  cadence: t.cadence,
+                  datasetId: dataset.trim() || undefined,
                 })))}
           >
             Start watching
