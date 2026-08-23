@@ -22,7 +22,7 @@ import { resolve } from '../src/decisions/index.js';
 import {
   getDb, closeDb, queueItems, targets, runs, fieldRuns, eq, sql,
 } from '../src/store/index.js';
-import { readCommand } from '../web/app/(app)/command-actions.js';
+import { readCommandView } from '../web/lib/commands.js';
 // `web/lib/queue.ts` imports no `@/` alias, so its types resolve from here --
 // which is what keeps the assertions below typed rather than silently `any`.
 import type { Decision } from '../web/lib/queue.js';
@@ -150,7 +150,7 @@ describe('a command turn carries the query and never the rows', () => {
     // The rows exist, and this is what the turn made of them: nothing. The
     // assertion is deliberately over the SERIALISED turn, because that is what
     // reaches Postgres and what a later reader gets back.
-    const r = await readCommand('decisions');
+    const r = await readCommandView('decisions');
     expect(r.ok && r.view.command === 'decisions' && r.view.decisions.length).toBeGreaterThan(0);
 
     const json = JSON.stringify(commandTurn('decisions', ''));
@@ -188,7 +188,7 @@ describe('a command turn carries the query and never the rows', () => {
 describe('the panel reads the store, so an old turn cannot go stale', () => {
   it('shows the held cell with both candidate values and no published value', async () => {
     if (!dbUp) return;
-    const r = await readCommand('decisions');
+    const r = await readCommandView('decisions');
     expect(r.ok).toBe(true);
     if (!r.ok || r.view.command !== 'decisions') throw new Error('unreachable');
 
@@ -204,8 +204,8 @@ describe('the panel reads the store, so an old turn cannot go stale', () => {
 
   it('`/held` is the same read, so the two cannot disagree about what is held', async () => {
     if (!dbUp) return;
-    const a = await readCommand('decisions');
-    const b = await readCommand('held');
+    const a = await readCommandView('decisions');
+    const b = await readCommandView('held');
     if (!a.ok || !b.ok || a.view.command === 'fields' || b.view.command === 'fields') {
       throw new Error('unreachable');
     }
@@ -215,10 +215,10 @@ describe('the panel reads the store, so an old turn cannot go stale', () => {
   });
 
   it('refuses a command name it does not have, with the ones it does', async () => {
-    const r = await readCommand('deciisons' as never);
+    const r = await readCommandView('deciisons' as never);
     expect(r.ok).toBe(false);
     if (r.ok) throw new Error('unreachable');
-    for (const c of COMMANDS) expect(r.detail).toContain(`/${c}`);
+    for (const c of COMMANDS) expect(r.detail).toContain(`/${String(c)}`);
   });
 
   it('a resolved cell reads as resolved from a turn that ran before it', async () => {
@@ -228,7 +228,7 @@ describe('the panel reads the store, so an old turn cannot go stale', () => {
     // turn is rendered again afterwards. Nothing about the turn changes; what
     // changes is the store, and the panel reads the store.
     const turn = commandTurn('decisions', '');
-    const before = await readCommand(turn.command);
+    const before = await readCommandView(turn.command);
     if (!before.ok || before.view.command !== 'decisions') throw new Error('unreachable');
     expect(before.view.decisions.some((d) => d.proof === PROOF)).toBe(true);
     const badgeBefore = outstandingCount(await notices(50));
@@ -239,7 +239,7 @@ describe('the panel reads the store, so an old turn cannot go stale', () => {
     const answered = await resolve({ proof: PROOF, resolution: 'first' });
     expect(answered.ok).toBe(true);
 
-    const after = await readCommand(turn.command);
+    const after = await readCommandView(turn.command);
     if (!after.ok || after.view.command !== 'decisions') throw new Error('unreachable');
     expect(after.view.decisions.some((d) => d.proof === PROOF)).toBe(false);
 
@@ -261,7 +261,7 @@ describe('a held cell whose value is an instruction changes nothing', () => {
       .set({ resolvedBy: null, resolution: null, resolvedAt: null })
       .where(eq(queueItems.proofId, PROOF));
 
-    const r = await readCommand('decisions');
+    const r = await readCommandView('decisions');
     if (!r.ok || r.view.command !== 'decisions') throw new Error('unreachable');
     // The payload is in the read -- it has to be, an operator deciding this cell
     // must see what the page actually said.
