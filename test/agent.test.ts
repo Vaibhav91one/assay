@@ -15,6 +15,7 @@ import { z } from 'zod';
 import {
   Reply, CADENCES, DISALLOWED_TOOLS, BASE_TOOLS, PAGE_MEMORY_MS,
   candidatesOn, resolverFor, urlsIn, converse, render, pageCandidates, forgetPages,
+  boilerplateKind,
   type Candidate,
 } from '../src/agent/index.js';
 import { withoutCredentials } from './no-credentials.js';
@@ -299,6 +300,112 @@ describe('a proposal is only "waiting" if one actually is', () => {
     const second = render(waiting(), pages, fetched, PAGE_MEMORY_MS + 2);
     expect(second.reply).toBe(first.reply);
     expect(second.reply).not.toMatch(/waiting on you/);
+  });
+});
+
+// --- a page with nothing on it worth watching --------------------------------
+//
+// `Build API: https://www.youtube.com/` proposed exactly one field:
+// `copyright_notice` = "© 2026 Google LLC", off fourteen elements examined. The
+// extraction is defensible -- the homepage is personalised and JS-rendered, so
+// the footer really is the most durable text on it -- and the answer is still
+// useless. These pin that a page which is all furniture is SAID so rather than
+// shipped as a proposal.
+
+describe('a page whose only durable text is furniture is not proposed', () => {
+  // The YouTube homepage as `candidatesOn` actually finds it: a footer, a
+  // consent line, and nav.
+  const FURNITURE = `<body>
+    <a class="nav">Sign in</a>
+    <p class="consent">We use cookies to deliver and maintain our services.</p>
+    <span class="foot">© 2026 Google LLC</span>
+  </body>`;
+  const url = 'https://www.youtube.com/';
+  const pages = [url];
+  const fetched = new Map<number, Candidate[]>([[0, candidatesOn(FURNITURE)]]);
+  const at = (name: string): number =>
+    candidatesOn(FURNITURE).findIndex((c) => (c.classes_stable ?? []).includes(name));
+
+  const propose = (names: [string, string][]): Reply => ({
+    kind: 'propose', url: 0, cadence: 'daily', say: null,
+    fields: names.map(([field, cls]) => ({
+      name: field, candidate: at(cls), confidence: 'high' as const,
+    })),
+  });
+
+  it('classifies each kind of furniture, and nothing else', () => {
+    expect(boilerplateKind('© 2026 Google LLC')).toBe('a copyright line');
+    expect(boilerplateKind('Copyright 2026 Example')).toBe('a copyright line');
+    expect(boilerplateKind('We use cookies to deliver our services')).toBe('a cookie banner');
+    expect(boilerplateKind('Sign in')).toBe('a navigation label');
+    expect(boilerplateKind('Privacy Policy')).toBe('a navigation label');
+    // Real values, including the ones that share a word with the list above.
+    expect(boilerplateKind('$1,299.00')).toBeNull();
+    expect(boilerplateKind('Terms of service updated for EU users')).toBeNull();
+    expect(boilerplateKind('Chocolate chip cookies, 12 pack')).toBeNull();
+    expect(boilerplateKind(null)).toBeNull();
+  });
+
+  it('refuses the footer instead of proposing it, and says why', () => {
+    const r = render(propose([['copyright_notice', 'foot']]), pages, fetched);
+    expect(r.kind).toBe('need_fields');
+    expect('proposal' in r).toBe(false);
+    expect(r.reply).toMatch(/a copyright line/);
+    expect(r.reply).toMatch(/[Nn]othing was created/);
+  });
+
+  it('points at the prebuilt scraper for the host the operator named', () => {
+    const r = render(propose([['copyright_notice', 'foot']]), pages, fetched);
+    // The curated YouTube card, by name and with its own example link shape.
+    expect(r.reply).toContain('YouTube');
+    expect(r.reply).toContain('https://www.youtube.com/@BBCNews');
+    // Never a dataset id. `findScraper` is the only source of these and this
+    // sentence does not carry one.
+    expect(r.reply).not.toMatch(/\bgd_[a-z0-9]+/);
+  });
+
+  it('suggests a specific page when no prebuilt scraper covers the host', () => {
+    const other = ['https://example.com/'];
+    const r = render(propose([['copyright_notice', 'foot']]), other, fetched);
+    expect(r.kind).toBe('need_fields');
+    expect(r.reply).toMatch(/one specific thing rather than a front page/);
+  });
+
+  it('does not quote the page back at the operator', () => {
+    // The sentence names the KIND of furniture, which this repo decided, and
+    // never the text, which a stranger wrote. Same rule as every other reply.
+    const r = render(propose([['copyright_notice', 'foot']]), pages, fetched);
+    expect(r.reply).not.toContain('Google LLC');
+  });
+
+  it('still proposes when one real value sits beside the furniture', () => {
+    const mixed = `<body>
+      <span class="foot">© 2026 Example Inc</span>
+      <p class="price">$1,299.00</p>
+    </body>`;
+    const cands = candidatesOn(mixed);
+    const idx = (cls: string) => cands.findIndex((c) => (c.classes_stable ?? []).includes(cls));
+    const r = render(
+      {
+        kind: 'propose', url: 0, cadence: 'daily', say: null,
+        fields: [
+          { name: 'footer', candidate: idx('foot'), confidence: 'high' },
+          { name: 'price', candidate: idx('price'), confidence: 'high' },
+        ],
+      },
+      ['https://shop.example/thing'],
+      new Map<number, Candidate[]>([[0, cands]]),
+    );
+    expect(r.kind).toBe('propose');
+  });
+
+  it('offers the prebuilt scraper when it could not tell at all', () => {
+    const r = render(
+      { kind: 'need_fields', url: 0, cadence: 'daily', say: null, fields: [] },
+      pages, fetched,
+    );
+    expect(r.kind).toBe('need_fields');
+    expect(r.reply).toContain('YouTube');
   });
 });
 

@@ -61,6 +61,10 @@ import { fingerprint, candidates } from '../fingerprint.js';
 import { digest, hasKey } from '../ai/model.js';
 import { listTargets, type FieldInput } from '../setup/index.js';
 import { fetchHtml } from '../skills/page.js';
+// The curated brand cards, so a page that yields nothing worth watching can be
+// answered with something that does. Read-only, synchronous and offline -- see
+// `findScraper` -- so it costs this turn nothing and cannot fail.
+import { findScraper, type ScraperMatch } from '../connectors/scrapers.js';
 import { CADENCES, DEFAULT_MODEL as DEFAULT_MODEL_ID, isModel } from './models.js';
 
 export { hasKey } from '../ai/model.js';
@@ -708,6 +712,101 @@ export async function converse(
   return result;
 }
 
+// --- a page with nothing on it worth watching --------------------------------
+
+/**
+ * Text that is on a page because every page has it.
+ *
+ * WHAT THIS IS FOR. `Build API: https://www.youtube.com/` came back with exactly
+ * one field -- `copyright_notice` = "© 2026 Google LLC" -- off fourteen elements
+ * examined. That extraction is not WRONG: the homepage is personalised and
+ * JS-rendered, so the footer genuinely is the most durable server-rendered text
+ * on it. It is useless, which is worse, because it is useless while looking like
+ * an answer. This product would rather say it cannot tell, so it does.
+ *
+ * EACH ENTRY CARRIES ITS OWN NAME FOR ITSELF, and the sentence quotes that name
+ * rather than the page. Echoing the matched text back would be Assay's own reply
+ * carrying a string a stranger wrote -- the exact channel the four properties in
+ * this file's header close -- for the sake of a nicer sentence. "a copyright
+ * line" is a fact this file determined, in this file's words.
+ *
+ * DELIBERATELY BLUNT, BECAUSE THE GATE IS NARROW. Nothing here fires unless
+ * EVERY field in a proposal matches, so a price beside a "Sign in" is untouched
+ * and only a page that is all furniture is refused. A list this aggressive would
+ * be unusable as a per-field filter and is safe as a whole-page one.
+ */
+const BOILERPLATE: readonly { what: string; re: RegExp }[] = [
+  { what: 'a copyright line', re: /(^|\s)(?:©|\(c\))\s*\d{4}|\bcopyright\b|\ball rights reserved\b/i },
+  // The word alone is not enough: "cookies" is a real field on a recipe page.
+  // A banner is the word next to what a banner asks for.
+  { what: 'a cookie banner', re: /\bcookies?\b.*\b(?:accept|consent|policy|preferences|manage|we use)\b|\b(?:accept|manage|we use)\b.*\bcookies?\b/i },
+  // Anchored end to end, so a heading that merely contains one of these words
+  // is not caught -- "Terms of service updated" is news; "Terms" is furniture.
+  {
+    what: 'a navigation label',
+    re: /^(?:home|menu|search|share|more|help|support|settings|language|country|region|about(?: us)?|contact(?: us)?|careers|jobs|press|blog|news|sign ?in|sign ?up|log ?in|log ?out|register|subscribe|download|install|get started|learn more|skip to (?:main )?content|privacy(?: policy)?|terms(?: of (?:use|service))?|cookie policy|legal|sitemap|advertis(?:e|ing)|feedback|accessibility|back to top)\.?$/i,
+  },
+];
+
+/** What kind of furniture this text is, or null when it is not furniture. */
+export function boilerplateKind(text: string | null): string | null {
+  const t = (text ?? '').trim();
+  if (!t) return null;
+  return BOILERPLATE.find((b) => b.re.test(t))?.what ?? null;
+}
+
+/**
+ * The curated brand card for the host the OPERATOR named, or null.
+ *
+ * The second label pair as well as the full host, so `www.youtube.com` and
+ * `m.youtube.com` both reach the YouTube card. No fuzzier than that: `findScraper`
+ * refuses a nearest guess on purpose, and this must not smuggle one in.
+ */
+function curatedFor(url: string): ScraperMatch | null {
+  let host: string;
+  try { host = new URL(url).hostname; } catch { return null; }
+  const parts = host.split('.');
+  return findScraper(host) ?? findScraper(parts.slice(-2).join('.'));
+}
+
+/**
+ * The better route for a host Assay already ships a prebuilt scraper for.
+ *
+ * THE LINK SHAPE COMES FROM THE CARD'S OWN `placeholder`, never from here. That
+ * is a real example the catalogue maintains beside the dataset it works with, so
+ * this cannot drift into suggesting a URL shape the scraper would reject -- and
+ * no `dataset_id` is named, because a card is a brand and the operator picks
+ * inside it.
+ */
+function curatedPointer(url: string): string | null {
+  const m = curatedFor(url);
+  return m
+    ? `Assay ships a prebuilt ${m.entry.name} scraper: open ${m.entry.name} in the library `
+      + `and give it a link to one thing, shaped like ${m.entry.placeholder}.`
+    : null;
+}
+
+/**
+ * What to say about a page whose every candidate is furniture.
+ *
+ * THREE MOVES, IN THE ORDER THEY HELP. Say what was found and that it was not
+ * proposed -- an absence has to read as deliberate. Then the better route, which
+ * for a covered host is a prebuilt scraper Assay already ships: a YouTube link
+ * belongs on the YouTube card, not on a footer. Then the manual way, because the
+ * operator may know something about this page that a read of it cannot.
+ */
+function nothingWorthWatching(url: string, kinds: string[]): string {
+  const found = kinds.length === 1 ? kinds[0]!
+    : `${kinds.slice(0, -1).join(', ')} and ${kinds.at(-1)}`;
+  return `I read ${url}, and everything on it that would still be there tomorrow is `
+    + `the page's own furniture -- ${found}. Watching that would tell you nothing, so I `
+    + 'have not proposed it and nothing was created. '
+    + (curatedPointer(url)
+      ?? 'Point me at a page for one specific thing rather than a front page -- a single '
+        + 'product, listing, profile or article.')
+    + ' Or tell me which values on this page you care about and I will watch those.';
+}
+
 /**
  * The answer to "is that proposal still waiting on me?", which is no.
  *
@@ -831,12 +930,34 @@ export function render(
   }
 
   if (r.kind === 'need_fields' || !fields.length) {
+    // The same pointer the furniture branch offers, for the same reason: a host
+    // Assay already has a prebuilt scraper for is a host where "I could not
+    // tell" is only half the answer.
+    const prebuilt = curatedPointer(url);
     return {
       kind: 'need_fields',
       model_configured: true,
       urls: pages,
       reply: `I read ${url} but could not tell what is worth watching on it. `
-        + 'Which values on that page do you care about?',
+        + (prebuilt ? `${prebuilt} Or which ` : 'Which ')
+        + 'values on that page do you care about?',
+    };
+  }
+
+  // NOTHING ON THIS PAGE IS WORTH WATCHING, said out loud rather than shipped as
+  // a proposal. Checked on the DOM text behind each field, so it is a fact about
+  // what the page actually said and not about the name the model chose for it --
+  // `copyright_notice` and `latest_update` are the same footer.
+  //
+  // EVERY field, not any: one piece of furniture beside a real value is a page
+  // with a real value on it. See `BOILERPLATE`.
+  const furniture = fields.map((f) => boilerplateKind(f.example));
+  if (furniture.every((k) => k !== null)) {
+    return {
+      kind: 'need_fields',
+      model_configured: true,
+      urls: pages,
+      reply: nothingWorthWatching(url, [...new Set(furniture as string[])]),
     };
   }
 
