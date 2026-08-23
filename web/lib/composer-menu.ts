@@ -28,6 +28,36 @@ export const SHORTCUTS = [
 export type ShortcutId = (typeof SHORTCUTS)[number]['id'];
 
 /**
+ * The modes actually offered, which is not all of them.
+ *
+ * SIX WERE DRAWN AND ONE IS THE PRODUCT. "Build API", "Automate", "Compare
+ * locations" and "AI visibility" prefix the operator's sentence with a word and
+ * change nothing else -- there is no API builder, no automation engine and no
+ * visibility report behind them, and `shortcutMessage` is the whole of their
+ * implementation. A menu is a promise about what a product does, and four of
+ * the six entries were promising things that do not exist. Research stays
+ * because the agent genuinely answers questions without building a watch.
+ *
+ * FILTERED AT RENDER, NEVER DELETED. `SHORTCUTS` is what `shortcutMessage`
+ * resolves against and what `LOOK` in `components/composer-shortcuts.tsx` is a
+ * `Record` over -- the exhaustiveness check that makes a new mode with no icon
+ * a compile error. Cutting rows out of the data would take both, and would
+ * strand any conversation whose transcript already carries one of the four.
+ *
+ * `NEXT_PUBLIC_` because this is read in the browser: Next inlines the value at
+ * build time, so the flag is a property of the build and not of the request,
+ * which is the right shape for "show me the unfinished ones while I work on
+ * them".
+ */
+const SHIPPED: readonly ShortcutId[] = ['watch', 'research'];
+
+export function visibleShortcuts(): (typeof SHORTCUTS)[number][] {
+  return process.env.NEXT_PUBLIC_ASSAY_ALL_MODES === '1'
+    ? [...SHORTCUTS]
+    : SHORTCUTS.filter((s) => SHIPPED.includes(s.id));
+}
+
+/**
  * Put the shortcut into the message channel the composer already owns.
  *
  * This returns one string because there must not be a second agent request
