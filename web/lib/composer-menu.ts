@@ -4,6 +4,17 @@
 // JSX: deciding whether a menu is open is the only non-obvious logic in the
 // composer, and it is the part that breaks silently when someone types an email
 // address or pastes a URL with a path in it.
+//
+// WHAT WENT: `@`. It listed the fields already under watch and inserted the
+// chosen id as text, and the id then reached the agent as a long word and
+// nothing else -- so picking a scraper and asking about it came back "Which page
+// should I watch?", the agent asking for the thing that had just been named. The
+// fix was never worth having: one row per FIELD per scraper is hundreds of rows
+// on an instance of any size, which is not a picker. It is deleted rather than
+// finished, and what replaces it is the agent's own read tools -- the model asks
+// the store when it needs to know, instead of the operator hand-feeding it one
+// id at a time. `menuAt`'s start-of-word rule survives the removal and still
+// earns its place; see below.
 
 export const SHORTCUTS = [
   { id: 'watch', label: 'Watch', placeholder: 'Paste a URL, or describe what you want to keep an eye on' },
@@ -30,88 +41,78 @@ export function shortcutMessage(text: string, selected: ShortcutId | null): stri
   return shortcut ? `${shortcut.label}: ${text}` : text;
 }
 
-/** Where the caret is, and what the menus need to know about it. */
+/** Where the caret is, and what the command menu needs to know about it. */
 export interface Menu {
-  sigil: '@' | '/';
-  /** Index of the sigil in the value. Replacing from here removes the query too. */
+  /** Index of the `/` in the value. Replacing from here removes the query too. */
   from: number;
-  /** What has been typed after the sigil. One token; a space closes the menu. */
+  /** What has been typed after it. One token; a space closes the menu. */
   query: string;
 }
 
 /**
- * Is a menu open, and what has been typed into it?
+ * Is the command menu open, and what has been typed into it?
  *
- * The sigil counts only at the START OF A WORD. That single rule is what stops
- * `you@example.com` opening the source list and `https://x.com/a/b` opening the
- * command list -- both are common in a box whose whole purpose is receiving
- * pasted URLs, and both would otherwise pop a menu over what the operator is
- * typing.
+ * The `/` counts only at the START OF A WORD. That single rule is what stops
+ * `https://x.com/a/b` opening the command list, which matters in a box whose
+ * whole purpose is receiving pasted URLs -- without it a menu pops over what the
+ * operator is typing every time they paste a path.
  *
- * The query excludes `@` and `/` as well as whitespace, so a second sigil starts
- * a new menu rather than extending the first one's query forever.
+ * The query excludes `/` as well as whitespace, so a second slash starts a new
+ * menu rather than extending the first one's query forever.
  */
 export function menuAt(value: string, caret: number | null): Menu | null {
   if (caret == null) return null;
-  const m = /(^|\s)([@/])([^\s@/]*)$/.exec(value.slice(0, caret));
+  const m = /(^|\s)\/([^\s/]*)$/.exec(value.slice(0, caret));
   if (!m) return null;
-  return { sigil: m[2] as '@' | '/', from: caret - m[3]!.length - 1, query: m[3]! };
+  return { from: caret - m[2]!.length - 1, query: m[2]! };
 }
 
 /**
- * What the `@` and `/` buttons do: open that menu at the caret.
+ * What the `/` button does: open the command menu at the caret.
  *
- * Opening a menu means putting its sigil in the text, because the text is where
+ * Opening the menu means putting a `/` in the text, because the text is where
  * `menuAt` reads the state from -- there is no separate mode flag, and there
  * should not be one. The consequence is that the button both opens a menu AND
  * types a character, and that is the whole of the bug this function fixes:
- * clicking `@` three times while looking for a source left `@ @ @` in the
+ * clicking it three times while looking for a command left `/ / /` in the
  * message. The operator asked to open the menu three times, not to type three
- * sigils.
+ * slashes.
  *
- * So a click while that menu is already open at the caret returns the value
+ * So a click while the menu is already open at the caret returns the value
  * untouched. The caller still focuses the box and re-reads the menu, which is
  * what the operator wanted -- pressing the button blurs the textarea and closes
  * the menu, so a second press has to be able to bring it back.
  *
  * NOT a debounce. A debounce on a text-insert control makes fast legitimate
  * typing feel broken and leaves the state bug in place: two deliberate clicks a
- * minute apart with the caret still after the sigil are the same mistake as two
+ * minute apart with the caret still after the slash are the same mistake as two
  * a moment apart, and are refused for the same reason.
  *
- * The pad keeps the sigil at the start of a word, which is where `menuAt` will
- * look for it: inserting into `foo` has to give `foo @` or the menu it just
+ * The pad keeps the slash at the start of a word, which is where `menuAt` will
+ * look for it: inserting into `foo` has to give `foo /` or the menu it just
  * opened would not be open.
  */
-export function insertSigil(
-  value: string,
-  caret: number,
-  sigil: '@' | '/',
-): { value: string; caret: number } {
-  const open = menuAt(value, caret);
-  if (open?.sigil === sigil) return { value, caret };
+export function openCommands(value: string, caret: number): { value: string; caret: number } {
+  if (menuAt(value, caret)) return { value, caret };
   const pad = caret > 0 && !/\s$/.test(value.slice(0, caret)) ? ' ' : '';
   return {
-    value: `${value.slice(0, caret)}${pad}${sigil}${value.slice(caret)}`,
+    value: `${value.slice(0, caret)}${pad}/${value.slice(caret)}`,
     caret: caret + pad.length + 1,
   };
 }
 
 /**
- * Replace an open menu's sigil and query with a chosen id.
+ * A slash the operator opened a menu with and then walked away from.
  *
- * Returns the new value and where the caret belongs, so the caller does not
- * recompute an offset that this function already knows.
+ * The owner sent a transcript reading `@ / @assay-testbed-…`: two sigil buttons
+ * pressed while hunting for a picker, and the orphans they left rode into the
+ * message and then into the model's prompt as noise. `@` is gone now, and this
+ * takes the rest: a `/` with whitespace or nothing on both sides names no
+ * command, so it is not a word and is not sent as one.
+ *
+ * Only bare ones. `/decisions` is a command and `https://x.com/a` is a URL --
+ * neither is whitespace-delimited on both sides, and neither is touched.
  */
-export function applyChoice(
-  value: string,
-  menu: Menu,
-  id: string,
-): { value: string; caret: number } {
-  const before = value.slice(0, menu.from);
-  const after = value.slice(menu.from + 1 + menu.query.length);
-  return {
-    value: `${before}@${id} ${after}`,
-    caret: before.length + id.length + 2,
-  };
+export function withoutOrphanSlash(text: string): string {
+  return text.replace(/(^|\s)\/(?=\s|$)/g, '$1').replace(/[ \t]{2,}/g, ' ').trim();
 }

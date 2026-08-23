@@ -11,9 +11,11 @@ import { turn, type TraceEvent } from '@/lib/chat-stream';
 import { Button } from '@/components/button';
 import { DEFAULT_MODEL } from 'assay/engine/agent/models';
 import {
-  historyFor, tail, turnFailed, HISTORY_TURNS, type Turn,
+  commandTurn, historyFor, tail, turnFailed, HISTORY_TURNS,
+  type CommandName, type Turn,
 } from 'assay/engine/store/conversation-log';
 import { Composer } from './composer';
+import { CommandTurn } from './command-turn';
 import { ExportMenu } from './export-menu';
 import { Trace, ToolChips } from './trace';
 import { SchemaTable, HeldCell, tierFor } from './schema-table';
@@ -244,6 +246,41 @@ export function Watch({
     }
   }, [model, convId, turns, router]);
 
+  /**
+   * Run a `/` command: append the turn, persist it, and read nothing here.
+   *
+   * NO MODEL, NO STREAM, NO ROWS. A command is not a question -- it asks the
+   * store, not the agent -- so it opens no SSE, aborts nothing that is running,
+   * and costs no tokens. What it appends carries the command name and the words
+   * typed after it and NOTHING ELSE; `CommandTurn` does the reading on every
+   * render, which is what keeps an old turn honest after its cells are answered.
+   *
+   * The conversation row is opened for a command exactly as it is for a message,
+   * because a transcript that silently drops the first thing an operator did is
+   * a transcript with a hole in it. A store that is down does not stop the
+   * listing appearing -- the turn is simply not persisted, which they find out
+   * on reload rather than being told a lie now, the same deal `submit` makes.
+   */
+  const runCommand = useCallback(async (name: CommandName, args: string) => {
+    const asked = commandTurn(name, args);
+    setTurns((t) => [...t, asked]);
+
+    try {
+      if (convId == null) {
+        const id = await openConversation(`/${name}`);
+        setConvId(id);
+        shown.current = id;
+        window.history.replaceState(null, '', `/?c=${id}`);
+        router.refresh();
+        await recordTurns(id, [asked]);
+      } else {
+        await recordTurns(convId, [asked]);
+      }
+    } catch {
+      // Unpersisted, and the panel above still reads live.
+    }
+  }, [convId, router]);
+
   /** Ask the newest question again. Only offered when the last one is recorded as failed. */
   const retry = useCallback(() => {
     const last = lastAsked(turns);
@@ -253,7 +290,14 @@ export function Watch({
   const started = turns.length > 0;
 
   const composer = (
-    <Composer auth={auth} model={model} onModel={setModel} onSubmit={submit} busy={running} />
+    <Composer
+      auth={auth}
+      model={model}
+      onModel={setModel}
+      onSubmit={submit}
+      onCommand={runCommand}
+      busy={running}
+    />
   );
 
   // The manual path, on the same condition it has always had: reachable whether
@@ -522,6 +566,13 @@ function TurnView({ turn: t, live = false, onAsk }: {
   }
 
   if (t.role === 'event') {
+    // A command is the one event that is not a line across the transcript
+    // either: it is a question about the store, and the answer is read fresh
+    // every time this renders rather than being kept in the turn. See
+    // `command-turn.tsx` -- the panel is what makes an old `/decisions` still
+    // true after the cells in it have been answered.
+    if (t.kind === 'command') return <CommandTurn turn={t} />;
+
     // A failure is the one event that is not a neutral rule across the
     // transcript. It is the difference between "no answer yet" and "no answer,
     // ever", so it is stated in words, in red, with a glyph -- colour is never

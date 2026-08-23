@@ -26,7 +26,7 @@ import { HELD_BECAUSE, heldBecause } from '../src/reports/vocabulary.js';
 import { tail, turnFailed, toMarkdown, type Turn } from '../src/store/conversation-log.js';
 
 import {
-  SHORTCUTS, applyChoice, insertSigil, menuAt, shortcutMessage,
+  SHORTCUTS, menuAt, openCommands, shortcutMessage, withoutOrphanSlash,
 } from '../web/lib/composer-menu.js';
 import { frames } from '../web/lib/chat-stream.js';
 
@@ -141,107 +141,101 @@ describe('composer shortcuts', () => {
 });
 
 describe('menuAt', () => {
-  it('opens on a sigil at the start of the box', () => {
-    expect(menuAt('@', 1)).toEqual({ sigil: '@', from: 0, query: '' });
-    expect(menuAt('/de', 3)).toEqual({ sigil: '/', from: 0, query: 'de' });
+  it('opens on a slash at the start of the box', () => {
+    expect(menuAt('/', 1)).toEqual({ from: 0, query: '' });
+    expect(menuAt('/de', 3)).toEqual({ from: 0, query: 'de' });
   });
 
-  it('opens on a sigil after a space', () => {
-    expect(menuAt('watch @pri', 10)).toEqual({ sigil: '@', from: 6, query: 'pri' });
-  });
-
-  it('does NOT open inside an email address', () => {
-    // The case that makes the start-of-word rule worth having.
-    expect(menuAt('mail me at you@example.com', 26)).toBeNull();
+  it('opens on a slash after a space', () => {
+    expect(menuAt('and then /dec', 13)).toEqual({ from: 9, query: 'dec' });
   });
 
   it('does NOT open on a slash inside a URL', () => {
+    // The case that makes the start-of-word rule worth having, and the reason
+    // it outlived `@`: this box exists to receive pasted URLs.
     expect(menuAt('https://example.com/recalls', 27)).toBeNull();
     expect(menuAt('watch https://x.com/a/b', 23)).toBeNull();
   });
 
+  it('does NOT open on an email address, which no longer has a menu to open', () => {
+    expect(menuAt('mail me at you@example.com', 26)).toBeNull();
+  });
+
   it('closes once a space is typed', () => {
-    expect(menuAt('@price ', 7)).toBeNull();
+    expect(menuAt('/runs ', 6)).toBeNull();
   });
 
   it('reads the caret, not the end of the string', () => {
-    // Caret parked just after `@pr`, with more text to its right.
-    expect(menuAt('@price and more', 3)).toEqual({ sigil: '@', from: 0, query: 'pr' });
+    expect(menuAt('/runs and more', 3)).toEqual({ from: 0, query: 'ru' });
   });
 
   it('is closed when there is no caret', () => {
-    expect(menuAt('@price', null)).toBeNull();
-  });
-});
-
-describe('applyChoice', () => {
-  it('replaces the sigil and the query, and leaves the caret after the id', () => {
-    const menu = menuAt('watch @pri', 10)!;
-    const { value, caret } = applyChoice('watch @pri', menu, 'ikea__price');
-    expect(value).toBe('watch @ikea__price ');
-    expect(value.slice(0, caret)).toBe('watch @ikea__price ');
-  });
-
-  it('keeps text that sits after the caret', () => {
-    const menu = menuAt('@pri tail', 4)!;
-    expect(applyChoice('@pri tail', menu, 'x__y').value).toBe('@x__y  tail');
+    expect(menuAt('/runs', null)).toBeNull();
   });
 });
 
 // The owner, from live use: "whenever you click on @ and /, it enters the
 // prompt bar multiple times." Reproduced on the running instance -- three
-// deliberate clicks on `@` left `@ @ @` in the message, and the same for `/`.
-// One character per click, so nothing was firing twice; the button opens the
-// menu by TYPING the sigil, and it typed another one every time whether a menu
-// was open or not.
-describe('insertSigil', () => {
+// deliberate clicks left three sigils in the message. One character per click,
+// so nothing was firing twice; the button opens the menu by TYPING the sigil,
+// and it typed another one every time whether a menu was open or not.
+describe('openCommands', () => {
   it('opens the menu on an empty box', () => {
-    expect(insertSigil('', 0, '@')).toEqual({ value: '@', caret: 1 });
-    expect(insertSigil('', 0, '/')).toEqual({ value: '/', caret: 1 });
+    expect(openCommands('', 0)).toEqual({ value: '/', caret: 1 });
   });
 
-  it('does not type a second sigil when that menu is already open', () => {
+  it('does not type a second slash when the menu is already open', () => {
     // The reported bug, at the size it actually is.
-    let v = insertSigil('', 0, '@');
-    for (let i = 0; i < 5; i++) v = insertSigil(v.value, v.caret, '@');
-    expect(v).toEqual({ value: '@', caret: 1 });
+    let v = openCommands('', 0);
+    for (let i = 0; i < 5; i++) v = openCommands(v.value, v.caret);
+    expect(v).toEqual({ value: '/', caret: 1 });
 
     // With a query typed into the open menu, the query survives untouched --
     // re-opening a menu must not throw away what was typed into it.
-    expect(insertSigil('@ike', 4, '@')).toEqual({ value: '@ike', caret: 4 });
-    expect(insertSigil('/dec', 4, '/')).toEqual({ value: '/dec', caret: 4 });
+    expect(openCommands('/dec', 4)).toEqual({ value: '/dec', caret: 4 });
   });
 
-  it('opens the other menu even when one is open, because that is a different ask', () => {
-    expect(insertSigil('@ike', 4, '/').value).toBe('@ike /');
-    expect(insertSigil('/dec', 4, '@').value).toBe('/dec @');
-  });
-
-  it('starts a word, because that is where menuAt looks for a sigil', () => {
-    const r = insertSigil('watch', 5, '@');
-    expect(r.value).toBe('watch @');
+  it('starts a word, because that is where menuAt looks for a slash', () => {
+    const r = openCommands('watch', 5);
+    expect(r.value).toBe('watch /');
     expect(r.caret).toBe(7);
     // The proof that the pad is not cosmetic: without it there is no menu.
-    expect(menuAt(r.value, r.caret)).toMatchObject({ sigil: '@', query: '' });
-    expect(menuAt('watch@', 6)).toBeNull();
+    expect(menuAt(r.value, r.caret)).toEqual({ from: 6, query: '' });
+    expect(menuAt('watch/', 6)).toBeNull();
   });
 
   it('adds no pad after whitespace or at the start', () => {
-    expect(insertSigil('watch ', 6, '@')).toEqual({ value: 'watch @', caret: 7 });
-    expect(insertSigil('a\n', 2, '/')).toEqual({ value: 'a\n/', caret: 3 });
+    expect(openCommands('watch ', 6)).toEqual({ value: 'watch /', caret: 7 });
+    expect(openCommands('a\n', 2)).toEqual({ value: 'a\n/', caret: 3 });
   });
 
   it('inserts at the caret and keeps what follows it', () => {
-    // Measured against the running instance: "hello world" with the caret after
-    // "hello" gives "hello @ world" and a caret at 7.
-    expect(insertSigil('hello world', 5, '@')).toEqual({ value: 'hello @ world', caret: 7 });
+    expect(openCommands('hello world', 5)).toEqual({ value: 'hello / world', caret: 7 });
   });
 
   it('closes a menu the caret has left, rather than treating it as open', () => {
-    // `@ike ` with a trailing space is no longer a menu -- `menuAt` says so --
-    // so the operator asking for one again gets one.
-    expect(menuAt('@ike ', 5)).toBeNull();
-    expect(insertSigil('@ike ', 5, '@')).toEqual({ value: '@ike @', caret: 6 });
+    expect(menuAt('/dec ', 5)).toBeNull();
+    expect(openCommands('/dec ', 5)).toEqual({ value: '/dec /', caret: 6 });
+  });
+});
+
+// The owner's transcript read `@ / @assay-testbed-...`: sigil buttons pressed
+// while hunting for a picker, and the orphans rode into the message and then
+// into the model's prompt as noise.
+describe('withoutOrphanSlash', () => {
+  it('takes a slash that names no command', () => {
+    expect(withoutOrphanSlash('/ watch this page')).toBe('watch this page');
+    expect(withoutOrphanSlash('watch this /')).toBe('watch this');
+    expect(withoutOrphanSlash('/ / watch')).toBe('watch');
+  });
+
+  it('leaves a command alone', () => {
+    expect(withoutOrphanSlash('/decisions')).toBe('/decisions');
+    expect(withoutOrphanSlash(' /runs ')).toBe('/runs');
+  });
+
+  it('leaves a URL alone, every slash of it', () => {
+    expect(withoutOrphanSlash('watch https://x.com/a/b')).toBe('watch https://x.com/a/b');
   });
 });
 

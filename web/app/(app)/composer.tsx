@@ -1,16 +1,16 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, AtSign, Check, ChevronDown, KeyRound, Slash, Terminal } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { ArrowRight, Check, ChevronDown, CircleAlert, KeyRound, Slash, Terminal } from 'lucide-react';
 import { useGlide } from '@/components/motion/glide';
 import { ComposerShortcuts } from '@/components/composer-shortcuts';
 import { MODELS, MODEL_LABEL } from 'assay/engine/agent/models';
+import { COMMANDS, commandIn, type CommandName } from 'assay/engine/store/conversation-log';
 import {
-  SHORTCUTS, applyChoice, insertSigil, menuAt, shortcutMessage,
+  SHORTCUTS, menuAt, openCommands, shortcutMessage, withoutOrphanSlash,
   type Menu, type ShortcutId,
 } from '@/lib/composer-menu';
-import { sources as loadSources, type Source } from './watch-actions';
+import { t } from '@/lib/copy';
 
 /**
  * The composer on "What should Assay watch?".
@@ -30,37 +30,26 @@ import { sources as loadSources, type Source } from './watch-actions';
  * is refusing to overclaim, and it would be a 126KB dependency with no public
  * source to audit, on a surface that reads untrusted pages.
  *
- * The menus list what this instance actually has. `@` is the fields already
- * under watch, read live; `/` is routes that exist. Neither invents a row, and
- * an empty one says it is empty.
- */
-
-export interface Command {
-  name: string;
-  hint: string;
-  href: string;
-}
-
-/**
- * `/` commands. Every one navigates somewhere that exists -- these routes are in
- * `web/app/(app)`, and `/fields?show=held` is the filter docs/STATES.md 1 #3
- * settled on ("route to Fields filtered to held -- no new screen").
+ * There is no `@` any more. It listed every watched field and inserted the id as
+ * text, which the agent then received as a long word -- so naming a scraper and
+ * asking about it came back "Which page should I watch?". Finishing it would have
+ * produced a picker with one row per field per scraper, which is not a picker on
+ * any instance of size. See `web/lib/composer-menu.ts`.
  *
- * Deliberately not a command palette. docs/APP-DESIGN.md 10 files cmd-K as a v2
- * omission, so this stays four destinations rather than growing into one.
+ * `/` LISTS IN THE CHAT AND DOES NOT NAVIGATE. It used to `router.push` to four
+ * screens, which answered the question by leaving the conversation. Now the
+ * command becomes a turn that reads the store live every time it is rendered,
+ * and a held cell can be answered where it is read. The command names are a
+ * closed set in `src/store/conversation-log.ts`; anything else is refused by
+ * name, here, before it reaches a read.
  */
-const COMMANDS: Command[] = [
-  { name: 'decisions', hint: 'held rows waiting on a person', href: '/decisions' },
-  { name: 'held', hint: 'every field currently holding a cell', href: '/fields?show=held' },
-  { name: 'runs', hint: 'what every scraper did last', href: '/runs' },
-  { name: 'fields', hint: 'everything under watch', href: '/fields' },
-];
 
 export function Composer({
   auth,
   model,
   onModel,
   onSubmit,
+  onCommand,
   busy,
 }: {
   /** Resolved on the server by `modelAuth()`. A string, so a new state cannot crash this. */
@@ -68,24 +57,28 @@ export function Composer({
   model: string;
   onModel: (m: string) => void;
   onSubmit: (text: string) => void;
+  /** Run a command in the transcript. Never a navigation -- see the header. */
+  onCommand: (name: CommandName, args: string) => void;
   busy: boolean;
 }) {
   const box = useRef<HTMLTextAreaElement>(null);
   const [text, setText] = useState('');
   const [menu, setMenu] = useState<Menu | null>(null);
   const [active, setActive] = useState(0);
-  const [sources, setSources] = useState<Source[] | null>(null);
   const [mode, setMode] = useState<ShortcutId | null>(null);
-  const router = useRouter();
+  /**
+   * A refusal the operator can see, and the text stays in the box behind it.
+   *
+   * Not a turn and not a toast. A mistyped command is not a thing that happened
+   * to the conversation -- writing it into the transcript would put a permanent
+   * record of a typo next to the questions that were really asked -- and a toast
+   * that fades takes the explanation with it while the wrong text is still in the
+   * box. This clears on the next keystroke, which is the operator fixing it.
+   */
+  const [refused, setRefused] = useState<string | null>(null);
 
-  // Fetched when `@` is first typed, not at mount: a menu nobody opens should
-  // not cost a query on every page load.
-  useEffect(() => {
-    if (menu?.sigil === '@' && sources === null) loadSources().then(setSources).catch(() => setSources([]));
-  }, [menu?.sigil, sources]);
-
-  const rows = menu ? matches(menu, sources) : [];
-  useEffect(() => { setActive(0); }, [menu?.sigil, menu?.query]);
+  const rows = menu ? matches(menu) : [];
+  useEffect(() => { setActive(0); }, [menu?.query]);
 
   function grow(el: HTMLTextAreaElement) {
     el.style.height = 'auto';
@@ -95,25 +88,38 @@ export function Composer({
   /** Re-read the caret after every change: that is what decides if a menu is open. */
   function change(el: HTMLTextAreaElement) {
     setText(el.value);
+    setRefused(null);
     grow(el);
     setMenu(menuAt(el.value, el.selectionStart));
   }
 
+  /**
+   * Picking a command RUNS it, rather than completing the word.
+   *
+   * The menu used to insert an id and the `/` rows used to navigate; a command
+   * is neither. What the operator asked for is the list, so they get the list --
+   * in the transcript, from a live read.
+   *
+   * Only the `/dec` that opened the menu comes out of the box. Anything typed
+   * around it stays: the operator was writing a message and reached for a
+   * command mid-sentence, and eating the sentence would be the router.push this
+   * replaced, wearing different clothes.
+   */
   function choose(i: number) {
-    const el = box.current;
-    if (!el || !menu) return;
     const row = rows[i];
-    if (!row) return;
-    if (row.kind === 'command') { router.push(row.href); setMenu(null); return; }
-    // Replace the sigil and everything typed after it with the target's id.
-    const { value, caret } = applyChoice(text, menu, row.id);
-    setText(value);
+    if (!row || !menu) return;
+    const rest = `${text.slice(0, menu.from)}${text.slice(menu.from + 1 + menu.query.length)}`;
+    run(row.name, '', rest);
+  }
+
+  /** One place a command starts from, whether it was picked or typed. */
+  function run(name: CommandName, args: string, keep = '') {
     setMenu(null);
-    queueMicrotask(() => {
-      el.focus();
-      el.setSelectionRange(caret, caret);
-      grow(el);
-    });
+    setRefused(null);
+    setText(withoutOrphanSlash(keep));
+    if (box.current) box.current.style.height = 'auto';
+    onCommand(name, args);
+    queueMicrotask(() => box.current?.focus());
   }
 
   function keyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -132,18 +138,47 @@ export function Composer({
     }
   }
 
+  /**
+   * Send, or run a command, or refuse one that does not exist.
+   *
+   * THE THIRD BRANCH IS THE POINT. A message beginning with `/` is a command
+   * attempt -- nothing else in this box starts with a slash, because a URL
+   * starts with its scheme -- so a name that is not one of the four is answered
+   * with the four rather than posted to the agent as a sentence. An operator who
+   * mistypes gets told; an operator trying to find a fifth command learns there
+   * is not one. Neither case reaches a read.
+   */
   function send() {
-    const written = text.trim();
+    const written = withoutOrphanSlash(text);
     if (!written || busy) return;
+
+    const typed = commandIn(written);
+    if (typed.kind === 'unknown') { setRefused(t('command.unknown')); return; }
+    if (typed.kind === 'command') { run(typed.name, typed.args); return; }
+
     onSubmit(shortcutMessage(written, mode));
     setText('');
     setMenu(null);
+    setRefused(null);
     if (box.current) box.current.style.height = 'auto';
   }
 
   return (
     <div className="relative w-full">
-      {menu && <MenuList rows={rows} active={active} onChoose={choose} sigil={menu.sigil} />}
+      {menu && <MenuList rows={rows} active={active} onChoose={choose} />}
+
+      {refused && (
+        // `alert`, and it sits above the box where the command was typed. The
+        // text is still in the box behind it, which is the other half of saying
+        // no out loud: the operator can see what they wrote and fix it.
+        <p
+          role="alert"
+          className="motion-pop-in mb-[8px] flex items-start gap-[8px] rounded-[var(--radius-control)] border border-[var(--semantic-warning)] bg-[var(--semantic-warning-subtle)] px-[12px] py-[9px]"
+        >
+          <CircleAlert size={14} strokeWidth={1.5} className="mt-[1px] shrink-0 text-[var(--semantic-warning)]" aria-hidden />
+          <span className="caption-12 leading-[1.45] text-[var(--text-secondary)]">{refused}</span>
+        </p>
+      )}
 
       <form
         className="flex w-full flex-col rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] px-[20px] pb-[12px] pt-[18px] transition-colors duration-[var(--duration-tint)] focus-within:border-[var(--semantic-link)]"
@@ -171,8 +206,7 @@ export function Composer({
         <ComposerShortcuts selected={mode} onSelect={selectShortcut} />
 
         <div className="flex items-center gap-[10px] pt-[10px]">
-          <Sigil icon={<AtSign size={14} strokeWidth={1.5} aria-hidden />} label="data source" onClick={() => insert('@')} />
-          <Sigil icon={<Slash size={14} strokeWidth={1.5} aria-hidden />} label="command" onClick={() => insert('/')} />
+          <Sigil icon={<Slash size={14} strokeWidth={1.5} aria-hidden />} label="command" onClick={insert} />
 
           <div className="ml-auto flex items-center gap-[10px]">
             <ModelPicker auth={auth} model={model} onModel={onModel} />
@@ -191,17 +225,17 @@ export function Composer({
   );
 
   /**
-   * The `@` / `/` buttons. Where the string goes is `insertSigil`'s problem --
-   * it is pure and tested; this is the DOM half.
+   * The `/` button. Where the string goes is `openCommands`' problem -- it is
+   * pure and tested; this is the DOM half.
    *
    * `el.selectionStart` and not a piece of state: pressing the button blurs the
    * textarea, and the blur closes the menu but leaves the caret where the
-   * operator put it, which is where the sigil belongs.
+   * operator put it, which is where the slash belongs.
    */
-  function insert(sigil: '@' | '/') {
+  function insert() {
     const el = box.current;
     if (!el) return;
-    const { value, caret } = insertSigil(text, el.selectionStart ?? text.length, sigil);
+    const { value, caret } = openCommands(text, el.selectionStart ?? text.length);
     setText(value);
     // After the commit, or `setSelectionRange` runs against the old string and
     // React then drops the caret at the end of the new one.
@@ -225,28 +259,22 @@ export function Composer({
   }
 }
 
-type Row =
-  | { kind: 'source'; id: string; title: string; sub: string; held: number; paused: boolean }
-  | { kind: 'command'; id: string; title: string; sub: string; href: string };
+interface Row { name: CommandName; title: string; sub: string }
 
-/** Rows for the open menu. Null sources means "still loading", not "none". */
-function matches(menu: Menu, sources: Source[] | null): Row[] {
+/**
+ * Rows for the open menu: the four commands, filtered by what has been typed.
+ *
+ * No fetch and nothing to load. The list is `COMMANDS`, which is a compile-time
+ * constant, so the menu cannot be empty for a reason the operator has to guess
+ * at -- an empty menu here means the query matches none of four names.
+ */
+function matches(menu: Menu): Row[] {
   const q = menu.query.toLowerCase();
-  if (menu.sigil === '/') {
-    return COMMANDS.filter((c) => c.name.includes(q))
-      .map((c) => ({ kind: 'command' as const, id: c.name, title: `/${c.name}`, sub: c.hint, href: c.href }));
-  }
-  return (sources ?? [])
-    .filter((s) => s.id.toLowerCase().includes(q) || s.url.toLowerCase().includes(q))
-    .slice(0, 8)
-    .map((s) => ({
-      kind: 'source' as const,
-      id: s.id,
-      title: s.field,
-      sub: s.url,
-      held: s.held,
-      paused: s.paused,
-    }));
+  return COMMANDS.filter((name) => name.includes(q)).map((name) => ({
+    name,
+    title: `/${name}`,
+    sub: t(`command.${name}.hint`),
+  }));
 }
 
 /**
@@ -258,9 +286,9 @@ function matches(menu: Menu, sources: Source[] | null): Row[] {
  * before its handler ran.
  */
 function MenuList({
-  rows, active, onChoose, sigil,
+  rows, active, onChoose,
 }: {
-  rows: Row[]; active: number; onChoose: (i: number) => void; sigil: '@' | '/';
+  rows: Row[]; active: number; onChoose: (i: number) => void;
 }) {
   const glide = useGlide<HTMLButtonElement>(rows.length ? active : null, rows.length);
 
@@ -274,12 +302,8 @@ function MenuList({
       className="motion-pop-in absolute bottom-[calc(100%+8px)] left-0 z-20 w-full overflow-hidden rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] p-[6px] shadow-[var(--shadow-elevation-floating)]"
     >
       {rows.length === 0 ? (
-        // The honest empty state, and the two sigils are empty for different
-        // reasons -- so they say different things.
         <p className="meta-12_5 px-[12px] py-[10px] text-[var(--text-secondary)]">
-          {sigil === '@'
-            ? 'Nothing is under watch yet, so there is no field to point at. Describe a page and Assay will start one.'
-            : 'No command matches that.'}
+          {t('home.composer.noCommand')}
         </p>
       ) : (
         <div className="relative">
@@ -290,7 +314,7 @@ function MenuList({
           />
           {rows.map((r, i) => (
             <button
-              key={r.id}
+              key={r.name}
               ref={glide.setRef(i)}
               type="button"
               role="option"
@@ -300,13 +324,11 @@ function MenuList({
             >
               <span className="mono-value-12_5 shrink-0 text-[var(--text-primary)]">{r.title}</span>
               <span className="caption-12 min-w-0 flex-1 truncate text-[var(--text-secondary)]">{r.sub}</span>
-              {r.kind === 'source' && r.held > 0 && (
-                // Held is amber everywhere in this product, never danger.
-                <span className="caption-11 shrink-0 text-[var(--semantic-warning)]">{r.held} held</span>
-              )}
-              {r.kind === 'source' && r.paused && (
-                <span className="caption-11 shrink-0 text-[var(--text-muted)]">paused</span>
-              )}
+              {/* No count on the row, deliberately. It would have to be read
+                  before the menu could open, and it would be a number from the
+                  moment the menu was drawn sitting next to a panel that re-reads
+                  on every render -- two answers to "how many are waiting" eight
+                  pixels apart. The panel is the one that is right. */}
             </button>
           ))}
         </div>

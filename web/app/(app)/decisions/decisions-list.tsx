@@ -15,8 +15,20 @@ import { undoCell, type Outcome } from './actions';
  * unmounts -- along with any "you just did this" state it was holding. The
  * receipt has to outlive the thing it is a receipt for, so it sits above the
  * list, which re-renders without ever unmounting.
+ *
+ * `onSettled` exists for the chat surface and is optional because this screen
+ * does not need it: a Server Component page re-renders from `revalidatePath`,
+ * while a command turn in the transcript holds its rows in client state and has
+ * to be told to read again. It fires on a real change only -- a resolve or an
+ * undo that the store accepted -- so a caller cannot mistake a refusal for one.
  */
-export function DecisionsList({ decisions }: { decisions: Decision[] }) {
+export function DecisionsList({
+  decisions,
+  onSettled,
+}: {
+  decisions: Decision[];
+  onSettled?: () => void;
+}) {
   const [receipt, setReceipt] = useState<{ proof: string; text: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -24,6 +36,7 @@ export function DecisionsList({ decisions }: { decisions: Decision[] }) {
   function onOutcome(proof: string, o: Outcome) {
     if (!o.ok) { setError(o.detail); return; }
     setError(null);
+    onSettled?.();
     if (o.kind === 'undone') { setReceipt(null); return; }
     setReceipt({
       proof,

@@ -267,9 +267,28 @@ const COPY = {
   'home.composer.placeholder': 'Paste a URL, or describe what you want to keep an eye on',
   'home.composer.label': 'What should Assay watch?',
   'home.composer.send': 'Read this page',
-  'home.composer.noSource':
-    'Nothing is under watch yet, so there is no field to point at. Describe a page and Assay will start one.',
   'home.composer.noCommand': 'No command matches that.',
+  // The `/` menu's own line per command, and what a refused one says. The names
+  // are `COMMANDS` in src/store/conversation-log.ts; these are the words for
+  // them. A command runs IN the chat -- none of these is a destination.
+  'command.decisions.hint': 'held rows waiting on a person',
+  'command.held.hint': 'every field currently holding a cell',
+  'command.runs.hint': 'what every scraper did last',
+  'command.fields.hint': 'everything under watch',
+  'command.unknown':
+    'Assay has no command by that name. The commands are /decisions, /held, /runs and /fields.',
+  // Said when a command was typed with words after it. The words are kept in the
+  // transcript and read by nothing, and saying so is cheaper than letting an
+  // operator believe they asked a question that was answered.
+  'command.argsIgnored':
+    'The rest of that line was not used. A command lists what the store holds; it does not take a question yet.',
+  'command.ranAt': 'read from the store just now',
+  'command.decisions.empty':
+    'Nothing is held. Every cell the gate could justify has been published, which is the good outcome.',
+  'command.held.empty': 'No field is holding a cell.',
+  'command.runs.empty': 'No runs yet. The first one happens when a scraper is due.',
+  'command.fields.empty': 'Nothing is under watch yet.',
+  'command.open': 'Open the full screen ›',
 
   // -- build / proposal ------------------------------------------------------
   'build.onThePage': 'ON THE PAGE',
