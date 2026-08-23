@@ -24,6 +24,8 @@ Built for the **Into the Scrape-Verse** hackathon (WeMakeDevs × Bright Data,
 thirty-second version and it runs offline.
 <!-- TODO(owner): paste the demo recording link on the line above before submitting. -->
 
+<img src="assets/screenshots/home.png" alt="Assay home: paste a URL, or describe what to keep an eye on">
+
 ## The break this exists for
 
 The breaks that matter are the quiet ones. Run 74 from this repo's own log:
@@ -39,6 +41,11 @@ database as a product recall. Assay caught it without an exception (the value's
 shape broke and an anchor died), re-found the title at score 0.9691 against a
 runner-up of 0.5718, and published it. Had the two been close, it would have
 published nothing and said so.
+
+<img src="assets/screenshots/gate.png" alt="The gate: candidates ranked, with top score, runner-up and margin">
+
+*Every run shows its work: the candidates it weighed, and the two numbers the
+gate decided on.*
 
 ## The numbers
 
@@ -102,6 +109,8 @@ Deeper material in [`docs/`](docs/): [architecture](docs/APP-DESIGN.md),
 [limitations](docs/LIMITATIONS.md), [prior art](docs/PRIOR-ART.md), and the
 [Bright Data head-to-head](docs/HEADTOHEAD.md) — where an audit found 6 of 10
 promised fields unhealthy behind a run the platform called 100% successful.
+
+<img src="assets/screenshots/audit.png" alt="Field audit: 100% success reported, six of ten promised fields absent or sparse">
 
 ## Disclosure: AI use
 
