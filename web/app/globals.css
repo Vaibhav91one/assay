@@ -70,3 +70,76 @@ body {
 .scroller-visible::-webkit-scrollbar-thumb:hover {
   background-color: var(--text-muted);
 }
+
+/* a11y overrides on generated tokens -- tools/tokens.js is upstream.
+ *
+ * These four values are WRONG IN FIGMA, not wrong here, and the fix belongs in
+ * the file the design is drawn from. But `tools/tokens.ts` regenerates
+ * `app/tokens.css` wholesale from a Figma dump, so a hand-edit there is
+ * deleted by the next pull with no diff to argue with -- which is exactly what
+ * its own header says ("Do not edit by hand"). So the corrections live here,
+ * where a regeneration cannot silently undo them, until the variables in the
+ * `assay` collection are changed and this block can be deleted.
+ *
+ * Unlayered, so it wins against the `@layer theme` block Tailwind emits for
+ * `@theme static`. Values only -- every call site still reads the same four
+ * variable names, and `status-line.tsx`'s TONE map and the per-screen tone
+ * maps in `runs/[run]` and `schedule/calendar-view` are untouched.
+ *
+ * Measured against #ffffff (`--bg-page`), which is what all four are read on:
+ *
+ *   --text-muted     #a2a2a2 -> #767676   2.51:1 -> 4.54:1
+ *   --semantic-warning  #ca8a04 -> #a16207   2.94:1 -> 4.92:1
+ *   --semantic-success  #16a34a -> #15803d   3.30:1 -> 4.55:1
+ *   --semantic-link     #2563eb -> unchanged, already 5.17:1
+ *
+ * 4.5:1 rather than 3:1 because none of the three is decoration: `--text-muted`
+ * is every table header and eyebrow on the app, and the two status hues are
+ * spent on the words "held" and "clean" at 12-14px -- body size, so the body
+ * threshold. Both keep their glyph, so nothing here is the only signal; that
+ * was already true when they were unreadable.
+ *
+ * They also carry white on top -- the `start` and `success` button variants,
+ * the decision card -- and both readings IMPROVE: white on #15803d is 4.55:1
+ * against 3.30:1 before. NOTE: `components/button.tsx` quotes the old 3.30
+ * figure in the comment on `start`, and that comment is now stale.
+ *
+ * The two `-subtle` fills are backgrounds and are untouched: the darker text
+ * on them gains contrast for free (#a16207 on #fffbeb is 5.14:1).
+ */
+:root {
+  --text-muted: #767676;
+  --semantic-warning: #a16207;
+  --semantic-success: #15803d;
+}
+
+/* The focus ring for everything that is not wearing one.
+ *
+ * `app/motion.css` has the real one -- a hairline in the surface colour then a
+ * brand ring outside it -- and `.focus-ring` is on every `Button`, on the
+ * tooltip triggers and on the rows that opt in. About half the interactive
+ * surface never opted in and fell through to the user agent's default outline,
+ * which on this palette is a blue-grey box in a design that has no blue-grey
+ * and, in a couple of places, no visible outline at all.
+ *
+ * So: the same promise, the same offset, drawn with `outline` rather than
+ * box-shadow because this is the catch-all and an outline follows a shape it
+ * knows nothing about (a table row, a summary, an anchor spanning two lines)
+ * where a shadow ring does not.
+ *
+ * `@layer base`, and that is the whole design of this rule. Anything with a
+ * Tailwind `focus-visible:outline-*` utility of its own -- the settings tabs
+ * and the notification switch both deliberately ring in link blue -- is in
+ * `@layer utilities` and still wins; `.focus-ring` is unlayered and wins by
+ * more. This only reaches what nothing else claimed.
+ *
+ * `:where()` for the element list so the selector's specificity comes from the
+ * two pseudo-classes alone and any real rule outranks it. `:not()` keeps it
+ * off the two motion classes, which turn `outline` off themselves and would
+ * otherwise get both rings at once. */
+@layer base {
+  :where(a[href], button, summary, input, select, textarea, [role='button'], [role='tab'], [role='switch'], [role='menuitem'], [tabindex]):not(.focus-ring, .focus-ring-inset):focus-visible {
+    outline: 2px solid var(--accent-brand);
+    outline-offset: 2px;
+  }
+}
