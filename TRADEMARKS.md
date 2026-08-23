@@ -74,6 +74,32 @@ may not be removed or obscured and must always be included with the logo."* A
 
 **Any site** names no brand and so has none to show.
 
+## The Bright Data brand cards carry a letter, not a logo
+
+The library now also lists twenty-eight brands whose data Bright Data's
+prebuilt scrapers collect — LinkedIn, Instagram, TikTok, Zillow, Shopee and so
+on. **None of them shows its owner's mark**, and that is a decision rather than
+an oversight.
+
+Applying the standard above to twenty-eight more brands means reading and
+quoting twenty-eight more published policies. The seven that were read say the
+answer is usually no: Amazon requires prior written approval *and* a mark
+appearing by itself, arXiv permits its logo for exactly one purpose this
+application is not, the PSF attaches a condition a 38px glyph cannot carry.
+Shipping twenty-eight marks on the assumption that the remainder would say yes
+would be a confident claim about other people's rights, made because checking
+was inconvenient.
+
+So each of those cards carries **Assay's own artwork**: the brand's initial
+letter in a tinted tile. It reproduces no logo, borrows no trade dress, and the
+tint is derived from a hash of the card's id rather than from the brand's own
+colour, so no card approximates the palette its owner uses. Where a mark has
+already been cleared and the brand is the same — GitHub, Wikipedia — the
+cleared mark is used, because it is the same permission.
+
+If a policy is read and quoted here, adding that brand to `MARKS` in
+`web/components/brand-mark.tsx` retires its letter with no other change.
+
 ## If you own one of these marks
 
 Open an issue and the mark will be removed on request, without argument.
