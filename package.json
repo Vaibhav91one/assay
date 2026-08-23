@@ -8,6 +8,7 @@
     "corpus": "tsx tools/fetch-corpus.ts",
     "test": "tsx tools/selftest.ts",
     "bench": "tsx tools/bench.ts",
+    "bench:live": "tsx tools/bench-live.ts",
     "sweep": "tsx tools/sweep.ts",
     "replay": "tsx tools/replay.ts",
     "audit": "tsx tools/audit.ts",
