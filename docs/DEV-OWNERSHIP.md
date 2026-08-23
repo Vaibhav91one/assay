@@ -22,7 +22,7 @@ machine answers on the built-in default, which is what `src/store/index.ts` fall
 when `DATABASE_URL` is unset — so the database-backed tests work with no setup at all:
 
 ```bash
-ASSAY_REQUIRE_DB=1 npx vitest run      # 570 passing, and actually touching Postgres
+ASSAY_REQUIRE_DB=1 npx vitest run      # green, and actually touching Postgres
 ```
 
 `ASSAY_REQUIRE_DB=1` is not optional advice. Without it a test that cannot reach the

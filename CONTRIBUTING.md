@@ -6,17 +6,27 @@ arguments.**
 
 ## The invariants
 
-These numbers are the product's argument. CI asserts each one on every push, and
-a change that moves them has broken the thing being built — not merely a test.
+These numbers are the product's argument, and a change that moves them has broken
+the thing being built — not merely a test.
 
-| Command | Must produce |
-|---|---|
-| `npm test` | 34 assertions, ending `all checks pass` |
-| `npm run bench` | 153 cases; gated arm at **0.0% wrong values** |
-| `npm run replay` | 74 runs, 8 ok, 66 heals, **0 abstentions** |
-| `git diff results/events.jsonl` | empty — proof records are byte-identical |
-| `ASSAY_REQUIRE_DB=1 npx vitest run` | 570 passing |
-| `npx tsc --noEmit` | clean, strict, whole repo |
+| Command | Must produce | asserted by CI |
+|---|---|---|
+| `npm test` | 34 assertions, ending `all checks pass` | yes, by count |
+| `npm run bench` | 153 cases; gated arm at **0.0% wrong values** | yes, both figures |
+| `npm run replay` | 74 runs, 8 ok, 66 heals, **0 abstentions** | yes, all four |
+| `git diff results/events.jsonl` | empty — proof records are byte-identical | yes |
+| `ASSAY_REQUIRE_DB=1 npx vitest run` | green | runs it; **no count asserted** |
+| `npx tsc --noEmit` | clean, strict, whole repo | yes |
+
+The last column is not decoration. The first four rows are the ones `ci.yml`
+parses out of the output and compares — move one and the build goes red with the
+number it saw. The vitest row is different: CI runs the suite and requires it
+green, but nothing checks how many tests ran, because that count moves every time
+anyone adds a test and pinning it would make an ordinary contribution look like a
+regression. **So no document in this repo states a passing-test count.** If you
+want today's, run it — it was 831 passing of 832 on 2026-08-23, the single failure
+being `test/liveness.test.ts` when another local database has a worker holding the
+advisory lock. Green is the invariant; the number is not.
 
 One more, load-bearing:
 
