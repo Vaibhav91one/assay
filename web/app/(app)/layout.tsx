@@ -1,6 +1,6 @@
 import { Sidebar } from '@/components/sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import { openDecisions, scrapers } from '@/lib/queue';
+import { scrapers, waitingCount } from '@/lib/queue';
 import { listConversations } from 'assay/engine/store/conversations';
 
 /**
@@ -15,8 +15,13 @@ import { listConversations } from 'assay/engine/store/conversations';
  * and then snapping shut.
  */
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const [queue, list, chats] = await Promise.all([
-    openDecisions(),
+  const [waiting, list, chats] = await Promise.all([
+    // The NUMBER, not a page of the list. This read the first 50 decisions and
+    // used only `.length`, which capped the badge at 50 and paid fifty
+    // `explain` round-trips per navigation to draw a number. `waitingCount` is
+    // one uncapped `count(*)`, and it is `cache()`d, so the screen inside this
+    // layout asking the same question costs nothing.
+    waitingCount(),
     scrapers(),
     listConversations(),
   ]);
@@ -31,7 +36,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <SidebarProvider>
       <Sidebar
-        waiting={queue.length}
+        waiting={waiting}
         scrapers={unchatted}
         conversations={chats.map((c) => ({
           id: c.id, title: c.title, scraperSlug: c.scraperSlug, turns: c.turns,

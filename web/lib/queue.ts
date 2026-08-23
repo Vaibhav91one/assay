@@ -4,7 +4,8 @@
 // is deliberately not installed -- a whole dependency for one guard rail.
 import { openQueue, explain, getDb } from 'assay/store';
 import * as schema from 'assay/engine/store/schema';
-import { and, desc, eq, lt } from 'drizzle-orm';
+import { and, desc, eq, isNull, lt, sql } from 'drizzle-orm';
+import { cache } from 'react';
 
 /**
  * Everything the Decisions screen needs, assembled server-side.
@@ -133,6 +134,46 @@ export async function openDecisions(limit = 50): Promise<Decision[]> {
     };
   }));
 }
+
+/**
+ * How many held cells are waiting on a person. UNCAPPED, and the only place
+ * this number is worked out.
+ *
+ * Four surfaces used to answer this question four ways: the rail counted a
+ * list capped at 50, Home counted one capped at 500, the bell counted a mixed
+ * list sliced to 12, and /runs counted RUNS containing a quarantined cell --
+ * a run fact, which a resolved hold still satisfies. On an instance with 60
+ * held cells the same product said 50, 60, 12 and 74 in four places at once.
+ *
+ * `resolved_by`, never `resolution`: `assay_propose` writes
+ * `model_nominated:<n>` into `resolution` while leaving the item OPEN, so
+ * reading that column would count a nomination as an answer. This is the same
+ * predicate `openQueue()` filters on, so the count and the list agree by
+ * construction rather than by two people remembering the same rule.
+ *
+ * `cache()` so the rail, the screen inside it and the top bar above it read it
+ * once per request instead of three times.
+ */
+export const waitingCount = cache(async (): Promise<number> => {
+  const [row] = await getDb()
+    .select({ n: sql<number>`count(*)::int` })
+    .from(schema.queueItems)
+    .where(isNull(schema.queueItems.resolvedBy));
+  return row?.n ?? 0;
+});
+
+/**
+ * The decisions to draw, and the number that is actually outstanding.
+ *
+ * They are not the same length and must not be conflated: `items` is a page of
+ * cards (`openDecisions` caps at 50 because 50 cards is already more than
+ * anyone reads), `count` is every open item. A screen that shows the list and
+ * states the number takes both from here.
+ */
+export const heldQueue = cache(async (): Promise<{ items: Decision[]; count: number }> => {
+  const [items, count] = await Promise.all([openDecisions(), waitingCount()]);
+  return { items, count };
+});
 
 /**
  * The sidebar's scraper list.

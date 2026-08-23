@@ -1,8 +1,9 @@
 // Server-only. Opens a Postgres pool; see web/lib/queue.ts on why
 // `server-only` is deliberately not a dependency.
-import { getDb, openQueue } from 'assay/store';
+import { getDb } from 'assay/store';
 import * as schema from 'assay/engine/store/schema';
 import { and, desc, eq, gte, sql } from 'drizzle-orm';
+import { waitingCount } from './queue.js';
 
 /** One bar on the run strip. `held` is what makes a bar amber. */
 export interface RunBar {
@@ -32,7 +33,7 @@ export async function homeStats(): Promise<HomeStats> {
   const db = getDb();
   const since = new Date(Date.now() - WINDOW_DAYS * 86_400_000);
 
-  const [window, runs, held, queue, retractions] = await Promise.all([
+  const [window, runs, held, waiting, retractions] = await Promise.all([
     // Counted in the database, not in the page. `bars` is capped at 60 because
     // the strip draws 60 bars; the HEADLINE is a count of the window, and
     // reading it off the capped list is how Home came to say "60 runs today"
@@ -64,7 +65,9 @@ export async function homeStats(): Promise<HomeStats> {
         sql`${schema.fieldRuns.status} = 'quarantined'`,
         gte(schema.runs.startedAt, since),
       )),
-    openQueue(500),
+    // The rail, the bell and /runs say this number too, so it is read from the
+    // one place that works it out rather than counted off a list capped at 500.
+    waitingCount(),
     db.select({ n: sql<number>`count(*)::int` }).from(schema.retractions),
   ]);
 
@@ -81,7 +84,7 @@ export async function homeStats(): Promise<HomeStats> {
     // that held something is not a failure -- it is the product working -- so
     // it is counted separately rather than subtracted from a success rate.
     clean: total - heldRuns.size,
-    waiting: queue.length,
+    waiting,
     retracted: retractions[0]?.n ?? 0,
     bars,
   };
