@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { CircleAlert } from 'lucide-react';
 import { TopBar } from '@/components/top-bar';
 import { Bar } from '@/components/bar';
@@ -127,14 +128,22 @@ function FieldsTable({ rows }: { rows: FieldRow[] }) {
                     where it carries the least, and the field gets whatever is
                     left. `title` carries the untruncated pair for anyone who
                     needs the exact id. */}
-                <span className="flex min-w-0 items-baseline" title={`${r.scraper} · ${r.field}`}>
+                {/* The row is a link now. Every column on this table is a
+                    SUMMARY of values the screen never showed -- "seen in 22/30"
+                    invites exactly one question and there was nowhere to go and
+                    ask it. */}
+                <Link
+                  href={`/fields/${encodeURIComponent(r.targetId)}`}
+                  title={`${r.scraper} · ${r.field}`}
+                  className="flex min-w-0 items-baseline hover:underline"
+                >
                   <span className="meta-12_5 shrink-0 text-[var(--text-muted)]">
                     {midTruncate(r.scraper)} ·&nbsp;
                   </span>
                   <span className="mono-value-12_5 min-w-0 truncate text-[var(--text-primary)]">
                     {r.field}
                   </span>
-                </span>
+                </Link>
               </span>
             </td>
             <td className="py-[9px]">

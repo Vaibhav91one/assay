@@ -4,7 +4,7 @@ import { getDb, openQueue } from 'assay/store';
 import * as schema from 'assay/engine/store/schema';
 import { assessField, knownFields } from 'assay/engine/health/observe';
 import type { FragilityGrade, DriftState } from 'assay/engine/health/index';
-import { asc, eq, inArray } from 'drizzle-orm';
+import { asc, desc, eq, inArray } from 'drizzle-orm';
 
 /**
  * What each field looks like when it is right, and how reliably it has been
@@ -183,5 +183,62 @@ export async function fieldsView(filter: FieldFilter = 'all'): Promise<FieldsVie
     fragile: rows.filter((r) => r.grade === 'fragile').length,
     missing: rows.filter((r) => r.seen === 0 && r.runs > 0).length,
     heldTotal: rows.reduce((n, r) => n + r.held, 0),
+  };
+}
+
+/**
+ * One published cell, over time, for one target.
+ *
+ * `value: null` is the hole and it is NOT a missing lookup -- a held cell is a
+ * cell the gate declined to publish, and the row exists precisely to say so.
+ * The status and the reason code come along so the screen can name which
+ * refusal it was; nothing here fills the gap with a guess or drops the row.
+ */
+export interface FieldValue {
+  runId: number;
+  at: Date | null;
+  field: string;
+  value: string | null;
+  /** `live | healed | quarantined | stale | degraded`, the store's own word. */
+  status: string;
+  reason: string | null;
+  proof: string;
+}
+
+export interface TargetHistory {
+  targetId: string;
+  scraper: string;
+  rows: FieldValue[];
+}
+
+/**
+ * The last `limit` cells this target published or withheld, newest first.
+ *
+ * A target row is one field (`{slug}__{field}`), so in practice this is one
+ * field's history -- but `field_runs` is keyed by run AND field, so the column
+ * is read rather than assumed. A target that grows a second field starts
+ * showing it here on the day it does.
+ */
+export async function targetHistory(targetId: string, limit = 30): Promise<TargetHistory> {
+  const rows = await getDb()
+    .select({
+      runId: schema.fieldRuns.runId,
+      at: schema.runs.startedAt,
+      field: schema.fieldRuns.field,
+      value: schema.fieldRuns.value,
+      status: schema.fieldRuns.status,
+      reason: schema.fieldRuns.reason,
+      proof: schema.fieldRuns.proofId,
+    })
+    .from(schema.fieldRuns)
+    .innerJoin(schema.runs, eq(schema.runs.runId, schema.fieldRuns.runId))
+    .where(eq(schema.runs.targetId, targetId))
+    .orderBy(desc(schema.fieldRuns.runId))
+    .limit(limit);
+
+  return {
+    targetId,
+    scraper: targetId.split('__')[0] ?? targetId,
+    rows: rows.map((r) => ({ ...r, at: (r.at as Date | null) ?? null, reason: r.reason ?? null })),
   };
 }
