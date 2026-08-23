@@ -19,10 +19,13 @@ export const dynamic = 'force-dynamic';
 /**
  * The catalogue: a mark, a name, a line.
  *
- * The brand mark fills the left of each card and the text sits to its right.
- * It is the only ornament on this screen and it earns its place by doing the
- * work a label would otherwise do -- you find GitHub by its shape before you
- * read the word. `aria-hidden`, because the name beside it is the real one.
+ * The mark fills the left of each card and the text sits to its right. It is
+ * the only ornament on this screen and it earns its place by doing the work a
+ * label would otherwise do -- you find the shop by the cart and the job board by
+ * the briefcase before you read the word, and the shelf you are on is the
+ * colour. `aria-hidden`, because the name beside it is the real one. The shelf
+ * is passed in because the colour is the CATEGORY'S and never the brand's; see
+ * `web/components/brand-mark.tsx`.
  *
  * SEARCH IS ABOVE THE SHELVES, and that order is the honest one. The shelves
  * are twenty-eight brands somebody chose out of 1,744; putting them first and
@@ -54,7 +57,7 @@ export default function LibraryPage() {
                       href={`/library/${t.id}`}
                       className="press-row flex w-full items-center gap-[18px] rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] px-[18px] py-[16px] transition-colors duration-[var(--duration-tint)] hover:bg-[var(--surface-subtle)]"
                     >
-                      <BrandMark id={t.id} name={t.name} size={38} />
+                      <BrandMark id={t.id} group={t.group} size={38} />
                       <span className="flex min-w-0 flex-1 flex-col gap-[3px]">
                         <span className="body-14 text-[var(--text-primary)]">{t.name}</span>
                         <span className="caption-12 text-[var(--text-secondary)]">

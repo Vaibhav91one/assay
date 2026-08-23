@@ -1,4 +1,9 @@
-import { Boxes, FileText, Globe, Package, ShoppingCart, type LucideIcon } from 'lucide-react';
+import {
+  AtSign, BedDouble, BookOpen, Boxes, Briefcase, BriefcaseBusiness, Building2, Camera,
+  Code, FileText, Gavel, Globe, Hotel, House, MessageCircleQuestion, MessagesSquare,
+  Music, Package, Palette, Pin, Play, Search, Shirt, ShoppingBag, ShoppingCart, Star,
+  Store, Target, TrendingUp, Tv, Users, type LucideIcon,
+} from 'lucide-react';
 
 /**
  * The brand mark on a tracker card.
@@ -13,8 +18,9 @@ import { Boxes, FileText, Globe, Package, ShoppingCart, type LucideIcon } from '
  * remain their owners'. What this screen does is nominative use -- a brand's
  * own mark identifying that brand, beside its name, on a card that scrapes
  * that site -- and every published policy was read before anything shipped.
- * Three passed. Four cards carry a neutral glyph instead, and each absence is
- * a decision:
+ * Three passed. Everything else carries an icon that says what the card DOES;
+ * see `ICONS`. Each absence is a decision, and these four are the ones that
+ * were argued individually before the other twenty-five joined them:
  *
  *   Amazon   "You may only use the specific trademarks identified by Amazon
  *            and only in materials that have been approved in advance, in
@@ -52,18 +58,8 @@ const MARKS: Record<string, { d: string; hex: string; title: string }> = {
   mdn: { d: 'm21.538 1.1-6.745 21.8h-2.77L18.77 1.1ZM24 1.1v21.8h-2.462V1.1Zm-12 0v21.8H9.538V1.1Zm-2.462 0L2.77 22.9H0L6.746 1.1Z', hex: '#000000', title: 'MDN Web Docs' },
 };
 
-/** Cards with no usable brand mark. Neutral by choice, not by omission. */
-const FALLBACK: Record<string, LucideIcon> = {
-  amazon: ShoppingCart,
-  arxiv: FileText,
-  pypi: Package,
-  any: Globe,
-  dataset: Boxes,
-};
-
 /**
- * The letter tile every Bright Data brand card carries, and why it is not a
- * logo.
+ * What a card DOES, as one glyph, and why it is not a logo.
  *
  * WHAT CHANGED. This screen used to hold seven cards and three of them earned a
  * real mark, each after its owner's published policy was read and quoted in
@@ -76,73 +72,149 @@ const FALLBACK: Record<string, LucideIcon> = {
  * -- Instagram, Threads, Yelp -- and they fail on a condition that is easy to
  * read past: the permission is a licence to use THE OWNER'S ASSET, not a licence
  * to draw the shape. "Anyone using Instagram's assets should only use the logos
- * found on our Brand Resource Center site". This file ships path data copied
- * from simple-icons, which is a monochrome redrawing and not that asset, so a
- * grant conditioned on using the owner's file does not reach it. YouTube's
- * grant is scoped to API clients and Assay is not one; Google's excludes
- * business use, which this is.
+ * found on our Brand Resource Center site". A monochrome redrawing is not that
+ * asset, so a grant conditioned on using the owner's file does not reach it.
+ * YouTube's grant is scoped to API clients and Assay is not one; Google's
+ * excludes business use, which this is.
  *
- * SO THE CARD CARRIES A LETTER, NOT A LOGO. An initial in a tinted tile is
- * Assay's own artwork. It borrows no trade dress, needs no permission and
- * cannot be mistaken for the brand's mark -- and it still does the job the mark
- * did on this screen, which is to make a card findable by shape before it is
- * read. The alternative was a wall of identical grey globes, which is worse:
- * twenty-eight cards that all look like "unknown".
+ * THIS IS WHY THERE IS NO BRAND-LOGO SET IN `package.json` AND MUST NOT BE. Not
+ * simple-icons, not any other. The finding above is what TRADEMARKS.md records
+ * and it does not change because a package would be convenient.
  *
- * THE TINT IS DERIVED FROM THE ID, NOT FROM THE BRAND'S COLOUR. Instagram's
- * tile is not Instagram's gradient and LinkedIn's is not LinkedIn's blue --
- * using the brand's palette would be the trade-dress claim this whole note
- * avoids. A hash over the id picks a hue, so the assignment is stable across
- * reloads and machines, and every card gets a different one without a table
- * anybody has to maintain.
+ * SO THE CARD CARRIES A VERB, NOT A MARK. A cart for a shop, a play glyph for
+ * video, a briefcase for jobs, a bed for a place to stay. Every one is
+ * `lucide-react` -- already a dependency, already `components.json`'s named icon
+ * library, MIT, and with no trademark attached to any of it. It describes what
+ * the scraper collects, which is the thing the operator is actually choosing
+ * between, and it borrows no trade dress to do it.
+ *
+ * IT IS PER BRAND, NOT PER SHELF, AND THAT IS THE POINT. Eight identical carts
+ * under "Shopping" would be a wall of the same tile, which is exactly what the
+ * letter tiles replaced. The glyph varies with what the brand is FOR -- a gavel
+ * for eBay, a palette for Etsy, a shirt for Zara -- so a card is findable by
+ * shape before it is read, which is the job the mark used to do. `CATEGORY`
+ * below is the floor, for a card nobody has picked a verb for.
+ *
+ * THE LETTER IS GONE RATHER THAN SUBORDINATE. It was carrying findability on
+ * its own; the glyph now carries it, the brand's name is already the card's
+ * title two millimetres to the right, and an initial tucked into the corner of
+ * an icon would be a second thing to read at 38px where one is plenty.
  *
  * A REAL MARK STILL WINS. `MARKS` is checked first: `bd-github` and
  * `bd-wikipedia` fall through to the GitHub and Wikipedia glyphs that were
  * already cleared, because it is the same brand and the same permission. If a
  * verdict in TRADEMARKS.md is ever settled the other way -- by obtaining the
  * owner's own asset file, or by asking them -- adding that brand to `MARKS`
- * retires its letter with no other change.
+ * retires its glyph with no other change.
  */
-function Lettermark({ id, name, size }: { id: string; name: string; size: number }) {
-  // FNV-1a over the id. Any stable hash would do; this one is four lines and
-  // has no dependency. The point is only that the same card is the same colour
-  // every time, and that neighbouring cards are not.
-  let h = 0x811c9dc5;
-  for (let i = 0; i < id.length; i++) {
-    h ^= id.charCodeAt(i);
-    h = Math.imul(h, 0x01000193) >>> 0;
-  }
-  const hue = h % 360;
+const ICONS: Record<string, LucideIcon> = {
+  // Social -- what you would be watching on each one.
+  instagram: Camera,
+  tiktok: Music,
+  facebook: Users,
+  youtube: Play,
+  x: AtSign,
+  reddit: MessagesSquare,
+  threads: AtSign,
+  pinterest: Pin,
+  quora: MessageCircleQuestion,
+
+  // Shopping.
+  amazon: ShoppingCart,
+  walmart: Store,
+  target: Target,
+  ebay: Gavel,
+  etsy: Palette,
+  bestbuy: Tv,
+  zara: Shirt,
+  shopee: ShoppingBag,
+
+  // Places and property.
+  zillow: House,
+  airbnb: BedDouble,
+  booking: Hotel,
+  yelp: Star,
+
+  // Jobs and companies.
+  linkedin: Briefcase,
+  glassdoor: Building2,
+  indeed: BriefcaseBusiness,
+  crunchbase: TrendingUp,
+
+  // Search and reference, and the page trackers that have no brand card.
+  google: Search,
+  arxiv: FileText,
+  pypi: Package,
+  any: Globe,
+  dataset: Boxes,
+
+  // Unreached today -- `MARKS` answers these three first -- and kept anyway, so
+  // that retiring a cleared mark drops the card to a sensible glyph instead of
+  // to its shelf's default.
+  github: Code,
+  wikipedia: BookOpen,
+  mdn: BookOpen,
+};
+
+/**
+ * The shelf a card sits on, as a glyph and a colour.
+ *
+ * THE COLOUR IS THE CATEGORY'S, NEVER THE BRAND'S. Instagram's tile is not
+ * Instagram's gradient and LinkedIn's is not LinkedIn's blue -- using the
+ * brand's palette would be the trade-dress claim the note above avoids. It says
+ * which shelf you are looking at, which is a fact about Assay's own catalogue.
+ *
+ * EVERY VALUE IS A TOKEN FROM `tokens.css`, so a palette change moves these and
+ * there is no hex on this screen to go stale. `--semantic-danger` is deliberately
+ * unused: red means a retraction everywhere else in this product and a category
+ * is not an error. `--text-muted` is unused too, for a duller reason -- #a2a2a2
+ * on #ffffff is 2.3:1, under the 3:1 a non-text glyph has to clear.
+ *
+ * ponytail: seven shelves and four chromatic tokens, so the last three share the
+ * neutrals and colour alone does not separate them. That is the palette's real
+ * ceiling rather than a shortcut -- there are twenty colours in the file and no
+ * dark theme -- and the glyph is doing the separating anyway. Upgrade path: a
+ * category ramp in Figma, regenerated through `tools/tokens.js`.
+ */
+const CATEGORY: Record<string, { icon: LucideIcon; colour: string }> = {
+  social: { icon: MessagesSquare, colour: 'var(--semantic-link)' },
+  commerce: { icon: ShoppingCart, colour: 'var(--semantic-success)' },
+  places: { icon: Pin, colour: 'var(--semantic-warning)' },
+  work: { icon: Briefcase, colour: 'var(--accent-brand)' },
+  web: { icon: Search, colour: 'var(--text-primary)' },
+  scrapers: { icon: Boxes, colour: 'var(--text-secondary)' },
+  pages: { icon: Globe, colour: 'var(--text-secondary)' },
+};
+
+const UNSHELVED = { icon: Globe, colour: 'var(--text-secondary)' };
+
+function CategoryMark({ id, group, size }: { id: string; group?: string; size: number }) {
+  const shelf = (group && CATEGORY[group]) || UNSHELVED;
+  const Icon = ICONS[id] ?? shelf.icon;
 
   return (
     <span
       aria-hidden
-      className="flex shrink-0 items-center justify-center rounded-[8px] font-semibold"
+      className="flex shrink-0 items-center justify-center rounded-[8px]"
       style={{
         width: size,
         height: size,
-        // Low saturation and high lightness for the ground, the same hue dark
-        // for the letter: readable on `--surface-card` (#ffffff) at every hue,
-        // which a fully saturated pair is not -- yellow on white fails and blue
-        // on white is heavy. There is no dark theme to check against.
-        background: `hsl(${hue} 62% 94%)`,
-        color: `hsl(${hue} 52% 32%)`,
-        fontSize: Math.round(size * 0.44),
-        lineHeight: 1,
+        // The category colour at a tenth, over the card it sits on. Mixed from
+        // the same token the glyph is drawn in rather than declared separately,
+        // so the pair cannot drift and neither half is a literal.
+        background: `color-mix(in srgb, ${shelf.colour} 10%, var(--surface-card))`,
+        color: shelf.colour,
       }}
     >
-      {/* The first letter or digit of the name, uppercased. `X` for X, `B` for
-          Best Buy. Not two letters: at 38px a monogram is a smudge. */}
-      {(/[a-z0-9]/i.exec(name)?.[0] ?? '?').toUpperCase()}
+      <Icon size={Math.round(size * 0.52)} strokeWidth={1.75} aria-hidden />
     </span>
   );
 }
 
-export function BrandMark({ id, name, size = 40 }: {
+export function BrandMark({ id, group, size = 40 }: {
   id: string;
-  /** The card's title. Only read for its first letter, and only when nothing
-   *  better is available -- see `Lettermark`. */
-  name?: string;
+  /** Which shelf in `GROUPS` this card sits on. Sets the colour -- see `CATEGORY`. */
+  group?: string;
   size?: number;
 }) {
   // A curated Bright Data card is `bd-github`; the page tracker for the same
@@ -167,21 +239,6 @@ export function BrandMark({ id, name, size = 40 }: {
     );
   }
 
-  const Icon = FALLBACK[key];
-  if (Icon) {
-    return (
-      <Icon
-        size={size}
-        strokeWidth={1.25}
-        aria-hidden
-        className="shrink-0 text-[var(--text-muted)]"
-      />
-    );
-  }
-
-  // A named brand with no cleared mark gets its letter. Something with no name
-  // at all -- which nothing on this screen is -- gets the globe it always got.
-  return name
-    ? <Lettermark id={id} name={name} size={size} />
-    : <Globe size={size} strokeWidth={1.25} aria-hidden className="shrink-0 text-[var(--text-muted)]" />;
+  // Everything else: what the scraper collects, in its shelf's colour.
+  return <CategoryMark id={key} group={group} size={size} />;
 }

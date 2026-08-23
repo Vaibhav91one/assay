@@ -53,7 +53,7 @@ export default async function TrackerPage({ params, searchParams }: {
           rel="noreferrer noopener"
           className="flex w-fit items-center gap-[12px]"
         >
-          <BrandMark id={t.id} name={t.name} size={28} />
+          <BrandMark id={t.id} group={t.group} size={28} />
           <span className="body-14 text-[var(--text-secondary)]">{t.subheading}</span>
         </a>
         <Apply tracker={t} dataset={dataset} />
