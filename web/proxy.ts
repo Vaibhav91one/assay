@@ -59,8 +59,32 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Skip static assets and _next. /api/v1/* is machine-to-machine and carries
-  // its own Bearer key auth (src/api/keys.js) -- operator sessions do not
-  // apply there, so it stays out of this matcher.
-  matcher: ['/((?!_next|api/v1|.*\\..*).*)'],
+  // Skip static assets and _next. /api/v1/*, /api/mcp and /api/oauth/* are
+  // machine-to-machine -- the first two carry their own Bearer key auth
+  // (src/api/keys.js's requireKey()), and /api/oauth/register and
+  // /api/oauth/token are called by an MCP client's own backend (claude.ai's,
+  // chiefly) with no session cookie at all, per the OAuth Dynamic Client
+  // Registration and token-exchange specs both being unauthenticated-until-
+  // proven-otherwise by design. Operator sessions do not apply to any of
+  // these, so they stay out of this matcher.
+  //
+  // /oauth/authorize is deliberately NOT excluded here -- it is the one OAuth
+  // route a human, not a backend, has to load and approve, and it needs
+  // exactly the operator session every other page in the app needs.
+  //
+  // `.well-known/oauth-*` needs no entry here: both live under a path
+  // segment that starts with a literal `.`, which the existing `.*\.*`.
+  // exclusion below already matches -- verified live rather than assumed,
+  // because a metadata endpoint an OAuth client cannot reach unauthenticated
+  // fails the whole flow before it starts.
+  //
+  // /api/mcp missing from here was a real bug, found by driving a genuine
+  // third-party MCP client (`@modelcontextprotocol/inspector`) against a
+  // running AUTH_MODE=clerk instance: clerkMiddleware() intercepted the
+  // request and rewrote it to /sign-in (an HTML page) before requireKey() on
+  // the route ever ran -- confirmed live via the response's own
+  // `x-middleware-rewrite: /sign-in?...` and `x-clerk-auth-status: signed-out`
+  // headers. No MCP client -- Claude Code, claude.ai, Inspector, or otherwise
+  // -- could ever have reached this endpoint on a hosted deployment.
+  matcher: ['/((?!_next|api/v1|api/mcp|api/oauth|.*\\..*).*)'],
 };

@@ -13,7 +13,26 @@ import { createMDX } from 'fumadocs-mdx/next';
 // "0 observations of this field" for a field with twenty-eight of them --
 // a false statement, rendered confidently, from a missing directory. This
 // config runs before any route module, which is where CAPTURE_DIR is read.
-process.env.ASSAY_CAPTURES ||= resolve(process.cwd(), '..', 'captures');
+//
+// `import.meta.dirname`, not `process.cwd()` -- cwd is `web/` under `next dev`
+// but the repo root under `npx next start web` (see the `.env`-loading
+// comment below), so a cwd-relative `..` finds the repo root in one case and
+// overshoots it in the other. Previously used `process.cwd()`, matching the
+// exact bug `ASSAY_CONNECTORS` below was already fixed for -- same anchor,
+// same reasoning, applied here too rather than left as the one line still
+// wrong.
+process.env.ASSAY_CAPTURES ||= resolve(import.meta.dirname, '..', 'captures');
+
+// The identical mistake, one file over. `src/connectors/config.ts`'s
+// `CONFIG_PATH()` defaults `ASSAY_CONNECTORS` to the relative path
+// `data/connectors.json` too, so it inherits exactly the bug the capture path
+// comment above describes -- confirmed live: `assay connectors set discord`
+// from the repo root (where the CLI and worker always run) writes
+// `<repo>/data/connectors.json`, and the web process, cwd `web/`, reads
+// `web/data/connectors.json` -- a file that was never written -- and reports
+// "Not configured" for a connector that plainly is. Same fix, same reasoning:
+// anchor it here, once, before any route reads it.
+process.env.ASSAY_CONNECTORS ||= resolve(import.meta.dirname, '..', 'data', 'connectors.json');
 
 // The same mistake, one directory up. `.env.example` sits at the repo root and
 // every doc tells an operator to copy it to `.env` there -- but Next roots its
@@ -52,6 +71,18 @@ const config: NextConfig = {
   // version to anyone scanning. It buys nobody anything.
   poweredByHeader: false,
 
+  // `next dev` ONLY (this option does not exist for `next start`, which is
+  // what a real self-host deployment runs -- see the module comment on why
+  // this repo builds with webpack instead of leaving that to guesswork).
+  // Without it, a Server Action POST arriving through a reverse proxy the dev
+  // server does not already trust is refused outright: "x-forwarded-host
+  // header ... does not match origin header ... Aborting the action" --
+  // measured live driving `/oauth/authorize`'s real Approve button through an
+  // ngrok tunnel, the same tunnel this session used for the whole real-world
+  // verification pass. `ASSAY_DEV_ORIGIN` is unset by default, so a plain
+  // `npm run dev` with no tunnel gets the same empty list as before this line.
+  ...(process.env.ASSAY_DEV_ORIGIN ? { allowedDevOrigins: [process.env.ASSAY_DEV_ORIGIN] } : {}),
+
   /**
    * The three headers that hold whether or not anything is in front of this.
    *
@@ -71,8 +102,21 @@ const config: NextConfig = {
    */
   async headers() {
     return [
+      /**
+       * `/api/captures/*` is excluded from this pattern, not overridden
+       * after it -- confirmed live that Next.js does NOT let a later,
+       * more-specific `headers()` entry win over an earlier one for the same
+       * key on an overlapping path; both apply, and the browser sees the
+       * DENY regardless of a second SAMEORIGIN rule declared afterward
+       * (real repro: Chrome's console "Refused to display ... because it
+       * set 'X-Frame-Options' to 'deny'", the frozen-page viewer showing the
+       * broken-document placeholder instead of a real captured page). A
+       * negative-lookahead in the SOURCE pattern is the only thing that
+       * actually stops this rule's X-Frame-Options from being sent on that
+       * path at all, so only the rule below ever applies to it.
+       */
       {
-        source: '/(.*)',
+        source: '/((?!api/captures/).*)',
         headers: [
           // Stop a capture served back to a browser being sniffed into
           // something executable, whatever the store said its type was.
@@ -85,6 +129,21 @@ const config: NextConfig = {
           // belongs in the Referer of an outbound click to a vendor's docs.
           { key: 'Referrer-Policy', value: 'no-referrer' },
         ],
+      },
+      /**
+       * The one deliberate exception to DENY above, and the one route that
+       * needs it: `components/capture-view.tsx`'s frozen-page viewer puts a
+       * stored capture in a same-origin `<iframe>`. SAMEORIGIN still refuses
+       * every other origin; only this app can frame this route, which is
+       * the same guarantee the sandboxed iframe's own
+       * `sandbox="allow-same-origin"` already assumes holds. Still gets
+       * `X-Content-Type-Options`/`Referrer-Policy` -- those are set inline
+       * on the route's own `Response` (`web/app/api/captures/[sha]/route.ts`),
+       * not lost by being excluded from the blanket rule above.
+       */
+      {
+        source: '/api/captures/:path*',
+        headers: [{ key: 'X-Frame-Options', value: 'SAMEORIGIN' }],
       },
     ];
   },

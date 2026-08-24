@@ -53,6 +53,42 @@ describe('MCP over HTTP', () => {
     expect(res.status).toBe(401);
   });
 
+  it('points an unauthenticated caller at the protected-resource metadata', async () => {
+    // The MCP authorization spec (and RFC9728 with it) requires this
+    // parameter so a real OAuth client -- claude.ai, chiefly -- can find
+    // `/.well-known/oauth-protected-resource` and, from there,
+    // `src/api/oauth.ts`'s endpoints, off a bare 401 with no other guidance.
+    if (!dbUp) return;
+    const res = await post(rpc('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'x', version: '1' } }));
+    expect(res.status).toBe(401);
+    expect(res.headers.get('www-authenticate')).toBe(
+      'Bearer resource_metadata="http://localhost/.well-known/oauth-protected-resource"',
+    );
+  });
+
+  it('points at the reverse proxy\'s public origin, not the internal Host header', async () => {
+    // Same real bug as the .well-known routes (see test/oauth-routes.test.ts):
+    // behind ngrok, `request.url`'s own origin is the proxy's internal
+    // target. A resource_metadata pointer built from it sends a real client
+    // to a URL it cannot reach.
+    if (!dbUp) return;
+    const { POST } = await import('../web/app/api/mcp/route.js');
+    const res = await POST(new Request('http://localhost:3911/api/mcp', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        accept: 'application/json, text/event-stream',
+        'x-forwarded-host': 'unloved-isolation-script.ngrok-free.dev',
+        'x-forwarded-proto': 'https',
+      },
+      body: JSON.stringify(rpc('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'x', version: '1' } })),
+    }));
+    expect(res.status).toBe(401);
+    expect(res.headers.get('www-authenticate')).toBe(
+      'Bearer resource_metadata="https://unloved-isolation-script.ngrok-free.dev/.well-known/oauth-protected-resource"',
+    );
+  });
+
   it('initializes and lists the same tools loadTools() registers', async () => {
     if (!dbUp) return;
     const init = await post(

@@ -50,13 +50,22 @@ https://<your-domain>/api/mcp
 ```
 
 This is the one transport reachable off the machine Assay runs on, so it needs
-its own credential — an Assay API key (`assay keys create`, or the API tab on
+its own credential. claude.ai gets one the real way: it registers itself, you
+approve it on a consent screen this instance serves, and it walks away with an
+ordinary Assay API key — no key ever typed or pasted, and the OAuth server
+behind it (`/oauth/authorize`, `/api/oauth/token`, `src/api/oauth.ts`) is
+real, not a placeholder. A client that does not speak OAuth can be handed a
+key directly instead (`assay keys create`, or the API tab on
 [Connect](/connect)), sent as `Authorization: Bearer ak_...`. Keys still never
-leave your instance; claude.ai calls your server, not the other way round. A
-**target-scoped** key is refused here today — `requireKey()`'s scoping only
-recognises `/api/v1/...` paths, and an MCP call has no single target or HTTP
-verb to check it against. A key with no scope (full access) is what this
-endpoint needs until that gap closes.
+leave your instance; claude.ai calls your server, not the other way round.
+
+A **target-scoped** key is checked per tool call here, the same as it would be
+on the REST surface — `requireKeyForMcp()` (`src/api/keys.ts`) reads the tool
+name and its arguments out of the JSON-RPC body to find a target to check,
+since an MCP call carries no single URL or HTTP verb the way a REST route
+does. A tool with no target argument at all, or one that spans more than one
+target by construction, has nothing for a scoped key to be checked against and
+is refused — the same answer its nearest REST equivalent already gives.
 
 <Callout type="info" title="One server, two transports">
   Both serve the same 27 tools from the same directory (`src/mcp/tools/*.ts`,

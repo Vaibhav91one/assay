@@ -46,6 +46,7 @@ export default async function ConnectPage({
           keys={keys.map((k) => ({
             keyId: k.keyId, name: k.name, keyPrefix: k.keyPrefix, scope: k.scope,
             createdAt: k.createdAt.toISOString(), lastUsedAt: k.lastUsedAt?.toISOString() ?? null,
+            expiresAt: k.expiresAt?.toISOString() ?? null,
           }))}
         />
       </div>

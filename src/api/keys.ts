@@ -11,7 +11,7 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import { parseDocument } from 'yaml';
-import { eq, and, isNull, desc } from 'drizzle-orm';
+import { eq, and, or, isNull, gt, desc } from 'drizzle-orm';
 import { getDb, apiKeys, sql } from '../store/index.js';
 
 const PREFIX = 'ak_';
@@ -24,8 +24,15 @@ export type KeyScope = z.infer<typeof KeyScope>;
 
 export const hashKey = (key: string): string => createHash('sha256').update(key).digest('hex');
 
-/** Mint a key. The plaintext is in the return value and nowhere else, ever. */
-export async function createKey(name: string, scope?: KeyScope | null) {
+/**
+ * Mint a key. The plaintext is in the return value and nowhere else, ever.
+ *
+ * `expiresAt` is for `src/api/oauth.ts` alone -- every other caller (the CLI,
+ * the API tab) omits it and gets the permanent key this product has always
+ * minted. See `schema.ts`'s own comment on the column for why only an
+ * OAuth-issued key carries one.
+ */
+export async function createKey(name: string, scope?: KeyScope | null, expiresAt?: Date | null) {
   const key = PREFIX + randomBytes(24).toString('hex');
   const parsedScope = scope == null ? null : KeyScope.parse(scope);
   const [row] = await getDb().insert(apiKeys).values({
@@ -33,6 +40,7 @@ export async function createKey(name: string, scope?: KeyScope | null) {
     keyPrefix: key.slice(0, 11),
     hash: hashKey(key),
     scope: parsedScope,
+    expiresAt: expiresAt ?? null,
   }).returning({ keyId: apiKeys.keyId, keyPrefix: apiKeys.keyPrefix });
   return { ...row, key };            // `key` is the only time the secret exists
 }
@@ -45,6 +53,8 @@ export interface KeyPresence {
   scope: KeyScope | null;
   createdAt: Date;
   lastUsedAt: Date | null;
+  /** Null for every CLI/API-tab key. Set only on a key an OAuth token exchange minted. */
+  expiresAt: Date | null;
 }
 
 /**
@@ -58,6 +68,7 @@ export async function listKeys(): Promise<KeyPresence[]> {
     .select({
       keyId: apiKeys.keyId, name: apiKeys.name, keyPrefix: apiKeys.keyPrefix,
       scope: apiKeys.scope, createdAt: apiKeys.createdAt, lastUsedAt: apiKeys.lastUsedAt,
+      expiresAt: apiKeys.expiresAt,
     })
     .from(apiKeys)
     .where(isNull(apiKeys.revokedAt))
@@ -76,7 +87,14 @@ export async function verifyKey(presented: unknown) {
   if (typeof presented !== 'string' || !presented.startsWith(PREFIX)) return null;
   const hash = hashKey(presented);
   const [row] = await getDb().select().from(apiKeys)
-    .where(and(eq(apiKeys.hash, hash), isNull(apiKeys.revokedAt))).limit(1);
+    .where(and(
+      eq(apiKeys.hash, hash),
+      isNull(apiKeys.revokedAt),
+      // Null means "never expires" -- every key but an OAuth-issued one. A
+      // present, past expiry is the same refusal as a revoked key: the row
+      // still exists (an audit trail), it just no longer authenticates.
+      or(isNull(apiKeys.expiresAt), gt(apiKeys.expiresAt, new Date())),
+    )).limit(1);
   if (!row) return null;
 
   const a = Buffer.from(hash, 'hex');
@@ -190,21 +208,131 @@ async function scopedTarget(request: Request, ctx?: RouteCtx): Promise<string | 
   return null;
 }
 
-/** Guard a route. Returns null when authorised, or the refusal Response. */
-export async function requireKey(request: Request, ctx?: RouteCtx): Promise<Response | null> {
+const unauthorized = (): Response => Response.json(
+  { error: 'unauthorized', detail: 'Send Authorization: Bearer <api key>.' },
+  { status: 401, headers: { 'WWW-Authenticate': 'Bearer' } },
+);
+
+/**
+ * Verify the bearer key itself. Shared by `requireKey()` (REST) and
+ * `requireKeyForMcp()` (MCP-over-HTTP) -- both need the same "is this a real,
+ * live key" answer, and differ only in HOW they decide what a scoped key is
+ * allowed to touch, because an MCP call carries no HTTP verb that means
+ * anything (every tool call is a POST) and no URL path that names a target
+ * (every tool call is the same URL).
+ */
+async function verifyRequest(
+  request: Request,
+): Promise<{ ok: true; verified: NonNullable<Awaited<ReturnType<typeof verifyKey>>> } | { ok: false; response: Response }> {
   const key = bearerFrom(request);
   const verified = key ? await verifyKey(key) : null;
-  if (!verified) {
-    return Response.json(
-      { error: 'unauthorized', detail: 'Send Authorization: Bearer <api key>.' },
-      { status: 401, headers: { 'WWW-Authenticate': 'Bearer' } },
-    );
-  }
+  if (!verified) return { ok: false, response: unauthorized() };
+  return { ok: true, verified };
+}
+
+/** Guard a route. Returns null when authorised, or the refusal Response. */
+export async function requireKey(request: Request, ctx?: RouteCtx): Promise<Response | null> {
+  const check = await verifyRequest(request);
+  if (!check.ok) return check.response;
+  const { verified } = check;
   if (verified.scope == null) return null;       // exact legacy behavior
 
   const needed = request.method === 'GET' || request.method === 'HEAD' ? 'read' : 'write';
   if (needed === 'write' && verified.scope.access !== 'write') return forbidden();
   const target = await scopedTarget(request, ctx);
+  if (!target || !verified.scope.targets.includes(target)) return forbidden();
+  return null;
+}
+
+/**
+ * The MCP tools whose call actually changes something. Everything else is
+ * `read`, INCLUDING `assay_field_health` -- it recomputes and persists, but
+ * so does its REST twin `/api/v1/health-fields`, which `scopedTarget()` above
+ * already treats as a GET. Same precedent, same answer here.
+ */
+const MCP_WRITE_TOOLS = new Set([
+  'assay_propose', 'assay_create_watch', 'assay_pause_watch', 'assay_delete_watch',
+]);
+
+/** A target this tool call could ever be scoped to, `'ANY'` for a tool that touches no stored target data, or null for neither. */
+async function mcpTarget(name: string, args: Record<string, unknown>): Promise<string | 'ANY' | null> {
+  switch (name) {
+    // Target is the whole point of the call, and required by the tool's own
+    // schema -- if a caller omitted it the tool itself would already refuse.
+    case 'assay_blast_radius':
+    case 'assay_heal_history':
+    case 'assay_contract':
+    case 'assay_contract_history':
+    case 'assay_diff':
+    case 'assay_pause_watch':
+    case 'assay_delete_watch':
+    // Optional in the schema, but only a PROVIDED target is checkable --
+    // omitting it means "every target", which a scoped key can never mean.
+    case 'assay_status':
+    case 'assay_runs':
+    case 'assay_field_health':
+    case 'assay_field_health_stored':
+    case 'assay_incidents':
+      return typeof args.target === 'string' && args.target ? args.target : null;
+
+    // Indirect ids, resolved the same way the REST routes over the same ids
+    // already do -- `/api/v1/rows/:proof`, `/api/v1/explain/:proof`,
+    // `/api/v1/reports/incidents/:episode`.
+    case 'assay_explain':
+    case 'assay_propose':
+    case 'assay_score_nomination':
+      return typeof args.proof === 'string' ? targetForProof(args.proof) : null;
+    case 'assay_incident':
+      return args.episode != null ? targetForEpisode(String(args.episode)) : null;
+
+    // Touches no stored target data at all -- drafts a contract and returns
+    // it; core.ts's own header states it "does not write to the store". A key
+    // scoped to one target cannot leak or mutate a fact about any other by
+    // calling this one.
+    case 'assay_watch':
+      return 'ANY';
+
+    // Every remaining tool either has no target argument at all
+    // (assay_held, assay_decisions, assay_brakes, assay_connectors,
+    // assay_model_status, assay_skills, assay_targets, assay_digest,
+    // assay_create_watch) or, like assay_blast in core.ts, takes only a field
+    // name that is not unique to one target -- there is no id here a scoped
+    // key could ever be checked against, the same as their nearest REST
+    // equivalent (where one exists) already refuses a scoped key outright.
+    default:
+      return null;
+  }
+}
+
+/**
+ * The MCP-over-HTTP guard (`web/app/api/mcp/route.ts`). Every call arrives as
+ * a POST regardless of which tool it invokes, so `requireKey()`'s HTTP-verb
+ * and URL-path reasoning has nothing to read here -- `rpc` is the parsed
+ * JSON-RPC body instead, and everything this function decides comes from it.
+ *
+ * `initialize`, `tools/list` and every other non-`tools/call` method are
+ * always allowed for a scoped key: they carry no target-specific data, only
+ * this server's own static tool descriptions.
+ */
+export async function requireKeyForMcp(
+  request: Request,
+  rpc: { method?: unknown; params?: { name?: unknown; arguments?: unknown } },
+): Promise<Response | null> {
+  const check = await verifyRequest(request);
+  if (!check.ok) return check.response;
+  const { verified } = check;
+  if (verified.scope == null) return null;       // exact legacy behavior
+
+  if (rpc.method !== 'tools/call') return null;
+
+  const name = typeof rpc.params?.name === 'string' ? rpc.params.name : '';
+  const args = (rpc.params?.arguments && typeof rpc.params.arguments === 'object'
+    ? rpc.params.arguments : {}) as Record<string, unknown>;
+
+  if (MCP_WRITE_TOOLS.has(name) && verified.scope.access !== 'write') return forbidden();
+
+  const target = await mcpTarget(name, args);
+  if (target === 'ANY') return null;
   if (!target || !verified.scope.targets.includes(target)) return forbidden();
   return null;
 }

@@ -109,9 +109,73 @@ export const apiKeys = pgTable('api_keys', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
   revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  // Null for every key minted by the CLI or the API tab -- those are meant to
+  // outlive a shell session, and nothing here changes that. Set only by
+  // `src/api/oauth.ts`, on the key an OAuth token exchange mints: a token
+  // handed to a third party (claude.ai) is the one credential in this table
+  // whose whole security story assumes it is short-lived and gets rotated,
+  // per OAuth 2.1's own guidance -- see that file for the refresh flow that
+  // makes a real expiry livable instead of a client that silently stops
+  // working every hour.
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
 }, (t) => ({
   lookup: index('api_keys_hash_idx').on(t.hash),
 }));
+
+/**
+ * OAuth 2.1 clients, registered dynamically (RFC7591) by MCP clients that
+ * discover `/api/mcp` on their own -- claude.ai's connector picker, chiefly.
+ * Public clients only: no secret column, because none is issued. PKCE (the
+ * challenge on `oauthCodes` below) is what proves a token request came from
+ * the same party that started the flow, which is what a secret would
+ * otherwise be for -- and a secret a browser-based client could ever hold
+ * would not be one.
+ */
+export const oauthClients = pgTable('oauth_clients', {
+  clientId: text('client_id').primaryKey(),
+  clientName: text('client_name'),
+  redirectUris: jsonb('redirect_uris').$type<string[]>().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * A single-use authorization code (RFC6749 §4.1.2), alive for minutes.
+ *
+ * No `key_id` column: the code does not carry a pre-minted key waiting to be
+ * handed over, because a code that never gets redeemed would leave an orphan
+ * one. `src/api/oauth.ts` mints the real `api_keys` row (`createKey()`,
+ * already used by the CLI and unit-tested there) only at successful token
+ * exchange, the same way every other Assay API key comes to exist.
+ */
+export const oauthCodes = pgTable('oauth_codes', {
+  code: text('code').primaryKey(),
+  clientId: text('client_id').notNull().references(() => oauthClients.clientId),
+  redirectUri: text('redirect_uri').notNull(),
+  codeChallenge: text('code_challenge').notNull(),
+  resource: text('resource'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  usedAt: timestamp('used_at', { withTimezone: true }),
+});
+
+/**
+ * A refresh token (RFC6749 §6), hashed the same way `api_keys.hash` is --
+ * this table is a bearer credential too, and a leaked database must not
+ * become a set of working ones.
+ *
+ * `keyId` points at the access-token row this refresh token currently
+ * renews. Single-use and rotated: redeeming one (`refreshAccessToken()`,
+ * `src/api/oauth.ts`) marks it used, revokes THAT `api_keys` row immediately
+ * rather than letting it ride out its own expiry, and returns a new key
+ * paired with a new refresh token here. A refresh token that outlives its own
+ * rotation is a credential nobody meant to still work.
+ */
+export const oauthRefreshTokens = pgTable('oauth_refresh_tokens', {
+  hash: text('hash').primaryKey(),
+  clientId: text('client_id').notNull().references(() => oauthClients.clientId),
+  keyId: integer('key_id').notNull().references(() => apiKeys.keyId),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  usedAt: timestamp('used_at', { withTimezone: true }),
+});
 
 /** A break, from first detection to recovery. One episode, one alert. */
 export const episodes = pgTable('episodes', {
