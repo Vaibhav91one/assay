@@ -41,15 +41,29 @@ args = ["tsx", "/absolute/path/to/assay/src/mcp/server.ts"]
 DATABASE_URL = "postgres://localhost:5432/assay"
 ```
 
-<Callout type="warn" title="One transport, not two">
-  `docs/APP-DESIGN.md` §6 describes "one MCP server, two transports" — stdio for
-  Claude Code and Codex, HTTP for the claude.ai remote connector. **Only stdio is
-  built.** `src/mcp/server.ts` connects a `StdioServerTransport` and there is no
-  route handler serving MCP over HTTP anywhere in `web/app/`.
+### claude.ai
 
-  The design note is a plan; this page is what exists. When the HTTP transport
-  lands it will serve the same 27 tools from the same directory, because the tool
-  surface is loaded rather than listed.
+Settings → Connectors → Add custom connector, pointing at:
+
+```
+https://<your-domain>/api/mcp
+```
+
+This is the one transport reachable off the machine Assay runs on, so it needs
+its own credential — an Assay API key (`assay keys create`, or the API tab on
+[Connect](/connect)), sent as `Authorization: Bearer ak_...`. Keys still never
+leave your instance; claude.ai calls your server, not the other way round. A
+**target-scoped** key is refused here today — `requireKey()`'s scoping only
+recognises `/api/v1/...` paths, and an MCP call has no single target or HTTP
+verb to check it against. A key with no scope (full access) is what this
+endpoint needs until that gap closes.
+
+<Callout type="info" title="One server, two transports">
+  Both serve the same 27 tools from the same directory (`src/mcp/tools/*.ts`,
+  globbed at boot) — stdio (`src/mcp/server.ts` + `StdioServerTransport`, for
+  Claude Code and Codex, local processes that can spawn one) and HTTP
+  (`web/app/api/mcp/route.ts`, `WebStandardStreamableHTTPServerTransport`, for
+  claude.ai). Neither keeps a second copy of the tool list.
 </Callout>
 
 ---

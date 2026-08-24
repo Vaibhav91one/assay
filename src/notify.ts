@@ -19,6 +19,9 @@ export interface Change {
 }
 
 /** How a message actually leaves the process. A parameter so tests need no key. */
+/** Resend's own response shape is wider than this; `id` is the one field a caller needs. */
+export interface SendResult { id?: string; [k: string]: unknown }
+
 export type Transport = (msg: {
   apiKey: string;
   from: string;
@@ -26,7 +29,7 @@ export type Transport = (msg: {
   subject: string;
   html: string;
   fetchImpl?: typeof fetch;
-}) => Promise<unknown>;
+}) => Promise<SendResult>;
 
 const esc = (s: unknown): string =>
   String(s ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' } as Record<string, string>)[c]!);
@@ -85,7 +88,7 @@ const resendTransport: Transport = async ({ apiKey, from, to, subject, html, fet
     body: JSON.stringify({ from, to, subject, html }),
   });
   if (!res.ok) throw new Error(`resend ${res.status}`);
-  return res.json();
+  return (await res.json()) as SendResult;
 };
 
 /**
@@ -105,7 +108,7 @@ export async function send({
   apiKey?: string;
   from?: string;
   transport?: Transport;
-}): Promise<unknown> {
+}): Promise<SendResult> {
   if (!apiKey) throw new Error('ASSAY_RESEND_KEY is not set');
   if (!from) throw new Error('ASSAY_MAIL_FROM is not set');
   if (!to) throw new Error('no recipient');

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
+import Link from 'next/link';
 import { ModelAccess, type ModelAuth } from '@/components/model-access';
 import { Working } from '@/components/loading';
 import { TopBar } from '@/components/top-bar';
@@ -357,7 +358,11 @@ function Tier({ p }: { p: Policy }) {
  */
 function Connectors({ v }: { v: SettingsView }) {
   return (
-    <SpecTable cols={[248, 168]}>
+    <>
+      <Link href="/connect" className="meta-12_5 mb-[14px] block w-fit text-[var(--semantic-link)] hover:underline">
+        Manage connectors ›
+      </Link>
+      <SpecTable cols={[248, 168]}>
       {v.connectors.flatMap((c) => [
         // The environment half, and only for a kind that has one. Slack and
         // Discord's webhook URL IS the whole credential, so inventing a token
@@ -393,7 +398,8 @@ function Connectors({ v }: { v: SettingsView }) {
           }
         />,
       ])}
-    </SpecTable>
+      </SpecTable>
+    </>
   );
 }
 

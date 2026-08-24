@@ -6,6 +6,8 @@ import { heldBecause, type Term } from 'assay/engine/reports/vocabulary';
 import { and, desc, eq, lte } from 'drizzle-orm';
 import { gateCheck, gateNumbers } from './run-flow';
 import { rankedOf, thresholdsOf } from './run-detail';
+import { hasCapture } from 'assay/engine/store/captures';
+import { t } from './copy';
 
 /**
  * F12, assembled: where one published value came from, months later, from a
@@ -115,6 +117,29 @@ export interface Provenance {
    * counterfactual to state because the value on the row IS what was published.
    */
   wouldHavePublished?: string | null;
+  /**
+   * Whether `captureSha` is still on disk. Captures are `rm`-prunable
+   * (`src/store/captures.ts`), so a sha on the row is not a promise the page
+   * is still readable -- this is checked once, here, rather than by every
+   * caller that wants to offer the frozen-page view.
+   */
+  captureAvailable: boolean;
+  /**
+   * The top two ranked candidates, labelled for the frozen-page view
+   * (`components/capture-view.tsx`) -- the same "Best match"/"Second
+   * candidate" wording `decision-card.tsx` uses, so a cell reads the same way
+   * whether it's still open in Decisions or being read back months later here.
+   * Null wherever `gate` is: there is nothing to box on a cell that published
+   * cleanly.
+   */
+  candidatesForView: { selector: string; label: string }[] | null;
+  /**
+   * Whether a queue item for this proof is still open (`resolved_by IS
+   * NULL`). Null when there is no queue item at all -- most cells never held,
+   * so most proofs never had one. This is what tells the page-map view
+   * whether "Looks right" has anything left to do here.
+   */
+  queueOpen: boolean | null;
 }
 
 /** `ranked` is jsonb, so it is whatever was written. Narrow it, do not trust it. */
@@ -173,7 +198,7 @@ export async function provenance(proofId: string): Promise<Provenance | null> {
   const targetId = e.target ?? '';
   const db = getDb();
 
-  const [record, heals, [target], unchanged] = await Promise.all([
+  const [record, heals, [target], unchanged, [queueItem]] = await Promise.all([
     rowByProof(proofId),
     db
       .select()
@@ -190,6 +215,10 @@ export async function provenance(proofId: string): Promise<Provenance | null> {
           .where(eq(schema.targets.targetId, targetId)).limit(1)
       : Promise.resolve([]),
     unchangedSince(targetId, e.field, e.run, e.value),
+    db.select({ resolvedBy: schema.queueItems.resolvedBy })
+      .from(schema.queueItems)
+      .where(eq(schema.queueItems.proofId, proofId))
+      .limit(1),
   ]);
 
   const heal = heals[0];
@@ -199,6 +228,11 @@ export async function provenance(proofId: string): Promise<Provenance | null> {
   const ranked = rankedOf(e.ranked);
   const numbers = gateNumbers(ranked);
   const th = thresholdsOf(target?.contract ?? null);
+
+  const OPTION_LABELS = [t('decisions.card.best'), t('decisions.card.second')] as const;
+  const candidatesForView = ranked?.length
+    ? ranked.slice(0, 2).map((c, i) => ({ selector: c.selector, label: OPTION_LABELS[i] ?? `candidate ${i + 1}` }))
+    : null;
 
   return {
     proof: e.proof,
@@ -234,5 +268,8 @@ export async function provenance(proofId: string): Promise<Provenance | null> {
     // what the row already says, and restating it as a counterfactual would be
     // a sentence about a decision that was never in doubt.
     wouldHavePublished: e.value === null ? ranked?.[0]?.value || null : null,
+    captureAvailable: e.capture_sha256 ? await hasCapture(e.capture_sha256) : false,
+    candidatesForView,
+    queueOpen: queueItem ? queueItem.resolvedBy === null : null,
   };
 }

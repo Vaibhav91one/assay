@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/sidebar';
 import { SidebarNav, ScraperList } from './sidebar-nav';
 import { ConversationList } from './conversation-list';
+import { UserMenu } from './user-menu';
 import { actionVariants } from './button';
 import { t } from '@/lib/copy';
 
@@ -200,7 +201,14 @@ export async function Sidebar({
               merely unbuilt but meaningless. `docs/STATES.md` 1 #11: everything
               that looks clickable has a defined consequence, or it does not
               exist. What is left is an identity read off `lib/auth.ts`, which
-              is a fact and not a control, and it now looks like one. */}
+              is a fact and not a control, and it now looks like one.
+
+              HOSTED IS DIFFERENT, and this is where that difference is allowed
+              back in: `named` is true only under AUTH_MODE=clerk, where there
+              is a real session and three real destinations behind the glyph
+              (Docs, GitHub, Sign out). The chevron returns for that case only
+              -- self-host's `!named` path above is untouched. */}
+          {named && <UserMenu />}
         </div>
       </SidebarFooter>
     </Rail>

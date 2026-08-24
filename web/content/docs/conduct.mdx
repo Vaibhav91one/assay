@@ -1,0 +1,57 @@
+---
+title: How Assay fetches
+description: What gets requested, how often, and what happens to it after. Every claim below is checked against the code that makes it true.
+---
+
+Figma's `conduct` frame (457:5673) promises five things. Four are true today and
+are described below as implemented. The fifth — respecting `robots.txt` — is
+**not implemented**: nothing in this codebase parses or checks `robots.txt`
+before a fetch. This page says so rather than asserting it, in keeping with
+[Limitations](/docs/limitations)'s rule that an unverified claim is marked
+unverified, not shipped as copy.
+
+## What I fetch
+
+One URL per target — the one you gave it, either pasted directly or picked from
+the sitemap suggestions the setup conversation offers. There is no crawl beyond
+that: `fetchHtml` (`src/skills/page.ts`) makes one request for the page you
+named and returns its bytes. Nothing here follows links, paginates, or expands
+scope on its own — an operator choosing several suggested pages is several
+targets, not one crawl.
+
+## How often
+
+Never faster than the cadence you set when you started watching the page. A run
+that finds nothing changed is still a run: it is recorded, and a skip (the
+worker declining to re-fetch because nothing is due) is recorded too — neither
+disappears from the log.
+
+## robots.txt — not implemented
+
+Nothing in `src/` reads or evaluates a site's `robots.txt`. A page you point
+Assay at is fetched regardless of what it disallows. This is a real gap, not a
+policy choice, and it is listed here rather than papered over — see
+[Limitations](/docs/limitations) for the project's standing rule on claims like
+this one.
+
+## Personal data
+
+Extraction is scoped to the fields you defined, nothing wider. The engine reads
+a page against a `FieldContract` — a tag allowlist, a length range, and an
+include/exclude pattern for exactly one field (`src/target.ts`) — and returns
+only that. There is no general-purpose scrape of a page's contents sitting
+behind it.
+
+## Where the test data came from
+
+77 archived pages across three sites — `mattel`, `ikea`, `chicco` — committed
+under `corpus/`, with provenance for every one of them in
+`corpus/manifest.json`: the original URL, the capture timestamp, and a content
+digest. None of it is live-fetched during a test run; the benchmark and replay
+suites (`npm run bench`, `npm run replay`) read these committed captures so a
+result is reproducible without depending on a site staying online or
+unchanged.
+
+---
+
+Questions about this policy belong in a public issue.

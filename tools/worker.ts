@@ -55,12 +55,17 @@ function fetcherFor(url: any) {
 async function notifyBreak({ target, field, diagnosis, runId, episodeId, proofId, reason }: any) {
   const to = process.env.ASSAY_MAIL_TO;
   try {
-    await send({
+    const sent = await send({
       to,
       subject: breakSubject({ target, field }),
       html: breakBody({ target, field, diagnosis, rowsHeld: 1, since: runId }),
     });
-    await markNotified(episodeId, 'email');
+    // `email:<resend id>` when Resend handed one back, so a later bounce
+    // webhook (`web/app/api/v1/connectors/resend/bounce/route.ts`) can find
+    // this episode by it. Plain `'email'` otherwise -- a test transport or a
+    // future provider with no id is still a successful send, just not one
+    // the bounce webhook can correlate.
+    await markNotified(episodeId, sent.id ? `email:${sent.id}` : 'email');
     return 'email';
   } catch (e) {
     const hook = process.env.ASSAY_WEBHOOK_URL;

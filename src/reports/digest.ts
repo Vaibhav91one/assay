@@ -20,6 +20,7 @@ import { cadenceMs, nextRunAt } from '../schedule.js';
 import { digestSubject, digestBody, type Change } from '../notify.js';
 import { fieldHistory, fieldsWithRuns, type DiffEntry } from './diff.js';
 import { asDate } from './vocabulary.js';
+import type { Message } from '../connectors/deliver.js';
 
 export interface Digest {
   since: Date;
@@ -113,6 +114,29 @@ export async function composeDigest({ since, until }: { since: Date; until: Date
 /** The HTML body, from the module that owns the send path. Not a second copy. */
 export const digestHtml = (d: Digest): string =>
   digestBody({ changes: d.changes, withheld: d.withheld, unchanged: d.unchanged });
+
+const line = (c: Change) => `• *${c.target}* / ${c.field} — ${c.what}`;
+
+/**
+ * The digest as a chat `Message` -- `connectors/deliver.ts`'s `announce()`
+ * already knows how to turn one of these into a Slack Block Kit payload or a
+ * Discord embed and send it to whatever's configured. Not a second delivery
+ * path: this is the same `Message` shape a break announcement uses, so
+ * `slackPayload`/`discordPayload`/the 3000/4096-char clipping they already do
+ * apply here unchanged rather than being re-derived for a digest specifically.
+ */
+export function digestMessage(d: Digest): Message {
+  const body = [
+    ...(d.changes.length ? ['CHANGED', ...d.changes.map(line)] : []),
+    ...(d.withheld.length ? ['', 'WITHHELD', ...d.withheld.map(line)] : []),
+  ].join('\n') || 'Nothing changed and nothing was withheld this window.';
+
+  return {
+    headline: d.subject,
+    body,
+    footer: `${d.unchanged} field${d.unchanged === 1 ? '' : 's'} unchanged this window.`,
+  };
+}
 
 // jsonb is whatever was written into it. Parsed, not trusted: an unusable
 // recipient list is an operator error that has to be loud, because the quiet

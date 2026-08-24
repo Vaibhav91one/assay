@@ -2,6 +2,8 @@ import { RefreshCw } from 'lucide-react';
 import { StatusLine, type Tone } from '@/components/status-line';
 import { Disclosure, GateNumbers } from '@/components/disclosure';
 import { Copy } from '@/components/copy';
+import { CaptureView } from '@/components/capture-view';
+import { ResolveCandidates } from '@/components/resolve-candidates';
 import type { Provenance, Standing } from '@/lib/explain';
 import { stamp } from '@/lib/when';
 import { t } from '@/lib/copy';
@@ -39,6 +41,23 @@ export function ProofDetail({ p }: { p: Provenance }) {
       </div>
 
       <Counterfactual p={p} />
+
+      {/* `decisions · frozen page` (413:2964): the candidates, boxed on the
+          page the gate actually saw them on. Both conditions matter --
+          `candidatesForView` is null on a cell that published cleanly (there
+          is nothing to compare), and `captureAvailable` false means the sha
+          is real but the file behind it was pruned, which is a normal state
+          for an old capture, not an error. */}
+      {p.captureSha && p.captureAvailable && p.candidatesForView && (
+        <div className="mt-[28px] flex w-full max-w-[1056px] flex-col items-start gap-[10px]">
+          <p className="label-10 text-[var(--text-muted)]">THE PAGE, AS THE GATE SAW IT</p>
+          <CaptureView sha={p.captureSha} candidates={p.candidatesForView} className="w-full" />
+          {/* Only when this proof's queue item is still open -- a cell that
+              already published, or was already answered, has no "looks
+              right" left to say. */}
+          {p.queueOpen && <ResolveCandidates proof={p.proof} candidates={p.candidatesForView} />}
+        </div>
+      )}
 
       <div className="mt-[28px] flex flex-col items-start gap-[12px]">
         <Disclosure label="the full record">
@@ -269,6 +288,14 @@ function standing(p: Provenance): string {
         : `Nothing was written to your data for this cell. The gate recorded ${p.why?.code ?? 'no reason'}.`;
     case 'stale':
       return 'The page had not changed since the last run, so this run republished what the last one said.';
+    case 'degraded':
+      // `fetch_blocked` (src/runner.ts) is the one degraded reason with real
+      // wording today -- Your data is untouched: nothing was healed and
+      // nothing entered the decisions queue, because there was no page
+      // content to gate on.
+      return p.why?.plain
+        ? `The site blocked me. Your data is untouched — ${p.why.plain}, so nothing was healed and nothing entered your decisions queue.`
+        : 'The run completed but this cell came back in a state the gate would not vouch for.';
     default:
       return 'The run completed but this cell came back in a state the gate would not vouch for.';
   }

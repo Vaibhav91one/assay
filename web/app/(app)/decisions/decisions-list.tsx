@@ -17,6 +17,14 @@ interface Receipt {
   text: string;
   /** The scraper to re-teach, on `neither` only. Null on the other three. */
   reteach: string | null;
+  /**
+   * Set only when `applied > 1` -- Figma's `decide-once` (414:3224): one
+   * answer settled every open item sharing this template. The toast is
+   * already the dark, persistent-until-acted-on surface that frame draws; the
+   * group key is the one additional fact worth naming, so a reader can tell
+   * this was a template-wide answer and not a coincidence of count.
+   */
+  groupKey: string | null;
 }
 
 /**
@@ -64,6 +72,7 @@ export function DecisionsList({
       // move that improves it. The re-teach link is that move. Only on
       // `neither`, because the other three answers ARE the fix.
       reteach: o.resolution === 'neither' ? d.target.split('__')[0] : null,
+      groupKey: o.applied > 1 ? o.groupKey : null,
     });
   }
 
@@ -100,7 +109,14 @@ export function DecisionsList({
 
       {receipt && (
         <Toast
-          message={receipt.text}
+          message={
+            <>
+              {receipt.text}
+              {receipt.groupKey && (
+                <span className="mono-value-12_5 ml-[8px] text-[#8a8d93]">{receipt.groupKey}</span>
+              )}
+            </>
+          }
           action={
             <span className="flex items-center gap-[4px]">
               {receipt.reteach && (

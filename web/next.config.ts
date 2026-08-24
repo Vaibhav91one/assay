@@ -111,6 +111,19 @@ const config: NextConfig = {
   // sibling, never a published build -- so Next has to be told to compile it.
   transpilePackages: ['assay'],
 
+  // `src/mcp/server.ts` (part of `assay`, transpiled above) imports
+  // `tsx/esm/api` at runtime to load `src/mcp/tools/*.ts` from real disk --
+  // see that file's own comment on why a plain dynamic `import()` cannot do
+  // this from Next's production server (no TS loader registered there, unlike
+  // `bin/assay.ts mcp`'s `tsx` shebang). `tsx` itself must NOT be bundled:
+  // its loader uses esbuild's native binary and a `sync ^.*\/.*$` dynamic
+  // require to find it, neither of which webpack can follow statically, and
+  // both fail the build if webpack tries. Marking it external tells Next to
+  // leave it as a real `require()`/`import()` resolved by Node at runtime --
+  // which is fine, because `tsx` is already in the image (see the
+  // Dockerfile's note on `drizzle-kit migrate`).
+  serverExternalPackages: ['tsx'],
+
   // Why this app builds with webpack rather than Turbopack.
   //
   // The engine is `module: NodeNext`, so every relative import inside it is

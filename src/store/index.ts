@@ -556,3 +556,19 @@ export async function setBaseline({
 export async function markNotified(episodeId: number, notified: string | null): Promise<void> {
   await getDb().execute(sql`UPDATE episodes SET notified = ${notified} WHERE episode_id = ${episodeId}`);
 }
+
+/**
+ * Find the episode `notifyBreak()` encoded a Resend email id onto, for the
+ * bounce webhook (`src/connectors/resend-bounce.ts`) to react to. `notified`
+ * is a free-text column with several shapes (`email`, `webhook (...)`,
+ * `undelivered: ...`); `notifyBreak()` writes exactly `email:<id>` and
+ * nothing else ever will, so an exact match is the whole query -- no new
+ * column, no index, no `LIKE` scan.
+ */
+export async function episodeByNotifiedEmailId(emailId: string): Promise<number | null> {
+  const [row] = await getDb().select({ episodeId: schema.episodes.episodeId })
+    .from(schema.episodes)
+    .where(eq(schema.episodes.notified, `email:${emailId}`))
+    .limit(1);
+  return row?.episodeId ?? null;
+}

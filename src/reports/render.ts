@@ -41,7 +41,13 @@ function delivery(notified: string | null): string {
   if (notified.startsWith('undelivered')) {
     return `**The alert reached nobody.** ${notified.replace(/^undelivered:\s*/, 'The send failed: ')}.`;
   }
-  return `The alert went out via ${notified}.`;
+  // `email:<resend id>` since the bounce webhook needed something to look the
+  // send back up by -- the id is for that lookup, not for a reader of this
+  // sentence, so it is dropped here rather than printed as "via email:re_abc".
+  // Scoped to exactly that prefix: "webhook (email failed: ...)" also
+  // contains a colon and must not be truncated at it.
+  const via = notified.startsWith('email:') ? 'email' : notified;
+  return `The alert went out via ${via}.`;
 }
 
 const at = (d: Date | null | undefined): string => when(d) ?? 'a time that was not recorded';

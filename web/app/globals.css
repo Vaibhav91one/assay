@@ -149,3 +149,15 @@ body {
     outline-offset: 2px;
   }
 }
+
+/* `window.print()` on `/incidents/[episode]` ("Download PDF" -- there is no
+ * PDF library dependency, the browser's own print-to-PDF is the whole
+ * mechanism). The rail is the app's own chrome, not part of the document
+ * being handed to someone else, so it is the one thing every printed screen
+ * in this app should drop -- scoped by the shadcn sidebar's own `data-slot`
+ * rather than a class this codebase would have to remember to add per page. */
+@media print {
+  [data-slot='sidebar-wrapper'] > [data-slot='sidebar'] {
+    display: none;
+  }
+}

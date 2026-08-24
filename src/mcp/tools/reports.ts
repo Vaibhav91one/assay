@@ -70,12 +70,23 @@ export const TOOLS: Record<string, McpTool> = {
       + 'unchanged count. The header is "N changes, M withheld" and never a bare '
       + 'change count. Composes only -- it does not send.',
     schema: {
-      since: z.coerce.date().describe('Start of the window, inclusive.'),
-      until: z.coerce.date().describe('End of the window, exclusive.'),
+      // ISO strings on the wire, not `z.coerce.date()`: MCP tool arguments are
+      // JSON, which has no Date type, and a Zod schema that resolves to `Date`
+      // has no JSON Schema representation -- `tools/list` fails FOR EVERY TOOL
+      // on this server, not just this one, because the SDK converts the whole
+      // registry in one pass. Found by web/app/api/mcp's own test
+      // (test/mcp-http.test.ts), which is the first thing in this repo to
+      // exercise `tools/list` through the real SDK rather than `loadTools()`
+      // directly -- this bug pre-dates the HTTP transport and would have hit
+      // stdio too, for any client that lists tools before calling one.
+      since: z.iso.datetime().describe('Start of the window, inclusive. ISO 8601.'),
+      until: z.iso.datetime().describe('End of the window, exclusive. ISO 8601.'),
     },
-    async run({ since, until }: { since: Date; until: Date }) {
-      if (!(since < until)) return { error: 'bad_window', detail: 'since must be before until.' };
-      return composeDigest({ since, until });
+    async run({ since, until }: { since: string; until: string }) {
+      const sinceDate = new Date(since);
+      const untilDate = new Date(until);
+      if (!(sinceDate < untilDate)) return { error: 'bad_window', detail: 'since must be before until.' };
+      return composeDigest({ since: sinceDate, until: untilDate });
     },
   },
 };

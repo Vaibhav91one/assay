@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import Link from 'next/link';
 import { SettingRow } from './switch';
 import { setDigest } from './actions';
 import type { AlertsView } from '@/lib/alerts';
@@ -97,6 +98,9 @@ export function NotificationsPanel({ view }: { view: AlertsView }) {
           {t('settings.notifications.digest.notSaved', { detail: failure })}
         </p>
       )}
+      <Link href="/digest" className="meta-12_5 mb-[10px] block w-fit text-[var(--semantic-link)] hover:underline">
+        Preview this week's digest ›
+      </Link>
 
       {/* Not switches. Both of these are decided per run from the process
           environment and read nothing from the store, so neither is a bit

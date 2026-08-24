@@ -11,7 +11,7 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import { parseDocument } from 'yaml';
-import { eq, and, isNull } from 'drizzle-orm';
+import { eq, and, isNull, desc } from 'drizzle-orm';
 import { getDb, apiKeys, sql } from '../store/index.js';
 
 const PREFIX = 'ak_';
@@ -35,6 +35,34 @@ export async function createKey(name: string, scope?: KeyScope | null) {
     scope: parsedScope,
   }).returning({ keyId: apiKeys.keyId, keyPrefix: apiKeys.keyPrefix });
   return { ...row, key };            // `key` is the only time the secret exists
+}
+
+/** A key's own row, everything but the two fields that could ever act as the credential itself. */
+export interface KeyPresence {
+  keyId: number;
+  name: string;
+  keyPrefix: string;
+  scope: KeyScope | null;
+  createdAt: Date;
+  lastUsedAt: Date | null;
+}
+
+/**
+ * Every live key, newest first -- for a "manage your API keys" screen that has
+ * no business ever seeing a hash or a plaintext. `keyPrefix` (the first 11
+ * chars, `ak_` included) is the only thing this returns that looks like the
+ * credential, and it is deliberately not enough of it to reconstruct one.
+ */
+export async function listKeys(): Promise<KeyPresence[]> {
+  const rows = await getDb()
+    .select({
+      keyId: apiKeys.keyId, name: apiKeys.name, keyPrefix: apiKeys.keyPrefix,
+      scope: apiKeys.scope, createdAt: apiKeys.createdAt, lastUsedAt: apiKeys.lastUsedAt,
+    })
+    .from(apiKeys)
+    .where(isNull(apiKeys.revokedAt))
+    .orderBy(desc(apiKeys.createdAt));
+  return rows as KeyPresence[];
 }
 
 /**

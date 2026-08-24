@@ -12,7 +12,7 @@ import { assertOperator } from '@/lib/auth';
  * -- silently settling 40 cells is indistinguishable from settling one.
  */
 export type Outcome =
-  | { ok: true; kind: 'resolved'; applied: number; resolution: Resolution }
+  | { ok: true; kind: 'resolved'; applied: number; resolution: Resolution; groupKey: string | null }
   | { ok: true; kind: 'undone'; applied: number }
   | { ok: false; detail: string };
 
@@ -25,7 +25,7 @@ export async function resolveCell(proof: string, resolution: Resolution): Promis
   if (!r.ok) return { ok: false, detail: r.detail };
 
   revalidatePath('/decisions');
-  return { ok: true, kind: 'resolved', applied: r.applied, resolution: r.resolution };
+  return { ok: true, kind: 'resolved', applied: r.applied, resolution: r.resolution, groupKey: r.group_key };
 }
 
 export async function undoCell(proof: string): Promise<Outcome> {

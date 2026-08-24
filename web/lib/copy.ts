@@ -73,6 +73,9 @@ const COPY = {
   'nav.selfHosted': 'Self-hosted',
   'nav.signedIn': 'Signed in',
   'nav.noAccounts': 'No accounts on this instance',
+  'nav.userMenu.trigger': 'Account menu',
+  'nav.userMenu.github': 'GitHub',
+  'nav.userMenu.signOut': 'Sign out',
 
   'topbar.loading': 'loading…',
 
@@ -92,6 +95,12 @@ const COPY = {
   'title.signIn': 'Sign in · Assay',
   'title.configureKey': 'Configure your key · Assay',
   'title.checkEmail': 'Check your email · Assay',
+  'title.blast': 'Blast radius · Assay',
+  'title.pageMap': 'Page map · Assay',
+  'title.incident': 'Incident record · Assay',
+  'title.digest': 'Digest · Assay',
+  'title.connect': 'Connect · Assay',
+  'title.alert': 'Alert · Assay',
 
   // -- decisions -------------------------------------------------------------
   'decisions.heading': 'Decisions',

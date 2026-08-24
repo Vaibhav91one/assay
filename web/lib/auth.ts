@@ -116,3 +116,29 @@ export async function assertOperator(): Promise<void> {
   if (await getCurrentUser()) return;
   throw new Unauthorized('Sign in to use this instance.');
 }
+
+/**
+ * Revoke the caller's Clerk session, hosted only.
+ *
+ * `web/app/sign-out/route.ts` is the only caller, and stays free of the string
+ * `@clerk/nextjs` for the same reason every other file downstream does -- see
+ * this file's own header and `test/auth.test.ts`'s "is the only module that
+ * names Clerk". Revoking is enough: `proxy.ts`'s `clerkMiddleware(...).auth
+ * .protect()` re-validates the session on the very next request, so a revoked
+ * one fails that check and the existing redirect-to-sign-in fires unchanged.
+ * No second protect() path is added here to keep in sync with that one.
+ *
+ * A no-op on self-host: there is no session there to revoke.
+ */
+export async function signOutCurrentSession(): Promise<void> {
+  if (authMode() !== 'clerk') return;
+
+  const pkg = '@clerk/nextjs/server';
+  // TODO(types): optional package, no type import available.
+  const { auth, clerkClient } = await import(/* webpackIgnore: true */ pkg);
+
+  const { sessionId } = await auth();
+  if (!sessionId) return;
+  const client = await clerkClient();
+  await client.sessions.revokeSession(sessionId);
+}

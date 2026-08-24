@@ -1,0 +1,63 @@
+---
+title: What your code receives
+description: The `_assay` envelope every published row carries, and the field states behind it.
+---
+
+Every row Assay publishes carries a `_assay` block alongside the fields
+themselves. This is that format (`src/envelope.ts`), carried over rather than
+paraphrased, because the two hard rules below are the whole point of the
+product and a summary is the wrong place to soften either of them.
+
+## The two rules
+
+1. **A held field is null and labelled — never omitted.** An absent key is
+   indistinguishable from a schema change downstream, so a field Assay isn't
+   sure about still appears, with a `status` that says so.
+2. **A held field is never filled.** No default, no last-good value, no
+   coercion. There is no setting that changes this — it is an absence, not a
+   configuration.
+
+## The five states
+
+```
+type FieldStatus = 'live' | 'healed' | 'quarantined' | 'stale' | 'degraded'
+```
+
+| status | meaning |
+|---|---|
+| `live` | reads clean against the baseline, published as-is |
+| `healed` | the page moved; the gate found a clear enough replacement and published it |
+| `quarantined` | nothing on the page cleared the gate — the value is `null`, not a guess |
+| `stale` | reserved: needs the per-field policy engine (contracts) this build doesn't have yet |
+| `degraded` | reserved: same prerequisite as `stale` |
+
+**`stale` and `degraded` are defined but nothing in this codebase emits them
+yet.** They're part of the closed vocabulary because the format shouldn't
+change shape when the policy engine lands; until it does, every row you'll
+actually see carries `live`, `healed`, or `quarantined`.
+
+## Shape
+
+```json
+{
+  "hazard": null,
+  "_assay": {
+    "run": 48,
+    "proof": "pr_9f2a...",
+    "fields": {
+      "hazard": {
+        "status": "quarantined",
+        "reason": "thin_margin",
+        "held_since_run": 42
+      }
+    }
+  }
+}
+```
+
+`reason` is a closed code, not free text — see the plain-English lookup in
+`heldBecause()` if you're rendering it for a person rather than a program.
+`held_since_run` is present only while a field is held, and marks the run
+where it first stopped being `live`.
+
+Full API surface: [API reference](/docs/api-reference).

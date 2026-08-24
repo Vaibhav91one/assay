@@ -162,13 +162,13 @@ describe('/api/v1 refuses an unauthenticated request', () => {
       });
       const res: Response = await mod[verb](request, ctx);
 
-      // The Bright Data delivery endpoint is the one route in this tree that
-      // does NOT take a consumer key: it is a webhook, authenticated with the
-      // per-connector bearer stored on the connector (src/connectors/brightdata.ts
-      // `authorise`). With no connector configured it fails CLOSED with 503,
-      // which is the property that matters -- an unconfigured receiver must
-      // never accept an anonymous delivery.
-      const expected = file.includes('delivery') ? [401, 503] : [401];
+      // The Bright Data delivery endpoint and the Resend bounce webhook are
+      // the two routes in this tree that do NOT take a consumer key: both are
+      // webhooks authenticated a different way (a per-connector bearer;
+      // a Svix HMAC signature) and both fail CLOSED with 503 when
+      // unconfigured, which is the property that matters -- an unconfigured
+      // receiver must never accept an anonymous delivery.
+      const expected = file.includes('delivery') || file.includes('resend/bounce') ? [401, 503] : [401];
       expect(
         expected,
         `${verb} ${file.slice(ROOT.length)} answered ${res.status} without a key`,

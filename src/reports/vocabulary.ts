@@ -22,6 +22,11 @@ export const HELD_BECAUSE: Record<string, string> = {
   thin_margin: 'two candidates on the page were too close to call',
   below_tau: 'nothing on the page looked enough like this field to be a candidate',
   no_candidates: 'the element is gone and nothing took its place',
+  // src/runner.ts's blocked branch: not a gate refusal, a fetch that never
+  // got page content to gate on. Shares this table because `field_runs.reason`
+  // is the one column both write to, and `heldBecause()` is the one lookup
+  // every screen already reads it through.
+  fetch_blocked: 'the site blocked the request before any page content came back',
 };
 
 // src/detect.ts: what the detector attributed the break to.
@@ -31,6 +36,10 @@ const CAUSE: Record<string, string> = {
   semantic_drift: 'the anchors around it stopped agreeing',
   wrong_value: 'the value stopped looking like this field',
   unknown: 'the page moved in a way the detector could not attribute',
+  // The fetch itself failed to reach the page (Cloudflare or similar), so
+  // there was nothing to detect drift IN -- a different fact from every code
+  // above, all of which describe a page that was successfully read.
+  blocked: 'the site refused the request before any content came back',
 };
 
 // queue_items.resolution: what the human chose. `model_nominated:<n>` is

@@ -44,7 +44,13 @@ const collect = (dir: string) => {
 collect(V1);
 
 const rel = (file: string) => file.slice(V1.length).replace(/\/route\.ts$/, '') || '/';
-const consumerRoutes = routes.filter((file) => !rel(file).includes('/delivery/'));
+// `/delivery/` (Bright Data) and `/connectors/resend/bounce` (Resend) both
+// authenticate a request from another SERVICE, not from an Assay API key --
+// a per-target bearer Assay itself minted, and a Svix HMAC signature,
+// respectively. Neither speaks `requireKey()`'s scheme, so neither belongs in
+// a matrix built to walk that scheme's four-way grid.
+const consumerRoutes = routes.filter((file) =>
+  !rel(file).includes('/delivery/') && !rel(file).includes('/connectors/resend/bounce'));
 
 async function wipe() {
   const d = getDb();

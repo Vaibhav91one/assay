@@ -11,6 +11,7 @@
 import { gzipSync, gunzipSync } from 'node:zlib';
 import { mkdir, writeFile, readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
+import { load } from 'cheerio';
 import { digest } from '../runner.js';
 
 export const CAPTURE_DIR = process.env.ASSAY_CAPTURES || 'captures';
@@ -52,3 +53,74 @@ export async function getCapture(sha: string, dir = CAPTURE_DIR): Promise<string
 export async function hasCapture(sha: string, dir = CAPTURE_DIR): Promise<boolean> {
   try { await stat(pathFor(sha, dir)); return true; } catch { return false; }
 }
+
+/**
+ * Box one or more candidate elements on a stored capture, server-side.
+ *
+ * A candidate's selector is `tag.firstClass` (see `src/decisions/index.ts`'s
+ * header on why that is NOT positionally unique) -- `$(sel)` can match several
+ * elements, so this boxes every match rather than guessing which one the gate
+ * meant. Client-side box-drawing would need a postMessage protocol between the
+ * page (inert, sandboxed, no scripts) and this app; annotating the markup
+ * before it ever reaches the iframe needs none, and keeps `allow-scripts` off
+ * the sandbox for good -- this is untrusted third-party HTML.
+ *
+ * `<base>` is injected so the capture's own relative image/CSS references at
+ * least attempt to resolve against the page's original URL rather than
+ * against this app's origin; it does nothing for a capture with no known
+ * origin, which is fine -- the point of this view is the structure, not a
+ * pixel-perfect re-render.
+ */
+export function annotateCapture(
+  html: string,
+  candidates: { selector: string; label: string }[],
+  baseUrl?: string | null,
+): string {
+  const $ = load(html);
+
+  // Defense in depth, not the only guard: the iframe this serves into is
+  // sandboxed WITHOUT `allow-scripts`, so none of this would execute even
+  // left in. It is stripped anyway because "the sandbox attribute is right"
+  // is a claim about the caller, and this function has no way to enforce that
+  // its caller got the attribute right -- a served response with no script in
+  // it is safe regardless.
+  $('script').remove();
+  $('*').each((_, el) => {
+    const attribs = (el as { attribs?: Record<string, string> }).attribs;
+    if (!attribs) return;
+    for (const name of Object.keys(attribs)) {
+      if (name.toLowerCase().startsWith('on')) $(el).removeAttr(name);
+    }
+    if (attribs.href?.trim().toLowerCase().startsWith('javascript:')) $(el).removeAttr('href');
+  });
+
+  if (baseUrl && !$('base').length) $('head').prepend(`<base href="${escapeAttr(baseUrl)}">`);
+
+  const COLORS = ['#f59e0b', '#3b82f6', '#22c55e'];
+  candidates.forEach((c, i) => {
+    let matched = 0;
+    $(c.selector).each((_, el) => {
+      matched += 1;
+      const color = COLORS[i % COLORS.length];
+      const existing = $(el).attr('style') || '';
+      $(el).attr(
+        'style',
+        `${existing}; outline: 3px solid ${color} !important; outline-offset: 2px !important; position: relative !important;`,
+      );
+      $(el).before(
+        `<div style="all: initial; position: relative; display: block; font: 11px/1.4 -apple-system, sans-serif; ` +
+        `background: ${color}; color: #fff; padding: 1px 6px; width: fit-content; border-radius: 3px 3px 0 0;">` +
+        `${escapeHtml(c.label)}</div>`,
+      );
+    });
+    // Zero matches is not an error here -- a stale selector on an old capture
+    // is exactly the case this view exists to show a human, not hide.
+    void matched;
+  });
+
+  return $.html();
+}
+
+const escapeHtml = (s: string) =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const escapeAttr = (s: string) => escapeHtml(s).replace(/"/g, '&quot;');
