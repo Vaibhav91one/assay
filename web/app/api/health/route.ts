@@ -3,7 +3,7 @@
 //
 // No UI here on purpose -- screens wait for the design.
 
-import { healGated } from 'assay/engine/heal';
+import { decide } from 'assay/engine/heal';
 import { STATUSES } from 'assay/engine/envelope';
 import { getDb, heldCells } from 'assay/store';
 
@@ -14,7 +14,11 @@ export async function GET() {
     engine: { heal: boolean; statuses: string[] };
     store: { reachable: boolean; heldCells: number | null; error?: string };
   } = {
-    engine: { heal: typeof healGated === 'function', statuses: STATUSES },
+    // `decide`, not `healGated`: the runtime candidate-healer is gone
+    // (`src/runner.ts`'s header), but `decide`'s pure tau/delta/margin
+    // arithmetic still ships -- `tools/sweep.ts` and the benchmark tools use
+    // it independently -- so it still proves the engine resolves.
+    engine: { heal: typeof decide === 'function', statuses: STATUSES },
     store: { reachable: false, heldCells: null },
   };
   try {

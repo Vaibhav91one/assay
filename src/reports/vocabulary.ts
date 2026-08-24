@@ -27,6 +27,13 @@ export const HELD_BECAUSE: Record<string, string> = {
   // is the one column both write to, and `heldBecause()` is the one lookup
   // every screen already reads it through.
   fetch_blocked: 'the site blocked the request before any page content came back',
+  // src/runner.ts's broken branch, now that `healGated` is gone: every break
+  // quarantines, with no same-run candidate re-match attempted. `causeOf()`
+  // still says WHY the detector called it broken (semantic drift, a missing
+  // selector, ...) from `event.attributed_cause` -- this code says what
+  // happens next, which is a Bright Data collector repair a human reviews,
+  // not an Assay auto-heal.
+  no_local_heal: 'recovery is a Bright Data collector fix reviewed by a human, not a same-run repair',
 };
 
 // src/detect.ts: what the detector attributed the break to.

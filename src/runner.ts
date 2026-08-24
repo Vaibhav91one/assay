@@ -15,7 +15,7 @@
 import { createHash } from 'node:crypto';
 import type { CheerioAPI } from 'cheerio';
 import { fingerprint, skeletonHash, type Fingerprint } from './fingerprint.js';
-import { healGated, type HealGateResult } from './heal.js';
+import type { HealGateResult } from './heal.js';
 import { detect, type Expected, type HistoryPoint } from './detect.js';
 import { publishRow, type FieldVerdict } from './envelope.js';
 import { thresholdsFor, type Contract } from './contracts/index.js';
@@ -270,57 +270,39 @@ export function evaluate({
     };
   }
 
-  const g = healGated($, baseline.target, { tau, delta, limit: 5 });
-  const candidates = (g.ranked || []).slice(0, 3).map((r) => ({
-    selector: selectorFor(r.el),
-    score: Number(r.score.toFixed(4)),
-    value: clean(r.fp.text).slice(0, 90),
-  }));
-  // A heal the GATE allowed and a POLICY withheld. Two different facts, and the
-  // proof record has to say which, or an operator reading `thin_margin` on a
-  // field they set to `auto_approve: never` is being told the wrong reason.
-  //
-  // The brake is checked before the floor: an operator saying "stop healing this
-  // field" outranks an arithmetic threshold, and reporting the threshold when a
-  // brake is what stopped it would send them to tune the wrong number.
-  const withheld: string | null =
-    g.decision !== 'heal'
-      ? null
-      : healBlock
-        ? healBlock
-        : policy && g.score <= policy.autoApproveAbove
-          ? `auto_approve_floor:${policy.autoApproveAbove}`
-          : null;
-
-  const healed = g.decision === 'heal' && withheld === null;
-  const reason = withheld ?? g.reason;
+  // Every break quarantines. Assay's own runtime candidate-healer (`healGated`,
+  // `src/heal.ts`) used to try a same-run re-match here; it is gone, on
+  // purpose -- see that file's header. Recovery is now exclusively Bright
+  // Data's collector-template repair (`tools/bd-heal.ts`), a separate,
+  // human-approved, out-of-band flow this function has no way to wait on, so
+  // there is nothing left for this branch to decide. `policy` and `healBlock`
+  // governed WHETHER a heal this branch could have made was allowed to
+  // publish; with no heal to allow or withhold, neither has anything to act
+  // on here anymore.
+  const reason = 'no_local_heal';
 
   return {
     sample,
     observed: true,
-    gate: g,
+    gate: null,
     event: {
       ...base,
-      event: healed ? 'heal' : 'abstain',
+      event: 'abstain',
       diagnosis: diag.diagnosis,
       attributed_cause: diag.cause,
       signals: diag.signals,
-      candidates,
-      score: g.score != null ? Number(g.score.toFixed(4)) : null,
-      runner_up: g.runnerUp != null ? Number(g.runnerUp.toFixed(4)) : null,
-      margin: g.margin != null ? Number(g.margin.toFixed(4)) : null,
-      decision: healed ? 'auto_approved' : 'abstain',
+      candidates: [],
+      score: null,
+      runner_up: null,
+      margin: null,
+      decision: 'abstain',
       reason,
-      healed_to: healed
-        ? { selector: selectorFor(g.element), value: clean(g.fingerprint.text).slice(0, 120) }
-        : null,
-      approved_by: 'assay',
+      healed_to: null,
+      approved_by: null,
     },
     // A held cell is quarantined, never filled. envelope.js enforces the null.
-    status: healed
-      ? { status: 'healed', reason }
-      : { status: 'quarantined', reason, held_since_run: meta.run },
-    publishedValue: healed ? clean(g.fingerprint.text) : null,
+    status: { status: 'quarantined', reason, held_since_run: meta.run },
+    publishedValue: null,
   };
 }
 

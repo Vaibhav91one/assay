@@ -138,33 +138,21 @@ suite('the live path holds a page against the page it last worked on', () => {
     await ingestPage({ target, html: page, via: 'test' });
 
     // rename_class rewrites the class the baseline selector was built from, so
-    // the stored selector stops resolving. The engine has always handled this
-    // -- `results/bench.json` heals every one of these -- but the live path
-    // could not reach it, because the baseline was rebuilt from this very page
-    // and its selector therefore always matched.
+    // the stored selector stops resolving. The live path used to report this
+    // as `live` regardless, because the baseline was rebuilt from this very
+    // page and its selector therefore always matched -- that is the bug this
+    // suite exists to keep dead.
+    //
+    // It always quarantines now: `healGated`, the runtime candidate re-match
+    // that used to try a same-run heal here, is gone (`src/runner.ts`'s
+    // header) -- recovery is Bright Data's collector repair, reviewed by a
+    // human, not something this call can do in the time it takes to answer
+    // one fetch.
     const r = await ingestPage({ target, html: mutated(page, 'rename_class'), via: 'test' });
 
     expect(r.skipped).toBe(false);
     expect(r.result!.status.status).not.toBe('live');
-    expect(['healed', 'quarantined']).toContain(r.result!.status.status);
-    // On this mutation the gate is confident, so it is the heal branch.
-    expect(r.result!.status.status).toBe('healed');
-    expect(r.result!.event.healed_to.selector).toMatch(/redesign-/);
-  });
-
-  it('advances the baseline on a published heal, and not before', async () => {
-    if (!dbUp) return;
-    await ingestPage({ target, html: page, via: 'test' });
-    const first = await storedBaseline();
-
-    const r = await ingestPage({ target, html: mutated(page, 'rename_class'), via: 'test' });
-    expect(r.result!.status.status).toBe('healed');
-
-    // A verified heal is the one thing that may move it: the page it healed on
-    // is what "working" looks like now.
-    const after = await storedBaseline();
-    expect(after!.baseline_golden_sha).not.toBe(first!.baseline_golden_sha);
-    expect(after!.baseline_selector).toBe(r.result!.event.healed_to.selector);
+    expect(r.result!.status.status).toBe('quarantined');
   });
 
   it('leaves the baseline where it was when the gate refused', async () => {
@@ -172,10 +160,11 @@ suite('the live path holds a page against the page it last worked on', () => {
     await ingestPage({ target, html: page, via: 'test' });
     const first = await storedBaseline();
 
-    // The class rename breaks the stored selector; the near-identical twin then
-    // gives the gate two candidates it cannot separate. An abstention is an
-    // unverified candidate, and adopting one is how a healer poisons its own
-    // baseline (src/runner.ts:72).
+    // The class rename breaks the stored selector; every break quarantines
+    // now (`healGated` is gone -- see the test above), so this mutation
+    // combination is no sharper a case than a plain break. Kept anyway: the
+    // baseline must never move on an unverified run, however it got here, and
+    // adopting one is how a healer poisons its own baseline (src/runner.ts:72).
     const r = await ingestPage({
       target, html: mutated(page, 'rename_class', 'duplicate_similar'), via: 'test',
     });
