@@ -23,7 +23,8 @@ const CLEAN = 'test_blast';        // a clean series with a skipped run in it
 const HOLED = 'test_blast_hole';   // a run that evaluated and recorded no cell
 const GAPPED = 'test_blast_gap';   // a run id that belongs to no run at all
 const CORR = 'test_blast_corr';    // ids from the real sequence, so a correction lands last
-const ALL = [CLEAN, HOLED, GAPPED, CORR];
+const BD = 'test_blast_bd';        // a brightdata:// target, synthetic-document caveat
+const ALL = [CLEAN, HOLED, GAPPED, CORR, BD];
 
 // A value of the kind that actually comes off a page: a comma, a quoted phrase,
 // a line break the site put there, and a currency symbol outside ASCII.
@@ -33,10 +34,10 @@ let dbUp = false;
 
 type Cell = { run: number; status: string; value: string | null; runStatus?: string };
 
-async function seed(targetId: string, cells: Cell[]) {
+async function seed(targetId: string, cells: Cell[], url?: string) {
   const d = getDb();
   await d.insert(targets).values({
-    targetId, url: `corpus://${targetId}`, cadence: '6h', contract: { field: 'price' },
+    targetId, url: url ?? `corpus://${targetId}`, cadence: '6h', contract: { field: 'price' },
   }).onConflictDoNothing();
   for (const c of cells) {
     await d.insert(runs).values({
@@ -87,6 +88,10 @@ beforeAll(async () => {
     { run: 920002, status: 'healed', value: '99.00' },
     { run: 920004, status: 'healed', value: '99.00' },
   ]);
+  await seed(BD, [
+    { run: 930001, status: 'live', value: '10.00' },
+    { run: 930002, status: 'healed', value: '99.00' },
+  ], 'brightdata://gd_test1234/https%3A%2F%2Fexample.com%2Fprofile');
 });
 
 async function wipe() {
@@ -238,6 +243,18 @@ describe('the backward walk', () => {
     });
     expect(w.detected_run).toBe(900004);
     expect(w.caveats[0]).toContain('900005');
+  });
+
+  it('warns that a brightdata:// target has no anchor-disagreement signal to corroborate it', async () => {
+    if (!dbUp) return;
+    const w = await blastRadius({ target: BD, field: 'price' });
+    expect(w.caveats.some((c) => c.includes('synthetic document'))).toBe(true);
+  });
+
+  it('stays silent about the synthetic-document caveat for a normally-fetched target', async () => {
+    if (!dbUp) return;
+    const w = await blastRadius({ target: CLEAN, field: 'price' });
+    expect(w.caveats.some((c) => c.includes('synthetic document'))).toBe(false);
   });
 });
 

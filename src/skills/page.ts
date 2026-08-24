@@ -17,16 +17,24 @@
 // create a target and stops working when the worker runs it. So both now call
 // here.
 //
-// THE DEFAULT IS UNCHANGED, DELIBERATELY. With nothing enabled -- which is every
-// existing install -- this does exactly what the two copies did: read the newest
-// committed capture for `corpus://`, and otherwise one ordinary fetch with the
-// same user-agent. A connector is consulted only AFTER a direct request has
-// already failed. Firecrawl is the only fallback wired here -- Bright Data
-// reaches Assay the other way round, by POSTing a delivery to
-// `src/connectors/brightdata.ts`, and nothing in this file calls it. It means
-// enabling one cannot change what happens on a page that was working, cannot
-// route traffic somewhere the operator did not expect, and cannot cost money on
-// a page a plain request can read.
+// WITH NO `BRIGHTDATA_API_TOKEN` -- every install before this file's Bright
+// Data fetch landed, and any self-hoster who never sets one -- this does
+// exactly what it always did: read the newest committed capture for
+// `corpus://`, otherwise one ordinary fetch with the same user-agent, and
+// consult a connector only after that direct request has already failed.
+// Firecrawl is the only such fallback wired here.
+//
+// WITH ONE SET, Bright Data's Web Unlocker (`viaWebUnlocker`, real proxy and
+// anti-bot layer, verified against the same endpoint `tools/bench-live.ts`
+// already uses in production) is the FIRST thing tried, not a fallback --
+// `direct()` runs only if Bright Data's own request fails. This is a
+// deliberate reversal from the paragraph above: with a token configured, a
+// page a plain request could have read is fetched through Bright Data
+// anyway, on purpose, because a page that reads fine today is exactly the
+// page that starts blocking `direct()`'s bare IP tomorrow with no warning.
+// Separately, and not through this function at all: Bright Data also reaches
+// Assay the other way round, by POSTing a delivery to
+// `src/connectors/brightdata.ts` -- nothing in this file calls that.
 
 import { readFile, readdir } from 'node:fs/promises';
 import { lookup } from 'node:dns/promises';
@@ -266,6 +274,64 @@ async function direct(url: string): Promise<Fetched> {
 }
 
 /**
+ * `POST https://api.brightdata.com/request`, zone `cli_unlocker`, `format: raw`.
+ * Verified live and already in production use for `npm run bench:live`
+ * (`tools/bench-live.ts`) -- same endpoint, same zone, same request shape.
+ *
+ * THIS IS THE PRIMARY FETCH NOW, NOT A FALLBACK. `direct()` has no proxy and
+ * no anti-bot layer; Bright Data's Web Unlocker has both, and Bright Data
+ * reaches the target instead of this process, so a page that blocks Assay's
+ * own IP or throttles a bare `fetch()` is no longer this product's problem to
+ * solve. `direct()` stays wired in below as what runs when
+ * `BRIGHTDATA_API_TOKEN` is unset -- a self-hoster with no Bright Data account
+ * loses nothing they had before.
+ *
+ * NO `assertReachable` HERE, DELIBERATELY. That guard exists to stop THIS
+ * PROCESS from opening a socket to its own loopback/private/link-local
+ * ranges -- see its own comment. Bright Data's infrastructure makes this
+ * request, not this process; forwarding `http://169.254.169.254/` to them
+ * fails on THEIR network, the same as any other address that does not route
+ * from wherever Bright Data's fetch executes. Applying a check whose whole
+ * premise is "this server's own network" to a fetch this server's network is
+ * never involved in would be refusing addresses for a reason that does not
+ * apply to them.
+ */
+async function viaWebUnlocker(url: string, token: string): Promise<Fetched> {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Refusal(`${url} is not a URL Assay can fetch.`);
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Refusal(`Assay only fetches http and https URLs, and that one is ${parsed.protocol}//`);
+  }
+
+  // Same zone `tools/bench-live.ts` already uses in production. Not a variable:
+  // that file names it a verified account fact, not a per-install setting, and
+  // this repo has exactly one Bright Data account to configure it for.
+  const ZONE = 'cli_unlocker';
+  const res = await fetch('https://api.brightdata.com/request', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ zone: ZONE, url, format: 'raw' }),
+    signal: AbortSignal.timeout(TIMEOUT_MS * 4),
+  });
+  const body = await res.text();
+  // Cheap enough to be certain, same guard as `tools/bd-heal.ts` and
+  // `tools/bench-live.ts`: this text is about to be treated as a page capture
+  // -- stored, diffed, possibly shown back -- and "verbatim" plus "secret" is
+  // how a credential ends up somewhere it should never have reached.
+  if (body.includes(token)) throw new Error('refusing to use a response that echoed the Bright Data token');
+  if (!res.ok) throw new Error(`bright data ${res.status}: ${body.slice(0, 200)}`);
+  if (body.length > MAX_BYTES) {
+    throw new Error(`${url} came back as ${body.length} bytes; Assay reads at most ${MAX_BYTES}.`);
+  }
+  if (!body.trim()) throw new Error(`bright data returned an empty body for ${url}`);
+  return { html: body, via: 'web-unlocker' };
+}
+
+/**
  * One page through Firecrawl.
  *
  * `formats: ['rawHtml']` because Assay resolves fields against the DOM the site
@@ -361,6 +427,22 @@ async function fromBrightData(url: string): Promise<Fetched> {
 export async function fetchHtml(url: string, enabledIds?: readonly string[]): Promise<Fetched> {
   if (url.startsWith('corpus://')) return fromCorpus(url);
   if (url.startsWith(BRIGHTDATA)) return fromBrightData(url);
+
+  const token = process.env.BRIGHTDATA_API_TOKEN;
+  if (token) {
+    try {
+      return await viaWebUnlocker(url, token);
+    } catch (e) {
+      // A refused address (bad protocol, unparseable url) is the end of the
+      // answer, same reasoning as the `Refusal` check below: falling through
+      // to `direct()` on a url Assay decided not to touch would make the
+      // decision meaningless. Anything else -- Bright Data down, blocked,
+      // rate-limited -- falls through to the same free path a no-token
+      // install has always used, so one bad Bright Data response never takes
+      // fetching down entirely.
+      if (e instanceof Refusal) throw e;
+    }
+  }
 
   try {
     return await direct(url);

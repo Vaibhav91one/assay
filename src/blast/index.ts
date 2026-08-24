@@ -96,9 +96,19 @@ export async function blastRadius(input: BlastQuery): Promise<BlastWindow> {
   const q = BlastQuery.parse(input);
   const d = getDb();
 
-  const [t] = await d.select({ id: targets.targetId }).from(targets)
+  const [t] = await d.select({ id: targets.targetId, url: targets.url }).from(targets)
     .where(eq(targets.targetId, q.target)).limit(1);
   if (!t) throw new BlastError('no_such_target', `No target "${q.target}".`);
+
+  // A `brightdata://<dataset_id>/<url>` target reads a Bright Data prebuilt
+  // scraper's flat JSON record, rendered to a synthetic one-leaf-per-field
+  // document (`recordToHtml`) -- not the site's real markup. On that document
+  // a CSS read and an XPath read of the same field have only one rendering to
+  // agree or disagree about, so `anchors_disagree` (what the caveat below
+  // warns is "not proof") cannot corroborate anything here; it is closer to a
+  // tautology. Said once, up front, rather than left for the reader to notice
+  // that the usual caveat is quieter than it should be for this target.
+  const syntheticDocument = t.url.startsWith('brightdata://');
 
   // LEFT JOIN, not inner: a skipped run has no cell, and dropping it here would
   // hide the gap the walk has to step over knowingly.
@@ -175,6 +185,11 @@ export async function blastRadius(input: BlastQuery): Promise<BlastWindow> {
           ...(unrecorded.length
             ? [`Run ${unrecorded[0]} evaluated but recorded no ${q.field} cell, so the walk `
                + 'could not see past it.']
+            : []),
+          ...(syntheticDocument
+            ? [`${q.target} is read from a Bright Data prebuilt scraper's record, not the site's `
+               + 'own markup. Anchor disagreement cannot fire on a synthetic document, so this '
+               + 'target has one fewer corroborating signal than a normally-fetched one.']
             : []),
         ],
       };
@@ -253,6 +268,14 @@ export async function blastRadius(input: BlastQuery): Promise<BlastWindow> {
     'Anchor disagreement is not proof. These runs published values that LOOK right; '
     + 'they may be the wrong value.',
   );
+  if (syntheticDocument) {
+    caveats.push(
+      `${q.target} is read from a Bright Data prebuilt scraper's record, not the site's own `
+      + 'markup. Anchor disagreement cannot fire on a synthetic document, so this target has '
+      + 'one fewer corroborating signal than a normally-fetched one -- treat these rows with '
+      + 'more scepticism, not less.',
+    );
+  }
 
   return {
     target: q.target,
