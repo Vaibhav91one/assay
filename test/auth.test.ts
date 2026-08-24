@@ -35,13 +35,33 @@ describe('auth seam', () => {
   });
 
   it('is the only module that names Clerk', () => {
-    // The seam's whole value is that one file knows about Clerk. This is a
-    // grep, not a mock, because the failure mode is a future route handler
-    // importing @clerk/nextjs directly -- which no runtime test would catch.
+    // The seam's whole value is that one file knows about Clerk for IDENTITY --
+    // who the request is from. This is a grep, not a mock, because the failure
+    // mode is a future route handler or Server Action importing @clerk/nextjs
+    // directly to check a session -- which no runtime test would catch.
     // Filesystem walk rather than `git grep`: a new file is untracked until
     // it is staged, and a guard that passes only after `git add` is no guard.
     // Prune node_modules and .next DURING the walk. A recursive readdir that
     // filters afterwards still descends into them, and never returns.
+    //
+    // Two deliberate exceptions, neither of which computes identity:
+    //
+    // `web/app/sign-in/clerk-panel.tsx` renders Clerk's own `<SignIn/>`
+    // widget, and does not answer "who is this request" for anything else in
+    // the app -- every other file still reaches identity only through
+    // `getCurrentUser()`/`requireOperator()`/`assertOperator()`. A UI widget
+    // importing a UI SDK is not the seam this test guards.
+    //
+    // `web/next.config.ts` aliases the package to `false` in its webpack
+    // config when it is not installed, so a self-host build still compiles
+    // even though `clerk-panel.tsx`'s import is a real, static one (a client
+    // component's import has to be, to reach the browser bundle at all --
+    // unlike `lib/auth.ts`'s dynamic server-side load). Naming the package to
+    // alias it away is build configuration, not a second place that decides
+    // who a request is from.
+    //
+    // `web/proxy.ts` is NOT a hit: it calls `loadClerkServer()` from
+    // `lib/auth.ts` rather than naming the package itself.
     const hits: string[] = [];
     const walk = (rel: string) => {
       for (const e of readdirSync(join(ROOT, rel), { withFileTypes: true })) {
@@ -54,7 +74,11 @@ describe('auth seam', () => {
     };
     walk('web'); walk('src');
 
-    expect(hits.sort()).toEqual(['web/lib/auth.ts', 'web/proxy.ts']);
+    expect(hits.sort()).toEqual([
+      'web/app/sign-in/clerk-panel.tsx',
+      'web/lib/auth.ts',
+      'web/next.config.ts',
+    ]);
   });
 
   it('keeps @clerk/nextjs out of the install a self-hoster pays for', () => {
@@ -105,10 +129,17 @@ describe('hosted gate', () => {
     expect(list?.split('|').sort()).toEqual(['__clerk', 'api\\/health', 'sign-in']);
   });
 
-  it('keeps /api/v1 out of the session matcher', () => {
-    // That surface is machine-to-machine and carries its own Bearer key. If it
-    // ever falls INSIDE the matcher, every consumer breaks at once.
-    expect(proxy).toMatch(/matcher: \['\/\(\(\?!_next\|api\/v1\|/);
+  it('keeps /api/v1, /api/mcp and /api/oauth out of the session matcher', () => {
+    // All three surfaces are machine-to-machine. /api/v1 and /api/mcp carry
+    // their own Bearer key; /api/oauth/register and /api/oauth/token are
+    // called by an MCP client's backend with no session cookie at all
+    // (Dynamic Client Registration and token exchange are unauthenticated by
+    // design). If any of them ever falls INSIDE the matcher, every consumer
+    // breaks at once -- this is exactly what happened to /api/mcp before that
+    // entry existed: clerkMiddleware() rewrote every request to /sign-in
+    // before requireKey() on the route ever ran, confirmed live against a
+    // running instance with a real third-party MCP client.
+    expect(proxy).toMatch(/matcher: \['\/\(\(\?!_next\|api\/v1\|api\/mcp\|api\/oauth\|/);
   });
 });
 

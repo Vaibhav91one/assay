@@ -7,6 +7,7 @@ import { actionVariants } from '@/components/button';
 import { Empty } from '@/components/empty';
 import type { Digest } from 'assay/engine/reports/digest';
 import { sendDigestNow } from './actions';
+import { stamp } from '@/lib/when';
 
 /**
  * Figma `digest` (436:203): CHANGED / WITHHELD / UNCHANGED, and a real "Send a
@@ -25,7 +26,7 @@ export function DigestView({ digest, since, until }: { digest: Digest; since: st
   return (
     <div className="flex flex-col gap-[24px] p-[24px]">
       <p className="meta-12_5 text-[var(--text-muted)]">
-        {new Date(since).toLocaleDateString()} – {new Date(until).toLocaleDateString()}
+        {stamp(since)} – {stamp(until)}
       </p>
 
       {digest.changes.length > 0 && (

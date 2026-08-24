@@ -7,12 +7,19 @@
 //                             email form could never succeed. Ask for keys.
 //
 // The left half is identical either way, which is why `chrome.tsx` exists.
+//
+// `[[...sign-in]]`, not a plain `page.tsx`: Clerk's `<SignIn/>` (`clerk-panel.tsx`)
+// navigates to sub-paths of its own -- `/sign-in/factor-one`,
+// `/sign-in/reset-password` -- for the multi-step flows this instance's
+// `first_factors` actually require (password, email-code verification).
+// The optional catch-all still matches bare `/sign-in` for the self-host
+// KeyPanel, so one route serves both.
 
 import type { Metadata } from 'next';
 import { authMode } from '@/lib/auth';
-import { CardHalf, Headline } from './chrome';
-import { KeyPanel } from './key-panel';
-import { SignInForm } from './sign-in-form';
+import { CardHalf, Headline } from '../chrome';
+import { KeyPanel } from '../key-panel';
+import { ClerkPanel } from '../clerk-panel';
 
 // Not static. This page now reads the environment twice -- `authMode()` picks
 // the panel, and the panel reports which keys are present -- and Next would
@@ -30,7 +37,7 @@ export default function SignInPage() {
   return (
     <main className="flex min-h-screen items-stretch bg-[var(--bg-page)]">
       <Headline />
-      <CardHalf>{authMode() === 'clerk' ? <SignInForm /> : <KeyPanel />}</CardHalf>
+      <CardHalf>{authMode() === 'clerk' ? <ClerkPanel /> : <KeyPanel />}</CardHalf>
     </main>
   );
 }

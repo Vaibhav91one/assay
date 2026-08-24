@@ -11,6 +11,7 @@
 // self-host default) it is a pass-through and Clerk is never imported.
 
 import { NextResponse, type NextRequest } from 'next/server';
+import { loadClerkServer } from './lib/auth';
 
 /**
  * What a signed-out request may still reach on the hosted instance.
@@ -29,8 +30,7 @@ const PUBLIC = /^\/(sign-in|api\/health|__clerk)(\/|$)/;
 export async function proxy(request: NextRequest) {
   if (process.env.AUTH_MODE !== 'clerk') return NextResponse.next();
 
-  const pkg = '@clerk/nextjs/server';
-  const { clerkMiddleware } = await import(/* webpackIgnore: true */ pkg);
+  const { clerkMiddleware } = await loadClerkServer();
 
   // The handler is the whole point, and calling `clerkMiddleware()` WITHOUT one
   // was this file's bug: bare, it attaches a session to the request and

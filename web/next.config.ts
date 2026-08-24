@@ -143,6 +143,26 @@ const config: NextConfig = {
       ...cfg.resolve.extensionAlias,
       '.js': ['.ts', '.tsx', '.js'],
     };
+
+    // `app/sign-in/clerk-panel.tsx` imports `@clerk/nextjs` statically --
+    // unlike `lib/auth.ts`'s server-side load, a CLIENT component's import
+    // has to be a real, webpack-resolvable specifier for the package to ever
+    // end up in the browser bundle at all. That is correct when the package
+    // is installed, and a hard build failure when it is not: measured live,
+    // `npm run build` with `@clerk/nextjs` absent (the actual self-host
+    // state, since it moved to `optionalDependencies`) died on "Module not
+    // found: Can't resolve '@clerk/nextjs'" -- a self-hoster who never sets
+    // AUTH_MODE=clerk could not build the image at all.
+    //
+    // Aliasing the specifier to `false` is webpack's own mechanism for "this
+    // module is optional, give every importer an empty object instead of
+    // failing to resolve it" -- `clerk-panel.tsx` checks for that and renders
+    // the same "not installed" guidance `lib/auth.ts` already throws for the
+    // server-side gate, rather than a blank card.
+    if (!existsSync(resolve(import.meta.dirname, 'node_modules', '@clerk', 'nextjs'))) {
+      cfg.resolve.alias = { ...cfg.resolve.alias, '@clerk/nextjs': false };
+    }
+
     return cfg;
   },
 };

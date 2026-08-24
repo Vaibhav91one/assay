@@ -12,6 +12,43 @@
 // @clerk/nextjs is deliberately NOT a dependency -- a self-hoster should not
 // download an auth SDK they will never load. Hosted installs it explicitly.
 
+import { createRequire } from 'node:module';
+
+const clerkRequire = createRequire(import.meta.url);
+
+/**
+ * `@clerk/nextjs@7.8.0`'s published ESM build has a broken relative import --
+ * `./routeMatcher` with no extension in `dist/esm/server/index.js` -- verified
+ * with a bare `node -e "import('@clerk/nextjs/server')"` outside this app
+ * entirely, so it is an upstream packaging bug, not anything in this seam. The
+ * CJS build has no such bug.
+ *
+ * `import()` first, `require()` only on failure -- not the other way round.
+ * `test/actions-auth.test.ts`'s `vi.mock('@clerk/nextjs/server', ...)` hooks
+ * the `import()` call below; `createRequire()` hands back Node's own loader,
+ * which bypasses Vitest's module graph entirely and would make every mocked
+ * test hit the real package instead (measured: exactly what happened before
+ * this ordering -- "This module cannot be imported from a Client Component
+ * module", Clerk's `auth()` running with no real Next.js request context).
+ * Trying the mockable path first keeps that working; the `require()` fallback
+ * only ever fires for the real package (broken ESM, reached via `import()`
+ * throwing) or a genuinely absent one -- either way the caller's own catch
+ * turns the failure into "npm install @clerk/nextjs", same as before.
+ *
+ * Specifier built in a variable, not a string literal, for the same reason
+ * every call site used to build its own: so the bundler cannot resolve it
+ * statically, which is what keeps the package genuinely optional rather than
+ * merely absent from the import graph.
+ */
+export async function loadClerkServer(): Promise<any> {
+  const pkg = `@clerk/nextjs${'/server'}`;
+  try {
+    return await import(/* webpackIgnore: true */ pkg);
+  } catch {
+    return clerkRequire(pkg);
+  }
+}
+
 /** Who is making a request, whichever deployment this is. */
 export interface CurrentUser {
   id: string;
@@ -36,15 +73,11 @@ export const authMode = (): 'clerk' | 'none' =>
 export async function getCurrentUser(): Promise<CurrentUser | null> {
   if (authMode() === 'none') return OPERATOR;
 
-  // Specifier in a variable so the bundler cannot statically resolve it --
-  // that is what makes the package genuinely optional rather than merely
-  // absent from the import graph at runtime.
-  const pkg = '@clerk/nextjs/server';
   // TODO(types): `auth` comes from an optional package that is deliberately
   // not a dependency here, so there is no type to import for it.
   let auth: any;
   try {
-    ({ auth } = await import(/* webpackIgnore: true */ pkg));
+    ({ auth } = await loadClerkServer());
   } catch {
     throw new Error(
       'AUTH_MODE=clerk but @clerk/nextjs is not installed. ' +
@@ -133,9 +166,8 @@ export async function assertOperator(): Promise<void> {
 export async function signOutCurrentSession(): Promise<void> {
   if (authMode() !== 'clerk') return;
 
-  const pkg = '@clerk/nextjs/server';
   // TODO(types): optional package, no type import available.
-  const { auth, clerkClient } = await import(/* webpackIgnore: true */ pkg);
+  const { auth, clerkClient } = await loadClerkServer();
 
   const { sessionId } = await auth();
   if (!sessionId) return;
