@@ -5,7 +5,7 @@
 // exists:
 //
 //   npx tsx tools/cli/connectors.ts list
-//   npx tsx tools/cli/connectors.ts set slack --url https://hooks.slack.com/services/...
+//   npx tsx tools/cli/connectors.ts set discord --url https://discord.com/api/webhooks/...
 //   npx tsx tools/cli/connectors.ts set brightdata            # mints the secret
 //   npx tsx tools/cli/connectors.ts test
 //   npx tsx tools/cli/connectors.ts forget discord
@@ -22,7 +22,7 @@ import { announce, summarise, testMessage } from '../../src/connectors/deliver.j
 const line = (s: string): void => console.log(s);
 
 export const command = new Command('connectors')
-  .description('Bright Data delivery, Slack and Discord.');
+  .description('Bright Data delivery and Discord.');
 
 command
   .command('list', { isDefault: true })
@@ -48,8 +48,8 @@ command
 
 command
   .command('set <kind>')
-  .description('Configure one connector. brightdata mints a secret; slack and discord take --url.')
-  .option('--url <url>', 'the incoming-webhook URL (slack, discord)')
+  .description('Configure one connector. brightdata mints a secret; discord takes --url.')
+  .option('--url <url>', 'the incoming-webhook URL (discord)')
   .action(async (kind: string, opts: { url?: string }) => {
     if (!(KINDS as readonly string[]).includes(kind)) {
       throw new Error(`kind must be one of: ${KINDS.join(', ')}`);

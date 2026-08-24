@@ -117,7 +117,7 @@ export async function postDelivery(request: Request, ctx: RouteCtx): Promise<Res
       // a replay, so the job would fail for ever over a chat message.
       try {
         // `announce` REPORTS a dead connector, it does not throw for one: a
-        // Slack 500 comes back as a result with `ok: false`, and no connector
+        // Discord 500 comes back as a result with `ok: false`, and no connector
         // configured comes back as an empty array. So "did the alert go out" is
         // a question about the results and not about whether this line threw.
         const rs = await announce(breakMessage(announcement));
@@ -160,7 +160,7 @@ export async function postDelivery(request: Request, ctx: RouteCtx): Promise<Res
 /**
  * Send one message to every configured chat connector and report what happened.
  *
- * Returns 502 when any delivery failed. A test that answers 200 while Slack
+ * Returns 502 when any delivery failed. A test that answers 200 while Discord
  * answered 404 is worse than no test at all -- it certifies a dead endpoint.
  */
 export const postTest = guarded(async () => {

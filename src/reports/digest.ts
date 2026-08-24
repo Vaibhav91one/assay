@@ -119,11 +119,11 @@ const line = (c: Change) => `• *${c.target}* / ${c.field} — ${c.what}`;
 
 /**
  * The digest as a chat `Message` -- `connectors/deliver.ts`'s `announce()`
- * already knows how to turn one of these into a Slack Block Kit payload or a
- * Discord embed and send it to whatever's configured. Not a second delivery
- * path: this is the same `Message` shape a break announcement uses, so
- * `slackPayload`/`discordPayload`/the 3000/4096-char clipping they already do
- * apply here unchanged rather than being re-derived for a digest specifically.
+ * already knows how to turn one of these into a Discord embed and send it to
+ * whatever's configured. Not a second delivery path: this is the same
+ * `Message` shape a break announcement uses, so `discordPayload`/the
+ * 4096-char clipping it already does apply here unchanged rather than being
+ * re-derived for a digest specifically.
  */
 export function digestMessage(d: Digest): Message {
   const body = [

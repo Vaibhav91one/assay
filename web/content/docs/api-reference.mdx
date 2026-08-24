@@ -60,7 +60,7 @@ Two shapes, and only two.
 ```
 
 ```json
-{ "error": "invalid_config", "issues": ["url: invalid_string — must be an https URL on one of: hooks.slack.com"] }
+{ "error": "invalid_config", "issues": ["url: invalid_string — must be an https URL on one of: discord.com"] }
 ```
 
 `error` is a stable code you can branch on. `detail` is a sentence for a human.
@@ -213,8 +213,8 @@ curl -sH "Authorization: Bearer $ASSAY_KEY" \
 
 | Method | Path | Body / query |
 |---|---|---|
-| `GET` | `/api/v1/connectors` | Presence for all three kinds. Never a value — the response shape has nowhere to put one. |
-| `PUT` | `/api/v1/connectors/:kind` | `{ "url" }` for `slack`/`discord`, `{ "secret" }` for `brightdata`. Unknown kind is `404`. |
+| `GET` | `/api/v1/connectors` | Presence for both kinds. Never a value — the response shape has nowhere to put one. |
+| `PUT` | `/api/v1/connectors/:kind` | `{ "url" }` for `discord`, `{ "secret" }` for `brightdata`. Unknown kind is `404`. |
 | `DELETE` | `/api/v1/connectors/:kind` | Idempotent. |
 | `POST` | `/api/v1/connectors/test` | One test message to every configured chat connector. |
 | `POST` | `/api/v1/connectors/:kind/delivery/:target` | **The one route that does not take an Assay key.** Bright Data POSTs a scraped page here and authenticates with the delivery secret Assay minted. It is not unauthenticated: it is authenticated as a different principal, and it fails closed when no connector is configured. |

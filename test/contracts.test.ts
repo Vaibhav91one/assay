@@ -230,7 +230,7 @@ fields:
     policy: strict
     on_abstain: quarantine
     auto_approve: clear_margin
-    alert: slack#data-oncall
+    alert: discord#data-oncall
   description:
     policy: loose
     on_abstain: publish_last_good
@@ -278,7 +278,7 @@ describe('contracts are versioned and append-only', () => {
   });
 
   const v1 = `target: ${target}\nfields:\n  recall_title:\n    policy: strict\n    alert: pagerduty\n`;
-  const v2 = `# quieter now\ntarget: ${target}\nfields:\n  recall_title:\n    policy: normal\n    alert: slack#data-oncall\n`;
+  const v2 = `# quieter now\ntarget: ${target}\nfields:\n  recall_title:\n    policy: normal\n    alert: discord#data-oncall\n`;
 
   it('appends a version instead of overwriting one', async () => {
     if (!dbUp) return;
@@ -302,7 +302,7 @@ describe('contracts are versioned and append-only', () => {
     const current = await latestContract(target);
     expect(current?.version).toBe(2);
     expect(thresholdsFor(current!.parsed, 'recall_title')).toMatchObject({
-      policy: 'normal', tau: 0.60, delta: 0.16, alert: 'slack#data-oncall',
+      policy: 'normal', tau: 0.60, delta: 0.16, alert: 'discord#data-oncall',
     });
     const first = await contractVersion(target, 1);
     expect(thresholdsFor(first!.parsed, 'recall_title')).toMatchObject({

@@ -364,9 +364,9 @@ function Connectors({ v }: { v: SettingsView }) {
       </Link>
       <SpecTable cols={[248, 168]}>
       {v.connectors.flatMap((c) => [
-        // The environment half, and only for a kind that has one. Slack and
-        // Discord's webhook URL IS the whole credential, so inventing a token
-        // row for them would be this same bug pointed the other way.
+        // The environment half, and only for a kind that has one. Discord's
+        // webhook URL IS the whole credential, so inventing a token row for
+        // it would be this same bug pointed the other way.
         ...(c.token
           ? [
             <ConnectorRow

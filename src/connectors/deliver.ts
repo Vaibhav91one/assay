@@ -1,25 +1,21 @@
-// Slack and Discord, which are both "POST JSON to a URL".
+// Discord, which is "POST JSON to a URL".
 //
-// No SDK. Both products document an incoming-webhook endpoint that takes a
-// JSON body and returns a status; a dependency would add a client, a retry
-// policy and a rate limiter to a call that is fifteen lines of `fetch`.
+// No SDK. Discord documents an incoming-webhook endpoint that takes a JSON
+// body and returns a status; a dependency would add a client, a retry policy
+// and a rate limiter to a call that is fifteen lines of `fetch`.
 //
-// Payload shapes below are transcribed from docs fetched 2026-08-22:
-//   Slack   https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks
-//           https://docs.slack.dev/reference/block-kit/blocks/section-block
-//           https://docs.slack.dev/reference/block-kit/blocks/context-block
+// Payload shape below is transcribed from docs fetched 2026-08-22:
 //   Discord https://docs.discord.com/developers/resources/webhook   (Execute Webhook)
 //           https://docs.discord.com/developers/resources/message    (embed + limits)
 //
-// TWO THINGS THAT BITE, both documented above and both handled here:
-//   1. Slack answers with a PLAIN-TEXT body -- `ok`, or `no_service` for a
-//      revoked webhook. Not JSON. Parsing it throws on the success case.
-//   2. Discord answers 204 with no body at all unless `wait=true`.
+// ONE THING THAT BITES, documented above and handled here: Discord answers
+// 204 with no body at all unless `wait=true`.
 //
 // Delivery never throws for a delivery failure and never retries. A 404 from
-// Slack is a fact the operator has to see; swallowing it, or hiding it behind
-// three silent attempts, turns a dead endpoint into a silent one -- which in a
-// product about not publishing lies is the same bug wearing a different hat.
+// Discord is a fact the operator has to see; swallowing it, or hiding it
+// behind three silent attempts, turns a dead endpoint into a silent one --
+// which in a product about not publishing lies is the same bug wearing a
+// different hat.
 
 import { secretFor } from './config.js';
 
@@ -34,7 +30,7 @@ export interface Announcement {
 }
 
 export interface DeliveryResult {
-  kind: 'slack' | 'discord';
+  kind: 'discord';
   ok: boolean;
   status: number;
   /** The provider's own words on failure. Empty on success. */
@@ -73,30 +69,7 @@ export const testMessage = (): Message => ({
   footer: 'You will only hear from Assay when something needs you.',
 });
 
-// --- payload builders (exported so the tests can read the exact JSON) --------
-
-/**
- * `text` is not enforced as required alongside `blocks`, but Slack pulls
- * desktop-notification text from it when it cannot extract any from the blocks
- * -- so a message without it can arrive as a silent notification.
- *
- * Section text caps at 3000 chars and a message at 50 blocks; this sends two.
- */
-export function slackPayload(m: Message): Record<string, unknown> {
-  return {
-    text: m.headline,
-    blocks: [
-      {
-        type: 'section',
-        text: { type: 'mrkdwn', text: cut(`*${m.headline}*\n${m.body}`, 3000) },
-      },
-      {
-        type: 'context',
-        elements: [{ type: 'mrkdwn', text: cut(m.footer, 3000) }],
-      },
-    ],
-  };
-}
+// --- payload builder (exported so the tests can read the exact JSON) --------
 
 /**
  * One embed. Limits enforced at the field level AND, per Discord's docs, as a
@@ -120,7 +93,7 @@ export function discordPayload(m: Message): Record<string, unknown> {
 // --- the POST ---------------------------------------------------------------
 
 async function post(
-  kind: 'slack' | 'discord',
+  kind: 'discord',
   url: string,
   payload: unknown,
   fetchImpl: typeof fetch,
@@ -140,9 +113,9 @@ async function post(
 
   if (res.ok) return { kind, ok: true, status: res.status, detail: '' };
 
-  // Slack's failure body is a bare string (`no_service` for a revoked hook);
-  // Discord's is JSON. Read as text either way and hand it over verbatim --
-  // the operator is better served by the provider's own words than by ours.
+  // Discord's failure body is JSON. Read as text either way and hand it over
+  // verbatim -- the operator is better served by the provider's own words
+  // than by ours.
   const body = await res.text().catch(() => '');
   const detail = res.status === 429
     // retry_after is FLOAT SECONDS. Reported, not slept on: this module does
@@ -164,14 +137,13 @@ export async function announce(
   m: Message,
   fetchImpl: typeof fetch = fetch,
 ): Promise<DeliveryResult[]> {
-  const [slack, discord] = await Promise.all([secretFor('slack'), secretFor('discord')]);
+  const discord = await secretFor('discord');
   const jobs: Promise<DeliveryResult>[] = [];
-  if (slack) jobs.push(post('slack', slack.url, slackPayload(m), fetchImpl));
   if (discord) jobs.push(post('discord', discord.url, discordPayload(m), fetchImpl));
   return Promise.all(jobs);
 }
 
-/** One line an operator can read: "slack ok · discord 404 no_service". */
+/** One line an operator can read: "discord 404 no_service". */
 export const summarise = (rs: DeliveryResult[]): string =>
   rs.length
     ? rs.map((r) => `${r.kind} ${r.ok ? 'ok' : `${r.status} ${r.detail}`}`).join(' · ')

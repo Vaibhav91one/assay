@@ -31,7 +31,7 @@ export default async function AlertPage({ params }: { params: Promise<{ episode:
     ? `${heldNow?.why?.plain ?? 'held'} — ${r.cause.plain}.`
     : (heldNow?.why?.plain ?? 'Held.');
 
-  const slack = breakMessage({
+  const discord = breakMessage({
     target: r.target, field: r.field, diagnosis, run: r.openedRun, rowsHeld: r.held.length,
   });
   const emailHtml = breakBody({
@@ -46,7 +46,7 @@ export default async function AlertPage({ params }: { params: Promise<{ episode:
         <AlertView
           episode={r.episode}
           field={r.field}
-          slack={slack}
+          discord={discord}
           emailSubject={emailSubject}
           emailHtml={emailHtml}
           notified={r.notified}

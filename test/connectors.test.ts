@@ -1,4 +1,4 @@
-// Connectors: the delivery receiver, the two chat webhooks, and the rule that
+// Connectors: the delivery receiver, the chat webhook, and the rule that
 // a stored secret never comes back out.
 //
 // The last one is the reason this file leads with it. Everything else here is
@@ -15,7 +15,7 @@ import { load } from 'cheerio';
 
 import { KINDS, put, remove, describe, secretFor } from '../src/connectors/config.js';
 import { verifyBearer, decodeDelivery, pageFrom, HTML_KEYS, DeliveryError } from '../src/connectors/brightdata.js';
-import { slackPayload, discordPayload, announce, summarise, breakMessage, testMessage } from '../src/connectors/deliver.js';
+import { discordPayload, announce, summarise, breakMessage, testMessage } from '../src/connectors/deliver.js';
 import { getConnectors, putConnector, deleteConnector, postDelivery } from '../src/connectors/handlers.js';
 import { ingestPage, pageDigest } from '../src/connectors/ingest.js';
 import { MUTATIONS, markTarget } from '../src/mutate.js';
@@ -23,15 +23,6 @@ import { pickTarget } from '../src/target.js';
 import { loadTools } from '../src/mcp/server.js';
 import { getDb, closeDb, heldCells, sql, targets } from '../src/store/index.js';
 
-// A real Slack webhook URL is a bearer credential. This is a syntactically
-// valid one pointed at a host that exists, so the host allow-list is exercised
-// without anything ever being posted to it -- every delivery test injects fetch.
-// Assembled rather than written out. GitHub's push protection matches the
-// shape of a Slack webhook URL and cannot know this token is twenty-four
-// literal x's, so a spelled-out placeholder blocks the push. The host has to
-// stay real -- the allow-list is the thing under test -- so only the literal
-// goes away, not the value.
-const SLACK_URL = ['https://hooks.slack.com/services', 'T00000000', 'B00000000', 'x'.repeat(24)].join('/');
 const DISCORD_URL = ['https://discord.com/api/webhooks', '123456789012345678', 'abcdefghijklmnopqrstuvwxyz'].join('/');
 const BD_SECRET = 'bdw_0123456789abcdef0123456789abcdef';
 
@@ -55,15 +46,15 @@ const ctx = (params: Record<string, string> = {}) => ({ params: Promise.resolve(
 
 suite('a stored secret never comes back out', () => {
   it('describe() reports presence and carries no value', async () => {
-    await put('slack', { url: SLACK_URL });
-    const [row] = await describe('slack');
+    await put('discord', { url: DISCORD_URL });
+    const [row] = await describe('discord');
     expect(row!.configured).toBe(true);
     // An exhaustive key list, not a spot check: the property is that there is
     // NOWHERE in this shape to put a secret, and a field added without thinking
     // about that has to come here and be argued for.
     expect(Object.keys(row!).sort()).toEqual(['configured', 'kind', 'token', 'updated_at']);
-    expect(JSON.stringify(row)).not.toContain('hooks.slack.com');
-    // Slack's webhook URL IS its whole credential; it has no environment half,
+    expect(JSON.stringify(row)).not.toContain('discord.com/api/webhooks');
+    // Discord's webhook URL IS its whole credential; it has no environment half,
     // and inventing a variable for it would be a row telling an operator to set
     // something nothing reads.
     expect(row!.token).toBeNull();
@@ -107,24 +98,23 @@ suite('a stored secret never comes back out', () => {
 
   it('the write response echoes nothing back', async () => {
     const res = await putConnector(
-      new Request('http://x', { method: 'PUT', body: JSON.stringify({ url: SLACK_URL }) }),
-      ctx({ kind: 'slack' }),
+      new Request('http://x', { method: 'PUT', body: JSON.stringify({ url: DISCORD_URL }) }),
+      ctx({ kind: 'discord' }),
     );
     // No API key on that request, so it must not even reach the store.
     expect(res.status).toBe(401);
-    expect(await res.text()).not.toContain('hooks.slack.com');
+    expect(await res.text()).not.toContain('discord.com/api/webhooks');
   });
 
   it('no read path leaks a configured credential', async () => {
-    await put('slack', { url: SLACK_URL });
     await put('discord', { url: DISCORD_URL });
     await put('brightdata', { secret: BD_SECRET });
 
     // Every response body this feature can produce for an unauthenticated or
-    // authenticated caller, checked against all three live secrets.
+    // authenticated caller, checked against both live secrets.
     const bodies = await Promise.all([
       getConnectors(new Request('http://x'), ctx()).then((r) => r.text()),
-      deleteConnector(new Request('http://x', { method: 'DELETE' }), ctx({ kind: 'slack' })).then((r) => r.text()),
+      deleteConnector(new Request('http://x', { method: 'DELETE' }), ctx({ kind: 'discord' })).then((r) => r.text()),
       postDelivery(
         new Request('http://x', { method: 'POST', body: '[]' }),
         ctx({ kind: 'brightdata', target: 'ikea' }),
@@ -134,7 +124,6 @@ suite('a stored secret never comes back out', () => {
 
     for (const body of bodies) {
       expect(body).not.toContain(BD_SECRET);
-      expect(body).not.toContain('hooks.slack.com');
       expect(body).not.toContain('discord.com/api/webhooks');
     }
   });
@@ -150,9 +139,9 @@ suite('a stored secret never comes back out', () => {
   });
 
   it('refuses a webhook URL on a host that is not the vendor', async () => {
-    await expect(put('slack', { url: 'https://evil.example.com/hook' })).rejects.toThrow();
+    await expect(put('discord', { url: 'https://evil.example.com/hook' })).rejects.toThrow();
     // http, right host: still refused. A credential does not travel in clear.
-    await expect(put('slack', { url: 'http://hooks.slack.com/services/x' })).rejects.toThrow();
+    await expect(put('discord', { url: 'http://discord.com/api/webhooks/x' })).rejects.toThrow();
   });
 });
 
@@ -284,37 +273,6 @@ suite('bright data delivery: the body', () => {
 
 // ---------------------------------------------------------------------------
 
-suite('slack payload', () => {
-  const a = breakMessage({ target: 'ikea', field: 'recall_title', diagnosis: 'The selector matches nothing.', run: 74 });
-
-  it('is the shape the incoming-webhook endpoint documents', () => {
-    const p = slackPayload(a) as any;
-    // `text` is not enforced as required alongside `blocks`, but Slack falls
-    // back to it for the desktop notification -- without it the alert can
-    // arrive silent, which for a break alert is the whole failure.
-    expect(p.text).toBe('ikea: I stopped publishing recall_title.');
-    expect(p.blocks).toHaveLength(2);
-    expect(p.blocks[0].type).toBe('section');
-    expect(p.blocks[0].text.type).toBe('mrkdwn');
-    expect(p.blocks[1].type).toBe('context');
-    expect(p.blocks[1].elements).toHaveLength(1);
-    expect(p.blocks.length).toBeLessThanOrEqual(50);
-  });
-
-  it('holds a section block to the documented 3000 characters', () => {
-    const p = slackPayload({ ...a, body: 'x'.repeat(5000) }) as any;
-    expect(p.blocks[0].text.text.length).toBeLessThanOrEqual(3000);
-  });
-
-  it('speaks the house voice: held, no percentage, no "successfully"', () => {
-    const s = JSON.stringify(slackPayload(a));
-    expect(s).toContain('stopped publishing');
-    expect(s).toContain('Nothing wrong was published.');
-    expect(s).not.toMatch(/successful/i);
-    expect(s).not.toMatch(/\d+(\.\d+)?%/);
-  });
-});
-
 suite('discord payload', () => {
   const a = breakMessage({ target: 'ikea', field: 'recall_title', diagnosis: 'The selector matches nothing.', run: 74 });
 
@@ -346,14 +304,14 @@ suite('delivery degrades honestly', () => {
   const a = breakMessage({ target: 'ikea', field: 'recall_title', diagnosis: 'gone', run: 74 });
 
   it('surfaces a 404 as a failure rather than swallowing it', async () => {
-    await put('slack', { url: SLACK_URL });
-    // Slack answers a revoked webhook with a plain-text body, not JSON.
-    const fake = async () => new Response('no_service', { status: 404 });
+    await put('discord', { url: DISCORD_URL });
+    // Discord answers a revoked webhook with a JSON body.
+    const fake = async () => new Response('{"message":"Unknown Webhook"}', { status: 404 });
     const [r] = await announce(a, fake as unknown as typeof fetch);
     expect(r!.ok).toBe(false);
     expect(r!.status).toBe(404);
-    expect(r!.detail).toBe('no_service');
-    expect(summarise([r!])).toBe('slack 404 no_service');
+    expect(r!.detail).toContain('Unknown Webhook');
+    expect(summarise([r!])).toContain('discord 404');
   });
 
   it('surfaces a dead host as never-reached, not as a rejection', async () => {
@@ -382,16 +340,6 @@ suite('delivery degrades honestly', () => {
     expect(summarise(await announce(a))).toBe('no chat connector configured');
   });
 
-  it('does not let one dead connector hide the other', async () => {
-    await put('slack', { url: SLACK_URL });
-    await put('discord', { url: DISCORD_URL });
-    const fake = async (u: string) =>
-      u.includes('slack') ? new Response('ok') : new Response('', { status: 500 });
-    const rs = await announce(a, fake as unknown as typeof fetch);
-    expect(rs).toHaveLength(2);
-    expect(rs.filter((r) => r.ok)).toHaveLength(1);
-    expect(rs.filter((r) => !r.ok)).toHaveLength(1);
-  });
 });
 
 // ---------------------------------------------------------------------------
@@ -550,8 +498,8 @@ suite('the seam', () => {
     it('records the failure on the episode, and still answers 200', async () => {
       if (!dbUp) return;
       await put('brightdata', { secret: BD_SECRET });
-      await put('slack', { url: SLACK_URL });
-      // Slack is down. Injected at the global, because `postDelivery` calls
+      await put('discord', { url: DISCORD_URL });
+      // Discord is down. Injected at the global, because `postDelivery` calls
       // `announce` with no transport argument -- which is the code path a real
       // delivery takes and therefore the one worth testing.
       globalThis.fetch = (async () => new Response('', { status: 500 })) as typeof fetch;
@@ -572,7 +520,7 @@ suite('the seam', () => {
       const note = await episodeNote();
       expect(note).toMatch(/^undelivered: /);
       // Readable: it says which connector and what it answered.
-      expect(note).toContain('slack');
+      expect(note).toContain('discord');
       expect(note).toContain('500');
     });
 
@@ -597,14 +545,14 @@ suite('the seam', () => {
       if (!dbUp) return;
       await wipe();
       await put('brightdata', { secret: BD_SECRET });
-      await put('slack', { url: SLACK_URL });
+      await put('discord', { url: DISCORD_URL });
       globalThis.fetch = (async () => new Response('ok')) as typeof fetch;
 
       await deliver(page);
       await deliver(broken(page));
 
       const note = await episodeNote();
-      expect(note).toBe('slack ok');
+      expect(note).toBe('discord ok');
       expect(note).not.toMatch(/undelivered/);
     });
   });
@@ -629,10 +577,10 @@ suite('mcp surface', () => {
     // page text is the last place to put a bearer token.
     expect(names.filter((n) => /connector/.test(n))).toEqual(['assay_connectors']);
 
-    await put('slack', { url: SLACK_URL });
+    await put('discord', { url: DISCORD_URL });
     const out = JSON.stringify(await tools.assay_connectors!.run({}));
-    expect(out).toContain('announced to slack');
-    expect(out).not.toContain('hooks.slack.com');
+    expect(out).toContain('announced to discord');
+    expect(out).not.toContain('discord.com/api/webhooks');
   });
 
   it('says plainly when nobody would hear about a held field', async () => {

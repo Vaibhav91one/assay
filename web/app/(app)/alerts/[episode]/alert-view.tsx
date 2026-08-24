@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { StatusLine } from '@/components/status-line';
 
-/** `Message` from `src/connectors/deliver.ts` — headline/body/footer, the shape both chat payload builders take. */
+/** `Message` from `src/connectors/deliver.ts` — headline/body/footer, the shape the chat payload builder takes. */
 interface Message { headline: string; body: string; footer: string }
 
 /**
@@ -13,14 +13,14 @@ interface Message { headline: string; body: string; footer: string }
 export function AlertView({
   episode,
   field,
-  slack,
+  discord,
   emailSubject,
   emailHtml,
   notified,
 }: {
   episode: number;
   field: string;
-  slack: Message;
+  discord: Message;
   emailSubject: string;
   emailHtml: string;
   notified: string | null;
@@ -41,11 +41,11 @@ export function AlertView({
       )}
 
       <section className="flex flex-col gap-[8px]">
-        <p className="label-10 text-[var(--text-muted)]">SLACK · #data-oncall</p>
+        <p className="label-10 text-[var(--text-muted)]">DISCORD · #data-oncall</p>
         <div className="rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] p-[16px]">
-          <p className="body-14 text-[var(--text-primary)]">{slack.headline}</p>
-          <p className="meta-13 mt-[6px] text-[var(--text-secondary)]">{slack.body}</p>
-          <p className="caption-12 mt-[10px] text-[var(--text-muted)]">{slack.footer}</p>
+          <p className="body-14 text-[var(--text-primary)]">{discord.headline}</p>
+          <p className="meta-13 mt-[6px] text-[var(--text-secondary)]">{discord.body}</p>
+          <p className="caption-12 mt-[10px] text-[var(--text-muted)]">{discord.footer}</p>
         </div>
       </section>
 

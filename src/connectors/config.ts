@@ -1,7 +1,7 @@
 // Connector configuration, and the rule that it never comes back out.
 //
-// Every one of the three secrets here is a bearer credential: a Slack or
-// Discord incoming-webhook URL is not an address with a password beside it, it
+// Every one of the two secrets here is a bearer credential: a Discord
+// incoming-webhook URL is not an address with a password beside it, it
 // IS the password, and anyone holding it can post as you. So the read path
 // reports PRESENCE and nothing else -- no value, no prefix, no masked tail, no
 // hostname. `describe()` is the only exported reader, and it cannot return a
@@ -16,14 +16,14 @@
 // It is written 0600, and the default path is INSIDE the repo. `.gitignore` has
 // no `data/` line yet and this feature may not add one, so until it does, point
 // ASSAY_CONNECTORS somewhere outside the tree or add the line. A file holding
-// three bearer credentials is not one to leave a `git add -A` away from a
+// two bearer credentials is not one to leave a `git add -A` away from a
 // commit.
 
 import { z } from 'zod';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
-export const KINDS = ['brightdata', 'slack', 'discord'] as const;
+export const KINDS = ['brightdata', 'discord'] as const;
 export type Kind = (typeof KINDS)[number];
 
 /**
@@ -80,20 +80,17 @@ const BrightDataConfig = z.object({
 // Host allow-lists, not just "is a URL". A connector URL is posted to on every
 // break; accepting an arbitrary host turns a config endpoint into an outbound
 // request primitive pointed anywhere, including at this machine's own network.
-const SlackConfig = z.object({ url: httpsHost(['hooks.slack.com']) });
 const DiscordConfig = z.object({
   url: httpsHost(['discord.com', 'discordapp.com', 'canary.discord.com', 'ptb.discord.com']),
 });
 
 export const CONFIG_SCHEMA = {
   brightdata: BrightDataConfig,
-  slack: SlackConfig,
   discord: DiscordConfig,
 } as const;
 
 export type ConnectorConfig = {
   brightdata: z.infer<typeof BrightDataConfig>;
-  slack: z.infer<typeof SlackConfig>;
   discord: z.infer<typeof DiscordConfig>;
 };
 
@@ -126,10 +123,9 @@ export type ConnectorConfig = {
  */
 const TOKEN_VAR: Record<Kind, string | null> = {
   brightdata: 'BRIGHTDATA_API_TOKEN',
-  // Slack and Discord have no second half: an incoming-webhook URL is the whole
+  // Discord has no second half: an incoming-webhook URL is the whole
   // credential and it lives in this file. A row claiming an absent environment
-  // variable for them would be the same lie pointed the other way.
-  slack: null,
+  // variable for it would be the same lie pointed the other way.
   discord: null,
 };
 

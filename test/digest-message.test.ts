@@ -1,13 +1,13 @@
 // `digestMessage` turns a `Digest` into the same `Message` shape a break
 // announcement uses, so it rides `connectors/deliver.ts`'s existing
-// `slackPayload`/`discordPayload`/`announce` rather than a second delivery
-// path. Digest's own rule -- a withheld field never reads as a change -- has
-// to survive the trip into that shape, so it's asserted here too, not just in
+// `discordPayload`/`announce` rather than a second delivery path. Digest's
+// own rule -- a withheld field never reads as a change -- has to survive the
+// trip into that shape, so it's asserted here too, not just in
 // `composeDigest` itself.
 
 import { describe, it, expect } from 'vitest';
 import { digestMessage, type Digest } from '../src/reports/digest.js';
-import { slackPayload } from '../src/connectors/deliver.js';
+import { discordPayload } from '../src/connectors/deliver.js';
 
 const base: Digest = {
   since: new Date('2026-08-17T00:00:00Z'),
@@ -44,9 +44,9 @@ describe('digestMessage', () => {
     expect(digestMessage(empty).body).toMatch(/nothing/i);
   });
 
-  it('produces a valid Slack Block Kit payload downstream', () => {
-    const payload = slackPayload(digestMessage(base));
-    expect(payload.text).toBe(base.subject);
-    expect(Array.isArray(payload.blocks)).toBe(true);
+  it('produces a valid Discord embed payload downstream', () => {
+    const payload = discordPayload(digestMessage(base)) as any;
+    expect(payload.embeds[0].title).toBe(base.subject);
+    expect(Array.isArray(payload.embeds)).toBe(true);
   });
 });
