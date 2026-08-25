@@ -138,6 +138,35 @@ to reach `pending_answer` / `user_approval`, across 51 polls and 29 completed
 steps. One run is one run, but it is longer than the documented ceiling and worth
 knowing before wiring a timeout to 15 minutes.
 
+### 2.1 Creating a collector from nothing — the gap `refactor_template` doesn't close
+
+Everything above operates on an EXISTING collector, given by id. Bright Data's
+public API reference documents `/dca/trigger` and `/dca/dataset` for running one
+and the three endpoints above for healing one, but nowhere documents how to
+create one — the earlier draft of this file said so and left it an open question.
+It no longer is one: the three endpoints below were confirmed by reading
+`brightdata/cli`'s own source (`src/commands/scraper.ts`, the `scraper create`
+subcommand), the same way `refactor_template` was confirmed before this file
+existed.
+
+- `POST /dca/collector` — body `{name, deliver: {type: "webhook", endpoint, filename: {template, extension}}}`, returns `{id, name, created}`. Creates an empty template; `id` is the new collector id.
+- `POST /dca/collectors/{collector_id}/automate_template` — body `{description, urls}` (description max 500 chars, one or more target URLs). Triggers AI-Flow to generate a schema and extraction code from scratch.
+- `GET  /dca/collectors/{collector_id}/automate_template/progress` — same progress shape as `refactor_template/progress`: `status: "done"` is the only documented success terminal; the CLI treats `failed`/`error`/`cancelled` as terminal failure and everything else as still running.
+
+AI-Flow generation is billed at $0 API cost either way (§1, row C1) — only page
+loads during a subsequent real run are metered. `bdata scraper create <url>
+"<description>"` wraps exactly this three-call sequence and "takes 5 to 10
+minutes" per its own `--help`.
+
+`tools/bd-create.ts` (`npm run bd:create`) is Assay's own driver for this flow,
+sibling to `tools/bd-heal.ts` and following the same transcript-capture
+discipline. It closes the recovery-path gap `docs/FEATURES.md`'s Phase-6 note
+flagged: a watch target with no manually-provisioned collector previously had no
+way to get one short of the Bright Data web UI. It still does not write a
+`target -> collector_id` mapping anywhere in Assay's store — that stays a human's
+call to make and wire up, on purpose, the same as `bd-heal.ts`'s own
+`--collector <id>` being supplied out of band rather than looked up.
+
 ---
 
 ## 3. Hypotheses: verdicts at a glance

@@ -14,6 +14,7 @@
     "audit": "tsx tools/audit.ts",
     "headtohead": "tsx tools/headtohead.ts",
     "bd:heal": "tsx tools/bd-heal.ts",
+    "bd:create": "tsx tools/bd-create.ts",
     "demo": "tsx tools/demo.ts",
     "seed:demo": "tsx tools/seed-demo.ts",
     "ingest": "tsx tools/ingest.ts",

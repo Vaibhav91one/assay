@@ -1,0 +1,291 @@
+{
+  "url": "https://news.ycombinator.com",
+  "description": "Extract the top 10 stories: title, url, points, author",
+  "name": "assay-phase6-livetest",
+  "deliver_webhook": "https://example.com/webhook",
+  "started_at": "2026-08-25T08:02:29.459Z",
+  "finished_at": "2026-08-25T08:06:10.247Z",
+  "poll_interval_ms": 20000,
+  "max_wait_ms": 720000,
+  "collector_id": "c_mt8dnc3cdhlebx59h",
+  "template": {
+    "at": "2026-08-25T08:02:33.640Z",
+    "http": 200,
+    "body_raw": "{\"name\":\"assay-phase6-livetest\",\"deliver\":{\"type\":\"webhook\",\"endpoint\":\"https://example.com/webhook\",\"filename\":{\"template\":\"data\",\"extension\":\"json\",\"tz_offset\":\"+00:00\"},\"flatten_csv\":false,\"delivery_type\":\"deliver_results\"},\"active\":false,\"created\":\"2026-08-25T08:02:31.032Z\",\"user\":\"vtking03@gmail.com\",\"customer\":\"hl_03fc6be2\",\"customer_id\":\"hl_03fc6be2\",\"output_format_ver\":1,\"require_all_success\":false,\"default_queue_behavior\":\"parallel\",\"strict_input_normalize\":true,\"request_cmd_behavior\":\"send_ajax_request\",\"strict_url_validate\":true,\"no_strange_input_normalize\":true,\"allow_wait_ms\":false,\"id\":\"c_mt8dnc3cdhlebx59h\",\"zone\":\"v__dca_assay_phase6_livetest\",\"notifications\":{\"success_rate\":{\"addresses\":\"vtking03@gmail.com\",\"frequency\":1}},\"history\":[{\"date\":\"2026-08-25T08:02:31.040Z\",\"user\":\"Vaibhav Tomar\",\"comment\":\"Collector was created\"}],\"output_fields\":[],\"fields\":{},\"template\":{\"stub\":true},\"has_output_fields_mapping\":false,\"account_id\":\"hl_03fc6be2\",\"is_under_dataset_migration\":false,\"under_sla\":false,\"output_schema_incompatible\":false,\"beta_output_schema_incompatible\":false,\"is_scheduled\":false}",
+    "body": {
+      "name": "assay-phase6-livetest",
+      "deliver": {
+        "type": "webhook",
+        "endpoint": "https://example.com/webhook",
+        "filename": {
+          "template": "data",
+          "extension": "json",
+          "tz_offset": "+00:00"
+        },
+        "flatten_csv": false,
+        "delivery_type": "deliver_results"
+      },
+      "active": false,
+      "created": "2026-08-25T08:02:31.032Z",
+      "user": "vtking03@gmail.com",
+      "customer": "hl_03fc6be2",
+      "customer_id": "hl_03fc6be2",
+      "output_format_ver": 1,
+      "require_all_success": false,
+      "default_queue_behavior": "parallel",
+      "strict_input_normalize": true,
+      "request_cmd_behavior": "send_ajax_request",
+      "strict_url_validate": true,
+      "no_strange_input_normalize": true,
+      "allow_wait_ms": false,
+      "id": "c_mt8dnc3cdhlebx59h",
+      "zone": "v__dca_assay_phase6_livetest",
+      "notifications": {
+        "success_rate": {
+          "addresses": "vtking03@gmail.com",
+          "frequency": 1
+        }
+      },
+      "history": [
+        {
+          "date": "2026-08-25T08:02:31.040Z",
+          "user": "Vaibhav Tomar",
+          "comment": "Collector was created"
+        }
+      ],
+      "output_fields": [],
+      "fields": {},
+      "template": {
+        "stub": true
+      },
+      "has_output_fields_mapping": false,
+      "account_id": "hl_03fc6be2",
+      "is_under_dataset_migration": false,
+      "under_sla": false,
+      "output_schema_incompatible": false,
+      "beta_output_schema_incompatible": false,
+      "is_scheduled": false
+    }
+  },
+  "trigger": {
+    "at": "2026-08-25T08:02:37.120Z",
+    "http": 200,
+    "body_raw": "{\"id\":\"ia_mt8dngna2nopwmf4b9\",\"queued\":false}",
+    "body": {
+      "id": "ia_mt8dngna2nopwmf4b9",
+      "queued": false
+    }
+  },
+  "statuses_seen": [
+    {
+      "key": "running/user_intent_analyzer",
+      "status": "running",
+      "step": "user_intent_analyzer",
+      "first_seen_at": "2026-08-25T08:02:58.305Z",
+      "poll": 1
+    },
+    {
+      "key": "running/output_schema_generator",
+      "status": "running",
+      "step": "output_schema_generator",
+      "first_seen_at": "2026-08-25T08:04:22.789Z",
+      "poll": 5
+    },
+    {
+      "key": "running/preview_picker",
+      "status": "running",
+      "step": "preview_picker",
+      "first_seen_at": "2026-08-25T08:04:44.740Z",
+      "poll": 6
+    },
+    {
+      "key": "done/collector_mainatiner",
+      "status": "done",
+      "step": "collector_mainatiner",
+      "first_seen_at": "2026-08-25T08:06:10.246Z",
+      "poll": 10
+    }
+  ],
+  "polls": [
+    {
+      "n": 1,
+      "at": "2026-08-25T08:02:58.305Z",
+      "http": 200,
+      "body_raw": "{\"step\":\"user_intent_analyzer\",\"completed_steps\":[\"prepare_intent_analyzer\"],\"status\":\"running\"}",
+      "body": {
+        "step": "user_intent_analyzer",
+        "completed_steps": [
+          "prepare_intent_analyzer"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 2,
+      "at": "2026-08-25T08:03:19.526Z",
+      "http": 200,
+      "body_raw": "{\"step\":\"user_intent_analyzer\",\"completed_steps\":[\"prepare_intent_analyzer\"],\"status\":\"running\"}",
+      "body": {
+        "step": "user_intent_analyzer",
+        "completed_steps": [
+          "prepare_intent_analyzer"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 3,
+      "at": "2026-08-25T08:03:40.365Z",
+      "http": 200,
+      "body_raw": "{\"step\":\"user_intent_analyzer\",\"completed_steps\":[\"prepare_intent_analyzer\"],\"status\":\"running\"}",
+      "body": {
+        "step": "user_intent_analyzer",
+        "completed_steps": [
+          "prepare_intent_analyzer"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 4,
+      "at": "2026-08-25T08:04:01.570Z",
+      "http": 200,
+      "body_raw": "{\"step\":\"user_intent_analyzer\",\"completed_steps\":[\"prepare_intent_analyzer\"],\"status\":\"running\"}",
+      "body": {
+        "step": "user_intent_analyzer",
+        "completed_steps": [
+          "prepare_intent_analyzer"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 5,
+      "at": "2026-08-25T08:04:22.789Z",
+      "http": 200,
+      "body_raw": "{\"step\":\"output_schema_generator\",\"completed_steps\":[\"prepare_intent_analyzer\",\"planner\"],\"status\":\"running\"}",
+      "body": {
+        "step": "output_schema_generator",
+        "completed_steps": [
+          "prepare_intent_analyzer",
+          "planner"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 6,
+      "at": "2026-08-25T08:04:44.740Z",
+      "http": 200,
+      "body_raw": "{\"step\":\"preview_picker\",\"completed_steps\":[\"prepare_intent_analyzer\",\"planner\",\"output_schema_generator\",\"code_generator\",\"input_schema_generator\",\"preview_runner\",\"preview_picker\"],\"status\":\"running\"}",
+      "body": {
+        "step": "preview_picker",
+        "completed_steps": [
+          "prepare_intent_analyzer",
+          "planner",
+          "output_schema_generator",
+          "code_generator",
+          "input_schema_generator",
+          "preview_runner",
+          "preview_picker"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 7,
+      "at": "2026-08-25T08:05:06.013Z",
+      "http": 200,
+      "body_raw": "{\"step\":\"preview_picker\",\"completed_steps\":[\"prepare_intent_analyzer\",\"planner\",\"output_schema_generator\",\"code_generator\",\"input_schema_generator\",\"preview_runner\",\"preview_picker\"],\"status\":\"running\"}",
+      "body": {
+        "step": "preview_picker",
+        "completed_steps": [
+          "prepare_intent_analyzer",
+          "planner",
+          "output_schema_generator",
+          "code_generator",
+          "input_schema_generator",
+          "preview_runner",
+          "preview_picker"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 8,
+      "at": "2026-08-25T08:05:27.523Z",
+      "http": 200,
+      "body_raw": "{\"step\":\"preview_picker\",\"completed_steps\":[\"prepare_intent_analyzer\",\"planner\",\"output_schema_generator\",\"code_generator\",\"input_schema_generator\",\"preview_runner\",\"preview_picker\"],\"status\":\"running\"}",
+      "body": {
+        "step": "preview_picker",
+        "completed_steps": [
+          "prepare_intent_analyzer",
+          "planner",
+          "output_schema_generator",
+          "code_generator",
+          "input_schema_generator",
+          "preview_runner",
+          "preview_picker"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 9,
+      "at": "2026-08-25T08:05:48.689Z",
+      "http": 200,
+      "body_raw": "{\"step\":\"preview_picker\",\"completed_steps\":[\"prepare_intent_analyzer\",\"planner\",\"discovery\",\"output_schema_generator\",\"code_generator\",\"input_schema_generator\",\"preview_runner\",\"preview_picker\"],\"status\":\"running\"}",
+      "body": {
+        "step": "preview_picker",
+        "completed_steps": [
+          "prepare_intent_analyzer",
+          "planner",
+          "discovery",
+          "output_schema_generator",
+          "code_generator",
+          "input_schema_generator",
+          "preview_runner",
+          "preview_picker"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 10,
+      "at": "2026-08-25T08:06:10.246Z",
+      "http": 200,
+      "body_raw": "{\"step\":\"collector_mainatiner\",\"completed_steps\":[\"prepare_intent_analyzer\",\"planner\",\"discovery\",\"collector_mainatiner\",\"output_schema_generator\",\"code_generator\",\"input_schema_generator\",\"preview_runner\",\"preview_picker\"],\"status\":\"done\"}",
+      "body": {
+        "step": "collector_mainatiner",
+        "completed_steps": [
+          "prepare_intent_analyzer",
+          "planner",
+          "discovery",
+          "collector_mainatiner",
+          "output_schema_generator",
+          "code_generator",
+          "input_schema_generator",
+          "preview_runner",
+          "preview_picker"
+        ],
+        "status": "done"
+      }
+    }
+  ],
+  "outcome": "done",
+  "preview": {
+    "step": "collector_mainatiner",
+    "completed_steps": [
+      "prepare_intent_analyzer",
+      "planner",
+      "discovery",
+      "collector_mainatiner",
+      "output_schema_generator",
+      "code_generator",
+      "input_schema_generator",
+      "preview_runner",
+      "preview_picker"
+    ],
+    "status": "done"
+  }
+}
