@@ -159,7 +159,6 @@ export async function build(
   }
 
   revalidatePath('/', 'layout');
-  revalidatePath('/decisions');
   return {
     ok: true,
     id: r.id,

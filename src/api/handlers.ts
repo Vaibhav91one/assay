@@ -4,7 +4,7 @@
 // Next. Read-only by construction: nothing here writes.
 
 import { requireKey } from './keys.js';
-import { rowByProof, heldCells, runsFor, openQueue, explain } from '../store/index.js';
+import { rowByProof, heldCells, runsFor, explain } from '../store/index.js';
 
 // The Next route-handler shape, named here rather than imported: `src/` is
 // engine-side and must not take a dependency on next just to describe two
@@ -68,15 +68,5 @@ export const getRuns = guarded(async (request) => {
   const url = new URL(request.url);
   return Response.json({
     runs: await runsFor(url.searchParams.get('target') || null, intParam(url, 'limit', 50, 500)),
-  });
-});
-
-/** GET /api/v1/queue -- open decisions the gate refused to make. */
-export const getQueue = guarded(async (request) => {
-  const url = new URL(request.url);
-  return Response.json({
-    queue: await openQueue(
-      intParam(url, 'limit', 50, 500), url.searchParams.get('target'),
-    ),
   });
 });

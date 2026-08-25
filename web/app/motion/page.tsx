@@ -68,9 +68,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 const SAMPLE: Notice[] = [
   {
     id: 'fixture-1',
-    kind: 'decision',
-    text: 'price on shop.example held — two candidates, neither obviously right',
-    href: '/decisions',
+    kind: 'held',
+    text: 'price on shop.example held — the selector it read stopped resolving',
+    href: '/fields?show=held',
     at: new Date(Date.now() - 4 * 60_000),
     outstanding: true,
   },

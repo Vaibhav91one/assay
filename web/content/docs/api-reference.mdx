@@ -1,9 +1,9 @@
 ---
 title: API reference
-description: The 28 routes under /api/v1, the key that opens them, and the error envelope every one of them returns.
+description: The 27 routes under /api/v1, the key that opens them, and the error envelope every one of them returns.
 ---
 
-Assay's consumer surface is 28 route files under `web/app/api/v1/`. Almost every
+Assay's consumer surface is 24 route files under `web/app/api/v1/`. Almost every
 one is a four-line re-export of a handler in `src/`, so the logic is testable
 without booting Next and the route file has nowhere to hide a second code path.
 
@@ -157,15 +157,7 @@ curl -sH "Authorization: Bearer $ASSAY_KEY" \
 | `GET` | `/api/v1/explain/:proof` | Full provenance for one cell. |
 | `GET` | `/api/v1/held` | Every held cell. `?target=` |
 | `GET` | `/api/v1/runs` | Run history, newest first. `?target=` `?limit=` (default 50, max 500) |
-| `GET` | `/api/v1/queue` | Open decisions the gate refused to make. `?target=` `?limit=` |
 | `GET` | `/api/v1/health-fields` | Standing per-field fragility and drift. `?target=` |
-
-### Decisions
-
-| Method | Path | Body / query |
-|---|---|---|
-| `POST` | `/api/v1/decisions/resolve` | `{ "proof", "resolution" }` — the resolution is one of `first`, `second`, `empty`, `neither`. Strict: an unrecognised key is a `400`, not a silent success. |
-| `POST` | `/api/v1/decisions/undo` | `{ "proof" }` |
 
 ### Targets
 

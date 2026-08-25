@@ -348,7 +348,7 @@ function Fields({ cells }: { cells: CellSummary[] }) {
                       {t('run.link.proof')}
                     </ProofSheet>
                     {c.status === 'quarantined' && (
-                      <Link href="/decisions" className="meta-13 text-[var(--semantic-link)]">
+                      <Link href="/fields?show=held" className="meta-13 text-[var(--semantic-link)]">
                         {t('run.link.decide')}
                       </Link>
                     )}

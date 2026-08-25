@@ -346,7 +346,7 @@ export function HeldCell({ reason, targetId }: { reason: string | null; targetId
             : t('build.held.noReason')}
       </span>
       <Link
-        href={targetId ? `/decisions?target=${encodeURIComponent(targetId)}` : '/decisions'}
+        href={targetId ? `/fields/${encodeURIComponent(targetId)}` : '/fields?show=held'}
         className="caption-11 self-start text-[var(--semantic-link)] hover:underline"
       >
         {t('build.decideIt')}

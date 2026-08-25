@@ -14,7 +14,7 @@ import { waitingCount } from './queue.js';
  * count is what is actually outstanding, so it goes down when the work is done
  * and not when someone looks at it.
  */
-export type NoticeKind = 'decision' | 'break' | 'undelivered' | 'healed';
+export type NoticeKind = 'held' | 'break' | 'undelivered' | 'healed';
 
 export interface Notice {
   id: string;
@@ -79,11 +79,14 @@ async function allNotices(): Promise<Notice[]> {
   for (const q of queue) {
     out.push({
       id: `q:${q.proofId}`,
-      kind: 'decision',
+      kind: 'held',
       text: q.field
         ? `${short(q.target ?? '')} is holding ${q.field}${q.rows ? ` on ${q.rows} row${q.rows === 1 ? '' : 's'}` : ''}`
         : 'A cell is held and waiting on you',
-      href: '/decisions',
+      // /fields, not a resolve screen: there is no more action to take here
+      // than to go look at what a Bright Data collector fix would need to
+      // address -- the decide-queue this used to point at is retired.
+      href: '/fields?show=held',
       at: q.ts ?? null,
       outstanding: true,
     });
@@ -165,7 +168,7 @@ export async function activity(limit = 12): Promise<{ items: Notice[]; count: nu
   const [all, waiting] = await Promise.all([allNotices(), waitingCount()]);
   return {
     items: all.slice(0, limit),
-    count: waiting + all.filter((n) => n.outstanding && n.kind !== 'decision').length,
+    count: waiting + all.filter((n) => n.outstanding && n.kind !== 'held').length,
   };
 }
 

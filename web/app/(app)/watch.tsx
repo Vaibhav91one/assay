@@ -807,11 +807,11 @@ function StartFrom({ waiting }: { waiting: number }) {
       <p className="label-10 text-[var(--text-muted)]">OR START FROM</p>
       {waiting > 0 && (
         <Row
-          href="/decisions"
+          href="/fields?show=held"
           icon={<Split size={18} strokeWidth={1.5} className="text-[var(--text-primary)]" aria-hidden />}
           badge={waiting}
-          title={`Review ${waiting} decision${waiting === 1 ? '' : 's'} waiting on you`}
-          sub="held rows, nothing published yet"
+          title={`${waiting} cell${waiting === 1 ? '' : 's'} held, nothing published yet`}
+          sub="waiting on a Bright Data collector fix, not a click here"
         />
       )}
       {/* First of the two, and above Runs on purpose: this is the row for
@@ -1038,8 +1038,8 @@ function Built({
           See the run ›
         </Link>
         {held.length > 0 && (
-          <Link href="/decisions" className="meta-13 text-[var(--semantic-link)]">
-            Decide the held {held.length === 1 ? 'field' : 'fields'} ›
+          <Link href="/fields?show=held" className="meta-13 text-[var(--semantic-link)]">
+            See the held {held.length === 1 ? 'field' : 'fields'} ›
           </Link>
         )}
       </div>

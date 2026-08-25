@@ -76,9 +76,11 @@ describe('AUTH_MODE=clerk, no session', () => {
     // Not an exact list -- that is the thing this test stopped relying on. A
     // floor, so a walk that silently finds nothing cannot pass.
     expect(FILES.length).toBeGreaterThanOrEqual(6);
-    // The one an audit actually reached the database with, and the two the
-    // merge added, named so a refactor that moves them is visible here.
-    expect(FILES).toContain('app/(app)/decisions/actions.ts');
+    // The two the merge added on the day the audit landed, named so a
+    // refactor that moves them is visible here. (`decisions/actions.ts` --
+    // the file the audit actually reached the database through -- is gone
+    // with the decide-queue; this file's walk still covers whatever replaces
+    // it, which is the point of walking rather than listing.)
     expect(FILES).toContain('app/(app)/library/actions.ts');
     expect(FILES).toContain('app/(app)/explain/actions.ts');
   });

@@ -26,7 +26,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
  * read" and a mute, because all three need a read-state column that does not
  * exist and would make the badge a fact about one browser tab; and a "view
  * all", because there is no route that lists these -- a notice is answered on
- * /decisions, /runs or /settings, and a link to nowhere is worse than no link
+ * /fields, /runs or /settings, and a link to nowhere is worse than no link
  * because it looks like it worked. Grouping the flyout into tabs was
  * considered and dropped: four kinds across two groups do not need them.
  *
@@ -42,14 +42,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
  * keyboard focus as well as on hover.
  */
 const ICON: Record<NoticeKind, typeof Bell> = {
-  decision: Split,
+  held: Split,
   break: CircleAlert,
   undelivered: MailWarning,
   healed: Check,
 };
 
 const TONE: Record<NoticeKind, string> = {
-  decision: 'var(--semantic-warning)',
+  held: 'var(--semantic-warning)',
   break: 'var(--semantic-danger)',
   undelivered: 'var(--semantic-danger)',
   healed: 'var(--semantic-success)',

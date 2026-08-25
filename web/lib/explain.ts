@@ -7,7 +7,6 @@ import { and, desc, eq, lte } from 'drizzle-orm';
 import { gateCheck, gateNumbers } from './run-flow';
 import { rankedOf, thresholdsOf } from './run-detail';
 import { hasCapture } from 'assay/engine/store/captures';
-import { t } from './copy';
 
 /**
  * F12, assembled: where one published value came from, months later, from a
@@ -229,7 +228,10 @@ export async function provenance(proofId: string): Promise<Provenance | null> {
   const numbers = gateNumbers(ranked);
   const th = thresholdsOf(target?.contract ?? null);
 
-  const OPTION_LABELS = [t('decisions.card.best'), t('decisions.card.second')] as const;
+  // Hardcoded, not `t()`: this is the only remaining consumer, historical
+  // proofs from before healGated was retired (`src/runner.ts`'s header) --
+  // a new proof never carries a ranked list to label.
+  const OPTION_LABELS = ['BEST MATCH', 'CLOSE SECOND'] as const;
   const candidatesForView = ranked?.length
     ? ranked.slice(0, 2).map((c, i) => ({ selector: c.selector, label: OPTION_LABELS[i] ?? `candidate ${i + 1}` }))
     : null;

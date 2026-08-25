@@ -1,13 +1,13 @@
 ---
 title: MCP
-description: 23 tools that hand an agent the list of calls a scraper refused to make, and four that are deliberately absent.
+description: 22 tools that hand an agent the list of calls a scraper refused to make, and four that are deliberately absent.
 ---
 
 The headline is not "let an agent scrape things" — every MCP server can do that.
 It is that this one hands an agent **the list of calls a scraper refused to
 make**, and gives it no way to settle them.
 
-The agent's inbox is the Decisions screen.
+The operator's inbox is the Fields screen, filtered to held.
 
 ---
 
@@ -68,7 +68,7 @@ target by construction, has nothing for a scoped key to be checked against and
 is refused — the same answer its nearest REST equivalent already gives.
 
 <Callout type="info" title="One server, two transports">
-  Both serve the same 23 tools from the same directory (`src/mcp/tools/*.ts`,
+  Both serve the same 22 tools from the same directory (`src/mcp/tools/*.ts`,
   globbed at boot) — stdio (`src/mcp/server.ts` + `StdioServerTransport`, for
   Claude Code and Codex, local processes that can spawn one) and HTTP
   (`web/app/api/mcp/route.ts`, `WebStandardStreamableHTTPServerTransport`, for
@@ -96,7 +96,7 @@ filesystem-order-dependent.
 
 ---
 
-## The 23 tools
+## The 22 tools
 
 ### Core — `tools/core.ts`
 
@@ -104,7 +104,6 @@ filesystem-order-dependent.
 |---|---|
 | `assay_status` | What is watching, what is held, and what is waiting on a human. |
 | `assay_held` | Every held cell: null, labelled, and never filled. |
-| `assay_decisions` | The queue. Each item carries both answers, the evidence, and what it is holding. |
 | `assay_runs` | Run history for a target, newest first. |
 | `assay_blast` | Which rows a break covers and how far back — the boundary between the last clean run and detection. |
 | `assay_explain` | Where a published value came from: run, capture, anchors, and whether it was healed. |

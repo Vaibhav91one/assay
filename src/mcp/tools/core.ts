@@ -59,31 +59,6 @@ export const TOOLS: Record<string, McpTool> = {
     },
   },
 
-  assay_decisions: {
-    description:
-      'The queue: decisions the gate refused to make. Each item carries both '
-      + 'answers, the evidence, and what it is holding.',
-    schema: { limit: z.number().int().min(1).max(500).optional() },
-    async run({ limit = 50 }: { limit?: number } = {}) {
-      const items = await openQueue(limit);
-      const out: Record<string, unknown>[] = [];
-      for (const it of items) {
-        const x = await explain(it.proofId);
-        if (!x) continue;
-        out.push({
-          proof: it.proofId,
-          run: x.run,
-          field: x.field,
-          reason: x.reason,
-          stakes_rows: it.stakesRows,
-          // The list the gate ranked. A nomination is scored against THIS.
-          candidates: x.ranked ?? [],
-        });
-      }
-      return { decisions: out };
-    },
-  },
-
   assay_runs: {
     description: 'Run history for a target, newest first.',
     schema: { target: z.string().optional(), limit: z.number().int().min(1).max(500).optional() },

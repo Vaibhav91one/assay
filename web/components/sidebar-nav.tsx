@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Home, Split, Activity, Columns3, Clock, Shapes, GitCompare, FileSearch, BookOpen,
+  Home, Activity, Columns3, Clock, Shapes, GitCompare, FileSearch, BookOpen,
 } from 'lucide-react';
 import {
   SidebarMenu,
@@ -13,20 +13,8 @@ import {
 } from '@/components/ui/sidebar';
 import { t } from '@/lib/copy';
 
-/**
- * `Split` is the Decisions glyph, everywhere the concept is drawn: here, the
- * notification row, the button that opens the queue, the empty state.
- *
- * A Decision on this product is one held value with two candidates and a
- * person who has to pick one. `Split` is a single path forking into two
- * arrowheads -- one thing, two ways, choose -- which is that sentence as a
- * picture. It replaced two glyphs that were each saying something else: a
- * balance beam, which reads as justice and weighing evidence rather than as
- * something waiting, and a checklist, which reads as tasks to tick off.
- */
 const NAV = [
   { href: '/', label: t('nav.home'), icon: Home },
-  { href: '/decisions', label: t('nav.decisions'), icon: Split },
   // Routes with no rail entry of their own still belong under one. A proof
   // opened from the runs table must not leave the rail pointing at nothing.
   { href: '/runs', label: t('nav.runs'), icon: Activity, also: ['/explain'] },
@@ -120,8 +108,11 @@ export function SidebarNav({ waiting }: { waiting: number }) {
                   'Decisions'`, which made the waiting badge a function of the
                   English word: the day that label is translated -- or merely
                   reworded -- the badge silently stops rendering, with nothing to
-                  fail. The href is the identity; the label is presentation. */}
-              {href === '/decisions' && waiting > 0 && (
+                  fail. The href is the identity; the label is presentation.
+                  Moved to /fields when the decide-queue screen it used to sit
+                  on was retired -- /fields?show=held is the read-only view of
+                  the same held cells now. */}
+              {href === '/fields' && waiting > 0 && (
                 <SidebarMenuBadge className="top-[-1px] size-[18px] justify-center rounded-full bg-[var(--accent-brand)] p-0 group-data-[collapsible=icon]:hidden">
                   <span className="caption-12 text-[var(--accent-on-primary)]">{waiting}</span>
                 </SidebarMenuBadge>

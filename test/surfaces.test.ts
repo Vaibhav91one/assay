@@ -174,8 +174,8 @@ describe('MCP tool surface', () => {
     expect(names).not.toContain('assay_resolve');
   });
 
-  it('exposes the seven documented tools', () => {
-    for (const t of ['assay_status', 'assay_held', 'assay_decisions',
+  it('exposes the six documented tools', () => {
+    for (const t of ['assay_status', 'assay_held',
       'assay_runs', 'assay_blast', 'assay_explain', 'assay_watch']) {
       expect(TOOLS[t]).toBeTruthy();
     }

@@ -14,8 +14,8 @@ export const dynamic = 'force-dynamic';
  *
  * All the arithmetic already existed (`src/blast/index.ts`, wired to
  * `GET /api/v1/blast` for machine consumers) -- this route is the operator-
- * session read of the same function, the way `decisions/page.tsx` reads
- * `heldQueue()` directly rather than calling its own REST API over HTTP.
+ * session read of the same function, called directly rather than through
+ * its own REST API over HTTP.
  */
 export default async function BlastRadiusPage({
   params,

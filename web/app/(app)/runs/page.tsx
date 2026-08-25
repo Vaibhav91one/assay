@@ -98,9 +98,9 @@ function NeedsYou({
           ))}
         </p>
       </div>
-      <Link href="/decisions" className={actionVariants({ variant: 'link' })}>
+      <Link href="/fields?show=held" className={actionVariants({ variant: 'link' })}>
         <ArrowRight size={16} strokeWidth={1.5} aria-hidden />
-        Open the decision{count === 1 ? '' : 's'}
+        See the held field{count === 1 ? '' : 's'}
       </Link>
     </div>
   );

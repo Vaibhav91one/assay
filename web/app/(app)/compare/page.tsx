@@ -175,7 +175,7 @@ function WithheldCard({ w }: { w: Withheld }) {
         </p>
       </div>
       {w.waiting ? (
-        <Link href="/decisions" className={actionVariants({ variant: 'success' })}>
+        <Link href="/fields?show=held" className={actionVariants({ variant: 'success' })}>
           <Split size={16} strokeWidth={1.5} aria-hidden />
           {t('compare.decide')}
         </Link>

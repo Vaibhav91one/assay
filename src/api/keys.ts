@@ -189,17 +189,13 @@ async function scopedTarget(request: Request, ctx?: RouteCtx): Promise<string | 
       ? parsed.target
       : null;
   }
-  if (path.startsWith('/decisions/')) {
-    const proof = (await jsonBody(request))?.proof;
-    return typeof proof === 'string' ? targetForProof(proof) : null;
-  }
   if (path === '/blast/retraction' && request.method !== 'GET') {
     const target = (await jsonBody(request))?.target;
     return typeof target === 'string' && target ? target : null;
   }
 
   const targetQueryRoutes = new Set([
-    '/targets', '/runs', '/held', '/queue', '/health-fields', '/blast',
+    '/targets', '/runs', '/held', '/health-fields', '/blast',
     '/blast/retraction', '/reports/diff', '/reports/incidents',
   ]);
   if (targetQueryRoutes.has(path) && request.method === 'GET') {
@@ -290,7 +286,7 @@ async function mcpTarget(name: string, args: Record<string, unknown>): Promise<s
       return 'ANY';
 
     // Every remaining tool either has no target argument at all
-    // (assay_held, assay_decisions, assay_connectors,
+    // (assay_held, assay_connectors,
     // assay_model_status, assay_skills, assay_targets, assay_digest,
     // assay_create_watch) or, like assay_blast in core.ts, takes only a field
     // name that is not unique to one target -- there is no id here a scoped

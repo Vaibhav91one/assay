@@ -26,7 +26,7 @@ Ranked by pain removed, not by how impressive they are to build. Phrased the way
 | 1 | *"Don't publish a number you aren't sure about. I would rather have a hole than a lie."* | Catastrophic. A hole is a ticket; a wrong price is a refund, a bad model, a recall that never went out | Every silent break | Quarantine (F4) |
 | 2 | *"Something's wrong — tell me exactly which rows, across which runs, and how far back."* | Turns an 11-day forensic dig into a 20-minute retraction | Every incident | Blast Radius (F6) |
 | 3 | *"Tell me it broke before my customer does."* | Removes the discovery lag entirely — the part that makes the incident embarrassing rather than routine | Weekly-ish | Drift Watch (F3), Diagnosis Alert (F5) |
-| 4 | *"When you genuinely can't tell, ask me — but make it a question I can answer in five seconds without opening the site."* | Converts an abstain from a stall into a resolved decision. Without this, refusal is just a slower failure | Per ambiguous break | Abstain Queue (F7), Decide Once (F8) |
+| 4 | *"When you genuinely can't tell, ask me — but make it a question I can answer in five seconds without opening the site."* | **No longer served by this build.** The decide-queue (F7, F8) is retired — see §2.3 — a held cell is now a read-only fact on the Fields screen, and recovery is Bright Data's collector repair, not an in-app resolution | Per ambiguous break | — |
 | 5 | *"Fix the boring ones without waking me. A class got renamed; I don't need to be involved."* | **No longer served by this build.** The runtime gate that did this (`healGated`) is retired — see §2.4 — every break now quarantines and recovery is Bright Data's collector repair, a human-approved, out-of-band flow, not a same-run auto-fix | Most breaks | — |
 | 6 | *"Where did this number come from?"* — asked about one cell, months later, usually by someone else | Ends the "I'll have to look into it" answer that costs a day and buys no trust | Per dispute | Cell Provenance (F12) |
 | 7 | *"Price must never be wrong. The description can be fuzzy. Stop treating them the same."* | Stops the single global threshold from being simultaneously too twitchy and too loose | Set once, felt daily | Field Contracts (F2) |
@@ -187,50 +187,30 @@ exactly as unreliable as the thing it replaces.
 
 ### 2.3 Deciding
 
-#### F7 — The Abstain Queue ⭐
+#### F7 — The Abstain Queue (retired)
 
 | | |
 |---|---|
-| **Job** | 4 — *"ask me a question I can answer in five seconds"* |
-| **What the user does** | Opens an inbox of *"I did not answer. You decide."* Resolves items with the keyboard. Leaves when it is empty. |
-| **Why it beats status quo** | No competitor ships this, because no competitor abstains — Scrapling returns its argmax, COLOR "suggested fixes for all captured broken locators", Skyvern turns a missing integer into `0`. The queue is the visible half of the only genuinely differentiated behaviour in the system. |
-| **Engine** | **✓** for content — every abstain already emits a proof record with candidates, scores, margin, thresholds, diagnosis and the frozen golden HTML hash. **✦** for the queue itself. |
+| **Job** | 4, formerly — *"ask me a question I can answer in five seconds"* |
+| **What it did** | An inbox of *"I did not answer. You decide."* — resolve with the keyboard, leave when it is empty. |
+| **Engine** | **retired** — `web/app/(app)/decisions/*`, `src/decisions/index.ts`'s `resolve`/`undo`, and the `assay_decisions` MCP tool are deleted. |
 
-**What makes an item resolvable in five seconds.** This is the hard design problem in the product,
-so it gets rules rather than a mockup:
+Retired for the same reason as F10/F11: it existed to settle a `ranked` candidate list, and
+`healGated` — the only thing that ever wrote one — is gone (`src/runner.ts`'s header). With no
+candidates to choose between, "first" and "second" could never be answered again; the honest move
+was removal, not a queue permanently stuck on two empty options. A held cell is now a read-only
+fact — visible on `/fields`, filtered to held — and recovery is exclusively Bright Data's collector
+repair (`tools/bd-heal.ts`), a separate, human-approved, out-of-band flow. The underlying
+`queue_items` table stays: `/compare`, `/fields`, the `/held` REST route and the `assay_held` MCP
+tool all still read it for what it always also meant — a cell the gate refused to publish.
 
-| Rule | Why |
-|---|---|
-| **Show values, never selectors.** *"Which of these is the price? **$49.99** or **$69.99**"* — with each candidate's label text, neighbours and heading path underneath | `span.pdp-price__was` is not evidence to a human. The user does not know this site; a selector string asks them to learn it |
-| **Show last week's answer, prominently.** *"On run 47 this field said $49.99"* | This is the single most decisive fact and it resolves the majority of items on its own. It is already in `before.value` |
-| **Two choices, or none.** If there are five plausible candidates, the correct behaviour is to stay quarantined and escalate — not to render a quiz | A five-way multiple-choice under time pressure reproduces the false-heal problem inside a human being |
-| **State the stakes on the card.** *"Decides 412 held rows across 3 runs"* | Makes speed rational and makes triage order obvious. Sort the queue by rows held, never by age |
-| **Render the frozen page inline.** The golden HTML is captured and hashed; show it with both candidates highlighted | Requiring the user to open the live site defeats the whole thing: the live site has changed again since, and it may be behind a login |
-| **Third button, always legitimate: "I can't tell."** It stays quarantined, escalates by the field contract, and is recorded as a *resolution*, not a skip | If the only way to empty the queue is to guess, we have rebuilt false healing with a slower processor. Refusal has to be available to the human too, or the product's thesis stops at the API boundary |
-| **Keyboard only: `1`, `2`, `N`.** No mouse, no confirmation dialog, undo instead | Five seconds does not survive a modal |
-| **No selector editing.** Ever | See anti-features |
-
-The margin bar — #1 and #2 scores side by side with the gap drawn between them — belongs on this
-card as the *justification*, not the question. It explains why the machine is asking. It is not
-what the user answers.
-
-#### F8 — Decide Once
+#### F8 — Decide Once (retired)
 
 | | |
 |---|---|
-| **Job** | 4 — the part that makes the queue survivable |
-| **What the user does** | Answers one card. A banner says *"applied to 340 other items on the same template."* |
-| **Why it beats status quo** | A template change produces one *decision* and thousands of *instances*. A queue that shows a thousand identical cards is not an inbox, it is a punishment, and it will be bulk-approved unread within two days — which is worse than no queue. |
-| **Engine** | **~** — `skeletonHash()` already groups pages by template, and the winning candidate's fingerprint gives the second key. New: the grouping and the write-back. |
-
-Grouping key: `skeleton_hash + field + winning candidate fingerprint shape`. The user's answer is
-appended as a **new capture** — never an overwrite. This is deliberate and it is where Scrapling
-fails: `auto_save=True` writes the relocated element back over the stored fingerprint with
-`INSERT OR REPLACE`, so one wrong match silently becomes ground truth and every later relocation
-drifts from it. Append-only is what makes F10 possible at all.
-
-Items in a group that do *not* match the key stay queued individually. A decision never leaks across
-templates.
+| **Job** | 4, formerly — the part that made the queue survivable |
+| **What it did** | Answered one card, applied it to every other held item on the same template. |
+| **Engine** | **retired** — along with F7. There is no queue left for it to group. |
 
 ### 2.4 Recovering
 
@@ -382,7 +362,7 @@ Things a reasonable, competent person would build, that we should refuse.
 | **A fleet dashboard: uptime tiles, health gauges, SLA rings** | This is the measurement trap wearing a UI. It is also, as a product, somebody else's. Nobody's bad day is improved by a gauge; it is improved by knowing which 4,113 rows to retract. **Partially overturned 2026-08-21** — the gauges refusal stands, the need does not: an unattended run needs a morning read. Ships as the Night Report, a log with no gauge, ring or percentage on it. See `docs/APP-DESIGN.md` §1 |
 | **RBAC, approval workflows, comment threads on queue items** | One owner, one decision, undo. Add the second person when a real team actually shares a queue and complains — not before |
 | **Scheduling and orchestration** | Bright Data runs the collectors. Becoming a job runner adds an on-call rotation and a class of failure that has nothing to do with our thesis. **Overturned 2026-08-21** — a product you walk away from must state its own cadence. Assay owns the schedule as declared state; it still does not execute the job. See `docs/APP-DESIGN.md` §1 |
-| **A notification bell/inbox** | Alerts are push and the Decisions badge already counts exactly what needs you. A second in-app inbox accumulates things-you-already-know, trains clearing behaviour, and is the fleet dashboard arriving through an icon |
+| **A notification bell/inbox** | Alerts are push and the held-count badge on `/fields` already counts exactly what needs you. A second in-app inbox accumulates things-you-already-know, trains clearing behaviour, and is the fleet dashboard arriving through an icon |
 | **A user-facing probe transcript** | The sandboxed probe is a fine internal tie-breaker for thin margins, but "here is the experiment the robot ran on the page" is not something a user *operates* — it is something they read once and never again. Feed its outcome into the queue card as one line of justification. Do not build a screen for it |
 
 Also cut, from earlier thinking: heal-history timeline visualisations, per-site scoreboards,
@@ -396,19 +376,20 @@ onboarding.
 Principles: **config lives in the repo** (diffable, reviewable, revertable — thresholds are code);
 **alerts are push, never a page you must remember to visit**; **the CLI is the primary surface**
 because the user already lives in a terminal and the output must pipe into their warehouse; and
-**only two things earn pixels** — both are comparisons a human makes under time pressure, and both
-are unreadable as text.
+**pixels are earned, not defaulted to** — the one screen left that does (F6) is a comparison a human
+makes under time pressure and is unreadable as text. F7 used to earn the same argument; it is
+retired along with the mechanism it existed to settle — see §2.3.
 
 | # | Feature | Primary surface | Also | Notes |
 |---|---|---|---|---|
 | F1 | Fragility Report | CLI (`assay fragility`) | Markdown export | Read once per quarter. A screen would be a screen nobody opens |
 | F2 | Field Contracts | Config file in repo | Read-only viewer in the app | Never a settings *editor*. A settings UI has no diff, no review, no revert. Credentials get pixels, policy gets a PR — `docs/APP-DESIGN.md` §1 |
 | F3 | Drift Watch | Webhook / chat message | CLI status | Amber only. Never pages |
-| F4 | **Quarantine** | Output envelope + storage | CLI (`assay held`), count badge in queue | The feature is mostly invisible, which is correct — its visible half is F13 |
+| F4 | **Quarantine** | Output envelope + storage | CLI (`assay held`), count badge on `/fields` | The feature is mostly invisible, which is correct — its visible half is F13 |
 | F5 | Diagnosis Alert | Webhook (Slack/PagerDuty by contract) | — | Body is the diagnosis string. One per episode |
 | F6 | **Blast Radius** | CLI (`assay blast`) + **UI** | CSV/webhook retraction list | The UI half is a timeline: last clean run, boundary, detection, rows held. This one earns a screen because the shape of the gap is the insight |
-| F7 | **Abstain Queue** | **UI** | CLI (`assay queue --json`) for automation | The one screen the product is judged on. Keyboard-first |
-| F8 | Decide Once | Inside the queue card | — | Not its own surface — a banner and a count |
+| F7 | Abstain Queue | — | — | **Retired** — see §2.3. Had nothing left to settle once `healGated` stopped writing `ranked` candidates |
+| F8 | Decide Once | — | — | **Retired** — along with F7 |
 | F9 | Retraction & Backfill | CLI | Webhook to warehouse | Piping into their systems matters more than rendering it in ours |
 | F10 | Unheal | — | — | **Retired** — see §2.4. `healGated`, the runtime healer it reverted, is gone |
 | F11 | Hostile Site Brake | — | — | **Retired** — see §2.4. Nothing left in the live pipeline to trip it |

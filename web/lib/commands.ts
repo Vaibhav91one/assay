@@ -19,7 +19,6 @@ import { COMMANDS, type CommandName } from 'assay/engine/store/conversation-log'
 // its own extension alias. No other module in `web/lib` imports a sibling, so
 // there was no house style to follow -- this is the spelling that satisfies both
 // type-checkers rather than only the one that runs in `web/`.
-import { openDecisions, type Decision } from './queue.js';
 import { fieldsView, type FieldRow } from './fields.js';
 import { runsView, type RunRow } from './runs.js';
 
@@ -27,23 +26,19 @@ import { runsView, type RunRow } from './runs.js';
  * What a `/` command in the chat reads, every time it is rendered.
  *
  * THE READ IS LIVE AND THE TURN HOLDS NOTHING. `src/store/conversation-log.ts`
- * states why: a transcript that froze "3 cells waiting" into a message would be
- * wrong the moment somebody answered one, and would keep offering buttons for a
- * decision that no longer exists. So a command turn stores the command, the
- * screen calls this on every mount, and what an operator scrolls back to is what
- * the store says now -- an answered cell reads as answered from a turn that ran
- * an hour before it was answered.
+ * states why: a transcript that froze "3 fields held" into a message would be
+ * wrong the moment the worker's next run changed that number. So a command turn
+ * stores the command, the screen calls this on every mount, and what an operator
+ * scrolls back to is what the store says now -- a `/fields` turn from an hour
+ * ago reads the current held count, not the one from when it was typed.
  *
- * NOTHING HERE IS A NEW READ. `/decisions` and `/held` are both
- * `openDecisions()` -- one queue, asked two questions, and the difference is a
- * sentence in the panel rather than a second query; `/fields` is `fieldsView()`,
- * `/runs` is `runsView()`. A second query answering the same question is how two
- * surfaces come to disagree about how many cells are waiting, which is the
- * failure this product exists to refuse.
+ * NOTHING HERE IS A NEW READ. `/fields` is `fieldsView()`, `/runs` is
+ * `runsView()` -- the same reads those screens themselves call. A second query
+ * answering the same question is how two surfaces come to disagree about what
+ * is held, which is the failure this product exists to refuse.
  *
- * NOTHING HERE WRITES, either. Resolving is `resolveCell` in
- * `./decisions/actions.ts` and asking for a run is `askForRun` in
- * `./schedule/actions.ts` -- the same actions those screens call, reached from a
+ * NOTHING HERE WRITES, either. Asking for a run is `askForRun` in
+ * `./schedule/actions.ts` -- the same action that screen calls, reached from a
  * button a person pressed. There is deliberately no write in this file: a second
  * writer is the drift `tools/sweep.ts` was cleaned of, and an agent that could
  * reach one would be the authority `docs/FEATURES.md` refuses it. `/fields` has
@@ -64,8 +59,6 @@ import { runsView, type RunRow } from './runs.js';
  * the turn: the copy is the lie this design exists to avoid.
  */
 export type CommandView =
-  /** The open queue. `held` is the same rows, counted by field -- see `scope()`. */
-  | { command: 'decisions' | 'held'; decisions: Decision[] }
   | { command: 'fields'; fields: FieldRow[]; tracked: number; fragile: number }
   | {
       command: 'runs';
@@ -92,9 +85,6 @@ export async function readCommandView(name: CommandName): Promise<CommandResult>
     };
   }
 
-  if (name === 'decisions' || name === 'held') {
-    return { ok: true, view: { command: name, decisions: await openDecisions() } };
-  }
   if (name === 'fields') {
     const v = await fieldsView('all');
     return {

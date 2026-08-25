@@ -87,7 +87,6 @@ These come from `tools/cli/*.ts`. A feature adds a file; nobody edits the binary
 | `assay correct <proof> <value>` | Publish a corrected value as a new row that supersedes the wrong one. |
 | `assay connectors` | Bright Data delivery and Discord. See [Configuring credentials](/docs/credentials#discord). |
 | `assay contracts` | Field contracts: per-field thresholds, checked before they reach a scrape. |
-| `assay decisions` | The abstain queue: what is waiting on a human, and answering it. |
 | `assay fragility [target]` | Per-field fragility grade and drift state, from the pages the store still has. |
 | `assay incident` | Incident records, field diffs, and the digest — composed, never sent. |
 
@@ -110,9 +109,10 @@ npx tsx tools/cli/connectors.ts list
 
 ## What the CLI can do that the API cannot
 
-`assay decisions resolve` settles a held cell. So does
-`POST /api/v1/decisions/resolve`. **No [MCP tool](/docs/mcp) does**, and that is
-enforced at boot rather than left to convention.
+`assay correct <proof> <value>` publishes a corrected value as a new row that
+supersedes the wrong one. There is no REST route and **no [MCP tool](/docs/mcp)
+does this either** — publishing a value is not something a model gets to
+trigger.
 
 ---
 

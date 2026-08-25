@@ -54,7 +54,6 @@ const COPY = {
   // -- global chrome ---------------------------------------------------------
   'app.name': 'Assay',
   'nav.home': 'Home',
-  'nav.decisions': 'Decisions',
   'nav.runs': 'Runs',
   'nav.fields': 'Fields',
   'nav.schedule': 'Schedule',
@@ -81,7 +80,6 @@ const COPY = {
 
   // -- page titles (Next metadata) -------------------------------------------
   'title.home': 'Assay',
-  'title.decisions': 'Decisions · Assay',
   'title.runs': 'Runs · Assay',
   'title.run': 'Run · Assay',
   'title.fields': 'Fields · Assay',
@@ -101,45 +99,6 @@ const COPY = {
   'title.digest': 'Digest · Assay',
   'title.connect': 'Connect · Assay',
   'title.alert': 'Alert · Assay',
-
-  // -- decisions -------------------------------------------------------------
-  'decisions.heading': 'Decisions',
-  'decisions.empty.title': 'Nothing is waiting on you.',
-  'decisions.empty.body':
-    'Every cell in the last run was either published or is still being watched. Held cells arrive here the moment the gate refuses one.',
-  'decisions.empty.link': 'See what the runs did ›',
-  'decisions.card.why': 'Why this is held',
-  'decisions.card.use': 'Use this',
-  'decisions.card.empty': 'Leave this field empty',
-  'decisions.card.neither': 'Neither is right',
-  'decisions.card.seeOnPage': 'See it on the page',
-  'decisions.card.best': 'BEST MATCH',
-  'decisions.card.second': 'CLOSE SECOND',
-  'decisions.card.nominated': ' · MODEL NOMINATED',
-  'decisions.card.noEarlierRuns': 'No earlier runs to compare against',
-  'decisions.question.two': 'Two answers look about equally likely.',
-  'decisions.question.one': 'Only one candidate, and not a convincing one.',
-  'decisions.question.none': 'Nothing on the page looks much like this field any more.',
-  'decisions.undo': 'Undo',
-  'decisions.undoing': 'Undoing',
-  'decisions.answered.first': 'You chose the best match.',
-  'decisions.answered.second': 'You chose the close second.',
-  'decisions.answered.empty': 'You said this field is genuinely empty.',
-  'decisions.answered.neither': 'You said neither candidate is right, so the cell stays held.',
-  'decisions.notFourAnswers': 'Not one of the four answers.',
-  'decisions.reteach': 'Point this field at the right value',
-  'decisions.card.optionN': 'OPTION {n}',
-  'decisions.card.heldAgo': 'held {ago}',
-  // The reason, in the words the rest of the product uses. A code with no
-  // wording is printed AS a code and this sentence says so -- never an
-  // invented adjective. src/reports/vocabulary.ts.
-  'decisions.reason.plain': 'Nothing was published: {plain}.',
-  'decisions.reason.untranslated.before': 'Nothing was published for this cell. The gate recorded',
-  'decisions.reason.untranslated.after': ', which this screen has no wording for.',
-  'decisions.reason.none': 'Nothing was published for this cell.',
-  'decisions.reason.heldSince': ' Held since run {run}.',
-  // `{rows}` and the verb arrive assembled -- the catalogue does not do plurals.
-  'decisions.reason.stakes': ' {rows} {verb} on this field.',
 
   // -- runs ------------------------------------------------------------------
   'runs.heading': 'Runs',
@@ -180,7 +139,7 @@ const COPY = {
   'run.table.head.value': 'value',
   'run.table.head.reason': 'reason',
   'run.link.proof': 'proof ›',
-  'run.link.decide': 'decide ›',
+  'run.link.decide': 'see it held ›',
   // What the section is, now that it no longer states a verdict. The verdict is
   // the band, drawn once on the selector diff above it -- see the note at the
   // gate section in `runs/[run]/page.tsx`.
@@ -328,7 +287,7 @@ const COPY = {
   'compare.empty.body':
     'Compare reads the last seven days. A scraper that has not run in that window has nothing to compare against.',
   'compare.cannotTell': 'I cannot tell you whether this changed.',
-  'compare.decide': 'Decide',
+  'compare.decide': 'See it held',
   'compare.alreadyAnswered': 'already answered ›',
   'compare.table.head.scraper': 'scraper',
   'compare.table.head.field': 'field',
@@ -437,7 +396,6 @@ const COPY = {
   'home.startFrom': 'OR START FROM',
   'home.runs.title': 'See what every scraper did last',
   'home.runs.sub': 'the runs, and what each one published',
-  'home.decisions.sub': 'held rows, nothing published yet',
   'home.manual.title': 'Describe the fields yourself',
   'home.manual.sub': 'a page, and what to watch on it — no model needed',
   'home.stats.eyebrow': 'ACROSS ALL SCRAPERS',
@@ -463,21 +421,16 @@ const COPY = {
   // The `/` menu's own line per command, and what a refused one says. The names
   // are `COMMANDS` in src/store/conversation-log.ts; these are the words for
   // them. A command runs IN the chat -- none of these is a destination.
-  'command.decisions.hint': 'held rows waiting on a person',
-  'command.held.hint': 'every field currently holding a cell',
   'command.runs.hint': 'what every scraper did last',
   'command.fields.hint': 'everything under watch',
   'command.unknown':
-    'Assay has no command by that name. The commands are /decisions, /held, /runs and /fields.',
+    'Assay has no command by that name. The commands are /runs and /fields.',
   // Said when a command was typed with words after it. The words are kept in the
   // transcript and read by nothing, and saying so is cheaper than letting an
   // operator believe they asked a question that was answered.
   'command.argsIgnored':
     'The rest of that line was not used. A command lists what the store holds; it does not take a question yet.',
   'command.ranAt': 'read from the store just now',
-  'command.decisions.empty':
-    'Nothing is held. Every cell the gate could justify has been published, which is the good outcome.',
-  'command.held.empty': 'No field is holding a cell.',
   'command.runs.empty': 'No runs yet. The first one happens when a scraper is due.',
   'command.fields.empty': 'Nothing is under watch yet.',
   'command.open': 'Open the full screen ›',
@@ -499,7 +452,7 @@ const COPY = {
   'build.start': 'Start watching these fields',
   'build.starting': 'Reading the page for a baseline',
   'build.held': 'held',
-  'build.decideIt': 'Decide it ›',
+  'build.decideIt': 'See it held ›',
   'build.seeRun': 'See the run ›',
   'build.nothingCreatedYet': 'These are the fields and what the page says in each one right now.',
 

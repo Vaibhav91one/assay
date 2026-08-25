@@ -16,7 +16,7 @@ flowchart TB
   broke -->|"yes"| abstain["ABSTAIN<br/>hold the cell<br/>publish a labelled hole<br/>log the reason: no_local_heal"]
 
   live --> proof["one proof record per run<br/>results/events.jsonl"]
-  abstain --> queue["the abstain queue<br/>empty / neither only"]
+  abstain --> held["held<br/>visible on /fields, filtered to held"]
   abstain --> proof
 
   classDef decision stroke-width:2px
