@@ -12,7 +12,18 @@ overturns nothing, and one adds to the list.
 
 ---
 
-## 1. The rule
+## 1. The rule (§1-3 retired)
+
+> **§1-3 describe a mechanism that is now retired.** `healGated` (the runtime
+> gate §1-3 describe extending with a model's nomination) no longer runs on a
+> live fetch -- `src/runner.ts`'s header. `scoreNomination()`, the function
+> that actually implemented model-vs-scorer disagreement (`src/ai/index.ts`,
+> called by the now-deleted `assay_propose`/`assay_score_nomination` MCP
+> tools and `POST /api/v1/ai/nominate`), is deleted along with it: there is
+> no more ranked candidate list for a model to nominate against, on any
+> field, ever. Read §1-3 as design history, not current behaviour. §4
+> onward (the setup agent, agentic flows, the no-LLM-explanation refusal)
+> describe a different part of the system and are unaffected.
 
 **The model proposes. It never decides.**
 

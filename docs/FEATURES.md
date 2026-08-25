@@ -27,12 +27,12 @@ Ranked by pain removed, not by how impressive they are to build. Phrased the way
 | 2 | *"Something's wrong — tell me exactly which rows, across which runs, and how far back."* | Turns an 11-day forensic dig into a 20-minute retraction | Every incident | Blast Radius (F6) |
 | 3 | *"Tell me it broke before my customer does."* | Removes the discovery lag entirely — the part that makes the incident embarrassing rather than routine | Weekly-ish | Drift Watch (F3), Diagnosis Alert (F5) |
 | 4 | *"When you genuinely can't tell, ask me — but make it a question I can answer in five seconds without opening the site."* | Converts an abstain from a stall into a resolved decision. Without this, refusal is just a slower failure | Per ambiguous break | Abstain Queue (F7), Decide Once (F8) |
-| 5 | *"Fix the boring ones without waking me. A class got renamed; I don't need to be involved."* | Removes ~60% of interruptions. Table stakes — everyone claims it, we do it with a gate | Most breaks | Field Contracts (F2) + existing gate |
+| 5 | *"Fix the boring ones without waking me. A class got renamed; I don't need to be involved."* | **No longer served by this build.** The runtime gate that did this (`healGated`) is retired — see §2.4 — every break now quarantines and recovery is Bright Data's collector repair, a human-approved, out-of-band flow, not a same-run auto-fix | Most breaks | — |
 | 6 | *"Where did this number come from?"* — asked about one cell, months later, usually by someone else | Ends the "I'll have to look into it" answer that costs a day and buys no trust | Per dispute | Cell Provenance (F12) |
 | 7 | *"Price must never be wrong. The description can be fuzzy. Stop treating them the same."* | Stops the single global threshold from being simultaneously too twitchy and too loose | Set once, felt daily | Field Contracts (F2) |
 | 8 | *"Warn me it's about to break, while I still have a calm Tuesday."* | Moves work from incident-time to maintenance-time. 10x cheaper hour for hour | Monthly | Fragility Report (F1) |
 | 9 | *"Let me prove to my customer/auditor that this number is right, without writing an essay."* | Converts a trust problem into a link | Per escalation | Incident Record (F14), Trust Envelope (F13) |
-| 10 | *"Tell me when I should stop patching this and go renegotiate with the source."* | Stops months of babysitting a site that is A/B testing or actively hostile | Rare, expensive | Hostile Site Brake (F11) |
+| 10 | *"Tell me when I should stop patching this and go renegotiate with the source."* | **Retired** — see §2.4. Nothing in the live pipeline patches on its own anymore, so there is nothing left to tell you to stop | Rare, expensive | — |
 
 Jobs 1 and 2 are the product. 3–5 make it usable. 6–10 make it keepable.
 
@@ -247,29 +247,30 @@ Corrections are **published as a new version, never a mutation in place**. Anyon
 consumed the wrong value needs to be able to see that it changed, and what it changed from.
 Silently repairing history is how you make a second, worse incident out of the first one.
 
-#### F10 — Unheal
+#### F10 — Unheal (retired)
 
 | | |
 |---|---|
 | **Job** | 1, in reverse — *"that fix was wrong"* |
-| **What the user does** | `assay unheal ikea/price --run 48`. The field reverts to the last capture that was verified good, the heal is marked wrong in the record, and blast radius automatically re-opens from the heal date forward. |
-| **Why it beats status quo** | There is no status quo. In every shipping healer, an approved relocation is permanent and untracked; there is nothing to roll back to because the old fingerprint was overwritten. |
-| **Engine** | **~** — append-only capture history is the enabling design decision; the revert command and the automatic blast re-open are new. |
+| **What it did** | `assay unheal ikea/price --run 48`. The field reverted to the last capture verified good, the heal was marked wrong in the record, and blast radius automatically re-opened from the heal date forward. |
+| **Engine** | **retired** — `src/brake/index.ts` and its wiring are deleted. |
 
-An unhealed field is also a *fact about the gate*: it feeds the ping-pong memory in F11 so the same
-wrong heal is not re-proposed next week.
+Retired along with F11 below, for the same reason: both existed to manage `healGated`'s own
+runtime candidate-healer, and `healGated` is gone (`src/runner.ts`'s header) -- Bright Data's
+collector repair is the only recovery path now, and it is a separate, human-approved, out-of-band
+flow (`tools/bd-heal.ts`) neither of these features had any part in. Historical `heal_history` rows
+from before the removal stay in Postgres, unread by the app; nothing was deleted from the database.
 
-#### F11 — Hostile Site Brake
+#### F11 — Hostile Site Brake (retired)
 
 | | |
 |---|---|
 | **Job** | 10 — *"tell me when to stop patching"* |
-| **What the user does** | Receives: *"`price` on ikea has healed 4 times in 9 days and twice reverted to a previous selector. This is A/B testing, not breakage. Healing is disabled for this field until you say otherwise."* Then they pick a real fix: pin the field to its JSON-LD location, split the field per variant, or go talk to the data provider. |
-| **Why it beats status quo** | The status quo self-heals forever and calls it resilience. A field oscillating between two selectors is a site running an experiment; every heal is "successful" and half the resulting data is from the wrong variant. Self-healing makes this *invisible*, which is worse than breaking. |
-| **Engine** | **~** — heal-frequency and heal-history memory are specified; exposing the brake as a user-visible state with actions is new. |
+| **What it did** | Detected a field oscillating between two selectors within a 14-day window and stopped healing it: *"`price` on ikea has healed 4 times in 9 days and twice reverted to a previous selector. This is A/B testing, not breakage. Healing is disabled for this field until you say otherwise."* |
+| **Engine** | **retired** — `src/brake/index.ts` and its wiring are deleted. |
 
-The brake is a **stop**, not a warning. The field goes degraded and stays there until a human clears
-it. This is the one place where the product deliberately makes things worse in the short term.
+The brake existed to catch a self-healer quietly publishing from the wrong A/B variant forever.
+With no runtime healer left to trip it, there is nothing for it to watch.
 
 ### 2.5 Proving trust to someone else
 
@@ -409,8 +410,8 @@ are unreadable as text.
 | F7 | **Abstain Queue** | **UI** | CLI (`assay queue --json`) for automation | The one screen the product is judged on. Keyboard-first |
 | F8 | Decide Once | Inside the queue card | — | Not its own surface — a banner and a count |
 | F9 | Retraction & Backfill | CLI | Webhook to warehouse | Piping into their systems matters more than rendering it in ours |
-| F10 | Unheal | CLI (`assay unheal`) | Button on a heal's proof view | Rare, deliberate, typed |
-| F11 | Hostile Site Brake | Webhook + field state | CLI to clear | Must be cleared explicitly by a human, from the CLI |
+| F10 | Unheal | — | — | **Retired** — see §2.4. `healGated`, the runtime healer it reverted, is gone |
+| F11 | Hostile Site Brake | — | — | **Retired** — see §2.4. Nothing left in the live pipeline to trip it |
 | F12 | Cell Provenance | CLI (`assay explain <proof_id>`) | JSON API | Usually consumed by a script or pasted into a ticket, not browsed |
 | F13 | Trust Envelope | Output format | — | Not a feature you look at. A contract your code reads |
 | F14 | Incident Record | CLI generates a single static HTML/MD file | — | The artefact is a *file the user sends someone*. Hosting it is not our problem |

@@ -2,36 +2,13 @@
 
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
-import { Check, CircleAlert, Eye } from 'lucide-react';
+import { CircleAlert, Eye } from 'lucide-react';
 import type { Decision } from '@/lib/queue';
-import { StatusLine } from '@/components/status-line';
 import { ProofSheet } from '@/components/proof-sheet';
 import { heldBecause } from 'assay/engine/reports/vocabulary';
 import { stamp, ago } from '@/lib/when';
 import { resolveCell, type Outcome } from './actions';
 import { t } from '@/lib/copy';
-
-const OPTION_LABELS = [t('decisions.card.best'), t('decisions.card.second')] as const;
-
-function Evidence({ e }: { e: Decision['candidates'][number]['evidence'] }) {
-  if (!e) {
-    // An absence is an absence. "No earlier runs to compare" is a fact;
-    // showing nothing would let the reader assume agreement.
-    return (
-      <p className="caption-12 text-[var(--text-muted)]">{t('decisions.card.noEarlierRuns')}</p>
-    );
-  }
-  return (
-    <StatusLine
-      tone={e.kind === 'steady' ? 'success' : 'warning'}
-      size={13}
-      type="caption-12"
-      className="gap-[6px]"
-    >
-      {e.text}
-    </StatusLine>
-  );
-}
 
 export function DecisionCard({
   d,
@@ -91,63 +68,6 @@ export function DecisionCard({
           </div>
         </div>
 
-        {/*
-          What every other product in this category would have done with this
-          cell, said out loud.
-
-          It is the only place the reader can see the thing they are being
-          asked to spend thirty seconds on. A healer ranks, takes the top of
-          the ranking and publishes it; the gate ranked the same list, found no
-          clear winner and published a labelled hole instead. Without this line
-          the card reads as Assay failing to do its job.
-
-          `candidates[0]` IS that top -- `openDecisions` keeps the gate's own
-          ordering, best first -- so this is a real counterfactual off the
-          stored ranking, not a guess about what a competitor might do. With no
-          candidates there was nothing to publish and the line would be a
-          fabrication, so it is skipped.
-        */}
-        {d.candidates.length > 0 && (
-          <p className="meta-12_5 rounded-[var(--radius-control)] bg-[var(--surface-subtle)] px-[14px] py-[10px] text-[var(--text-secondary)]">
-            {t('counterfactual.before')}{' '}
-            <span className="mono-value-12_5 break-words text-[var(--text-primary)]">
-              “{d.candidates[0].value}”
-            </span>
-            {t('counterfactual.after')}
-          </p>
-        )}
-
-        {d.candidates.length > 0 && (
-          // STACKED BELOW 768. Two candidate cards side by side in 350px is two
-          // columns of 165px, and the value in each is the whole question --
-          // "£4.99" against "Add to basket" only reads as a choice if both are
-          // legible. One under the other keeps the order (best match first),
-          // which is the other half of what the pair is saying.
-          <div className="flex w-full flex-col items-stretch gap-[16px] md:flex-row">
-            {d.candidates.map((c, i) => (
-              <div
-                key={c.selector + i}
-                className="flex min-w-0 flex-1 flex-col gap-[10px] rounded-[var(--radius-card)] border border-[var(--border-default)] bg-[var(--surface-card)] px-[20px] py-[18px]"
-              >
-                <p className="label-10_5 text-[var(--text-muted)]">
-                  {OPTION_LABELS[i] ?? t('decisions.card.optionN', { n: i + 1 })}
-                  {d.nominated === i && t('decisions.card.nominated')}
-                </p>
-                <p className="nav-15 break-words text-[var(--text-primary)]">{c.value}</p>
-                <Evidence e={c.evidence} />
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() => act(() => resolveCell(d.proof, i === 0 ? 'first' : 'second'))}
-                  className="mt-auto flex h-[36px] w-fit items-center gap-[8px] rounded-[var(--radius-control)] bg-[var(--semantic-success)] px-[15px] disabled:opacity-60"
-                >
-                  <Check size={16} strokeWidth={2} className="text-[var(--accent-on-primary)]" aria-hidden />
-                  <span className="meta-12_5 text-[var(--accent-on-primary)]">{t('decisions.card.use')}</span>
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       <div className="h-px w-full bg-[var(--border-hairline)]" />
@@ -187,10 +107,14 @@ export function DecisionCard({
   );
 }
 
-/** The question follows from why the gate refused, not from a template. */
-function question(d: Decision): string {
-  if (d.candidates.length >= 2) return t('decisions.question.two');
-  if (d.candidates.length === 1) return t('decisions.question.one');
+/**
+ * The question follows from why the gate refused, not from a template.
+ *
+ * Always the no-candidates question now: `healGated`, the only thing that
+ * ever populated `field_runs.ranked`, no longer runs (`src/runner.ts`'s
+ * header), so a held cell never carries a ranked candidate to ask about.
+ */
+function question(_d: Decision): string {
   return t('decisions.question.none');
 }
 

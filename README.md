@@ -11,11 +11,13 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT"></a>
 </p>
 
-Assay is a self-healing scraper that refuses to guess. When a page changes, it
-ranks replacement candidates — and publishes only a clear winner. Everything
-else becomes a labelled hole and a question in a review queue, never a wrong
-value in your warehouse. It also measures how often its own heals are wrong,
-and ships the numbers.
+Assay is a scraper that refuses to guess. When a page changes, it holds the
+field rather than publish a guess — a labelled hole and a question in a
+review queue, never a wrong value in your warehouse. Recovery is Bright
+Data's collector repair, reviewed by a human before anything republishes.
+The candidate-ranking gate that used to attempt a same-run auto-fix is still
+measured offline against 153 archived breaks (`npm run bench`), and the
+numbers still ship — it just no longer runs on a live page.
 
 Built for the **Into the Scrape-Verse** hackathon (WeMakeDevs × Bright Data,
 17–23 Aug 2026).
@@ -100,7 +102,7 @@ npm run apikey -- my-key                # mint a key for the REST API
 The web UI is chat-first: paste a URL, confirm the proposed fields, and every
 run gets a full decision trace with a shareable proof page. Docs live in the
 app at `/docs` — including the [API reference](web/content/docs/api-reference.mdx),
-[MCP server](web/content/docs/mcp.mdx) (27 tools for Claude/Codex),
+[MCP server](web/content/docs/mcp.mdx) (23 tools for Claude/Codex),
 [CLI](web/content/docs/cli.mdx), and a [glossary](web/content/docs/glossary.mdx).
 Read [`/docs/self-host`](web/content/docs/self-host.mdx) before exposing it —
 self-hosted mode authenticates nobody by design.

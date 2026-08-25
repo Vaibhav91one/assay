@@ -5,7 +5,6 @@
 // clean clone; the pure ones (signing, schemas, tool surface) always run.
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { z } from 'zod';
 import { sign, verify, EVENTS, deliver, heldObservation } from '../src/api/webhooks.js';
 import { loadTools, REFUSED_TOOLS, type McpTool } from '../src/mcp/server.js';
 import { getExplain, getHeld, getRow } from '../src/api/handlers.js';
@@ -176,7 +175,7 @@ describe('MCP tool surface', () => {
   });
 
   it('exposes the seven documented tools', () => {
-    for (const t of ['assay_status', 'assay_held', 'assay_decisions', 'assay_propose',
+    for (const t of ['assay_status', 'assay_held', 'assay_decisions',
       'assay_runs', 'assay_blast', 'assay_explain', 'assay_watch']) {
       expect(TOOLS[t]).toBeTruthy();
     }
@@ -194,17 +193,6 @@ describe('MCP tool surface', () => {
     // another's tool and nobody finds out until production.
     const dir = new URL('./fixtures/tools-duplicate/', import.meta.url);
     await expect(loadTools(dir)).rejects.toThrow(/both export "assay_status"/);
-  });
-
-  it('assay_propose takes an index, not a value', () => {
-    const shape = z.object(TOOLS.assay_propose!.schema);
-    // A reference is accepted.
-    expect(shape.safeParse({ proof: 'pr_x', candidate_index: 0 }).success).toBe(true);
-    // A value in its place is rejected by the contract itself.
-    expect(shape.safeParse({ proof: 'pr_x', candidate_index: 'burn, electric shock' }).success)
-      .toBe(false);
-    // And there is no field a value could arrive in.
-    expect(Object.keys(TOOLS.assay_propose!.schema)).not.toContain('value');
   });
 });
 

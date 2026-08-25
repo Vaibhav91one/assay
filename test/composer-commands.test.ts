@@ -236,7 +236,7 @@ describe('the panel reads the store, so an old turn cannot go stale', () => {
     // The human answer, through the action the Decisions screen owns. There is
     // no second resolve path and this test would be the place a second one
     // showed up.
-    const answered = await resolve({ proof: PROOF, resolution: 'first' });
+    const answered = await resolve({ proof: PROOF, resolution: 'empty' });
     expect(answered.ok).toBe(true);
 
     const after = await readCommandView(turn.command);

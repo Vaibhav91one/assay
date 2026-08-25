@@ -2,14 +2,15 @@
 // `web/app/api/v1/ai/` stay thin wrappers so this is testable without booting
 // Next -- the same shape `src/api/handlers.ts` uses for the read-only surface.
 //
-// Nothing here writes. `POST /nominate` scores a nomination and returns what the
-// gate would say; recording a nomination is still `assay_propose`'s job and
-// resolving one is still nobody's.
+// `POST /nominate` used to score a nomination against the ranked list
+// `healGated` persisted when the gate abstained. It is gone along with
+// `assay_propose`/`assay_score_nomination`: `healGated` no longer runs
+// (`src/runner.ts`'s header), so there is never a ranked list to score a
+// nomination against.
 
 import { z } from 'zod';
 import { requireKey } from '../api/keys.js';
-import { explain } from '../store/index.js';
-import { hasKey, scoreNomination, rankDiscovery, type RankedCandidate } from './index.js';
+import { hasKey, rankDiscovery } from './index.js';
 
 type RouteCtx = { params: Promise<any> };
 type Handler = (request: Request, ctx: RouteCtx) => Promise<Response>;
@@ -78,44 +79,6 @@ export const getStatus = guarded(async () =>
       nomination_scoring: 'unaffected',
     },
   }));
-
-const NominateBody = z.object({
-  proof: z.string().min(1),
-  candidate_index: z.int().min(0),
-  // An index or an explicit null ("none of these"). Absent means not consulted,
-  // which is a third state and not the same as either.
-  model_pick: z.int().min(0).nullable().optional(),
-  tau: z.number().min(0).max(1).optional(),
-  delta: z.number().min(0).max(1).optional(),
-}).strict();
-
-/**
- * POST /api/v1/ai/nominate -- what would the gate say about this candidate?
- *
- * Read-only by construction: it scores the ranked list persisted when the gate
- * abstained and returns `decision: null`. Re-fetching the page would score a
- * different page and be silently wrong (CRITIQUE 2.4).
- */
-export const postNominate = guarded(async (request) => {
-  const body = await parseBody(request, NominateBody);
-  if (!body.ok) return body.response;
-
-  const x = await explain(body.data.proof);
-  if (!x) return Response.json({ error: 'not_found', detail: 'No held cell with that proof.' }, { status: 404 });
-  if (x.status !== 'quarantined') {
-    return Response.json({ error: 'not_held', detail: `That cell is ${x.status}, not held.` }, { status: 409 });
-  }
-
-  const ranked = (x.ranked ?? []) as RankedCandidate[];
-  return Response.json({
-    proof: body.data.proof,
-    ...scoreNomination(ranked, body.data.candidate_index, {
-      tau: body.data.tau,
-      delta: body.data.delta,
-      modelPick: 'model_pick' in body.data ? body.data.model_pick : undefined,
-    }),
-  });
-});
 
 const DiscoverBody = z.object({
   intent: z.string().min(1).max(500),

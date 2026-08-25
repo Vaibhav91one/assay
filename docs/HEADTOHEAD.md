@@ -45,6 +45,14 @@ specification of the experiment, not a report of one.
 
 ## 1. What the harness compares
 
+> This section describes the benchmark harness (`npm run bench`, `npm run
+> bench:live`), which still runs exactly as written below -- not the live
+> product pipeline. `healGated` no longer runs on a real fetch
+> (`src/runner.ts`'s header): a live break quarantines unconditionally now,
+> and recovery is Bright Data's collector repair, reviewed by a human. The
+> comparison below stays meaningful as an offline measurement of the same
+> gate arithmetic, evaluated on the same archived corpus either way.
+
 Two self-healing scrapers, given the same broken page, judged on the same
 question:
 

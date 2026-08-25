@@ -193,13 +193,6 @@ curl -sH "Authorization: Bearer $ASSAY_KEY" \
 | `GET` | `/api/v1/blast/retraction` | The list, without filing it. Same query as `/blast`; `?format=csv` returns the CSV as an attachment rather than JSON. |
 | `POST` | `/api/v1/blast/retraction` | File it. `{ …the same query fields, "exported"? }` — `exported` records that the list left the building. |
 
-### Brakes
-
-| Method | Path | Body / query |
-|---|---|---|
-| `GET` | `/api/v1/brake` | Every field currently held by a brake. `?target=` |
-| `POST` | `/api/v1/brake` | Clear one — the field name has to be typed out. A `POST` and not a `DELETE`: the brake becomes inactive and keeps a record of who made it so. |
-
 ### Reports
 
 | Method | Path | Body / query |
@@ -226,15 +219,16 @@ Every route here is read-only by construction, and none of them accepts a value.
 | Method | Path | Body / query |
 |---|---|---|
 | `GET` | `/api/v1/ai/status` | Whether a model is configured. Assay runs with none; every AI path degrades to the non-AI behaviour. |
-| `POST` | `/api/v1/ai/nominate` | `{ "proof", "candidate_index", "model_pick"?, "tau"?, "delta"? }` — scores a candidate **index** against the ranked list persisted when the gate abstained. Returns `decision: null`. `404` for an unknown proof, `409 not_held` for a cell that is not held. |
 | `POST` | `/api/v1/ai/discover` | `{ "intent", "targets" }` — orders candidate targets by operator intent, and always says in `source` whether the ordering came from a model or from word overlap. |
 
-<Callout type="warn" title="A candidate index, never a string">
-  `POST /api/v1/ai/nominate` takes an index into a list Assay already built and
-  already scored. It does not re-fetch the page — that would score a *different*
-  page and be silently wrong — and there is no route anywhere on this surface
-  that lets a caller hand Assay a value to publish. The equivalent restriction on
-  the [MCP server](/docs/mcp) is enforced at boot.
+<Callout type="warn" title="No route hands Assay a value to publish">
+  There is no route anywhere on this surface, or on the [MCP server](/docs/mcp),
+  that lets a caller hand Assay a value to publish — that restriction is
+  enforced at boot on the MCP side. `POST /api/v1/ai/nominate` used to be the
+  read-only half of that story, scoring a candidate index against the ranked
+  list the runtime gate persisted when it abstained; it is gone along with that
+  gate (see [MCP](/docs/mcp)) — recovery is a Bright Data collector repair now,
+  reviewed by a human, not something this API scores a nomination against.
 </Callout>
 
 ---

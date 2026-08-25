@@ -189,18 +189,18 @@ async function scopedTarget(request: Request, ctx?: RouteCtx): Promise<string | 
       ? parsed.target
       : null;
   }
-  if (path.startsWith('/decisions/') || path === '/ai/nominate') {
+  if (path.startsWith('/decisions/')) {
     const proof = (await jsonBody(request))?.proof;
     return typeof proof === 'string' ? targetForProof(proof) : null;
   }
-  if ((path === '/brake' || path === '/blast/retraction') && request.method !== 'GET') {
+  if (path === '/blast/retraction' && request.method !== 'GET') {
     const target = (await jsonBody(request))?.target;
     return typeof target === 'string' && target ? target : null;
   }
 
   const targetQueryRoutes = new Set([
     '/targets', '/runs', '/held', '/queue', '/health-fields', '/blast',
-    '/blast/retraction', '/brake', '/reports/diff', '/reports/incidents',
+    '/blast/retraction', '/reports/diff', '/reports/incidents',
   ]);
   if (targetQueryRoutes.has(path) && request.method === 'GET') {
     return url.searchParams.get('target') || null;
@@ -251,7 +251,7 @@ export async function requireKey(request: Request, ctx?: RouteCtx): Promise<Resp
  * already treats as a GET. Same precedent, same answer here.
  */
 const MCP_WRITE_TOOLS = new Set([
-  'assay_propose', 'assay_create_watch', 'assay_pause_watch', 'assay_delete_watch',
+  'assay_create_watch', 'assay_pause_watch', 'assay_delete_watch',
 ]);
 
 /** A target this tool call could ever be scoped to, `'ANY'` for a tool that touches no stored target data, or null for neither. */
@@ -260,7 +260,6 @@ async function mcpTarget(name: string, args: Record<string, unknown>): Promise<s
     // Target is the whole point of the call, and required by the tool's own
     // schema -- if a caller omitted it the tool itself would already refuse.
     case 'assay_blast_radius':
-    case 'assay_heal_history':
     case 'assay_contract':
     case 'assay_contract_history':
     case 'assay_diff':
@@ -279,8 +278,6 @@ async function mcpTarget(name: string, args: Record<string, unknown>): Promise<s
     // already do -- `/api/v1/rows/:proof`, `/api/v1/explain/:proof`,
     // `/api/v1/reports/incidents/:episode`.
     case 'assay_explain':
-    case 'assay_propose':
-    case 'assay_score_nomination':
       return typeof args.proof === 'string' ? targetForProof(args.proof) : null;
     case 'assay_incident':
       return args.episode != null ? targetForEpisode(String(args.episode)) : null;
@@ -293,7 +290,7 @@ async function mcpTarget(name: string, args: Record<string, unknown>): Promise<s
       return 'ANY';
 
     // Every remaining tool either has no target argument at all
-    // (assay_held, assay_decisions, assay_brakes, assay_connectors,
+    // (assay_held, assay_decisions, assay_connectors,
     // assay_model_status, assay_skills, assay_targets, assay_digest,
     // assay_create_watch) or, like assay_blast in core.ts, takes only a field
     // name that is not unique to one target -- there is no id here a scoped

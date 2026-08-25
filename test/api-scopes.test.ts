@@ -140,8 +140,6 @@ const requestFor = (
   if (path === '/contracts') body = { yaml: `target: ${target}\nfields: {}` };
   if (path.includes('/decisions/')) body = { proof, resolution: 'empty' };
   if (path === '/decisions/undo') body = { proof };
-  if (path === '/ai/nominate') body = { proof, candidate_index: 0 };
-  if (path === '/brake') body = { target, field: 'price', confirm: 'wrong', cleared_by: 'matrix' };
   if (path === '/blast/retraction') body = { target, field: 'price', from_run: 0 };
   if (path === '/targets') body = {};
 

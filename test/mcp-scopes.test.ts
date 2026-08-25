@@ -155,7 +155,7 @@ describe('tools with no target a scoped key could ever be checked against', () =
   it('refuses every one of them, matching their nearest REST equivalent', async () => {
     if (!dbUp) return;
     for (const name of [
-      'assay_held', 'assay_decisions', 'assay_brakes', 'assay_connectors',
+      'assay_held', 'assay_decisions', 'assay_connectors',
       'assay_model_status', 'assay_skills', 'assay_targets', 'assay_digest',
       'assay_create_watch',
     ]) {

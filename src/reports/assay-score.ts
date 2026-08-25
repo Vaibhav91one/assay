@@ -46,9 +46,14 @@ export type Band = 'CLEAR' | 'AGREED' | 'THIN' | 'WEAK' | 'GONE' | 'POLICY' | 'B
  * Exact reason codes, mapped one to one.
  *
  * `auto_approve_floor:<n>` carries the floor it tripped and so cannot be a key
- * here; it is matched by prefix in `bandFor`. `brake_engaged` is the exact
- * string `healBlockFor` in src/connectors/ingest.ts:91 passes as `healBlock`
- * when `shouldHeal` says no -- checked against the caller, not guessed.
+ * here; it is matched by prefix in `bandFor`.
+ *
+ * EVERY CODE HERE IS NOW HISTORICAL ONLY. `healGated` (the gate that wrote
+ * `clear_margin`/`benign_tie`/`thin_margin`/`below_tau`/`no_candidates`) and
+ * `healBlockFor` (`src/connectors/ingest.ts`, which wrote `brake_engaged`) are
+ * both gone -- see `src/runner.ts`'s header. Nothing in the live pipeline
+ * writes any of these codes to a new row anymore; they stay mapped here only
+ * so a proof from before this change still bands correctly.
  */
 const BANDS: Readonly<Record<string, Band>> = {
   clear_margin: 'CLEAR',
@@ -76,22 +81,19 @@ const FLOOR = 'auto_approve_floor:';
  *     `HELD_BECAUSE` and draws it the same way: a code with no wording prints
  *     AS a code, never as an invented adjective.
  *
- *   * `brake_unreadable:<message>` -- ingest.ts:97, the fail-closed branch when
- *     the brake table cannot be READ. It is deliberately NOT BRAKED. A brake
- *     that could not be read is not a brake that is set: nobody may have
- *     stopped this field, and telling the operator one did would send them to
- *     clear a brake that does not exist while the actual fault -- an
- *     unreachable database -- goes unnamed. The raw code still prints in the
- *     reason column, which is where an operator can act on it.
+ *   * `brake_unreadable:<message>` -- a historical row from `healBlockFor`'s
+ *     fail-closed branch, back when the brake table could not be READ. It was
+ *     deliberately NOT BRAKED even then: a brake that could not be read is not
+ *     a brake that is set, and telling the operator one did would send them to
+ *     clear a brake that does not exist. The raw code still prints in the
+ *     reason column on such a row, which is where an operator can act on it.
  *
- *   * NO REASON AT ALL. A published heal writes none: `src/runner.ts:263` gives
+ *   * NO REASON AT ALL. A published heal writes none: `src/runner.ts:263` gave
  *     the status `{ status: 'healed' }` with no reason field, so `clear_margin`
- *     and `benign_tie` live on the proof record and never reach `field_runs`.
- *     CLEAR and AGREED are in the table because they are the gate's own words
- *     and because `assay_propose` speaks them (src/ai/index.ts:248-251) -- so
- *     the day a heal reason is persisted, the band is already correct. Until
- *     then a healed cell shows the diff and no band, which is the honest shape
- *     of "nothing recorded which of the two heals this was".
+ *     and `benign_tie` live on the proof record and never reached `field_runs`.
+ *     CLEAR and AGREED stayed in the table as the gate's own historical words;
+ *     a healed cell shows the diff and no band, which is the honest shape of
+ *     "nothing recorded which of the two heals this was".
  */
 export function bandFor(reason: string | null | undefined): Band | null {
   if (!reason) return null;

@@ -215,7 +215,6 @@ function CodeBlock({ code }: { code: string }) {
 const AGENT_TOOLS: [string, string][] = [
   ['assay_status', 'What is watching, what is held, what is waiting on a human.'],
   ['assay_decisions', 'The queue — each item carries both answers and the evidence.'],
-  ['assay_propose', 'Nominate an element, by index. Never a value.'],
   ['assay_runs', 'Run history for a target.'],
   ['assay_blast_radius', 'What was already published that is now suspect.'],
   ['assay_explain', 'Where a published value came from.'],

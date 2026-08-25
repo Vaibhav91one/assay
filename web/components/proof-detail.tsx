@@ -3,7 +3,6 @@ import { StatusLine, type Tone } from '@/components/status-line';
 import { Disclosure, GateNumbers } from '@/components/disclosure';
 import { Copy } from '@/components/copy';
 import { CaptureView } from '@/components/capture-view';
-import { ResolveCandidates } from '@/components/resolve-candidates';
 import type { Provenance, Standing } from '@/lib/explain';
 import { stamp } from '@/lib/when';
 import { t } from '@/lib/copy';
@@ -52,10 +51,6 @@ export function ProofDetail({ p }: { p: Provenance }) {
         <div className="mt-[28px] flex w-full max-w-[1056px] flex-col items-start gap-[10px]">
           <p className="label-10 text-[var(--text-muted)]">THE PAGE, AS THE GATE SAW IT</p>
           <CaptureView sha={p.captureSha} candidates={p.candidatesForView} className="w-full" />
-          {/* Only when this proof's queue item is still open -- a cell that
-              already published, or was already answered, has no "looks
-              right" left to say. */}
-          {p.queueOpen && <ResolveCandidates proof={p.proof} candidates={p.candidatesForView} />}
         </div>
       )}
 

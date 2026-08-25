@@ -501,8 +501,9 @@ describe('what the agent is allowed to hold', () => {
     // added alongside it must not have introduced a way around that.
     const tools = await loadTools();
     expect('assay_resolve' in tools).toBe(false);
-    // The agent is given neither the nomination tool nor any write tool.
-    expect(Object.keys(tools)).toContain('assay_propose');
+    // Not a vacuous pass: loadTools() genuinely registers tools, it just
+    // refuses this specific one.
+    expect(Object.keys(tools)).toContain('assay_status');
   });
 });
 

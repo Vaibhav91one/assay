@@ -1,6 +1,6 @@
 ---
 title: MCP
-description: 27 tools that hand an agent the list of calls a scraper refused to make, and four that are deliberately absent.
+description: 23 tools that hand an agent the list of calls a scraper refused to make, and four that are deliberately absent.
 ---
 
 The headline is not "let an agent scrape things" — every MCP server can do that.
@@ -68,7 +68,7 @@ target by construction, has nothing for a scoped key to be checked against and
 is refused — the same answer its nearest REST equivalent already gives.
 
 <Callout type="info" title="One server, two transports">
-  Both serve the same 27 tools from the same directory (`src/mcp/tools/*.ts`,
+  Both serve the same 23 tools from the same directory (`src/mcp/tools/*.ts`,
   globbed at boot) — stdio (`src/mcp/server.ts` + `StdioServerTransport`, for
   Claude Code and Codex, local processes that can spawn one) and HTTP
   (`web/app/api/mcp/route.ts`, `WebStandardStreamableHTTPServerTransport`, for
@@ -96,7 +96,7 @@ filesystem-order-dependent.
 
 ---
 
-## The 27 tools
+## The 23 tools
 
 ### Core — `tools/core.ts`
 
@@ -105,7 +105,6 @@ filesystem-order-dependent.
 | `assay_status` | What is watching, what is held, and what is waiting on a human. |
 | `assay_held` | Every held cell: null, labelled, and never filled. |
 | `assay_decisions` | The queue. Each item carries both answers, the evidence, and what it is holding. |
-| `assay_propose` | Nominate an element for a held field, **by index** into the candidate list from `assay_decisions`. Scored against the same gate as any other candidate and may still be held. |
 | `assay_runs` | Run history for a target, newest first. |
 | `assay_blast` | Which rows a break covers and how far back — the boundary between the last clean run and detection. |
 | `assay_explain` | Where a published value came from: run, capture, anchors, and whether it was healed. |
@@ -143,13 +142,6 @@ filesystem-order-dependent.
 | `assay_contract` | The contract in force for a target: what the operator wrote, and the τ/δ each field is gated at. A field the contract does not mention is gated at the engine defaults, and that is stated rather than left blank. |
 | `assay_contract_history` | Every version, newest first, with the YAML as written. Answers "what did the contract say when that cell was published". |
 
-### Brakes — `tools/brake.ts`
-
-| Tool | Returns |
-|---|---|
-| `assay_brakes` | Fields where healing has been **stopped** because the selector is oscillating. |
-| `assay_heal_history` | Every heal recorded for one field, oldest first, including reverted ones, plus whether the sequence counts as thrashing. Reverted rows are kept on purpose: the oscillation pattern is the evidence. |
-
 ### Blast radius — `tools/blast.ts`
 
 | Tool | Returns |
@@ -161,7 +153,6 @@ filesystem-order-dependent.
 | Tool | Returns |
 |---|---|
 | `assay_model_status` | Whether a model is configured. Assay runs with none: every AI path degrades to the non-AI behaviour. |
-| `assay_score_nomination` | Scores a candidate index against the ranked list persisted when the gate abstained. Records nothing and resolves nothing. Takes a reference, never a value. |
 
 ### Connections — `tools/connectors.ts`, `tools/skills.ts`
 
@@ -182,22 +173,22 @@ Not merely absent. `src/mcp/server.ts` carries the name in `REFUSED_TOOLS`, and
 if any module in `src/mcp/tools/` ever exports a tool called `assay_resolve`, the
 server **throws on startup** with the reason rather than quietly dropping it.
 
-Resolving a decision is a human act. A model **nominates**; it never settles a
-queue item. A nomination enters as a candidate and clears the same two gates as
-anything else, or the cell stays held.
-
-That is not a policy bolted on afterwards. The product already draws the rule
-elsewhere: when the scorer and the model disagree, *neither wins*. An MCP tool
-that let the model decide would contradict a screen that already exists.
+Resolving a decision is a human act, and there is no MCP path around that —
+this surface has no write access to a held cell at all. There used to be a
+narrower version of the same rule: `assay_propose` let a model **nominate** a
+ranked candidate without ever being able to accept one itself. It is gone
+along with the mechanism it nominated against — `healGated`, the runtime
+candidate gate, no longer runs (`src/runner.ts`'s header), so there is never a
+ranked candidate to nominate.
 
 ### `assay_clear_brake` — and there will not be one
 
-A brake exists because a field is publishing values from the wrong variant and
-nobody noticed. Clearing it resumes exactly that. Handing a model a tool that
-turns the warning off is the same mistake as `assay_resolve`, one table over.
-
-What a model *can* do is the useful half: see which fields are braked, read the
-sequence of heals that tripped it, and explain it to the person who has to decide.
+A brake existed because a field was publishing values from the wrong variant and
+nobody noticed. Clearing it resumed exactly that. Handing a model a tool that
+turns the warning off would have been the same mistake as `assay_resolve`, one
+table over. Moot now: `src/brake/index.ts` and the brake it managed are
+retired along with `healGated`, the runtime healer it existed to watch — see
+`docs/FEATURES.md` F10/F11.
 
 ### `assay_contract_write`
 
@@ -215,12 +206,10 @@ able to make one. `src/skills/store.ts` has no writer at all.
 
 ## No tool on this server accepts a value
 
-The model returns element **references** and Assay reads the DOM itself. The MCP
-server is where untrusted page text actually meets a model, so the invariant is
-enforced there and not merely intended: `assay_propose` and
-`assay_score_nomination` both take an **index** into a candidate list Assay
-built, and there is no argument anywhere on this surface into which a caller
-could put a string to be published.
+The MCP server is where untrusted page text actually meets a model, so the
+invariant is enforced there and not merely intended: there is no argument
+anywhere on this surface into which a caller could put a string to be
+published, and no tool that writes a value to a held cell at all.
 
 ---
 
@@ -228,6 +217,6 @@ could put a string to be published.
 
 <Cards>
   <Card title="API reference" href="/docs/api-reference" description="The same store over HTTP, where resolve does exist." />
-  <Card title="The CLI" href="/docs/cli" description="Where a human settles what the agent could only nominate." />
+  <Card title="The CLI" href="/docs/cli" description="Where a human settles what this surface can only report as held." />
   <Card title="Glossary" href="/docs/glossary" description="Held, band, episode, proof id." />
 </Cards>

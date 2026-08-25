@@ -3,11 +3,7 @@
 //
 // Three rules hold this file up:
 //
-//   1. `resolved_by` is what "settled" means. Never `resolution`. assay_propose
-//      writes `resolution = model_nominated:<n>` on an item that is still OPEN,
-//      leaving resolved_by null. Reading `resolution` to test settledness would
-//      silently promote a model's nomination to a human's decision, which is the
-//      exact failure the product exists to prevent.
+//   1. `resolved_by` is what "settled" means. Never `resolution`.
 //
 //   2. Decide-once is one UPDATE inside one transaction (F8). A loop over 340
 //      items can half-fail and leave a queue nobody can trust; a transaction
@@ -18,20 +14,13 @@
 //      F9 requires corrections be published as a new version, never an in-place
 //      rewrite. This module records the decision; republishing it is F9's job.
 //
-// NOT DONE, and not an oversight. A human accepting candidate 1 or 2 is a
-// verification, and by the rule in src/runner.ts:72 a verified candidate is
-// exactly what may move a field's baseline -- which now lives on
-// `field_state.baseline_golden_sha` / `baseline_selector` and is otherwise only
-// moved by a published heal in `ingestPage`. Wiring `resolve()` to move it needs
-// one thing this repo does not have yet: `field_runs.ranked[i].selector` is
-// `selectorFor(el)`, which is `tag.firstClass` and is NOT unique -- a listing
-// page routinely ranks five candidates that all serialise to
-// `h2.recall-card__title`. Re-resolving the accepted one with `$(sel).first()`
-// would silently adopt the first card on the page instead of the one the
-// operator chose, which is a confident wrong baseline written by the safety
-// mechanism. The prerequisite is a positionally unique reference on the ranked
-// list (an nth-of-type path, or the index within `$(sel)`); until that exists,
-// a resolution settles the queue item and leaves the baseline where it was.
+// TWO ANSWERS, NOT FOUR. `first`/`second` -- accepting a ranked candidate --
+// are gone: `healGated`, the only thing that ever populated `field_runs.ranked`,
+// no longer runs (`src/runner.ts`'s header), so there is never a candidate to
+// accept. What was already true when there were candidates stays true now that
+// there are none: a resolution settles the queue item and never moves a
+// field's baseline -- that stays exclusively `ingestPage`'s to do, on a
+// verified fetch, never on a human's say-so about a past run.
 //
 // The logic functions take plain arguments and return plain results, so a Next
 // Server Action can call them directly. The Response-shaped handlers at the
@@ -40,18 +29,18 @@
 
 import { z } from 'zod';
 import { isNotNull } from 'drizzle-orm';
-import { getDb, queueItems, fieldRuns, eq, and, isNull } from '../store/index.js';
+import { getDb, queueItems, eq, and, isNull } from '../store/index.js';
 import { requireKey } from '../api/keys.js';
 
 /**
- * The four answers, and there is no fifth.
+ * The two answers, and there is no third.
  *
  * `neither` is a resolution, not a skip (FEATURES F7): the cell stays withheld
  * and the target needs a human who is not under five-second pressure. Making
  * refusal unavailable to the operator would rebuild false healing inside a
  * person.
  */
-export const Resolution = z.enum(['first', 'second', 'empty', 'neither']);
+export const Resolution = z.enum(['empty', 'neither']);
 export type Resolution = z.infer<typeof Resolution>;
 
 // strictObject, not object: an unrecognised key is a caller sending something
@@ -65,8 +54,7 @@ export const UndoInput = z.strictObject({ proof: z.string().min(1) });
 export type ResolveInput = z.infer<typeof ResolveInput>;
 export type UndoInput = z.infer<typeof UndoInput>;
 
-export type DecisionError =
-  | 'not_found' | 'already_resolved' | 'not_resolved' | 'no_such_candidate';
+export type DecisionError = 'not_found' | 'already_resolved' | 'not_resolved';
 
 export type Failure = { ok: false; error: DecisionError; detail: string };
 
@@ -90,9 +78,6 @@ export type Undone = {
 
 const fail = (error: DecisionError, detail: string): Failure => ({ ok: false, error, detail });
 
-/** How many candidates the gate actually ranked for this cell, at abstain time. */
-const candidateCount = (ranked: unknown): number => (Array.isArray(ranked) ? ranked.length : 0);
-
 /**
  * Settle a held cell, and every open item on the same template with it (F8).
  *
@@ -115,22 +100,6 @@ export async function resolve({ proof, resolution }: ResolveInput): Promise<Deci
         'already_resolved',
         `That item was settled by ${item.resolvedBy}. Undo it before deciding again.`,
       );
-    }
-
-    // "Candidate 1" and "candidate 2" have to exist to be chosen. Accepting
-    // `second` against a one-candidate list would be picking whatever happened
-    // to be there -- a coercion, on the one screen where guessing is the failure.
-    if (resolution === 'first' || resolution === 'second') {
-      const [cell] = await tx.select({ ranked: fieldRuns.ranked }).from(fieldRuns)
-        .where(eq(fieldRuns.proofId, proof)).limit(1);
-      const needed = resolution === 'first' ? 1 : 2;
-      const have = candidateCount(cell?.ranked);
-      if (have < needed) {
-        return fail(
-          'no_such_candidate',
-          `This cell has ${have} ranked candidate(s); "${resolution}" needs ${needed}.`,
-        );
-      }
     }
 
     const resolvedAt = new Date();
@@ -223,7 +192,6 @@ const STATUS: Record<DecisionError, number> = {
   not_found: 404,
   already_resolved: 409,
   not_resolved: 409,
-  no_such_candidate: 422,
 };
 
 const invalid = (detail: string): Response =>

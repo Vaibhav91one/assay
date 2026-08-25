@@ -8,7 +8,6 @@ import type { CommandName, Turn } from 'assay/engine/store/conversation-log';
 import { t } from '@/lib/copy';
 import { ago, stamp } from '@/lib/when';
 import { DecisionsList } from './decisions/decisions-list';
-import { FieldControls } from './field-controls';
 import { RunNow } from './schedule/run-now';
 import { readCommand, type CommandResult, type CommandView } from './command-actions';
 
@@ -39,15 +38,13 @@ import { readCommand, type CommandResult, type CommandView } from './command-act
  * `RunNow`'s header explains. A second writer here would be the drift
  * `tools/sweep.ts` was cleaned of.
  *
- * `/fields` LISTS, AND CARRIES THE TWO DECISIONS THAT BELONG TO A FIELD. There
- * is no `actions.ts` under `web/app/(app)/fields` and this does not invent one:
- * nothing in the listing itself is approvable, and a control there would be a
- * control with no decision behind it. What the row does carry is
- * `FieldControls`, which is the brake and the standing heal -- decisions about
- * the FIELD rather than about anything in this table, and until now reachable
- * only from the CLI. Both keep the friction they were built with: the brake
- * takes the field name typed out, the unheal takes two presses and says what
- * range it puts in doubt before the second one. See `./field-controls.tsx`.
+ * `/fields` LISTS. There is no `actions.ts` under `web/app/(app)/fields` and
+ * this does not invent one: nothing in the listing itself is approvable. It
+ * used to also carry `FieldControls` -- the brake and the standing heal,
+ * decisions about the FIELD rather than about anything in this table. Both
+ * are gone: `healGated`, the only thing that ever wrote a heal in the live
+ * pipeline, no longer runs (`src/runner.ts`'s header), so there is nothing
+ * left to brake against or revert.
  */
 
 const listeners = new Set<() => void>();
@@ -223,12 +220,6 @@ function Body({ view, onSettled }: { view: CommandView; onSettled: () => void })
             <span className="caption-11 shrink-0 text-[var(--text-muted)]">
               seen in {f.seen} of {f.runs}
             </span>
-            {/* The two decisions that belong to a FIELD rather than to a cell:
-                clearing a brake, and reverting the heal in force. Neither is a
-                listing action and neither is one click -- see
-                `field-controls.tsx`. They live here because a brake is set on a
-                field and this is the command that lists fields. */}
-            <FieldControls targetId={f.targetId} field={f.field} />
           </li>
         ))}
       </ul>

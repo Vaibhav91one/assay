@@ -85,8 +85,6 @@ These come from `tools/cli/*.ts`. A feature adds a file; nobody edits the binary
 | `assay watch` | Put a page under watch, and list, pause or forget what is watched. |
 | `assay blast <target/field>` | Which rows a wrong value covers, and how far back. |
 | `assay correct <proof> <value>` | Publish a corrected value as a new row that supersedes the wrong one. |
-| `assay brake` | Fields where healing has been stopped because the selector oscillates. `clear` requires typing the field name. |
-| `assay unheal <ref>` | Revert a field to its last verified selector and re-open its blast radius. |
 | `assay connectors` | Bright Data delivery and Discord. See [Configuring credentials](/docs/credentials#discord). |
 | `assay contracts` | Field contracts: per-field thresholds, checked before they reach a scrape. |
 | `assay decisions` | The abstain queue: what is waiting on a human, and answering it. |
@@ -115,10 +113,6 @@ npx tsx tools/cli/connectors.ts list
 `assay decisions resolve` settles a held cell. So does
 `POST /api/v1/decisions/resolve`. **No [MCP tool](/docs/mcp) does**, and that is
 enforced at boot rather than left to convention.
-
-Clearing a brake is the same shape: it exists on the CLI and on the API, and it
-requires the field name typed out, because clearing a brake resumes publishing
-from a field that was oscillating.
 
 ---
 

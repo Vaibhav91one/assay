@@ -12,8 +12,8 @@ boots with no account, no signup and no keys.
 <Callout type="error" title="Self-hosted mode authenticates nobody">
   `AUTH_MODE=none` does not mean "one operator". It means there is no operator
   check at all: every screen is served to whoever opens the port. That includes
-  resolving held decisions, clearing a brake and editing a contract — the
-  actions that decide what gets published to your data.
+  resolving held decisions and editing a contract — the actions that decide
+  what gets published to your data.
 
   The compose file therefore publishes `web` on `127.0.0.1:3000`, not
   `0.0.0.0:3000`. Reaching it means being on the host, or forwarding a port to

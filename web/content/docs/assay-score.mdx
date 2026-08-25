@@ -12,6 +12,17 @@ of one two-part test the run took. This page is the whole of that test, with the
 measured numbers, so that a word on a screen can always be turned back into
 arithmetic you can check.
 
+<Callout type="warn" title="This describes the gate, not the live pipeline">
+  `healGated` -- the gate this whole page explains -- no longer runs on a real
+  fetch. `src/runner.ts` retired it: every live break quarantines
+  unconditionally now, with the reason `no_local_heal`, which is not one of
+  the seven words below and prints as a raw code (see the callout further
+  down on codes this build does not know). Everything on this page still
+  applies exactly as written to `npm run bench` and `npm run sweep`, the
+  offline benchmark arm, and to any cell that carries a reason code from
+  before the gate was retired.
+</Callout>
+
 ---
 
 ## The gate
@@ -105,13 +116,12 @@ brake is what stopped it would send them to tune the wrong number.
 </Callout>
 
 <Callout title="A published heal currently shows the diff and no word">
-  `src/runner.ts` writes `{ status: 'healed' }` with no reason, so
+  `src/runner.ts` wrote `{ status: 'healed' }` with no reason, so
   `clear_margin` and `benign_tie` live on the proof record in
-  `results/events.jsonl` and never reach the `field_runs.reason` column the band
-  is read from. **CLEAR** and **AGREED** are defined here, and are what
-  `assay_propose` reports over MCP, but the run screen draws the before/after
-  selector diff for a heal and claims nothing about which of the two it was. It
-  will, unchanged, the day that reason is persisted.
+  `results/events.jsonl` and never reached the `field_runs.reason` column the
+  band is read from. **CLEAR** and **AGREED** are defined here as the gate's
+  own words, but the run screen draws the before/after selector diff for a
+  historical heal and claims nothing about which of the two it was.
 </Callout>
 
 ---

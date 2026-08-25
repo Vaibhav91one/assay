@@ -23,7 +23,6 @@ import { pickTarget } from '../target.js';
 import { putCapture, getCapture, CAPTURE_DIR, type StoredCapture } from '../store/captures.js';
 import { openEpisode, closeEpisode } from '../api/webhooks.js';
 import { latestContract } from '../contracts/store.js';
-import { shouldHeal, recordHeal, checkBrake } from '../brake/index.js';
 import {
   getDb, reserveRunId, recordRun, lastRunFor, historyFor, baselineFor, setBaseline, sql,
 } from '../store/index.js';
@@ -87,39 +86,6 @@ export function normalisePage(html: string): NormalisedPage {
 
 /** The digest recorded as `runs.page_sha` for a given page. */
 export const pageDigest = (html: string): string => digest(normalise(html).html());
-
-/**
- * Why this field may not heal on this run, or null.
- *
- * `shouldHeal` deliberately does not catch a database error: a brake that
- * cannot be READ is not a brake that is not SET, and answering "yes, heal" on a
- * failed query would be a silent fallback in the one place this product refuses
- * one. It left the decision to the caller. This is the caller, and the decision
- * is to fail CLOSED -- an unreadable brake withholds the heal.
- *
- * The alternatives were worse. Healing anyway is the fallback D refused, and it
- * fails in the expensive direction: a wrong value is a refund, a hole is a
- * ticket. Letting the error abort the run is worse still -- it loses the run
- * RECORD, and detect() guards on history.length >= 3 with robustZ over an
- * unbroken series, so an unreachable brake table would quietly disarm the
- * detector for every field on the target. One outage would become two.
- *
- * Failing closed costs an abstention, which is the product's own designed
- * answer to "I cannot justify this". It is not silent: the reason lands on the
- * proof record and opens an episode, so the operator is told the brake is
- * unreadable rather than discovering it when a bad heal ships.
- */
-async function healBlockFor(targetId: string, field: string): Promise<string | null> {
-  try {
-    return (await shouldHeal(targetId, field)) ? null : 'brake_engaged';
-  } catch (e) {
-    // First line only: a reason is read back in a table cell and an alert
-    // subject, and drizzle's message carries the whole query and its params
-    // across several lines. The full error is not swallowed -- it is the thing
-    // that produced this line, and the run it stopped is in the proof record.
-    return `brake_unreadable:${(e as Error).message.split('\n')[0]}`;
-  }
-}
 
 /**
  * Rebuild the baseline from the page it was taken from.
@@ -284,7 +250,6 @@ export async function ingestPage({
   // nothing. Read here rather than in each caller so a delivered run and a
   // fetched run are governed by the same document.
   const contract = await latestContract(target.targetId);
-  const healBlock = await healBlockFor(target.targetId, c.field);
   // Per RUN, not per page: a page that reverts to an earlier state would
   // otherwise collide on the unique proof_id, and a proof is about a run.
   const proofId = `pr_${sha16(`${target.targetId}${runId}${baseline.field}`)}`;
@@ -297,7 +262,6 @@ export async function ingestPage({
     history,
     thresholds: c.thresholds ?? { tau: 0.6, delta: 0.16 },
     contract: contract?.parsed ?? null,
-    healBlock,
     meta: { run: runId, site: target.targetId, via },
     proofId,
   });
@@ -315,20 +279,15 @@ export async function ingestPage({
     groupKey: `${result.event.skeleton.after}:${baseline.field}`,
   });
 
-  // The baseline moves here, and only here.
-  //
-  // A published heal is the only run that may move it. An unverified heal is
-  // how a healer poisons its own baseline (src/runner.ts:72), so a candidate
-  // the gate refused -- however well it scored -- leaves the "then" exactly
-  // where it was, and the field keeps being measured against the page it last
-  // worked on. Written after recordRun so the run is durable first: a baseline
-  // that advanced past a run nobody has a record of is worse than one that did
-  // not advance.
-  // `capture` is non-null on every branch that can reach here: a healed status
-  // means `event.event === 'heal'`, and only an `ok` event keeps no bytes.
-  if (result.status.status === 'healed' && result.event.healed_to && capture) {
-    newBaseline = { capture, selector: result.event.healed_to.selector };
-  }
+  // The baseline moves here, and only here -- on the first run that
+  // establishes one (`newBaseline` set above), never on a heal. `healGated`
+  // used to also move it here on a published heal; it is gone
+  // (`src/runner.ts`'s header), and so is the F10/F11 heal-history bookkeeping
+  // (`src/brake/index.ts`) that used to run alongside it -- `evaluate()` can no
+  // longer produce `status: 'healed'` from this pipeline at all, so there is
+  // no heal left to advance the baseline from or record. Written after
+  // recordRun so the run is durable first: a baseline that advanced past a run
+  // nobody has a record of is worse than one that did not advance.
   if (newBaseline && result.observed) {
     await setBaseline({
       targetId: target.targetId,
@@ -337,28 +296,6 @@ export async function ingestPage({
       url: target.url,
       selector: newBaseline.selector,
     });
-  }
-
-  // A heal is the evidence F11 grades. `heal_history` had no writer anywhere in
-  // the pipeline, so detectPingPong was reading an empty table on every field
-  // and the brake could not engage on its own -- the whole of F11 was
-  // unreachable. Recorded after recordRun, so the run is durable first.
-  //
-  // Left to throw, like every other store call here. A heal that published
-  // without leaving a row blinds the oscillation detector against the very
-  // field that just moved, and that is not a thing to note and carry on from.
-  if (result.status.status === 'healed' && result.event.healed_to) {
-    await recordHeal({
-      targetId: target.targetId,
-      field: baseline.field,
-      fromSelector: baseline.selector,
-      toSelector: result.event.healed_to.selector,
-      runId,
-    });
-    // Engages the brake if this field is thrashing. It announces itself on the
-    // NEXT run, which is the right run: the brake stops the next heal, and that
-    // abstention opens an episode carrying `brake_engaged` as its reason.
-    await checkBrake(target.targetId, baseline.field);
   }
 
   // An episode opens on a break and closes when the field recovers. openEpisode

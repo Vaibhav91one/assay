@@ -19,8 +19,9 @@
 //
 // The first of `default`, `COMMAND`, `COMMANDS` that is present wins; the rest
 // are ignored. An array is how one file contributes more than one TOP-LEVEL
-// command -- `assay unheal ...` is drawn as a peer of `assay brake ...`, not as
-// `assay brake unheal`, so a feature is not obliged to invent a parent noun.
+// command -- two related verbs can each stand as their own top-level command
+// (`assay foo ...`, `assay bar ...`) rather than one being forced into a
+// subcommand of the other, when a feature is not obliged to invent a parent noun.
 //
 // Every command must carry a `.description()`. `GROUP` files the whole module
 // under one `--help` heading; a command that set its own `.helpGroup()` keeps
