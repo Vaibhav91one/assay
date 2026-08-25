@@ -45,9 +45,9 @@ for (const sig of ['SIGTERM', 'SIGINT']) {
  */
 function fetcherFor(url: any) {
   return async () => {
-    const { html } = await fetchHtml(url);
+    const { html, via } = await fetchHtml(url);
     const $ = load(html); $('script,style,noscript').remove();
-    return { $, html };
+    return { $, html, via };
   };
 }
 
@@ -105,13 +105,13 @@ async function notifyBreak({ target, field, diagnosis, runId, episodeId, proofId
  */
 async function runOne(target: any) {
   const { targetId } = target;
-  const { html } = await fetcherFor(target.url)();
+  const { html, via } = await fetcherFor(target.url)();
 
   // `ingestPage` deliberately receives the response bytes, not the stripped
   // extraction DOM: challenge scripts are evidence that the response is not
   // the site, and removing them here would make the local worker disagree with
   // the Bright Data delivery path at the exact provider boundary they share.
-  const r = await ingestPage({ target, html, via: 'worker' });
+  const r = await ingestPage({ target, html, via });
   if (r.skipped) return `${targetId}  run ${r.runId}  skipped (page unchanged)`;
 
   const result = r.result!;

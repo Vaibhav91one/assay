@@ -214,7 +214,7 @@ function CodeBlock({ code }: { code: string }) {
 
 const AGENT_TOOLS: [string, string][] = [
   ['assay_status', 'What is watching, what is held, what is waiting on a human.'],
-  ['assay_decisions', 'The queue — each item carries both answers and the evidence.'],
+  ['assay_held', 'Every held cell: null, labelled, and never filled.'],
   ['assay_runs', 'Run history for a target.'],
   ['assay_blast_radius', 'What was already published that is now suspect.'],
   ['assay_explain', 'Where a published value came from.'],
@@ -226,8 +226,8 @@ function ToolTable() {
     <div className="flex flex-col gap-[6px]">
       <p className="label-10 text-[var(--text-muted)]">WHAT THE AGENT CAN DO</p>
       <p className="meta-11 text-[var(--text-muted)]">
-        23 tools total (full list in the docs). There is no tool that lets a model decide — the agent&apos;s
-        inbox is the Decisions screen.
+        22 tools total (full list in the docs). There is no tool that lets a model decide — the
+        operator&apos;s inbox is the Fields screen, filtered to held.
       </p>
       <ul className="flex flex-col gap-[3px]">
         {AGENT_TOOLS.map(([name, desc]) => (

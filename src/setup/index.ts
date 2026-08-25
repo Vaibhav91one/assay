@@ -170,7 +170,10 @@ export interface TargetView {
  * behaviour with nothing enabled is unchanged: the newest committed capture for
  * `corpus://`, and otherwise one ordinary request.
  */
-const fetchPage = async (url: string): Promise<string> => (await fetchHtml(url)).html;
+const fetchPage = async (url: string): Promise<{ html: string; via: string }> => {
+  const { html, via } = await fetchHtml(url);
+  return { html, via };
+};
 
 /** `https://www.ikea.com/us/en/recalls/` -> `ikea-com-us-en-recalls`. */
 export function slugFor(url: string): string {
@@ -241,8 +244,9 @@ export async function createTarget(input: CreateInput): Promise<Created | Failur
   }
 
   let html: string;
+  let fetchedVia: string;
   try {
-    html = await fetchPage(url);
+    ({ html, via: fetchedVia } = await fetchPage(url));
   } catch (e) {
     // The URL is the operator's own input, so the fetch failure is theirs to
     // see. It names no internal detail: `fetch 404` is the whole of it.
@@ -289,7 +293,7 @@ export async function createTarget(input: CreateInput): Promise<Created | Failur
       const [t] = await d.select().from(targets).where(eq(targets.targetId, ids[i]!)).limit(1);
       row.contract = t!.contract;
       // The shared run path. Not a copy of it.
-      const r = await ingestPage({ target: row, html, via: 'setup', page });
+      const r = await ingestPage({ target: row, html, via: fetchedVia, page });
       out.push({
         id: ids[i]!,
         field: fields[i]!.name,

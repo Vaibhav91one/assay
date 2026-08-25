@@ -159,7 +159,13 @@ export async function ingestPage({
 }: {
   target: TargetRow;
   html: string;
-  /** Provenance, recorded on the proof record. Never branched on. */
+  /**
+   * Which fetch path served this page -- `web-unlocker`, `local-fetch`,
+   * `corpus`, `firecrawl`, or `brightdata` for a webhook delivery, which never
+   * calls `fetchHtml` at all. Recorded on `runs.via`. Never branched on: this
+   * is for an operator auditing a run after the fact, not a decision the
+   * pipeline makes differently per source.
+   */
   via: string;
   /**
    * `html`, already normalised, when the caller has it. Optional and defaulted,
@@ -181,8 +187,8 @@ export async function ingestPage({
   // series, so a silent gap here disarms the detector without ever erroring.
   if (last && last.page_sha && last.page_sha === sha) {
     await getDb().execute(
-      sql`INSERT INTO runs (run_id, target_id, status, page_bytes, page_sha)
-          VALUES (${runId}, ${target.targetId}, 'skipped', ${normalised.length}, ${sha})`,
+      sql`INSERT INTO runs (run_id, target_id, status, page_bytes, page_sha, via)
+          VALUES (${runId}, ${target.targetId}, 'skipped', ${normalised.length}, ${sha}, ${via})`,
     );
     return { runId, proofId: null, result: null, skipped: true, episodeId: null };
   }
@@ -277,6 +283,7 @@ export async function ingestPage({
     result,
     proofId,
     groupKey: `${result.event.skeleton.after}:${baseline.field}`,
+    via,
   });
 
   // The baseline moves here, and only here -- on the first run that

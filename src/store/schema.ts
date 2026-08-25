@@ -57,6 +57,13 @@ export const runs = pgTable('runs', {
   // this is the "fingerprint check" a skipped run still records. Deliberately
   // no FK to captures: we record what we saw even when we keep no bytes.
   pageSha: text('page_sha'),
+  // Which fetch path actually served this run's page: `web-unlocker`,
+  // `local-fetch`, `corpus`, `firecrawl`, or `brightdata` (a webhook delivery,
+  // which never calls `fetchHtml` at all). Null on rows recorded before this
+  // column existed -- there is no way to reconstruct it after the fact, and
+  // guessing would be worse than an honest gap. See `src/skills/page.ts`'s
+  // `Fetched.via` for where the live value comes from.
+  via: text('via'),
 }, (t) => ({
   history: index('runs_target_started_idx').on(t.targetId, t.startedAt),
 }));

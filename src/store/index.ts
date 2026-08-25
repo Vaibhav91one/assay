@@ -158,6 +158,7 @@ export async function recordRun({
   proofId,
   groupKey,
   stakesRows = 0,
+  via = null,
 }: {
   runId: number;
   targetId: string;
@@ -166,6 +167,8 @@ export async function recordRun({
   proofId: string;
   groupKey?: string | null;
   stakesRows?: number;
+  /** Which fetch path served this run's page. See `schema.ts`'s column comment. */
+  via?: string | null;
 }): Promise<number> {
   const d = getDb();
   return d.transaction(async (tx): Promise<number> => {
@@ -183,6 +186,7 @@ export async function recordRun({
       status: result.event.event,
       pageBytes: result.sample?.pageBytes ?? null,
       pageSha: result.event.capture_sha256 ?? null,
+      via,
     }).returning({ runId: schema.runs.runId });
 
     // A blocked response is a run-level fact about the fetch, not an observed

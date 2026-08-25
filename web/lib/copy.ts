@@ -247,9 +247,8 @@ const COPY = {
     'Every cell the gate looked at was either published or is still being watched.',
   'fields.empty.all.body': 'A field appears here once a scraper has run against it at least once.',
   'fields.headline.none': 'nothing tracked yet',
-  // The Decisions screen's "No field is waiting on you." is a sentence about a
-  // queue. This is a table filtered to a column, and the honest thing it can
-  // say is that the column is empty.
+  // This is a table filtered to a column, so the honest thing it can say is
+  // that the column is empty -- not a sentence about a queue with nothing in it.
   'fields.empty.heldFilter': 'No held fields right now.',
   // What to do about a fragility grade, derived from the anchors that produced
   // it. `sturdy` and `insufficient_history` get nothing, deliberately.

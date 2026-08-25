@@ -388,6 +388,10 @@ suite('the seam', () => {
       if (r.result!.status.status === 'quarantined') {
         expect(r.result!.publishedValue).toBeNull();
       }
+      // Not just carried on the in-memory event -- actually written to the row,
+      // so an operator can audit which fetch path served a run after the fact.
+      const { rows } = await getDb().execute(sql`SELECT via FROM runs WHERE run_id = ${r.runId}`);
+      expect((rows[0] as { via: string }).via).toBe('brightdata');
     }
 
     // Cleanup: this test writes real rows. field_state included -- a run that

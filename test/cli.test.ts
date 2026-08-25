@@ -197,4 +197,11 @@ describe('the binary', () => {
     expect(r.status).toBe(2);
     expect(r.stderr).toMatch(/mattel/);
   });
+
+  it('exits 2 on apikey --read and --write together, before touching the database', () => {
+    const r = assay('apikey', 'x', '--read', 'ikea', '--write', 'ikea');
+    expect(r.status).toBe(2);
+    expect(r.stderr).toMatch(/choose one scope/);
+    expect(r.stdout).toBe('');
+  });
 });

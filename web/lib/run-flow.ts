@@ -142,6 +142,9 @@ export interface RunRecord {
   status: string;
   pageBytes: number | null;
   pageSha: string | null;
+  /** `runs.via` -- which fetch path served this page. Null on rows recorded
+   *  before the column existed; there is no way to reconstruct it after the fact. */
+  via: string | null;
   skeletonHash: string | null;
   /** `runs.capture_sha IS NOT NULL` -- a clean run deliberately keeps no bytes. */
   captureKept: boolean;
@@ -255,6 +258,10 @@ export function flowFor(run: RunRecord): Flow {
       ...(run.url ? [{ label: 'url', value: run.url, source: 'targets.url' }] : []),
       { label: 'page size', value: bytes(run.pageBytes), source: 'runs.page_bytes' },
       { label: 'page digest', value: sha(run.pageSha), source: 'runs.page_sha' },
+      // Absent on runs recorded before this column existed -- not a fact worth
+      // a row when there is nothing to show, since "unknown" would read as a
+      // fifth fetch path rather than as a gap in old data.
+      ...(run.via ? [{ label: 'fetched via', value: run.via, source: 'runs.via' }] : []),
     ],
   });
 

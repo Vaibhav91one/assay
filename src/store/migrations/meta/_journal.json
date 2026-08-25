@@ -71,6 +71,13 @@
       "when": 1787593507205,
       "tag": "0009_flawless_the_stranger",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1787652941362,
+      "tag": "0010_thin_luke_cage",
+      "breakpoints": true
     }
   ]
 }

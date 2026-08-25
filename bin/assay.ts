@@ -81,10 +81,11 @@ function check<T>(schema: z.ZodType<T>, value: unknown, what: string): T {
  * same command would work from the repo and fail from anywhere else.
  */
 function tool(script: string, args: string[]): never {
-  const r = spawnSync(process.execPath, ['--import', 'tsx', `tools/${script}`, ...args], {
-    cwd: REPO,
-    stdio: 'inherit',
-  });
+  const r = spawnSync(
+    process.execPath,
+    ['--env-file-if-exists=.env', '--import', 'tsx', `tools/${script}`, ...args],
+    { cwd: REPO, stdio: 'inherit' },
+  );
   if (r.error) {
     console.error(`assay: could not start tools/${script}: ${r.error.message}`);
     process.exit(1);
@@ -201,7 +202,20 @@ program
   .command('apikey')
   .description('Mint a consumer API key. Printed once, stored hashed, never recoverable.')
   .argument('<name...>', 'what this key is for, e.g. "warehouse etl"')
-  .action((name: string[]) => tool('apikey.ts', name));
+  .option('--read <targets>', 'comma-separated targets this key may only read')
+  .option('--write <targets>', 'comma-separated targets this key may read and write')
+  .action((name: string[], opts: { read?: string; write?: string }) => {
+    if (opts.read !== undefined && opts.write !== undefined) {
+      console.error('assay: choose one scope: --read or --write');
+      process.exit(2);
+    }
+    const scope = opts.read !== undefined
+      ? ['--read', opts.read]
+      : opts.write !== undefined
+        ? ['--write', opts.write]
+        : [];
+    tool('apikey.ts', [...name, ...scope]);
+  });
 
 // Feature commands. A missing or empty `tools/cli/` is a fresh worktree, not a
 // fault: the binary still runs and still helps. A file that is present and

@@ -7,11 +7,13 @@
 //
 //   node tools/ingest.js [site] [--mutate <id>]
 //
-// The real corpus produces zero abstentions -- two and a half years of genuine
-// drift never once produced a near-tie, which is the finding in README. So to
-// exercise the quarantine path you have to manufacture one, exactly as the
-// benchmark does: --mutate duplicate_similar plants a near-identical decoy
-// beside the real value on the final capture.
+// Every detected break quarantines now -- `healGated` (the runtime candidate
+// gate that used to auto-heal a confident match) is retired, see src/runner.ts's
+// own header. So a site whose real corpus drifted between captures, which used
+// to heal silently and publish clean, now abstains on that same real drift. To
+// exercise a SPECIFIC quarantine reason on demand rather than whatever the
+// corpus happens to contain, --mutate duplicate_similar plants a near-identical
+// decoy beside the real value on the final capture.
 
 import { load } from 'cheerio';
 import { readFile, readdir } from 'node:fs/promises';
@@ -107,6 +109,7 @@ const main = async () => {
       proofId,
       groupKey: `${r.event.skeleton.after}:${baseline.field}`,
       stakesRows: 0,
+      via: 'corpus',
     });
 
     if (r.status.status === 'quarantined') held = { proofId, runId, file };
@@ -123,7 +126,7 @@ const main = async () => {
     console.log(`\nreading the held cell back out of postgres (proof ${held.proofId}):\n`);
     console.log(JSON.stringify(await rowByProof(held.proofId), null, 2));
   } else {
-    console.log('\nno abstention on this corpus -- expected. Re-run with:');
+    console.log('\nno abstention -- this corpus run had no detected break. To force one:');
     console.log(`  node tools/ingest.js ${SITE} --mutate duplicate_similar\n`);
   }
 

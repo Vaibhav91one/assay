@@ -159,6 +159,7 @@ describe('the run diagram renders no arithmetic', () => {
     status: 'abstain',
     pageBytes: 79_479,
     pageSha: 'aaaa111122223333',
+    via: 'local-fetch',
     skeletonHash: 'aa1afd70',
     captureKept: true,
     previous: { runId: 60, pageSha: 'bbbb444455556666' },

@@ -171,6 +171,7 @@ export async function runDetail(runId: number): Promise<RunDetail | null> {
     status: run.status,
     pageBytes: run.pageBytes,
     pageSha: run.pageSha,
+    via: run.via,
     skeletonHash: run.skeletonHash,
     captureKept: run.captureSha != null,
     previous: previous ?? null,
