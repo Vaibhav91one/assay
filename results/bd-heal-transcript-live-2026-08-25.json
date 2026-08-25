@@ -1,0 +1,2095 @@
+{
+  "collector": "c_mt1nrjboski90goqc",
+  "prompt": "recall_title is promised by the approved output schema but returned null in 60 of 60 records, while the run reported 100% success and 0 failed crawls. The listing-page title selector never resolved. recall_url and date_published are also absent from every record, and product_name and hazard arrived in 1 of 60 rows each. Fix the listing-stage parser so recall_title is populated from the recall heading on the listing page.",
+  "started_at": "2026-08-25T06:22:02.984Z",
+  "finished_at": "2026-08-25T06:36:02.118Z",
+  "poll_interval_ms": 20000,
+  "max_wait_ms": 1500000,
+  "statuses_seen": [
+    {
+      "key": "running/code_fixer",
+      "status": "running",
+      "step": "code_fixer",
+      "first_seen_at": "2026-08-25T06:22:25.998Z",
+      "poll": 1
+    },
+    {
+      "key": "running/control_preview_runner",
+      "status": "running",
+      "step": "control_preview_runner",
+      "first_seen_at": "2026-08-25T06:23:32.302Z",
+      "poll": 4
+    },
+    {
+      "key": "running/step_preview_runner",
+      "status": "running",
+      "step": "step_preview_runner",
+      "first_seen_at": "2026-08-25T06:25:43.085Z",
+      "poll": 10
+    },
+    {
+      "key": "running/css_selector_extractor",
+      "status": "running",
+      "step": "css_selector_extractor",
+      "first_seen_at": "2026-08-25T06:30:21.501Z",
+      "poll": 23
+    },
+    {
+      "key": "pending_answer/user_approval",
+      "status": "pending_answer",
+      "step": "user_approval",
+      "first_seen_at": "2026-08-25T06:36:02.116Z",
+      "poll": 39
+    }
+  ],
+  "trigger": {
+    "at": "2026-08-25T06:22:04.730Z",
+    "http": 200,
+    "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"queued\":false}",
+    "body": {
+      "id": "ia_mt8a25sy2nk46dn9no",
+      "queued": false
+    }
+  },
+  "polls": [
+    {
+      "n": 1,
+      "at": "2026-08-25T06:22:25.998Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"code_fixer\",\"completed_steps\":[\"planner\",\"control_preview_runner\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "code_fixer",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 2,
+      "at": "2026-08-25T06:22:47.371Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"code_fixer\",\"completed_steps\":[\"planner\",\"control_preview_runner\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "code_fixer",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 3,
+      "at": "2026-08-25T06:23:08.948Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"code_fixer\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "code_fixer",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 4,
+      "at": "2026-08-25T06:23:32.302Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"control_preview_runner\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "control_preview_runner",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 5,
+      "at": "2026-08-25T06:23:53.623Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"code_fixer\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "code_fixer",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 6,
+      "at": "2026-08-25T06:24:17.465Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"code_fixer\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "code_fixer",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 7,
+      "at": "2026-08-25T06:24:39.142Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"code_fixer\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "code_fixer",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 8,
+      "at": "2026-08-25T06:25:00.481Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"code_fixer\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "code_fixer",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 9,
+      "at": "2026-08-25T06:25:21.898Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"code_fixer\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "code_fixer",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 10,
+      "at": "2026-08-25T06:25:43.085Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"step_preview_runner\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "step_preview_runner",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 11,
+      "at": "2026-08-25T06:26:04.338Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"code_fixer\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "code_fixer",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 12,
+      "at": "2026-08-25T06:26:25.590Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"code_fixer\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "code_fixer",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 13,
+      "at": "2026-08-25T06:26:47.193Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"step_preview_runner\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "step_preview_runner",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 14,
+      "at": "2026-08-25T06:27:08.631Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"code_fixer\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "code_fixer",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 15,
+      "at": "2026-08-25T06:27:29.700Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"code_fixer\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "code_fixer",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 16,
+      "at": "2026-08-25T06:27:51.075Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"code_fixer\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "code_fixer",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 17,
+      "at": "2026-08-25T06:28:13.562Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"code_fixer\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "code_fixer",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 18,
+      "at": "2026-08-25T06:28:34.713Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"code_fixer\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "code_fixer",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 19,
+      "at": "2026-08-25T06:28:56.266Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"code_fixer\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "code_fixer",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 20,
+      "at": "2026-08-25T06:29:17.636Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"code_fixer\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "code_fixer",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 21,
+      "at": "2026-08-25T06:29:38.762Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"code_fixer\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "code_fixer",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 22,
+      "at": "2026-08-25T06:29:59.965Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"step_preview_runner\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "step_preview_runner",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 23,
+      "at": "2026-08-25T06:30:21.501Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"css_selector_extractor\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "css_selector_extractor",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 24,
+      "at": "2026-08-25T06:30:42.559Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"css_selector_extractor\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "css_selector_extractor",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 25,
+      "at": "2026-08-25T06:31:03.660Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"css_selector_extractor\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "css_selector_extractor",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 26,
+      "at": "2026-08-25T06:31:24.997Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"css_selector_extractor\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "css_selector_extractor",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 27,
+      "at": "2026-08-25T06:31:46.120Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"css_selector_extractor\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "css_selector_extractor",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 28,
+      "at": "2026-08-25T06:32:07.311Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"css_selector_extractor\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "css_selector_extractor",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 29,
+      "at": "2026-08-25T06:32:28.374Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"css_selector_extractor\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "css_selector_extractor",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 30,
+      "at": "2026-08-25T06:32:49.429Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"css_selector_extractor\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "css_selector_extractor",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 31,
+      "at": "2026-08-25T06:33:10.546Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"step_preview_runner\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "step_preview_runner",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 32,
+      "at": "2026-08-25T06:33:31.686Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"css_selector_extractor\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "css_selector_extractor",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 33,
+      "at": "2026-08-25T06:33:52.803Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"css_selector_extractor\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "css_selector_extractor",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 34,
+      "at": "2026-08-25T06:34:13.903Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"css_selector_extractor\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "css_selector_extractor",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 35,
+      "at": "2026-08-25T06:34:35.102Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"step_preview_runner\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "step_preview_runner",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 36,
+      "at": "2026-08-25T06:34:56.524Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"step_preview_runner\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "step_preview_runner",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 37,
+      "at": "2026-08-25T06:35:18.187Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"css_selector_extractor\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "css_selector_extractor",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 38,
+      "at": "2026-08-25T06:35:39.701Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"css_selector_extractor\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\"],\"status\":\"running\"}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "css_selector_extractor",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor"
+        ],
+        "status": "running"
+      }
+    },
+    {
+      "n": 39,
+      "at": "2026-08-25T06:36:02.116Z",
+      "http": 200,
+      "body_raw": "{\"id\":\"ia_mt8a25sy2nk46dn9no\",\"step\":\"user_approval\",\"completed_steps\":[\"planner\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"request_fulfillment_validator\",\"step_advance\",\"control_preview_runner\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"css_selector_extractor\",\"code_fixer\",\"step_preview_runner\",\"html_diff\",\"step_advance\"],\"status\":\"pending_answer\",\"diff\":{\"template_a\":{\"_id\":\"6a872721efa9d997f91c7940\",\"name\":\"New ide-automation template\",\"steps\":[{\"name\":\"New ide-automation template\",\"code\":\"// Navigate to the IKEA recalls page\\nnavigate(input.url);\\n\\n\\n// Parse the page to extract all recall URLs\\nconst {recall_urls} = parse();\\n\\n// Iterate through each recall URL and collect it using next_stage\\nfor (let url of recall_urls) {\\n    next_stage({url});\\n}\\n\",\"input\":[{\"url\":\"https://www.ikea.com/us/en/customer-service/product-support/recalls/\"}],\"fields\":{\"url\":{\"type\":\"url\",\"required\":true}},\"features\":[\"cmd.navigate\",\"cmd.parse\",\"cmd.next_stage\"],\"worker\":\"code\",\"parser\":{\"parser\":\"// Select all recall links from the content cards\\nconst recall_links = $('.pub__content-card a[href*=\\\"/recalls/\\\"]').toArray();\\n\\n// Extract URLs and convert relative URLs to absolute\\nconst base_url = 'https://www.ikea.com';\\nconst recall_urls = recall_links.map(link => {\\n    const href = $(link).attr('href');\\n    if (href) {\\n        // Convert relative URLs to absolute URLs\\n        return new URL(href, base_url).href;\\n    }\\n}).filter(Boolean); // Remove any undefined/null values\\n\\n// Remove duplicates\\nconst unique_recall_urls = [...new Set(recall_urls)];\\n\\nconsole.log(`Found ${unique_recall_urls.length} unique recall URLs`);\\n\\nreturn {recall_urls: unique_recall_urls};\\n\",\"sandbox_version\":1,\"id\":\"p_mt1pwkdl2kh1syw5f1.1\"},\"parse_code\":\"// Select all recall links from the content cards\\nconst recall_links = $('.pub__content-card a[href*=\\\"/recalls/\\\"]').toArray();\\n\\n// Extract URLs and convert relative URLs to absolute\\nconst base_url = 'https://www.ikea.com';\\nconst recall_urls = recall_links.map(link => {\\n    const href = $(link).attr('href');\\n    if (href) {\\n        // Convert relative URLs to absolute URLs\\n        return new URL(href, base_url).href;\\n    }\\n}).filter(Boolean); // Remove any undefined/null values\\n\\n// Remove duplicates\\nconst unique_recall_urls = [...new Set(recall_urls)];\\n\\nconsole.log(`Found ${unique_recall_urls.length} unique recall URLs`);\\n\\nreturn {recall_urls: unique_recall_urls};\\n\"},{\"name\":\"New ide-automation template\",\"code\":\"navigate(input.url);\\ncollect(parse());\\n\",\"input\":[{\"url\":\"https://www.ikea.com/us/en/customer-service/product-support/recalls/ikea-chest-and-dresser-safety-recall-pub4b96e3c0/\"}],\"fields\":{\"url\":{\"type\":\"url\",\"required\":true}},\"features\":[\"cmd.navigate\",\"cmd.parse\",\"cmd.collect\"],\"worker\":\"code\",\"parser\":{\"parser\":\"// Helper function to convert URLs\\nconst toURL = (url) => {\\n  if (!url) return null;\\n  try {\\n    return new URL(url);\\n  } catch {\\n    return null;\\n  }\\n};\\n\\n// Extract recall_title - this is for listing page card title, not detail page\\n// Since we're on the detail page, this would be null (no listing card here)\\nlet recall_title = null;\\n\\n// Extract recall_url - URL from listing page card\\n// Since we're on the detail page, this would be null\\nlet recall_url = null;\\n\\n// Extract title_on_detail - Main h1 heading on detail page\\nlet title_on_detail = $('h1').text_sane();\\n\\n// Extract date_published - Publication date if shown\\n// Looking for date elements, but none found in the HTML\\nlet date_published = null;\\n\\n// Extract description - Main recall description from first text section\\nlet description = $('[data-pub-type=\\\"text\\\"]').first().text_sane();\\n\\n// Extract product_name - Product names from h2 headings in container sections\\nlet product_names = $('[data-pub-type=\\\"container\\\"] h2').toArray()\\n  .map(el => $(el).text_sane())\\n  .filter(text => text && !text.includes('Refund') && !text.includes('See more'));\\nlet product_name = product_names.join(', ') || null;\\n\\n// Extract hazard - Safety risk described in the recall\\nlet hazard_text = $('[data-pub-type=\\\"text\\\"] p').first().text_sane();\\nlet hazard = null;\\nif (hazard_text && hazard_text.includes('tip-over')) {\\n  hazard = 'tip-over accidents';\\n}\\n\\n// Extract remedy - What customers should do\\nlet remedy_parts = [];\\n// From button labels\\n$('[data-pub-type=\\\"button-link\\\"] .pub__btn__label').toArray().forEach(el => {\\n  let text = $(el).text_sane();\\n  if (text) remedy_parts.push(text);\\n});\\n// From strong text in text sections\\n$('[data-pub-type=\\\"text\\\"] strong').toArray().forEach(el => {\\n  let text = $(el).text_sane();\\n  if (text && !text.includes('Please note')) remedy_parts.push(text);\\n});\\nlet remedy = remedy_parts.length > 0 ? remedy_parts.join(', ') : null;\\n\\n// Extract image_urls - Product images from image-with-caption sections\\nlet image_urls = $('[data-pub-type=\\\"image-with-caption\\\"] img').toArray()\\n  .map(el => {\\n    let src = $(el).attr('src');\\n    if (src) {\\n      // Remove query parameters to get clean URL\\n      src = src.split('?')[0];\\n      return toURL(src);\\n    }\\n    return null;\\n  })\\n  .filter(url => url !== null);\\n\\n// Extract recall_details_url - Link to CPSC page\\nlet recall_details_url = toURL($('a[href*=\\\"cpsc.gov\\\"]').attr('href'));\\n\\n// Extract product_page_url - The input URL\\nlet product_page_url = toURL(input.url);\\n\\nreturn {\\n  recall_title,\\n  recall_url,\\n  title_on_detail,\\n  date_published,\\n  description,\\n  product_name,\\n  hazard,\\n  remedy,\\n  image_urls,\\n  recall_details_url,\\n  product_page_url\\n};\\n\",\"sandbox_version\":1,\"id\":\"p_mt1pwkdm19ng8rmmlu.1\"},\"parse_code\":\"// Helper function to convert URLs\\nconst toURL = (url) => {\\n  if (!url) return null;\\n  try {\\n    return new URL(url);\\n  } catch {\\n    return null;\\n  }\\n};\\n\\n// Extract recall_title - this is for listing page card title, not detail page\\n// Since we're on the detail page, this would be null (no listing card here)\\nlet recall_title = null;\\n\\n// Extract recall_url - URL from listing page card\\n// Since we're on the detail page, this would be null\\nlet recall_url = null;\\n\\n// Extract title_on_detail - Main h1 heading on detail page\\nlet title_on_detail = $('h1').text_sane();\\n\\n// Extract date_published - Publication date if shown\\n// Looking for date elements, but none found in the HTML\\nlet date_published = null;\\n\\n// Extract description - Main recall description from first text section\\nlet description = $('[data-pub-type=\\\"text\\\"]').first().text_sane();\\n\\n// Extract product_name - Product names from h2 headings in container sections\\nlet product_names = $('[data-pub-type=\\\"container\\\"] h2').toArray()\\n  .map(el => $(el).text_sane())\\n  .filter(text => text && !text.includes('Refund') && !text.includes('See more'));\\nlet product_name = product_names.join(', ') || null;\\n\\n// Extract hazard - Safety risk described in the recall\\nlet hazard_text = $('[data-pub-type=\\\"text\\\"] p').first().text_sane();\\nlet hazard = null;\\nif (hazard_text && hazard_text.includes('tip-over')) {\\n  hazard = 'tip-over accidents';\\n}\\n\\n// Extract remedy - What customers should do\\nlet remedy_parts = [];\\n// From button labels\\n$('[data-pub-type=\\\"button-link\\\"] .pub__btn__label').toArray().forEach(el => {\\n  let text = $(el).text_sane();\\n  if (text) remedy_parts.push(text);\\n});\\n// From strong text in text sections\\n$('[data-pub-type=\\\"text\\\"] strong').toArray().forEach(el => {\\n  let text = $(el).text_sane();\\n  if (text && !text.includes('Please note')) remedy_parts.push(text);\\n});\\nlet remedy = remedy_parts.length > 0 ? remedy_parts.join(', ') : null;\\n\\n// Extract image_urls - Product images from image-with-caption sections\\nlet image_urls = $('[data-pub-type=\\\"image-with-caption\\\"] img').toArray()\\n  .map(el => {\\n    let src = $(el).attr('src');\\n    if (src) {\\n      // Remove query parameters to get clean URL\\n      src = src.split('?')[0];\\n      return toURL(src);\\n    }\\n    return null;\\n  })\\n  .filter(url => url !== null);\\n\\n// Extract recall_details_url - Link to CPSC page\\nlet recall_details_url = toURL($('a[href*=\\\"cpsc.gov\\\"]').attr('href'));\\n\\n// Extract product_page_url - The input URL\\nlet product_page_url = toURL(input.url);\\n\\nreturn {\\n  recall_title,\\n  recall_url,\\n  title_on_detail,\\n  date_published,\\n  description,\\n  product_name,\\n  hazard,\\n  remedy,\\n  image_urls,\\n  recall_details_url,\\n  product_page_url\\n};\\n\"}],\"visibility\":\"private\",\"user\":\"dca_freelancer@brightdata.com\",\"status\":{\"value\":\"development\",\"last_modified\":{\"date\":\"2026-08-20T16:11:13.827Z\",\"email\":\"dca_freelancer@brightdata.com\"}},\"url\":\"https://www.ikea.com/us/en/customer-service/product-support/recalls/\",\"use_case\":\"other\",\"customer\":\"hl_03fc6be2\",\"sandbox_version\":1,\"example_input\":[{\"url\":\"https://www.ikea.com/us/en/customer-service/product-support/recalls/\"}],\"example_output\":\"{\\\"recall_title\\\":null,\\\"recall_url\\\":null,\\\"title_on_detail\\\":\\\"IKEA 2016 Chests and Dresser Safety Recall\\\",\\\"date_published\\\":null,\\\"description\\\":\\\"In 2016, we recalled 17.3 million chests and dres...A refund card to help buy a replacement dresser.\\\",\\\"product_name\\\":\\\"MALM, HEMNES, HOPEN, BRIMNES\\\",\\\"hazard\\\":\\\"tip-over accidents\\\",\\\"remedy\\\":\\\"Contact us, Request a kit, Contact us, 6 drawer:,...ing Guide (PDF), Request chest/dresser anchoring\\\",\\\"image_urls\\\":[\\\"https://www.ikea.com/images/panel-of-recalled-chests-of-drawers-136bc3964ea31acfc324f422a49f0884.jpg\\\",\\\"https://www.ikea.com/images/recalled-malm-bec63c88287f35e44c649f4982f39f3f.jpg\\\",\\\"5 more items\\\"],\\\"recall_details_url\\\":\\\"https://www.cpsc.gov/Recalls/2018/IKEA-Reannounce...ests-and-Dressers-Due-to-Serious-Tip-over-Hazard\\\",\\\"product_page_url\\\":\\\"https://www.ikea.com/us/en/customer-service/produ...kea-chest-and-dresser-safety-recall-pub4b96e3c0/\\\"}\",\"output_fields\":{\"type\":\"object\",\"fields\":{\"title_on_detail\":{\"type\":\"text\"},\"description\":{\"type\":\"text\"},\"product_name\":{\"type\":\"text\"},\"hazard\":{\"type\":\"text\"},\"remedy\":{\"type\":\"text\"},\"image_urls\":{\"type\":\"array\",\"items\":{\"type\":\"url\"}},\"recall_details_url\":{\"type\":\"url\"},\"product_page_url\":{\"type\":\"url\"}}},\"features\":[\"cmd.navigate\",\"cmd.parse\",\"cmd.next_stage\",\"cmd.collect\"],\"shared_libs\":[],\"source\":\"dca-ide-automation-66f5c565b6-nszkm\",\"customer_id\":\"hl_03fc6be2\",\"code_environment\":\"intent\",\"id\":\"t_mt1pwkdf296bebzxnx.1\",\"family\":\"t_mt1pwkdf296bebzxnx\",\"patch\":1,\"version\":\"1\",\"domain\":\"www.ikea.com\",\"discovery\":false,\"last_modified\":{\"email\":\"dca_freelancer@brightdata.com\",\"date\":\"2026-08-20T16:11:13.833Z\"},\"is_development\":true},\"template_b\":{\"_id\":{\"buffer\":{\"0\":106,\"1\":135,\"2\":39,\"3\":33,\"4\":239,\"5\":169,\"6\":217,\"7\":151,\"8\":249,\"9\":28,\"10\":121,\"11\":64}},\"name\":\"New ide-automation template\",\"steps\":[{\"name\":\"New ide-automation template\",\"code\":\"// Navigate to the IKEA recalls page\\nnavigate(input.url);\\n\\n// Parse the page to extract all recall data\\nconst {recalls} = parse();\\n\\n// Iterate through each recall and pass all data to next_stage\\nfor (let recall of recalls) {\\n    next_stage({\\n        url: recall.recall_url,\\n        recall_title: recall.recall_title,\\n        recall_url: recall.recall_url,\\n        date_published: recall.date_published\\n    });\\n}\",\"input\":[{\"url\":\"https://www.ikea.com/us/en/customer-service/product-support/recalls/\"}],\"fields\":{\"url\":{\"type\":\"url\",\"required\":true}},\"features\":[\"cmd.navigate\",\"cmd.parse\",\"cmd.next_stage\"],\"worker\":\"code\",\"parser\":{\"parser\":\"// Select all recall content cards\\nconst cards = $('.pub__content-card').toArray();\\n\\n// Extract recall data from each card\\nconst recalls = cards.map(card => {\\n    const $card = $(card);\\n    const $link = $card.find('a[href*=\\\"/recalls/\\\"]');\\n    const recall_url = $link.attr('href');\\n    const recall_title = $card.find('.pub__content-card__title').text_sane();\\n    \\n    return {\\n        recall_url,\\n        recall_title,\\n        date_published: null // No date visible on listing page cards\\n    };\\n}).filter(r => r.recall_url);\\n\\nconsole.log(`Found ${recalls.length} recalls`);\\n\\nreturn {recalls};\",\"sandbox_version\":1,\"id\":\"p_mt1pwkdl2kh1syw5f1.1\"},\"parse_code\":\"// Select all recall content cards\\nconst cards = $('.pub__content-card').toArray();\\n\\n// Extract recall data from each card\\nconst recalls = cards.map(card => {\\n    const $card = $(card);\\n    const $link = $card.find('a[href*=\\\"/recalls/\\\"]');\\n    const recall_url = $link.attr('href');\\n    const recall_title = $card.find('.pub__content-card__title').text_sane();\\n    \\n    return {\\n        recall_url,\\n        recall_title,\\n        date_published: null // No date visible on listing page cards\\n    };\\n}).filter(r => r.recall_url);\\n\\nconsole.log(`Found ${recalls.length} recalls`);\\n\\nreturn {recalls};\"},{\"name\":\"New ide-automation template\",\"code\":\"// The 404 error is caused by truncated/malformed input URLs (e.g., \\\"produ...\\\" instead of \\\"product-support\\\")\\n// This is an input data quality issue from step 0, not a code logic issue\\n// Mark as bad_input to prevent retries when URL is malformed\\nif (!input.url || input.url.includes('...')) {\\n  bad_input('Input URL is truncated or malformed');\\n}\\n\\nnavigate(input.url);\\n\\ncollect(parse());\",\"input\":[{\"url\":\"https://www.ikea.com/us/en/customer-service/produ...ue-to-laceration-and-ingestion-risk-pub1c66cca0/\",\"recall_title\":\"IKEA recalls the IKEA 365+ VÄRDEFULL garlic press due to laceration and ingestion risk\",\"recall_url\":\"https://www.ikea.com/us/en/customer-service/produ...ue-to-laceration-and-ingestion-risk-pub1c66cca0/\",\"date_published\":null}],\"fields\":{\"url\":{\"type\":\"url\",\"required\":true}},\"features\":[\"cmd.navigate\",\"cmd.parse\",\"cmd.collect\"],\"worker\":\"code\",\"parser\":{\"parser\":\"const toURL = (url) => {\\n  if (!url) return null;\\n  try {\\n    return new URL(url, location.href);\\n  } catch {\\n    return null;\\n  }\\n};\\n\\n// Extract title_on_detail - Use input.recall_title first, fallback to h1\\nconst title_on_detail = input.recall_title || $('h1').text_sane();\\n\\n// Extract description - Main recall description from text section\\nconst description = $('[data-pub-type=\\\"text\\\"]').text_sane();\\n\\n// Extract product_name - Robust 3-tier fallback: table → h2 → title extraction\\nlet product_name = null;\\nconst table_product = $('table tbody tr td').first().text_sane();\\nif (table_product) {\\n  product_name = table_product;\\n} else {\\n  const h2_products = $('h2').toArray()\\n    .map(el => $(el).text_sane())\\n    .filter(text => text && !text.match(/refund|see more|contact|information|satisfied|footer/i));\\n  if (h2_products.length > 0) {\\n    product_name = h2_products[0];\\n  } else if (title_on_detail) {\\n    const product_match = title_on_detail.match(/recalls? (?:the )?(.+?) due to/i);\\n    if (product_match) {\\n      product_name = product_match[1].trim();\\n    }\\n  }\\n}\\n\\n// Extract hazard - Generic extraction from text using multiple patterns\\nlet hazard = null;\\nconst full_text = $('[data-pub-type=\\\"text\\\"]').text_sane();\\n\\nconst posing_match = full_text.match(/posing (?:an? )?(.+?) risk/i);\\nif (posing_match) {\\n  hazard = posing_match[1].trim();\\n} else if (title_on_detail) {\\n  const title_match = title_on_detail.match(/due to (.+?)(?:\\\\s+risk)?$/i);\\n  if (title_match) {\\n    hazard = title_match[1].trim().replace(/\\\\s+risk$/i, '');\\n  }\\n}\\n\\n// Extract remedy - Look for action sentences in text\\nlet remedy = null;\\nconst remedy_match = full_text.match(/Consumers should (.+?)(?:\\\\.\\\\s*(?:We apologize|For more information|$))/i);\\nif (remedy_match) {\\n  remedy = 'Consumers should ' + remedy_match[1].trim();\\n}\\n\\n// Extract image_urls - Product images from image-with-caption sections\\nconst image_urls = $('[data-pub-type=\\\"image-with-caption\\\"] img').toArray()\\n  .map(el => {\\n    const src = $(el).attr('src');\\n    if (src) {\\n      return toURL(src.split('?')[0]);\\n    }\\n    return null;\\n  })\\n  .filter(url => url !== null);\\n\\n// Extract recall_details_url - Link to CPSC page\\nconst recall_details_url = toURL($('a[href*=\\\"cpsc.gov\\\"]').attr('href'));\\n\\n// Extract product_page_url - Use input.recall_url first, fallback to input.url\\nconst product_page_url = toURL(input.recall_url || input.url);\\n\\nreturn {\\n  title_on_detail,\\n  description,\\n  product_name,\\n  hazard,\\n  remedy,\\n  image_urls,\\n  recall_details_url,\\n  product_page_url\\n};\",\"sandbox_version\":1,\"id\":\"p_mt1pwkdm19ng8rmmlu.1\"},\"parse_code\":\"const toURL = (url) => {\\n  if (!url) return null;\\n  try {\\n    return new URL(url, location.href);\\n  } catch {\\n    return null;\\n  }\\n};\\n\\n// Extract title_on_detail - Use input.recall_title first, fallback to h1\\nconst title_on_detail = input.recall_title || $('h1').text_sane();\\n\\n// Extract description - Main recall description from text section\\nconst description = $('[data-pub-type=\\\"text\\\"]').text_sane();\\n\\n// Extract product_name - Robust 3-tier fallback: table → h2 → title extraction\\nlet product_name = null;\\nconst table_product = $('table tbody tr td').first().text_sane();\\nif (table_product) {\\n  product_name = table_product;\\n} else {\\n  const h2_products = $('h2').toArray()\\n    .map(el => $(el).text_sane())\\n    .filter(text => text && !text.match(/refund|see more|contact|information|satisfied|footer/i));\\n  if (h2_products.length > 0) {\\n    product_name = h2_products[0];\\n  } else if (title_on_detail) {\\n    const product_match = title_on_detail.match(/recalls? (?:the )?(.+?) due to/i);\\n    if (product_match) {\\n      product_name = product_match[1].trim();\\n    }\\n  }\\n}\\n\\n// Extract hazard - Generic extraction from text using multiple patterns\\nlet hazard = null;\\nconst full_text = $('[data-pub-type=\\\"text\\\"]').text_sane();\\n\\nconst posing_match = full_text.match(/posing (?:an? )?(.+?) risk/i);\\nif (posing_match) {\\n  hazard = posing_match[1].trim();\\n} else if (title_on_detail) {\\n  const title_match = title_on_detail.match(/due to (.+?)(?:\\\\s+risk)?$/i);\\n  if (title_match) {\\n    hazard = title_match[1].trim().replace(/\\\\s+risk$/i, '');\\n  }\\n}\\n\\n// Extract remedy - Look for action sentences in text\\nlet remedy = null;\\nconst remedy_match = full_text.match(/Consumers should (.+?)(?:\\\\.\\\\s*(?:We apologize|For more information|$))/i);\\nif (remedy_match) {\\n  remedy = 'Consumers should ' + remedy_match[1].trim();\\n}\\n\\n// Extract image_urls - Product images from image-with-caption sections\\nconst image_urls = $('[data-pub-type=\\\"image-with-caption\\\"] img').toArray()\\n  .map(el => {\\n    const src = $(el).attr('src');\\n    if (src) {\\n      return toURL(src.split('?')[0]);\\n    }\\n    return null;\\n  })\\n  .filter(url => url !== null);\\n\\n// Extract recall_details_url - Link to CPSC page\\nconst recall_details_url = toURL($('a[href*=\\\"cpsc.gov\\\"]').attr('href'));\\n\\n// Extract product_page_url - Use input.recall_url first, fallback to input.url\\nconst product_page_url = toURL(input.recall_url || input.url);\\n\\nreturn {\\n  title_on_detail,\\n  description,\\n  product_name,\\n  hazard,\\n  remedy,\\n  image_urls,\\n  recall_details_url,\\n  product_page_url\\n};\"}],\"visibility\":\"private\",\"user\":\"dca_freelancer@brightdata.com\",\"status\":{\"value\":\"development\",\"last_modified\":{\"date\":\"2026-08-20T16:11:13.827Z\",\"email\":\"dca_freelancer@brightdata.com\"}},\"url\":\"https://www.ikea.com/us/en/customer-service/product-support/recalls/\",\"use_case\":\"other\",\"customer\":\"hl_03fc6be2\",\"sandbox_version\":1,\"example_input\":[{\"url\":\"https://www.ikea.com/us/en/customer-service/product-support/recalls/\"}],\"example_output\":\"{\\\"recall_title\\\":null,\\\"recall_url\\\":null,\\\"title_on_detail\\\":\\\"IKEA 2016 Chests and Dresser Safety Recall\\\",\\\"date_published\\\":null,\\\"description\\\":\\\"In 2016, we recalled 17.3 million chests and dres...A refund card to help buy a replacement dresser.\\\",\\\"product_name\\\":\\\"MALM, HEMNES, HOPEN, BRIMNES\\\",\\\"hazard\\\":\\\"tip-over accidents\\\",\\\"remedy\\\":\\\"Contact us, Request a kit, Contact us, 6 drawer:,...ing Guide (PDF), Request chest/dresser anchoring\\\",\\\"image_urls\\\":[\\\"https://www.ikea.com/images/panel-of-recalled-chests-of-drawers-136bc3964ea31acfc324f422a49f0884.jpg\\\",\\\"https://www.ikea.com/images/recalled-malm-bec63c88287f35e44c649f4982f39f3f.jpg\\\",\\\"5 more items\\\"],\\\"recall_details_url\\\":\\\"https://www.cpsc.gov/Recalls/2018/IKEA-Reannounce...ests-and-Dressers-Due-to-Serious-Tip-over-Hazard\\\",\\\"product_page_url\\\":\\\"https://www.ikea.com/us/en/customer-service/produ...kea-chest-and-dresser-safety-recall-pub4b96e3c0/\\\"}\",\"output_fields\":{\"type\":\"object\",\"fields\":{\"title_on_detail\":{\"type\":\"text\"},\"description\":{\"type\":\"text\"},\"product_name\":{\"type\":\"text\"},\"hazard\":{\"type\":\"text\"},\"remedy\":{\"type\":\"text\"},\"image_urls\":{\"type\":\"array\",\"items\":{\"type\":\"url\"}},\"recall_details_url\":{\"type\":\"url\"},\"product_page_url\":{\"type\":\"url\"}}},\"features\":[\"cmd.navigate\",\"cmd.parse\",\"cmd.next_stage\",\"cmd.collect\"],\"shared_libs\":[],\"source\":\"dca-ide-automation-66f5c565b6-nszkm\",\"customer_id\":\"hl_03fc6be2\",\"code_environment\":\"intent\",\"id\":\"t_mt1pwkdf296bebzxnx.1\",\"family\":\"t_mt1pwkdf296bebzxnx\",\"patch\":1,\"version\":\"1\",\"domain\":\"www.ikea.com\",\"discovery\":false,\"last_modified\":{\"email\":\"dca_freelancer@brightdata.com\",\"date\":\"2026-08-20T16:11:13.833Z\"},\"is_development\":true},\"title\":\"View refactor changes\",\"user\":\"vtking03@gmail.com\"},\"success\":false}",
+      "body": {
+        "id": "ia_mt8a25sy2nk46dn9no",
+        "step": "user_approval",
+        "completed_steps": [
+          "planner",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "request_fulfillment_validator",
+          "step_advance",
+          "control_preview_runner",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "css_selector_extractor",
+          "code_fixer",
+          "step_preview_runner",
+          "html_diff",
+          "step_advance"
+        ],
+        "status": "pending_answer",
+        "diff": {
+          "template_a": {
+            "_id": "6a872721efa9d997f91c7940",
+            "name": "New ide-automation template",
+            "steps": [
+              {
+                "name": "New ide-automation template",
+                "code": "// Navigate to the IKEA recalls page\nnavigate(input.url);\n\n\n// Parse the page to extract all recall URLs\nconst {recall_urls} = parse();\n\n// Iterate through each recall URL and collect it using next_stage\nfor (let url of recall_urls) {\n    next_stage({url});\n}\n",
+                "input": [
+                  {
+                    "url": "https://www.ikea.com/us/en/customer-service/product-support/recalls/"
+                  }
+                ],
+                "fields": {
+                  "url": {
+                    "type": "url",
+                    "required": true
+                  }
+                },
+                "features": [
+                  "cmd.navigate",
+                  "cmd.parse",
+                  "cmd.next_stage"
+                ],
+                "worker": "code",
+                "parser": {
+                  "parser": "// Select all recall links from the content cards\nconst recall_links = $('.pub__content-card a[href*=\"/recalls/\"]').toArray();\n\n// Extract URLs and convert relative URLs to absolute\nconst base_url = 'https://www.ikea.com';\nconst recall_urls = recall_links.map(link => {\n    const href = $(link).attr('href');\n    if (href) {\n        // Convert relative URLs to absolute URLs\n        return new URL(href, base_url).href;\n    }\n}).filter(Boolean); // Remove any undefined/null values\n\n// Remove duplicates\nconst unique_recall_urls = [...new Set(recall_urls)];\n\nconsole.log(`Found ${unique_recall_urls.length} unique recall URLs`);\n\nreturn {recall_urls: unique_recall_urls};\n",
+                  "sandbox_version": 1,
+                  "id": "p_mt1pwkdl2kh1syw5f1.1"
+                },
+                "parse_code": "// Select all recall links from the content cards\nconst recall_links = $('.pub__content-card a[href*=\"/recalls/\"]').toArray();\n\n// Extract URLs and convert relative URLs to absolute\nconst base_url = 'https://www.ikea.com';\nconst recall_urls = recall_links.map(link => {\n    const href = $(link).attr('href');\n    if (href) {\n        // Convert relative URLs to absolute URLs\n        return new URL(href, base_url).href;\n    }\n}).filter(Boolean); // Remove any undefined/null values\n\n// Remove duplicates\nconst unique_recall_urls = [...new Set(recall_urls)];\n\nconsole.log(`Found ${unique_recall_urls.length} unique recall URLs`);\n\nreturn {recall_urls: unique_recall_urls};\n"
+              },
+              {
+                "name": "New ide-automation template",
+                "code": "navigate(input.url);\ncollect(parse());\n",
+                "input": [
+                  {
+                    "url": "https://www.ikea.com/us/en/customer-service/product-support/recalls/ikea-chest-and-dresser-safety-recall-pub4b96e3c0/"
+                  }
+                ],
+                "fields": {
+                  "url": {
+                    "type": "url",
+                    "required": true
+                  }
+                },
+                "features": [
+                  "cmd.navigate",
+                  "cmd.parse",
+                  "cmd.collect"
+                ],
+                "worker": "code",
+                "parser": {
+                  "parser": "// Helper function to convert URLs\nconst toURL = (url) => {\n  if (!url) return null;\n  try {\n    return new URL(url);\n  } catch {\n    return null;\n  }\n};\n\n// Extract recall_title - this is for listing page card title, not detail page\n// Since we're on the detail page, this would be null (no listing card here)\nlet recall_title = null;\n\n// Extract recall_url - URL from listing page card\n// Since we're on the detail page, this would be null\nlet recall_url = null;\n\n// Extract title_on_detail - Main h1 heading on detail page\nlet title_on_detail = $('h1').text_sane();\n\n// Extract date_published - Publication date if shown\n// Looking for date elements, but none found in the HTML\nlet date_published = null;\n\n// Extract description - Main recall description from first text section\nlet description = $('[data-pub-type=\"text\"]').first().text_sane();\n\n// Extract product_name - Product names from h2 headings in container sections\nlet product_names = $('[data-pub-type=\"container\"] h2').toArray()\n  .map(el => $(el).text_sane())\n  .filter(text => text && !text.includes('Refund') && !text.includes('See more'));\nlet product_name = product_names.join(', ') || null;\n\n// Extract hazard - Safety risk described in the recall\nlet hazard_text = $('[data-pub-type=\"text\"] p').first().text_sane();\nlet hazard = null;\nif (hazard_text && hazard_text.includes('tip-over')) {\n  hazard = 'tip-over accidents';\n}\n\n// Extract remedy - What customers should do\nlet remedy_parts = [];\n// From button labels\n$('[data-pub-type=\"button-link\"] .pub__btn__label').toArray().forEach(el => {\n  let text = $(el).text_sane();\n  if (text) remedy_parts.push(text);\n});\n// From strong text in text sections\n$('[data-pub-type=\"text\"] strong').toArray().forEach(el => {\n  let text = $(el).text_sane();\n  if (text && !text.includes('Please note')) remedy_parts.push(text);\n});\nlet remedy = remedy_parts.length > 0 ? remedy_parts.join(', ') : null;\n\n// Extract image_urls - Product images from image-with-caption sections\nlet image_urls = $('[data-pub-type=\"image-with-caption\"] img').toArray()\n  .map(el => {\n    let src = $(el).attr('src');\n    if (src) {\n      // Remove query parameters to get clean URL\n      src = src.split('?')[0];\n      return toURL(src);\n    }\n    return null;\n  })\n  .filter(url => url !== null);\n\n// Extract recall_details_url - Link to CPSC page\nlet recall_details_url = toURL($('a[href*=\"cpsc.gov\"]').attr('href'));\n\n// Extract product_page_url - The input URL\nlet product_page_url = toURL(input.url);\n\nreturn {\n  recall_title,\n  recall_url,\n  title_on_detail,\n  date_published,\n  description,\n  product_name,\n  hazard,\n  remedy,\n  image_urls,\n  recall_details_url,\n  product_page_url\n};\n",
+                  "sandbox_version": 1,
+                  "id": "p_mt1pwkdm19ng8rmmlu.1"
+                },
+                "parse_code": "// Helper function to convert URLs\nconst toURL = (url) => {\n  if (!url) return null;\n  try {\n    return new URL(url);\n  } catch {\n    return null;\n  }\n};\n\n// Extract recall_title - this is for listing page card title, not detail page\n// Since we're on the detail page, this would be null (no listing card here)\nlet recall_title = null;\n\n// Extract recall_url - URL from listing page card\n// Since we're on the detail page, this would be null\nlet recall_url = null;\n\n// Extract title_on_detail - Main h1 heading on detail page\nlet title_on_detail = $('h1').text_sane();\n\n// Extract date_published - Publication date if shown\n// Looking for date elements, but none found in the HTML\nlet date_published = null;\n\n// Extract description - Main recall description from first text section\nlet description = $('[data-pub-type=\"text\"]').first().text_sane();\n\n// Extract product_name - Product names from h2 headings in container sections\nlet product_names = $('[data-pub-type=\"container\"] h2').toArray()\n  .map(el => $(el).text_sane())\n  .filter(text => text && !text.includes('Refund') && !text.includes('See more'));\nlet product_name = product_names.join(', ') || null;\n\n// Extract hazard - Safety risk described in the recall\nlet hazard_text = $('[data-pub-type=\"text\"] p').first().text_sane();\nlet hazard = null;\nif (hazard_text && hazard_text.includes('tip-over')) {\n  hazard = 'tip-over accidents';\n}\n\n// Extract remedy - What customers should do\nlet remedy_parts = [];\n// From button labels\n$('[data-pub-type=\"button-link\"] .pub__btn__label').toArray().forEach(el => {\n  let text = $(el).text_sane();\n  if (text) remedy_parts.push(text);\n});\n// From strong text in text sections\n$('[data-pub-type=\"text\"] strong').toArray().forEach(el => {\n  let text = $(el).text_sane();\n  if (text && !text.includes('Please note')) remedy_parts.push(text);\n});\nlet remedy = remedy_parts.length > 0 ? remedy_parts.join(', ') : null;\n\n// Extract image_urls - Product images from image-with-caption sections\nlet image_urls = $('[data-pub-type=\"image-with-caption\"] img').toArray()\n  .map(el => {\n    let src = $(el).attr('src');\n    if (src) {\n      // Remove query parameters to get clean URL\n      src = src.split('?')[0];\n      return toURL(src);\n    }\n    return null;\n  })\n  .filter(url => url !== null);\n\n// Extract recall_details_url - Link to CPSC page\nlet recall_details_url = toURL($('a[href*=\"cpsc.gov\"]').attr('href'));\n\n// Extract product_page_url - The input URL\nlet product_page_url = toURL(input.url);\n\nreturn {\n  recall_title,\n  recall_url,\n  title_on_detail,\n  date_published,\n  description,\n  product_name,\n  hazard,\n  remedy,\n  image_urls,\n  recall_details_url,\n  product_page_url\n};\n"
+              }
+            ],
+            "visibility": "private",
+            "user": "dca_freelancer@brightdata.com",
+            "status": {
+              "value": "development",
+              "last_modified": {
+                "date": "2026-08-20T16:11:13.827Z",
+                "email": "dca_freelancer@brightdata.com"
+              }
+            },
+            "url": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+            "use_case": "other",
+            "customer": "hl_03fc6be2",
+            "sandbox_version": 1,
+            "example_input": [
+              {
+                "url": "https://www.ikea.com/us/en/customer-service/product-support/recalls/"
+              }
+            ],
+            "example_output": "{\"recall_title\":null,\"recall_url\":null,\"title_on_detail\":\"IKEA 2016 Chests and Dresser Safety Recall\",\"date_published\":null,\"description\":\"In 2016, we recalled 17.3 million chests and dres...A refund card to help buy a replacement dresser.\",\"product_name\":\"MALM, HEMNES, HOPEN, BRIMNES\",\"hazard\":\"tip-over accidents\",\"remedy\":\"Contact us, Request a kit, Contact us, 6 drawer:,...ing Guide (PDF), Request chest/dresser anchoring\",\"image_urls\":[\"https://www.ikea.com/images/panel-of-recalled-chests-of-drawers-136bc3964ea31acfc324f422a49f0884.jpg\",\"https://www.ikea.com/images/recalled-malm-bec63c88287f35e44c649f4982f39f3f.jpg\",\"5 more items\"],\"recall_details_url\":\"https://www.cpsc.gov/Recalls/2018/IKEA-Reannounce...ests-and-Dressers-Due-to-Serious-Tip-over-Hazard\",\"product_page_url\":\"https://www.ikea.com/us/en/customer-service/produ...kea-chest-and-dresser-safety-recall-pub4b96e3c0/\"}",
+            "output_fields": {
+              "type": "object",
+              "fields": {
+                "title_on_detail": {
+                  "type": "text"
+                },
+                "description": {
+                  "type": "text"
+                },
+                "product_name": {
+                  "type": "text"
+                },
+                "hazard": {
+                  "type": "text"
+                },
+                "remedy": {
+                  "type": "text"
+                },
+                "image_urls": {
+                  "type": "array",
+                  "items": {
+                    "type": "url"
+                  }
+                },
+                "recall_details_url": {
+                  "type": "url"
+                },
+                "product_page_url": {
+                  "type": "url"
+                }
+              }
+            },
+            "features": [
+              "cmd.navigate",
+              "cmd.parse",
+              "cmd.next_stage",
+              "cmd.collect"
+            ],
+            "shared_libs": [],
+            "source": "dca-ide-automation-66f5c565b6-nszkm",
+            "customer_id": "hl_03fc6be2",
+            "code_environment": "intent",
+            "id": "t_mt1pwkdf296bebzxnx.1",
+            "family": "t_mt1pwkdf296bebzxnx",
+            "patch": 1,
+            "version": "1",
+            "domain": "www.ikea.com",
+            "discovery": false,
+            "last_modified": {
+              "email": "dca_freelancer@brightdata.com",
+              "date": "2026-08-20T16:11:13.833Z"
+            },
+            "is_development": true
+          },
+          "template_b": {
+            "_id": {
+              "buffer": {
+                "0": 106,
+                "1": 135,
+                "2": 39,
+                "3": 33,
+                "4": 239,
+                "5": 169,
+                "6": 217,
+                "7": 151,
+                "8": 249,
+                "9": 28,
+                "10": 121,
+                "11": 64
+              }
+            },
+            "name": "New ide-automation template",
+            "steps": [
+              {
+                "name": "New ide-automation template",
+                "code": "// Navigate to the IKEA recalls page\nnavigate(input.url);\n\n// Parse the page to extract all recall data\nconst {recalls} = parse();\n\n// Iterate through each recall and pass all data to next_stage\nfor (let recall of recalls) {\n    next_stage({\n        url: recall.recall_url,\n        recall_title: recall.recall_title,\n        recall_url: recall.recall_url,\n        date_published: recall.date_published\n    });\n}",
+                "input": [
+                  {
+                    "url": "https://www.ikea.com/us/en/customer-service/product-support/recalls/"
+                  }
+                ],
+                "fields": {
+                  "url": {
+                    "type": "url",
+                    "required": true
+                  }
+                },
+                "features": [
+                  "cmd.navigate",
+                  "cmd.parse",
+                  "cmd.next_stage"
+                ],
+                "worker": "code",
+                "parser": {
+                  "parser": "// Select all recall content cards\nconst cards = $('.pub__content-card').toArray();\n\n// Extract recall data from each card\nconst recalls = cards.map(card => {\n    const $card = $(card);\n    const $link = $card.find('a[href*=\"/recalls/\"]');\n    const recall_url = $link.attr('href');\n    const recall_title = $card.find('.pub__content-card__title').text_sane();\n    \n    return {\n        recall_url,\n        recall_title,\n        date_published: null // No date visible on listing page cards\n    };\n}).filter(r => r.recall_url);\n\nconsole.log(`Found ${recalls.length} recalls`);\n\nreturn {recalls};",
+                  "sandbox_version": 1,
+                  "id": "p_mt1pwkdl2kh1syw5f1.1"
+                },
+                "parse_code": "// Select all recall content cards\nconst cards = $('.pub__content-card').toArray();\n\n// Extract recall data from each card\nconst recalls = cards.map(card => {\n    const $card = $(card);\n    const $link = $card.find('a[href*=\"/recalls/\"]');\n    const recall_url = $link.attr('href');\n    const recall_title = $card.find('.pub__content-card__title').text_sane();\n    \n    return {\n        recall_url,\n        recall_title,\n        date_published: null // No date visible on listing page cards\n    };\n}).filter(r => r.recall_url);\n\nconsole.log(`Found ${recalls.length} recalls`);\n\nreturn {recalls};"
+              },
+              {
+                "name": "New ide-automation template",
+                "code": "// The 404 error is caused by truncated/malformed input URLs (e.g., \"produ...\" instead of \"product-support\")\n// This is an input data quality issue from step 0, not a code logic issue\n// Mark as bad_input to prevent retries when URL is malformed\nif (!input.url || input.url.includes('...')) {\n  bad_input('Input URL is truncated or malformed');\n}\n\nnavigate(input.url);\n\ncollect(parse());",
+                "input": [
+                  {
+                    "url": "https://www.ikea.com/us/en/customer-service/produ...ue-to-laceration-and-ingestion-risk-pub1c66cca0/",
+                    "recall_title": "IKEA recalls the IKEA 365+ VÄRDEFULL garlic press due to laceration and ingestion risk",
+                    "recall_url": "https://www.ikea.com/us/en/customer-service/produ...ue-to-laceration-and-ingestion-risk-pub1c66cca0/",
+                    "date_published": null
+                  }
+                ],
+                "fields": {
+                  "url": {
+                    "type": "url",
+                    "required": true
+                  }
+                },
+                "features": [
+                  "cmd.navigate",
+                  "cmd.parse",
+                  "cmd.collect"
+                ],
+                "worker": "code",
+                "parser": {
+                  "parser": "const toURL = (url) => {\n  if (!url) return null;\n  try {\n    return new URL(url, location.href);\n  } catch {\n    return null;\n  }\n};\n\n// Extract title_on_detail - Use input.recall_title first, fallback to h1\nconst title_on_detail = input.recall_title || $('h1').text_sane();\n\n// Extract description - Main recall description from text section\nconst description = $('[data-pub-type=\"text\"]').text_sane();\n\n// Extract product_name - Robust 3-tier fallback: table → h2 → title extraction\nlet product_name = null;\nconst table_product = $('table tbody tr td').first().text_sane();\nif (table_product) {\n  product_name = table_product;\n} else {\n  const h2_products = $('h2').toArray()\n    .map(el => $(el).text_sane())\n    .filter(text => text && !text.match(/refund|see more|contact|information|satisfied|footer/i));\n  if (h2_products.length > 0) {\n    product_name = h2_products[0];\n  } else if (title_on_detail) {\n    const product_match = title_on_detail.match(/recalls? (?:the )?(.+?) due to/i);\n    if (product_match) {\n      product_name = product_match[1].trim();\n    }\n  }\n}\n\n// Extract hazard - Generic extraction from text using multiple patterns\nlet hazard = null;\nconst full_text = $('[data-pub-type=\"text\"]').text_sane();\n\nconst posing_match = full_text.match(/posing (?:an? )?(.+?) risk/i);\nif (posing_match) {\n  hazard = posing_match[1].trim();\n} else if (title_on_detail) {\n  const title_match = title_on_detail.match(/due to (.+?)(?:\\s+risk)?$/i);\n  if (title_match) {\n    hazard = title_match[1].trim().replace(/\\s+risk$/i, '');\n  }\n}\n\n// Extract remedy - Look for action sentences in text\nlet remedy = null;\nconst remedy_match = full_text.match(/Consumers should (.+?)(?:\\.\\s*(?:We apologize|For more information|$))/i);\nif (remedy_match) {\n  remedy = 'Consumers should ' + remedy_match[1].trim();\n}\n\n// Extract image_urls - Product images from image-with-caption sections\nconst image_urls = $('[data-pub-type=\"image-with-caption\"] img').toArray()\n  .map(el => {\n    const src = $(el).attr('src');\n    if (src) {\n      return toURL(src.split('?')[0]);\n    }\n    return null;\n  })\n  .filter(url => url !== null);\n\n// Extract recall_details_url - Link to CPSC page\nconst recall_details_url = toURL($('a[href*=\"cpsc.gov\"]').attr('href'));\n\n// Extract product_page_url - Use input.recall_url first, fallback to input.url\nconst product_page_url = toURL(input.recall_url || input.url);\n\nreturn {\n  title_on_detail,\n  description,\n  product_name,\n  hazard,\n  remedy,\n  image_urls,\n  recall_details_url,\n  product_page_url\n};",
+                  "sandbox_version": 1,
+                  "id": "p_mt1pwkdm19ng8rmmlu.1"
+                },
+                "parse_code": "const toURL = (url) => {\n  if (!url) return null;\n  try {\n    return new URL(url, location.href);\n  } catch {\n    return null;\n  }\n};\n\n// Extract title_on_detail - Use input.recall_title first, fallback to h1\nconst title_on_detail = input.recall_title || $('h1').text_sane();\n\n// Extract description - Main recall description from text section\nconst description = $('[data-pub-type=\"text\"]').text_sane();\n\n// Extract product_name - Robust 3-tier fallback: table → h2 → title extraction\nlet product_name = null;\nconst table_product = $('table tbody tr td').first().text_sane();\nif (table_product) {\n  product_name = table_product;\n} else {\n  const h2_products = $('h2').toArray()\n    .map(el => $(el).text_sane())\n    .filter(text => text && !text.match(/refund|see more|contact|information|satisfied|footer/i));\n  if (h2_products.length > 0) {\n    product_name = h2_products[0];\n  } else if (title_on_detail) {\n    const product_match = title_on_detail.match(/recalls? (?:the )?(.+?) due to/i);\n    if (product_match) {\n      product_name = product_match[1].trim();\n    }\n  }\n}\n\n// Extract hazard - Generic extraction from text using multiple patterns\nlet hazard = null;\nconst full_text = $('[data-pub-type=\"text\"]').text_sane();\n\nconst posing_match = full_text.match(/posing (?:an? )?(.+?) risk/i);\nif (posing_match) {\n  hazard = posing_match[1].trim();\n} else if (title_on_detail) {\n  const title_match = title_on_detail.match(/due to (.+?)(?:\\s+risk)?$/i);\n  if (title_match) {\n    hazard = title_match[1].trim().replace(/\\s+risk$/i, '');\n  }\n}\n\n// Extract remedy - Look for action sentences in text\nlet remedy = null;\nconst remedy_match = full_text.match(/Consumers should (.+?)(?:\\.\\s*(?:We apologize|For more information|$))/i);\nif (remedy_match) {\n  remedy = 'Consumers should ' + remedy_match[1].trim();\n}\n\n// Extract image_urls - Product images from image-with-caption sections\nconst image_urls = $('[data-pub-type=\"image-with-caption\"] img').toArray()\n  .map(el => {\n    const src = $(el).attr('src');\n    if (src) {\n      return toURL(src.split('?')[0]);\n    }\n    return null;\n  })\n  .filter(url => url !== null);\n\n// Extract recall_details_url - Link to CPSC page\nconst recall_details_url = toURL($('a[href*=\"cpsc.gov\"]').attr('href'));\n\n// Extract product_page_url - Use input.recall_url first, fallback to input.url\nconst product_page_url = toURL(input.recall_url || input.url);\n\nreturn {\n  title_on_detail,\n  description,\n  product_name,\n  hazard,\n  remedy,\n  image_urls,\n  recall_details_url,\n  product_page_url\n};"
+              }
+            ],
+            "visibility": "private",
+            "user": "dca_freelancer@brightdata.com",
+            "status": {
+              "value": "development",
+              "last_modified": {
+                "date": "2026-08-20T16:11:13.827Z",
+                "email": "dca_freelancer@brightdata.com"
+              }
+            },
+            "url": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+            "use_case": "other",
+            "customer": "hl_03fc6be2",
+            "sandbox_version": 1,
+            "example_input": [
+              {
+                "url": "https://www.ikea.com/us/en/customer-service/product-support/recalls/"
+              }
+            ],
+            "example_output": "{\"recall_title\":null,\"recall_url\":null,\"title_on_detail\":\"IKEA 2016 Chests and Dresser Safety Recall\",\"date_published\":null,\"description\":\"In 2016, we recalled 17.3 million chests and dres...A refund card to help buy a replacement dresser.\",\"product_name\":\"MALM, HEMNES, HOPEN, BRIMNES\",\"hazard\":\"tip-over accidents\",\"remedy\":\"Contact us, Request a kit, Contact us, 6 drawer:,...ing Guide (PDF), Request chest/dresser anchoring\",\"image_urls\":[\"https://www.ikea.com/images/panel-of-recalled-chests-of-drawers-136bc3964ea31acfc324f422a49f0884.jpg\",\"https://www.ikea.com/images/recalled-malm-bec63c88287f35e44c649f4982f39f3f.jpg\",\"5 more items\"],\"recall_details_url\":\"https://www.cpsc.gov/Recalls/2018/IKEA-Reannounce...ests-and-Dressers-Due-to-Serious-Tip-over-Hazard\",\"product_page_url\":\"https://www.ikea.com/us/en/customer-service/produ...kea-chest-and-dresser-safety-recall-pub4b96e3c0/\"}",
+            "output_fields": {
+              "type": "object",
+              "fields": {
+                "title_on_detail": {
+                  "type": "text"
+                },
+                "description": {
+                  "type": "text"
+                },
+                "product_name": {
+                  "type": "text"
+                },
+                "hazard": {
+                  "type": "text"
+                },
+                "remedy": {
+                  "type": "text"
+                },
+                "image_urls": {
+                  "type": "array",
+                  "items": {
+                    "type": "url"
+                  }
+                },
+                "recall_details_url": {
+                  "type": "url"
+                },
+                "product_page_url": {
+                  "type": "url"
+                }
+              }
+            },
+            "features": [
+              "cmd.navigate",
+              "cmd.parse",
+              "cmd.next_stage",
+              "cmd.collect"
+            ],
+            "shared_libs": [],
+            "source": "dca-ide-automation-66f5c565b6-nszkm",
+            "customer_id": "hl_03fc6be2",
+            "code_environment": "intent",
+            "id": "t_mt1pwkdf296bebzxnx.1",
+            "family": "t_mt1pwkdf296bebzxnx",
+            "patch": 1,
+            "version": "1",
+            "domain": "www.ikea.com",
+            "discovery": false,
+            "last_modified": {
+              "email": "dca_freelancer@brightdata.com",
+              "date": "2026-08-20T16:11:13.833Z"
+            },
+            "is_development": true
+          },
+          "title": "View refactor changes",
+          "user": "vtking03@gmail.com"
+        },
+        "success": false
+      }
+    }
+  ],
+  "gate": {
+    "reached": true,
+    "at": "2026-08-25T06:36:02.116Z",
+    "poll": 39,
+    "body": {
+      "id": "ia_mt8a25sy2nk46dn9no",
+      "step": "user_approval",
+      "completed_steps": [
+        "planner",
+        "control_preview_runner",
+        "code_fixer",
+        "step_preview_runner",
+        "request_fulfillment_validator",
+        "step_advance",
+        "control_preview_runner",
+        "code_fixer",
+        "step_preview_runner",
+        "css_selector_extractor",
+        "code_fixer",
+        "step_preview_runner",
+        "css_selector_extractor",
+        "code_fixer",
+        "step_preview_runner",
+        "css_selector_extractor",
+        "code_fixer",
+        "step_preview_runner",
+        "css_selector_extractor",
+        "code_fixer",
+        "step_preview_runner",
+        "css_selector_extractor",
+        "code_fixer",
+        "step_preview_runner",
+        "css_selector_extractor",
+        "code_fixer",
+        "step_preview_runner",
+        "html_diff",
+        "step_advance"
+      ],
+      "status": "pending_answer",
+      "diff": {
+        "template_a": {
+          "_id": "6a872721efa9d997f91c7940",
+          "name": "New ide-automation template",
+          "steps": [
+            {
+              "name": "New ide-automation template",
+              "code": "// Navigate to the IKEA recalls page\nnavigate(input.url);\n\n\n// Parse the page to extract all recall URLs\nconst {recall_urls} = parse();\n\n// Iterate through each recall URL and collect it using next_stage\nfor (let url of recall_urls) {\n    next_stage({url});\n}\n",
+              "input": [
+                {
+                  "url": "https://www.ikea.com/us/en/customer-service/product-support/recalls/"
+                }
+              ],
+              "fields": {
+                "url": {
+                  "type": "url",
+                  "required": true
+                }
+              },
+              "features": [
+                "cmd.navigate",
+                "cmd.parse",
+                "cmd.next_stage"
+              ],
+              "worker": "code",
+              "parser": {
+                "parser": "// Select all recall links from the content cards\nconst recall_links = $('.pub__content-card a[href*=\"/recalls/\"]').toArray();\n\n// Extract URLs and convert relative URLs to absolute\nconst base_url = 'https://www.ikea.com';\nconst recall_urls = recall_links.map(link => {\n    const href = $(link).attr('href');\n    if (href) {\n        // Convert relative URLs to absolute URLs\n        return new URL(href, base_url).href;\n    }\n}).filter(Boolean); // Remove any undefined/null values\n\n// Remove duplicates\nconst unique_recall_urls = [...new Set(recall_urls)];\n\nconsole.log(`Found ${unique_recall_urls.length} unique recall URLs`);\n\nreturn {recall_urls: unique_recall_urls};\n",
+                "sandbox_version": 1,
+                "id": "p_mt1pwkdl2kh1syw5f1.1"
+              },
+              "parse_code": "// Select all recall links from the content cards\nconst recall_links = $('.pub__content-card a[href*=\"/recalls/\"]').toArray();\n\n// Extract URLs and convert relative URLs to absolute\nconst base_url = 'https://www.ikea.com';\nconst recall_urls = recall_links.map(link => {\n    const href = $(link).attr('href');\n    if (href) {\n        // Convert relative URLs to absolute URLs\n        return new URL(href, base_url).href;\n    }\n}).filter(Boolean); // Remove any undefined/null values\n\n// Remove duplicates\nconst unique_recall_urls = [...new Set(recall_urls)];\n\nconsole.log(`Found ${unique_recall_urls.length} unique recall URLs`);\n\nreturn {recall_urls: unique_recall_urls};\n"
+            },
+            {
+              "name": "New ide-automation template",
+              "code": "navigate(input.url);\ncollect(parse());\n",
+              "input": [
+                {
+                  "url": "https://www.ikea.com/us/en/customer-service/product-support/recalls/ikea-chest-and-dresser-safety-recall-pub4b96e3c0/"
+                }
+              ],
+              "fields": {
+                "url": {
+                  "type": "url",
+                  "required": true
+                }
+              },
+              "features": [
+                "cmd.navigate",
+                "cmd.parse",
+                "cmd.collect"
+              ],
+              "worker": "code",
+              "parser": {
+                "parser": "// Helper function to convert URLs\nconst toURL = (url) => {\n  if (!url) return null;\n  try {\n    return new URL(url);\n  } catch {\n    return null;\n  }\n};\n\n// Extract recall_title - this is for listing page card title, not detail page\n// Since we're on the detail page, this would be null (no listing card here)\nlet recall_title = null;\n\n// Extract recall_url - URL from listing page card\n// Since we're on the detail page, this would be null\nlet recall_url = null;\n\n// Extract title_on_detail - Main h1 heading on detail page\nlet title_on_detail = $('h1').text_sane();\n\n// Extract date_published - Publication date if shown\n// Looking for date elements, but none found in the HTML\nlet date_published = null;\n\n// Extract description - Main recall description from first text section\nlet description = $('[data-pub-type=\"text\"]').first().text_sane();\n\n// Extract product_name - Product names from h2 headings in container sections\nlet product_names = $('[data-pub-type=\"container\"] h2').toArray()\n  .map(el => $(el).text_sane())\n  .filter(text => text && !text.includes('Refund') && !text.includes('See more'));\nlet product_name = product_names.join(', ') || null;\n\n// Extract hazard - Safety risk described in the recall\nlet hazard_text = $('[data-pub-type=\"text\"] p').first().text_sane();\nlet hazard = null;\nif (hazard_text && hazard_text.includes('tip-over')) {\n  hazard = 'tip-over accidents';\n}\n\n// Extract remedy - What customers should do\nlet remedy_parts = [];\n// From button labels\n$('[data-pub-type=\"button-link\"] .pub__btn__label').toArray().forEach(el => {\n  let text = $(el).text_sane();\n  if (text) remedy_parts.push(text);\n});\n// From strong text in text sections\n$('[data-pub-type=\"text\"] strong').toArray().forEach(el => {\n  let text = $(el).text_sane();\n  if (text && !text.includes('Please note')) remedy_parts.push(text);\n});\nlet remedy = remedy_parts.length > 0 ? remedy_parts.join(', ') : null;\n\n// Extract image_urls - Product images from image-with-caption sections\nlet image_urls = $('[data-pub-type=\"image-with-caption\"] img').toArray()\n  .map(el => {\n    let src = $(el).attr('src');\n    if (src) {\n      // Remove query parameters to get clean URL\n      src = src.split('?')[0];\n      return toURL(src);\n    }\n    return null;\n  })\n  .filter(url => url !== null);\n\n// Extract recall_details_url - Link to CPSC page\nlet recall_details_url = toURL($('a[href*=\"cpsc.gov\"]').attr('href'));\n\n// Extract product_page_url - The input URL\nlet product_page_url = toURL(input.url);\n\nreturn {\n  recall_title,\n  recall_url,\n  title_on_detail,\n  date_published,\n  description,\n  product_name,\n  hazard,\n  remedy,\n  image_urls,\n  recall_details_url,\n  product_page_url\n};\n",
+                "sandbox_version": 1,
+                "id": "p_mt1pwkdm19ng8rmmlu.1"
+              },
+              "parse_code": "// Helper function to convert URLs\nconst toURL = (url) => {\n  if (!url) return null;\n  try {\n    return new URL(url);\n  } catch {\n    return null;\n  }\n};\n\n// Extract recall_title - this is for listing page card title, not detail page\n// Since we're on the detail page, this would be null (no listing card here)\nlet recall_title = null;\n\n// Extract recall_url - URL from listing page card\n// Since we're on the detail page, this would be null\nlet recall_url = null;\n\n// Extract title_on_detail - Main h1 heading on detail page\nlet title_on_detail = $('h1').text_sane();\n\n// Extract date_published - Publication date if shown\n// Looking for date elements, but none found in the HTML\nlet date_published = null;\n\n// Extract description - Main recall description from first text section\nlet description = $('[data-pub-type=\"text\"]').first().text_sane();\n\n// Extract product_name - Product names from h2 headings in container sections\nlet product_names = $('[data-pub-type=\"container\"] h2').toArray()\n  .map(el => $(el).text_sane())\n  .filter(text => text && !text.includes('Refund') && !text.includes('See more'));\nlet product_name = product_names.join(', ') || null;\n\n// Extract hazard - Safety risk described in the recall\nlet hazard_text = $('[data-pub-type=\"text\"] p').first().text_sane();\nlet hazard = null;\nif (hazard_text && hazard_text.includes('tip-over')) {\n  hazard = 'tip-over accidents';\n}\n\n// Extract remedy - What customers should do\nlet remedy_parts = [];\n// From button labels\n$('[data-pub-type=\"button-link\"] .pub__btn__label').toArray().forEach(el => {\n  let text = $(el).text_sane();\n  if (text) remedy_parts.push(text);\n});\n// From strong text in text sections\n$('[data-pub-type=\"text\"] strong').toArray().forEach(el => {\n  let text = $(el).text_sane();\n  if (text && !text.includes('Please note')) remedy_parts.push(text);\n});\nlet remedy = remedy_parts.length > 0 ? remedy_parts.join(', ') : null;\n\n// Extract image_urls - Product images from image-with-caption sections\nlet image_urls = $('[data-pub-type=\"image-with-caption\"] img').toArray()\n  .map(el => {\n    let src = $(el).attr('src');\n    if (src) {\n      // Remove query parameters to get clean URL\n      src = src.split('?')[0];\n      return toURL(src);\n    }\n    return null;\n  })\n  .filter(url => url !== null);\n\n// Extract recall_details_url - Link to CPSC page\nlet recall_details_url = toURL($('a[href*=\"cpsc.gov\"]').attr('href'));\n\n// Extract product_page_url - The input URL\nlet product_page_url = toURL(input.url);\n\nreturn {\n  recall_title,\n  recall_url,\n  title_on_detail,\n  date_published,\n  description,\n  product_name,\n  hazard,\n  remedy,\n  image_urls,\n  recall_details_url,\n  product_page_url\n};\n"
+            }
+          ],
+          "visibility": "private",
+          "user": "dca_freelancer@brightdata.com",
+          "status": {
+            "value": "development",
+            "last_modified": {
+              "date": "2026-08-20T16:11:13.827Z",
+              "email": "dca_freelancer@brightdata.com"
+            }
+          },
+          "url": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+          "use_case": "other",
+          "customer": "hl_03fc6be2",
+          "sandbox_version": 1,
+          "example_input": [
+            {
+              "url": "https://www.ikea.com/us/en/customer-service/product-support/recalls/"
+            }
+          ],
+          "example_output": "{\"recall_title\":null,\"recall_url\":null,\"title_on_detail\":\"IKEA 2016 Chests and Dresser Safety Recall\",\"date_published\":null,\"description\":\"In 2016, we recalled 17.3 million chests and dres...A refund card to help buy a replacement dresser.\",\"product_name\":\"MALM, HEMNES, HOPEN, BRIMNES\",\"hazard\":\"tip-over accidents\",\"remedy\":\"Contact us, Request a kit, Contact us, 6 drawer:,...ing Guide (PDF), Request chest/dresser anchoring\",\"image_urls\":[\"https://www.ikea.com/images/panel-of-recalled-chests-of-drawers-136bc3964ea31acfc324f422a49f0884.jpg\",\"https://www.ikea.com/images/recalled-malm-bec63c88287f35e44c649f4982f39f3f.jpg\",\"5 more items\"],\"recall_details_url\":\"https://www.cpsc.gov/Recalls/2018/IKEA-Reannounce...ests-and-Dressers-Due-to-Serious-Tip-over-Hazard\",\"product_page_url\":\"https://www.ikea.com/us/en/customer-service/produ...kea-chest-and-dresser-safety-recall-pub4b96e3c0/\"}",
+          "output_fields": {
+            "type": "object",
+            "fields": {
+              "title_on_detail": {
+                "type": "text"
+              },
+              "description": {
+                "type": "text"
+              },
+              "product_name": {
+                "type": "text"
+              },
+              "hazard": {
+                "type": "text"
+              },
+              "remedy": {
+                "type": "text"
+              },
+              "image_urls": {
+                "type": "array",
+                "items": {
+                  "type": "url"
+                }
+              },
+              "recall_details_url": {
+                "type": "url"
+              },
+              "product_page_url": {
+                "type": "url"
+              }
+            }
+          },
+          "features": [
+            "cmd.navigate",
+            "cmd.parse",
+            "cmd.next_stage",
+            "cmd.collect"
+          ],
+          "shared_libs": [],
+          "source": "dca-ide-automation-66f5c565b6-nszkm",
+          "customer_id": "hl_03fc6be2",
+          "code_environment": "intent",
+          "id": "t_mt1pwkdf296bebzxnx.1",
+          "family": "t_mt1pwkdf296bebzxnx",
+          "patch": 1,
+          "version": "1",
+          "domain": "www.ikea.com",
+          "discovery": false,
+          "last_modified": {
+            "email": "dca_freelancer@brightdata.com",
+            "date": "2026-08-20T16:11:13.833Z"
+          },
+          "is_development": true
+        },
+        "template_b": {
+          "_id": {
+            "buffer": {
+              "0": 106,
+              "1": 135,
+              "2": 39,
+              "3": 33,
+              "4": 239,
+              "5": 169,
+              "6": 217,
+              "7": 151,
+              "8": 249,
+              "9": 28,
+              "10": 121,
+              "11": 64
+            }
+          },
+          "name": "New ide-automation template",
+          "steps": [
+            {
+              "name": "New ide-automation template",
+              "code": "// Navigate to the IKEA recalls page\nnavigate(input.url);\n\n// Parse the page to extract all recall data\nconst {recalls} = parse();\n\n// Iterate through each recall and pass all data to next_stage\nfor (let recall of recalls) {\n    next_stage({\n        url: recall.recall_url,\n        recall_title: recall.recall_title,\n        recall_url: recall.recall_url,\n        date_published: recall.date_published\n    });\n}",
+              "input": [
+                {
+                  "url": "https://www.ikea.com/us/en/customer-service/product-support/recalls/"
+                }
+              ],
+              "fields": {
+                "url": {
+                  "type": "url",
+                  "required": true
+                }
+              },
+              "features": [
+                "cmd.navigate",
+                "cmd.parse",
+                "cmd.next_stage"
+              ],
+              "worker": "code",
+              "parser": {
+                "parser": "// Select all recall content cards\nconst cards = $('.pub__content-card').toArray();\n\n// Extract recall data from each card\nconst recalls = cards.map(card => {\n    const $card = $(card);\n    const $link = $card.find('a[href*=\"/recalls/\"]');\n    const recall_url = $link.attr('href');\n    const recall_title = $card.find('.pub__content-card__title').text_sane();\n    \n    return {\n        recall_url,\n        recall_title,\n        date_published: null // No date visible on listing page cards\n    };\n}).filter(r => r.recall_url);\n\nconsole.log(`Found ${recalls.length} recalls`);\n\nreturn {recalls};",
+                "sandbox_version": 1,
+                "id": "p_mt1pwkdl2kh1syw5f1.1"
+              },
+              "parse_code": "// Select all recall content cards\nconst cards = $('.pub__content-card').toArray();\n\n// Extract recall data from each card\nconst recalls = cards.map(card => {\n    const $card = $(card);\n    const $link = $card.find('a[href*=\"/recalls/\"]');\n    const recall_url = $link.attr('href');\n    const recall_title = $card.find('.pub__content-card__title').text_sane();\n    \n    return {\n        recall_url,\n        recall_title,\n        date_published: null // No date visible on listing page cards\n    };\n}).filter(r => r.recall_url);\n\nconsole.log(`Found ${recalls.length} recalls`);\n\nreturn {recalls};"
+            },
+            {
+              "name": "New ide-automation template",
+              "code": "// The 404 error is caused by truncated/malformed input URLs (e.g., \"produ...\" instead of \"product-support\")\n// This is an input data quality issue from step 0, not a code logic issue\n// Mark as bad_input to prevent retries when URL is malformed\nif (!input.url || input.url.includes('...')) {\n  bad_input('Input URL is truncated or malformed');\n}\n\nnavigate(input.url);\n\ncollect(parse());",
+              "input": [
+                {
+                  "url": "https://www.ikea.com/us/en/customer-service/produ...ue-to-laceration-and-ingestion-risk-pub1c66cca0/",
+                  "recall_title": "IKEA recalls the IKEA 365+ VÄRDEFULL garlic press due to laceration and ingestion risk",
+                  "recall_url": "https://www.ikea.com/us/en/customer-service/produ...ue-to-laceration-and-ingestion-risk-pub1c66cca0/",
+                  "date_published": null
+                }
+              ],
+              "fields": {
+                "url": {
+                  "type": "url",
+                  "required": true
+                }
+              },
+              "features": [
+                "cmd.navigate",
+                "cmd.parse",
+                "cmd.collect"
+              ],
+              "worker": "code",
+              "parser": {
+                "parser": "const toURL = (url) => {\n  if (!url) return null;\n  try {\n    return new URL(url, location.href);\n  } catch {\n    return null;\n  }\n};\n\n// Extract title_on_detail - Use input.recall_title first, fallback to h1\nconst title_on_detail = input.recall_title || $('h1').text_sane();\n\n// Extract description - Main recall description from text section\nconst description = $('[data-pub-type=\"text\"]').text_sane();\n\n// Extract product_name - Robust 3-tier fallback: table → h2 → title extraction\nlet product_name = null;\nconst table_product = $('table tbody tr td').first().text_sane();\nif (table_product) {\n  product_name = table_product;\n} else {\n  const h2_products = $('h2').toArray()\n    .map(el => $(el).text_sane())\n    .filter(text => text && !text.match(/refund|see more|contact|information|satisfied|footer/i));\n  if (h2_products.length > 0) {\n    product_name = h2_products[0];\n  } else if (title_on_detail) {\n    const product_match = title_on_detail.match(/recalls? (?:the )?(.+?) due to/i);\n    if (product_match) {\n      product_name = product_match[1].trim();\n    }\n  }\n}\n\n// Extract hazard - Generic extraction from text using multiple patterns\nlet hazard = null;\nconst full_text = $('[data-pub-type=\"text\"]').text_sane();\n\nconst posing_match = full_text.match(/posing (?:an? )?(.+?) risk/i);\nif (posing_match) {\n  hazard = posing_match[1].trim();\n} else if (title_on_detail) {\n  const title_match = title_on_detail.match(/due to (.+?)(?:\\s+risk)?$/i);\n  if (title_match) {\n    hazard = title_match[1].trim().replace(/\\s+risk$/i, '');\n  }\n}\n\n// Extract remedy - Look for action sentences in text\nlet remedy = null;\nconst remedy_match = full_text.match(/Consumers should (.+?)(?:\\.\\s*(?:We apologize|For more information|$))/i);\nif (remedy_match) {\n  remedy = 'Consumers should ' + remedy_match[1].trim();\n}\n\n// Extract image_urls - Product images from image-with-caption sections\nconst image_urls = $('[data-pub-type=\"image-with-caption\"] img').toArray()\n  .map(el => {\n    const src = $(el).attr('src');\n    if (src) {\n      return toURL(src.split('?')[0]);\n    }\n    return null;\n  })\n  .filter(url => url !== null);\n\n// Extract recall_details_url - Link to CPSC page\nconst recall_details_url = toURL($('a[href*=\"cpsc.gov\"]').attr('href'));\n\n// Extract product_page_url - Use input.recall_url first, fallback to input.url\nconst product_page_url = toURL(input.recall_url || input.url);\n\nreturn {\n  title_on_detail,\n  description,\n  product_name,\n  hazard,\n  remedy,\n  image_urls,\n  recall_details_url,\n  product_page_url\n};",
+                "sandbox_version": 1,
+                "id": "p_mt1pwkdm19ng8rmmlu.1"
+              },
+              "parse_code": "const toURL = (url) => {\n  if (!url) return null;\n  try {\n    return new URL(url, location.href);\n  } catch {\n    return null;\n  }\n};\n\n// Extract title_on_detail - Use input.recall_title first, fallback to h1\nconst title_on_detail = input.recall_title || $('h1').text_sane();\n\n// Extract description - Main recall description from text section\nconst description = $('[data-pub-type=\"text\"]').text_sane();\n\n// Extract product_name - Robust 3-tier fallback: table → h2 → title extraction\nlet product_name = null;\nconst table_product = $('table tbody tr td').first().text_sane();\nif (table_product) {\n  product_name = table_product;\n} else {\n  const h2_products = $('h2').toArray()\n    .map(el => $(el).text_sane())\n    .filter(text => text && !text.match(/refund|see more|contact|information|satisfied|footer/i));\n  if (h2_products.length > 0) {\n    product_name = h2_products[0];\n  } else if (title_on_detail) {\n    const product_match = title_on_detail.match(/recalls? (?:the )?(.+?) due to/i);\n    if (product_match) {\n      product_name = product_match[1].trim();\n    }\n  }\n}\n\n// Extract hazard - Generic extraction from text using multiple patterns\nlet hazard = null;\nconst full_text = $('[data-pub-type=\"text\"]').text_sane();\n\nconst posing_match = full_text.match(/posing (?:an? )?(.+?) risk/i);\nif (posing_match) {\n  hazard = posing_match[1].trim();\n} else if (title_on_detail) {\n  const title_match = title_on_detail.match(/due to (.+?)(?:\\s+risk)?$/i);\n  if (title_match) {\n    hazard = title_match[1].trim().replace(/\\s+risk$/i, '');\n  }\n}\n\n// Extract remedy - Look for action sentences in text\nlet remedy = null;\nconst remedy_match = full_text.match(/Consumers should (.+?)(?:\\.\\s*(?:We apologize|For more information|$))/i);\nif (remedy_match) {\n  remedy = 'Consumers should ' + remedy_match[1].trim();\n}\n\n// Extract image_urls - Product images from image-with-caption sections\nconst image_urls = $('[data-pub-type=\"image-with-caption\"] img').toArray()\n  .map(el => {\n    const src = $(el).attr('src');\n    if (src) {\n      return toURL(src.split('?')[0]);\n    }\n    return null;\n  })\n  .filter(url => url !== null);\n\n// Extract recall_details_url - Link to CPSC page\nconst recall_details_url = toURL($('a[href*=\"cpsc.gov\"]').attr('href'));\n\n// Extract product_page_url - Use input.recall_url first, fallback to input.url\nconst product_page_url = toURL(input.recall_url || input.url);\n\nreturn {\n  title_on_detail,\n  description,\n  product_name,\n  hazard,\n  remedy,\n  image_urls,\n  recall_details_url,\n  product_page_url\n};"
+            }
+          ],
+          "visibility": "private",
+          "user": "dca_freelancer@brightdata.com",
+          "status": {
+            "value": "development",
+            "last_modified": {
+              "date": "2026-08-20T16:11:13.827Z",
+              "email": "dca_freelancer@brightdata.com"
+            }
+          },
+          "url": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+          "use_case": "other",
+          "customer": "hl_03fc6be2",
+          "sandbox_version": 1,
+          "example_input": [
+            {
+              "url": "https://www.ikea.com/us/en/customer-service/product-support/recalls/"
+            }
+          ],
+          "example_output": "{\"recall_title\":null,\"recall_url\":null,\"title_on_detail\":\"IKEA 2016 Chests and Dresser Safety Recall\",\"date_published\":null,\"description\":\"In 2016, we recalled 17.3 million chests and dres...A refund card to help buy a replacement dresser.\",\"product_name\":\"MALM, HEMNES, HOPEN, BRIMNES\",\"hazard\":\"tip-over accidents\",\"remedy\":\"Contact us, Request a kit, Contact us, 6 drawer:,...ing Guide (PDF), Request chest/dresser anchoring\",\"image_urls\":[\"https://www.ikea.com/images/panel-of-recalled-chests-of-drawers-136bc3964ea31acfc324f422a49f0884.jpg\",\"https://www.ikea.com/images/recalled-malm-bec63c88287f35e44c649f4982f39f3f.jpg\",\"5 more items\"],\"recall_details_url\":\"https://www.cpsc.gov/Recalls/2018/IKEA-Reannounce...ests-and-Dressers-Due-to-Serious-Tip-over-Hazard\",\"product_page_url\":\"https://www.ikea.com/us/en/customer-service/produ...kea-chest-and-dresser-safety-recall-pub4b96e3c0/\"}",
+          "output_fields": {
+            "type": "object",
+            "fields": {
+              "title_on_detail": {
+                "type": "text"
+              },
+              "description": {
+                "type": "text"
+              },
+              "product_name": {
+                "type": "text"
+              },
+              "hazard": {
+                "type": "text"
+              },
+              "remedy": {
+                "type": "text"
+              },
+              "image_urls": {
+                "type": "array",
+                "items": {
+                  "type": "url"
+                }
+              },
+              "recall_details_url": {
+                "type": "url"
+              },
+              "product_page_url": {
+                "type": "url"
+              }
+            }
+          },
+          "features": [
+            "cmd.navigate",
+            "cmd.parse",
+            "cmd.next_stage",
+            "cmd.collect"
+          ],
+          "shared_libs": [],
+          "source": "dca-ide-automation-66f5c565b6-nszkm",
+          "customer_id": "hl_03fc6be2",
+          "code_environment": "intent",
+          "id": "t_mt1pwkdf296bebzxnx.1",
+          "family": "t_mt1pwkdf296bebzxnx",
+          "patch": 1,
+          "version": "1",
+          "domain": "www.ikea.com",
+          "discovery": false,
+          "last_modified": {
+            "email": "dca_freelancer@brightdata.com",
+            "date": "2026-08-20T16:11:13.833Z"
+          },
+          "is_development": true
+        },
+        "title": "View refactor changes",
+        "user": "vtking03@gmail.com"
+      },
+      "success": false
+    }
+  },
+  "preview": {
+    "id": "ia_mt8a25sy2nk46dn9no",
+    "step": "user_approval",
+    "completed_steps": [
+      "planner",
+      "control_preview_runner",
+      "code_fixer",
+      "step_preview_runner",
+      "request_fulfillment_validator",
+      "step_advance",
+      "control_preview_runner",
+      "code_fixer",
+      "step_preview_runner",
+      "css_selector_extractor",
+      "code_fixer",
+      "step_preview_runner",
+      "css_selector_extractor",
+      "code_fixer",
+      "step_preview_runner",
+      "css_selector_extractor",
+      "code_fixer",
+      "step_preview_runner",
+      "css_selector_extractor",
+      "code_fixer",
+      "step_preview_runner",
+      "css_selector_extractor",
+      "code_fixer",
+      "step_preview_runner",
+      "css_selector_extractor",
+      "code_fixer",
+      "step_preview_runner",
+      "html_diff",
+      "step_advance"
+    ],
+    "status": "pending_answer",
+    "diff": {
+      "template_a": {
+        "_id": "6a872721efa9d997f91c7940",
+        "name": "New ide-automation template",
+        "steps": [
+          {
+            "name": "New ide-automation template",
+            "code": "// Navigate to the IKEA recalls page\nnavigate(input.url);\n\n\n// Parse the page to extract all recall URLs\nconst {recall_urls} = parse();\n\n// Iterate through each recall URL and collect it using next_stage\nfor (let url of recall_urls) {\n    next_stage({url});\n}\n",
+            "input": [
+              {
+                "url": "https://www.ikea.com/us/en/customer-service/product-support/recalls/"
+              }
+            ],
+            "fields": {
+              "url": {
+                "type": "url",
+                "required": true
+              }
+            },
+            "features": [
+              "cmd.navigate",
+              "cmd.parse",
+              "cmd.next_stage"
+            ],
+            "worker": "code",
+            "parser": {
+              "parser": "// Select all recall links from the content cards\nconst recall_links = $('.pub__content-card a[href*=\"/recalls/\"]').toArray();\n\n// Extract URLs and convert relative URLs to absolute\nconst base_url = 'https://www.ikea.com';\nconst recall_urls = recall_links.map(link => {\n    const href = $(link).attr('href');\n    if (href) {\n        // Convert relative URLs to absolute URLs\n        return new URL(href, base_url).href;\n    }\n}).filter(Boolean); // Remove any undefined/null values\n\n// Remove duplicates\nconst unique_recall_urls = [...new Set(recall_urls)];\n\nconsole.log(`Found ${unique_recall_urls.length} unique recall URLs`);\n\nreturn {recall_urls: unique_recall_urls};\n",
+              "sandbox_version": 1,
+              "id": "p_mt1pwkdl2kh1syw5f1.1"
+            },
+            "parse_code": "// Select all recall links from the content cards\nconst recall_links = $('.pub__content-card a[href*=\"/recalls/\"]').toArray();\n\n// Extract URLs and convert relative URLs to absolute\nconst base_url = 'https://www.ikea.com';\nconst recall_urls = recall_links.map(link => {\n    const href = $(link).attr('href');\n    if (href) {\n        // Convert relative URLs to absolute URLs\n        return new URL(href, base_url).href;\n    }\n}).filter(Boolean); // Remove any undefined/null values\n\n// Remove duplicates\nconst unique_recall_urls = [...new Set(recall_urls)];\n\nconsole.log(`Found ${unique_recall_urls.length} unique recall URLs`);\n\nreturn {recall_urls: unique_recall_urls};\n"
+          },
+          {
+            "name": "New ide-automation template",
+            "code": "navigate(input.url);\ncollect(parse());\n",
+            "input": [
+              {
+                "url": "https://www.ikea.com/us/en/customer-service/product-support/recalls/ikea-chest-and-dresser-safety-recall-pub4b96e3c0/"
+              }
+            ],
+            "fields": {
+              "url": {
+                "type": "url",
+                "required": true
+              }
+            },
+            "features": [
+              "cmd.navigate",
+              "cmd.parse",
+              "cmd.collect"
+            ],
+            "worker": "code",
+            "parser": {
+              "parser": "// Helper function to convert URLs\nconst toURL = (url) => {\n  if (!url) return null;\n  try {\n    return new URL(url);\n  } catch {\n    return null;\n  }\n};\n\n// Extract recall_title - this is for listing page card title, not detail page\n// Since we're on the detail page, this would be null (no listing card here)\nlet recall_title = null;\n\n// Extract recall_url - URL from listing page card\n// Since we're on the detail page, this would be null\nlet recall_url = null;\n\n// Extract title_on_detail - Main h1 heading on detail page\nlet title_on_detail = $('h1').text_sane();\n\n// Extract date_published - Publication date if shown\n// Looking for date elements, but none found in the HTML\nlet date_published = null;\n\n// Extract description - Main recall description from first text section\nlet description = $('[data-pub-type=\"text\"]').first().text_sane();\n\n// Extract product_name - Product names from h2 headings in container sections\nlet product_names = $('[data-pub-type=\"container\"] h2').toArray()\n  .map(el => $(el).text_sane())\n  .filter(text => text && !text.includes('Refund') && !text.includes('See more'));\nlet product_name = product_names.join(', ') || null;\n\n// Extract hazard - Safety risk described in the recall\nlet hazard_text = $('[data-pub-type=\"text\"] p').first().text_sane();\nlet hazard = null;\nif (hazard_text && hazard_text.includes('tip-over')) {\n  hazard = 'tip-over accidents';\n}\n\n// Extract remedy - What customers should do\nlet remedy_parts = [];\n// From button labels\n$('[data-pub-type=\"button-link\"] .pub__btn__label').toArray().forEach(el => {\n  let text = $(el).text_sane();\n  if (text) remedy_parts.push(text);\n});\n// From strong text in text sections\n$('[data-pub-type=\"text\"] strong').toArray().forEach(el => {\n  let text = $(el).text_sane();\n  if (text && !text.includes('Please note')) remedy_parts.push(text);\n});\nlet remedy = remedy_parts.length > 0 ? remedy_parts.join(', ') : null;\n\n// Extract image_urls - Product images from image-with-caption sections\nlet image_urls = $('[data-pub-type=\"image-with-caption\"] img').toArray()\n  .map(el => {\n    let src = $(el).attr('src');\n    if (src) {\n      // Remove query parameters to get clean URL\n      src = src.split('?')[0];\n      return toURL(src);\n    }\n    return null;\n  })\n  .filter(url => url !== null);\n\n// Extract recall_details_url - Link to CPSC page\nlet recall_details_url = toURL($('a[href*=\"cpsc.gov\"]').attr('href'));\n\n// Extract product_page_url - The input URL\nlet product_page_url = toURL(input.url);\n\nreturn {\n  recall_title,\n  recall_url,\n  title_on_detail,\n  date_published,\n  description,\n  product_name,\n  hazard,\n  remedy,\n  image_urls,\n  recall_details_url,\n  product_page_url\n};\n",
+              "sandbox_version": 1,
+              "id": "p_mt1pwkdm19ng8rmmlu.1"
+            },
+            "parse_code": "// Helper function to convert URLs\nconst toURL = (url) => {\n  if (!url) return null;\n  try {\n    return new URL(url);\n  } catch {\n    return null;\n  }\n};\n\n// Extract recall_title - this is for listing page card title, not detail page\n// Since we're on the detail page, this would be null (no listing card here)\nlet recall_title = null;\n\n// Extract recall_url - URL from listing page card\n// Since we're on the detail page, this would be null\nlet recall_url = null;\n\n// Extract title_on_detail - Main h1 heading on detail page\nlet title_on_detail = $('h1').text_sane();\n\n// Extract date_published - Publication date if shown\n// Looking for date elements, but none found in the HTML\nlet date_published = null;\n\n// Extract description - Main recall description from first text section\nlet description = $('[data-pub-type=\"text\"]').first().text_sane();\n\n// Extract product_name - Product names from h2 headings in container sections\nlet product_names = $('[data-pub-type=\"container\"] h2').toArray()\n  .map(el => $(el).text_sane())\n  .filter(text => text && !text.includes('Refund') && !text.includes('See more'));\nlet product_name = product_names.join(', ') || null;\n\n// Extract hazard - Safety risk described in the recall\nlet hazard_text = $('[data-pub-type=\"text\"] p').first().text_sane();\nlet hazard = null;\nif (hazard_text && hazard_text.includes('tip-over')) {\n  hazard = 'tip-over accidents';\n}\n\n// Extract remedy - What customers should do\nlet remedy_parts = [];\n// From button labels\n$('[data-pub-type=\"button-link\"] .pub__btn__label').toArray().forEach(el => {\n  let text = $(el).text_sane();\n  if (text) remedy_parts.push(text);\n});\n// From strong text in text sections\n$('[data-pub-type=\"text\"] strong').toArray().forEach(el => {\n  let text = $(el).text_sane();\n  if (text && !text.includes('Please note')) remedy_parts.push(text);\n});\nlet remedy = remedy_parts.length > 0 ? remedy_parts.join(', ') : null;\n\n// Extract image_urls - Product images from image-with-caption sections\nlet image_urls = $('[data-pub-type=\"image-with-caption\"] img').toArray()\n  .map(el => {\n    let src = $(el).attr('src');\n    if (src) {\n      // Remove query parameters to get clean URL\n      src = src.split('?')[0];\n      return toURL(src);\n    }\n    return null;\n  })\n  .filter(url => url !== null);\n\n// Extract recall_details_url - Link to CPSC page\nlet recall_details_url = toURL($('a[href*=\"cpsc.gov\"]').attr('href'));\n\n// Extract product_page_url - The input URL\nlet product_page_url = toURL(input.url);\n\nreturn {\n  recall_title,\n  recall_url,\n  title_on_detail,\n  date_published,\n  description,\n  product_name,\n  hazard,\n  remedy,\n  image_urls,\n  recall_details_url,\n  product_page_url\n};\n"
+          }
+        ],
+        "visibility": "private",
+        "user": "dca_freelancer@brightdata.com",
+        "status": {
+          "value": "development",
+          "last_modified": {
+            "date": "2026-08-20T16:11:13.827Z",
+            "email": "dca_freelancer@brightdata.com"
+          }
+        },
+        "url": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+        "use_case": "other",
+        "customer": "hl_03fc6be2",
+        "sandbox_version": 1,
+        "example_input": [
+          {
+            "url": "https://www.ikea.com/us/en/customer-service/product-support/recalls/"
+          }
+        ],
+        "example_output": "{\"recall_title\":null,\"recall_url\":null,\"title_on_detail\":\"IKEA 2016 Chests and Dresser Safety Recall\",\"date_published\":null,\"description\":\"In 2016, we recalled 17.3 million chests and dres...A refund card to help buy a replacement dresser.\",\"product_name\":\"MALM, HEMNES, HOPEN, BRIMNES\",\"hazard\":\"tip-over accidents\",\"remedy\":\"Contact us, Request a kit, Contact us, 6 drawer:,...ing Guide (PDF), Request chest/dresser anchoring\",\"image_urls\":[\"https://www.ikea.com/images/panel-of-recalled-chests-of-drawers-136bc3964ea31acfc324f422a49f0884.jpg\",\"https://www.ikea.com/images/recalled-malm-bec63c88287f35e44c649f4982f39f3f.jpg\",\"5 more items\"],\"recall_details_url\":\"https://www.cpsc.gov/Recalls/2018/IKEA-Reannounce...ests-and-Dressers-Due-to-Serious-Tip-over-Hazard\",\"product_page_url\":\"https://www.ikea.com/us/en/customer-service/produ...kea-chest-and-dresser-safety-recall-pub4b96e3c0/\"}",
+        "output_fields": {
+          "type": "object",
+          "fields": {
+            "title_on_detail": {
+              "type": "text"
+            },
+            "description": {
+              "type": "text"
+            },
+            "product_name": {
+              "type": "text"
+            },
+            "hazard": {
+              "type": "text"
+            },
+            "remedy": {
+              "type": "text"
+            },
+            "image_urls": {
+              "type": "array",
+              "items": {
+                "type": "url"
+              }
+            },
+            "recall_details_url": {
+              "type": "url"
+            },
+            "product_page_url": {
+              "type": "url"
+            }
+          }
+        },
+        "features": [
+          "cmd.navigate",
+          "cmd.parse",
+          "cmd.next_stage",
+          "cmd.collect"
+        ],
+        "shared_libs": [],
+        "source": "dca-ide-automation-66f5c565b6-nszkm",
+        "customer_id": "hl_03fc6be2",
+        "code_environment": "intent",
+        "id": "t_mt1pwkdf296bebzxnx.1",
+        "family": "t_mt1pwkdf296bebzxnx",
+        "patch": 1,
+        "version": "1",
+        "domain": "www.ikea.com",
+        "discovery": false,
+        "last_modified": {
+          "email": "dca_freelancer@brightdata.com",
+          "date": "2026-08-20T16:11:13.833Z"
+        },
+        "is_development": true
+      },
+      "template_b": {
+        "_id": {
+          "buffer": {
+            "0": 106,
+            "1": 135,
+            "2": 39,
+            "3": 33,
+            "4": 239,
+            "5": 169,
+            "6": 217,
+            "7": 151,
+            "8": 249,
+            "9": 28,
+            "10": 121,
+            "11": 64
+          }
+        },
+        "name": "New ide-automation template",
+        "steps": [
+          {
+            "name": "New ide-automation template",
+            "code": "// Navigate to the IKEA recalls page\nnavigate(input.url);\n\n// Parse the page to extract all recall data\nconst {recalls} = parse();\n\n// Iterate through each recall and pass all data to next_stage\nfor (let recall of recalls) {\n    next_stage({\n        url: recall.recall_url,\n        recall_title: recall.recall_title,\n        recall_url: recall.recall_url,\n        date_published: recall.date_published\n    });\n}",
+            "input": [
+              {
+                "url": "https://www.ikea.com/us/en/customer-service/product-support/recalls/"
+              }
+            ],
+            "fields": {
+              "url": {
+                "type": "url",
+                "required": true
+              }
+            },
+            "features": [
+              "cmd.navigate",
+              "cmd.parse",
+              "cmd.next_stage"
+            ],
+            "worker": "code",
+            "parser": {
+              "parser": "// Select all recall content cards\nconst cards = $('.pub__content-card').toArray();\n\n// Extract recall data from each card\nconst recalls = cards.map(card => {\n    const $card = $(card);\n    const $link = $card.find('a[href*=\"/recalls/\"]');\n    const recall_url = $link.attr('href');\n    const recall_title = $card.find('.pub__content-card__title').text_sane();\n    \n    return {\n        recall_url,\n        recall_title,\n        date_published: null // No date visible on listing page cards\n    };\n}).filter(r => r.recall_url);\n\nconsole.log(`Found ${recalls.length} recalls`);\n\nreturn {recalls};",
+              "sandbox_version": 1,
+              "id": "p_mt1pwkdl2kh1syw5f1.1"
+            },
+            "parse_code": "// Select all recall content cards\nconst cards = $('.pub__content-card').toArray();\n\n// Extract recall data from each card\nconst recalls = cards.map(card => {\n    const $card = $(card);\n    const $link = $card.find('a[href*=\"/recalls/\"]');\n    const recall_url = $link.attr('href');\n    const recall_title = $card.find('.pub__content-card__title').text_sane();\n    \n    return {\n        recall_url,\n        recall_title,\n        date_published: null // No date visible on listing page cards\n    };\n}).filter(r => r.recall_url);\n\nconsole.log(`Found ${recalls.length} recalls`);\n\nreturn {recalls};"
+          },
+          {
+            "name": "New ide-automation template",
+            "code": "// The 404 error is caused by truncated/malformed input URLs (e.g., \"produ...\" instead of \"product-support\")\n// This is an input data quality issue from step 0, not a code logic issue\n// Mark as bad_input to prevent retries when URL is malformed\nif (!input.url || input.url.includes('...')) {\n  bad_input('Input URL is truncated or malformed');\n}\n\nnavigate(input.url);\n\ncollect(parse());",
+            "input": [
+              {
+                "url": "https://www.ikea.com/us/en/customer-service/produ...ue-to-laceration-and-ingestion-risk-pub1c66cca0/",
+                "recall_title": "IKEA recalls the IKEA 365+ VÄRDEFULL garlic press due to laceration and ingestion risk",
+                "recall_url": "https://www.ikea.com/us/en/customer-service/produ...ue-to-laceration-and-ingestion-risk-pub1c66cca0/",
+                "date_published": null
+              }
+            ],
+            "fields": {
+              "url": {
+                "type": "url",
+                "required": true
+              }
+            },
+            "features": [
+              "cmd.navigate",
+              "cmd.parse",
+              "cmd.collect"
+            ],
+            "worker": "code",
+            "parser": {
+              "parser": "const toURL = (url) => {\n  if (!url) return null;\n  try {\n    return new URL(url, location.href);\n  } catch {\n    return null;\n  }\n};\n\n// Extract title_on_detail - Use input.recall_title first, fallback to h1\nconst title_on_detail = input.recall_title || $('h1').text_sane();\n\n// Extract description - Main recall description from text section\nconst description = $('[data-pub-type=\"text\"]').text_sane();\n\n// Extract product_name - Robust 3-tier fallback: table → h2 → title extraction\nlet product_name = null;\nconst table_product = $('table tbody tr td').first().text_sane();\nif (table_product) {\n  product_name = table_product;\n} else {\n  const h2_products = $('h2').toArray()\n    .map(el => $(el).text_sane())\n    .filter(text => text && !text.match(/refund|see more|contact|information|satisfied|footer/i));\n  if (h2_products.length > 0) {\n    product_name = h2_products[0];\n  } else if (title_on_detail) {\n    const product_match = title_on_detail.match(/recalls? (?:the )?(.+?) due to/i);\n    if (product_match) {\n      product_name = product_match[1].trim();\n    }\n  }\n}\n\n// Extract hazard - Generic extraction from text using multiple patterns\nlet hazard = null;\nconst full_text = $('[data-pub-type=\"text\"]').text_sane();\n\nconst posing_match = full_text.match(/posing (?:an? )?(.+?) risk/i);\nif (posing_match) {\n  hazard = posing_match[1].trim();\n} else if (title_on_detail) {\n  const title_match = title_on_detail.match(/due to (.+?)(?:\\s+risk)?$/i);\n  if (title_match) {\n    hazard = title_match[1].trim().replace(/\\s+risk$/i, '');\n  }\n}\n\n// Extract remedy - Look for action sentences in text\nlet remedy = null;\nconst remedy_match = full_text.match(/Consumers should (.+?)(?:\\.\\s*(?:We apologize|For more information|$))/i);\nif (remedy_match) {\n  remedy = 'Consumers should ' + remedy_match[1].trim();\n}\n\n// Extract image_urls - Product images from image-with-caption sections\nconst image_urls = $('[data-pub-type=\"image-with-caption\"] img').toArray()\n  .map(el => {\n    const src = $(el).attr('src');\n    if (src) {\n      return toURL(src.split('?')[0]);\n    }\n    return null;\n  })\n  .filter(url => url !== null);\n\n// Extract recall_details_url - Link to CPSC page\nconst recall_details_url = toURL($('a[href*=\"cpsc.gov\"]').attr('href'));\n\n// Extract product_page_url - Use input.recall_url first, fallback to input.url\nconst product_page_url = toURL(input.recall_url || input.url);\n\nreturn {\n  title_on_detail,\n  description,\n  product_name,\n  hazard,\n  remedy,\n  image_urls,\n  recall_details_url,\n  product_page_url\n};",
+              "sandbox_version": 1,
+              "id": "p_mt1pwkdm19ng8rmmlu.1"
+            },
+            "parse_code": "const toURL = (url) => {\n  if (!url) return null;\n  try {\n    return new URL(url, location.href);\n  } catch {\n    return null;\n  }\n};\n\n// Extract title_on_detail - Use input.recall_title first, fallback to h1\nconst title_on_detail = input.recall_title || $('h1').text_sane();\n\n// Extract description - Main recall description from text section\nconst description = $('[data-pub-type=\"text\"]').text_sane();\n\n// Extract product_name - Robust 3-tier fallback: table → h2 → title extraction\nlet product_name = null;\nconst table_product = $('table tbody tr td').first().text_sane();\nif (table_product) {\n  product_name = table_product;\n} else {\n  const h2_products = $('h2').toArray()\n    .map(el => $(el).text_sane())\n    .filter(text => text && !text.match(/refund|see more|contact|information|satisfied|footer/i));\n  if (h2_products.length > 0) {\n    product_name = h2_products[0];\n  } else if (title_on_detail) {\n    const product_match = title_on_detail.match(/recalls? (?:the )?(.+?) due to/i);\n    if (product_match) {\n      product_name = product_match[1].trim();\n    }\n  }\n}\n\n// Extract hazard - Generic extraction from text using multiple patterns\nlet hazard = null;\nconst full_text = $('[data-pub-type=\"text\"]').text_sane();\n\nconst posing_match = full_text.match(/posing (?:an? )?(.+?) risk/i);\nif (posing_match) {\n  hazard = posing_match[1].trim();\n} else if (title_on_detail) {\n  const title_match = title_on_detail.match(/due to (.+?)(?:\\s+risk)?$/i);\n  if (title_match) {\n    hazard = title_match[1].trim().replace(/\\s+risk$/i, '');\n  }\n}\n\n// Extract remedy - Look for action sentences in text\nlet remedy = null;\nconst remedy_match = full_text.match(/Consumers should (.+?)(?:\\.\\s*(?:We apologize|For more information|$))/i);\nif (remedy_match) {\n  remedy = 'Consumers should ' + remedy_match[1].trim();\n}\n\n// Extract image_urls - Product images from image-with-caption sections\nconst image_urls = $('[data-pub-type=\"image-with-caption\"] img').toArray()\n  .map(el => {\n    const src = $(el).attr('src');\n    if (src) {\n      return toURL(src.split('?')[0]);\n    }\n    return null;\n  })\n  .filter(url => url !== null);\n\n// Extract recall_details_url - Link to CPSC page\nconst recall_details_url = toURL($('a[href*=\"cpsc.gov\"]').attr('href'));\n\n// Extract product_page_url - Use input.recall_url first, fallback to input.url\nconst product_page_url = toURL(input.recall_url || input.url);\n\nreturn {\n  title_on_detail,\n  description,\n  product_name,\n  hazard,\n  remedy,\n  image_urls,\n  recall_details_url,\n  product_page_url\n};"
+          }
+        ],
+        "visibility": "private",
+        "user": "dca_freelancer@brightdata.com",
+        "status": {
+          "value": "development",
+          "last_modified": {
+            "date": "2026-08-20T16:11:13.827Z",
+            "email": "dca_freelancer@brightdata.com"
+          }
+        },
+        "url": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+        "use_case": "other",
+        "customer": "hl_03fc6be2",
+        "sandbox_version": 1,
+        "example_input": [
+          {
+            "url": "https://www.ikea.com/us/en/customer-service/product-support/recalls/"
+          }
+        ],
+        "example_output": "{\"recall_title\":null,\"recall_url\":null,\"title_on_detail\":\"IKEA 2016 Chests and Dresser Safety Recall\",\"date_published\":null,\"description\":\"In 2016, we recalled 17.3 million chests and dres...A refund card to help buy a replacement dresser.\",\"product_name\":\"MALM, HEMNES, HOPEN, BRIMNES\",\"hazard\":\"tip-over accidents\",\"remedy\":\"Contact us, Request a kit, Contact us, 6 drawer:,...ing Guide (PDF), Request chest/dresser anchoring\",\"image_urls\":[\"https://www.ikea.com/images/panel-of-recalled-chests-of-drawers-136bc3964ea31acfc324f422a49f0884.jpg\",\"https://www.ikea.com/images/recalled-malm-bec63c88287f35e44c649f4982f39f3f.jpg\",\"5 more items\"],\"recall_details_url\":\"https://www.cpsc.gov/Recalls/2018/IKEA-Reannounce...ests-and-Dressers-Due-to-Serious-Tip-over-Hazard\",\"product_page_url\":\"https://www.ikea.com/us/en/customer-service/produ...kea-chest-and-dresser-safety-recall-pub4b96e3c0/\"}",
+        "output_fields": {
+          "type": "object",
+          "fields": {
+            "title_on_detail": {
+              "type": "text"
+            },
+            "description": {
+              "type": "text"
+            },
+            "product_name": {
+              "type": "text"
+            },
+            "hazard": {
+              "type": "text"
+            },
+            "remedy": {
+              "type": "text"
+            },
+            "image_urls": {
+              "type": "array",
+              "items": {
+                "type": "url"
+              }
+            },
+            "recall_details_url": {
+              "type": "url"
+            },
+            "product_page_url": {
+              "type": "url"
+            }
+          }
+        },
+        "features": [
+          "cmd.navigate",
+          "cmd.parse",
+          "cmd.next_stage",
+          "cmd.collect"
+        ],
+        "shared_libs": [],
+        "source": "dca-ide-automation-66f5c565b6-nszkm",
+        "customer_id": "hl_03fc6be2",
+        "code_environment": "intent",
+        "id": "t_mt1pwkdf296bebzxnx.1",
+        "family": "t_mt1pwkdf296bebzxnx",
+        "patch": 1,
+        "version": "1",
+        "domain": "www.ikea.com",
+        "discovery": false,
+        "last_modified": {
+          "email": "dca_freelancer@brightdata.com",
+          "date": "2026-08-20T16:11:13.833Z"
+        },
+        "is_development": true
+      },
+      "title": "View refactor changes",
+      "user": "vtking03@gmail.com"
+    },
+    "success": false
+  },
+  "outcome": "gate_reached",
+  "live_check": {
+    "url": "https://www.ikea.com/us/en/customer-service/product-support/recalls/",
+    "fetchedVia": "web-unlocker",
+    "fetchError": null,
+    "fields": [
+      {
+        "field": "title_on_detail",
+        "verifiable": false,
+        "oldSelector": null,
+        "stillResolves": null,
+        "text": null,
+        "detail": "title_on_detail is assigned in step 1, which reads a per-item URL discovered only after step 0 actually runs. Not verifiable from the template alone."
+      },
+      {
+        "field": "product_page_url",
+        "verifiable": false,
+        "oldSelector": null,
+        "stillResolves": null,
+        "text": null,
+        "detail": "product_page_url is assigned in step 1, which reads a per-item URL discovered only after step 0 actually runs. Not verifiable from the template alone."
+      }
+    ]
+  },
+  "agent_verdict": {
+    "recommendation": "looks_risky",
+    "concerns": [
+      "Vendor's own preview reports success:false — the vendor itself flags this repair as failing; that alone warrants blocking until re-run clean.",
+      "Stage 1 now sets title_on_detail/product_page_url from input.recall_title/recall_url piped out of stage 0, so the detail-vs-listing corroboration check compares a value to itself — it can no longer catch a wrong listing title.",
+      "Stage 1's bad_input() guard matches literal '...' in URLs, implying truncated placeholder strings are entering the pipeline as real data; the guard hides that corruption instead of fixing where it originates.",
+      "Live re-fetch couldn't verify title_on_detail/product_page_url at all since they depend on a per-item URL only known after step 0 runs — no independent confirmation the listing-title fix works end-to-end.",
+      "date_published is still hardcoded to null in the listing parser, so that part of the original reported bug (recall_url/date_published absent) is left unresolved by this proposal."
+    ],
+    "agrees_with_diff_gate": true
+  }
+}
