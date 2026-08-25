@@ -5,7 +5,7 @@ import { modelAuth } from 'assay/engine/ai/model';
 import { alertsView } from '@/lib/alerts';
 import { listKeys } from 'assay/api/keys';
 import { ConnectView } from './connect-view';
-import { isConnectTabId } from './tabs';
+import { CONNECT_TABS, isConnectTabId } from './tabs';
 import { t } from '@/lib/copy';
 
 export const metadata: Metadata = { title: t('title.connect') };
@@ -36,7 +36,11 @@ export default async function ConnectPage({
 
   return (
     <>
-      <TopBar title={t('title.connect')} status="seven connectors · one server" />
+      {/* Derived from the tab list itself, not a hand-counted literal -- "seven
+          connectors" (the Figma spec this screen was built from) already drifted
+          once, silently, when Slack's tab was removed and nobody updated this
+          string alongside it. */}
+      <TopBar title={t('title.connect')} status={`${CONNECT_TABS.length} tabs · one server`} />
       <div className="flex w-full flex-col items-start px-[20px] md:px-[56px] pb-[48px] pt-[36px]">
         <ConnectView
           initial={initial}

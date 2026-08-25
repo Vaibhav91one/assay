@@ -19,6 +19,23 @@ named and returns its bytes. Nothing here follows links, paginates, or expands
 scope on its own — an operator choosing several suggested pages is several
 targets, not one crawl.
 
+## Who actually makes the request
+
+With `BRIGHTDATA_API_TOKEN` unset — every install before this changed, and any
+self-host that never sets one — this server opens the connection itself, the
+same bare `fetch()` it always has.
+
+With one set, **this server does not make the request** — Bright Data's Web
+Unlocker does, from their own infrastructure, and hands the bytes back. That is
+true of every target, not an opt-in per page: the target URL you gave Assay is
+sent to Bright Data on every fetch. This exists because a page that reads fine
+today is exactly the page that starts blocking a bare request tomorrow with no
+warning. When this server does make the request itself — Bright Data unreachable,
+or no token configured — it still refuses to open a connection to its own
+loopback, private-network or cloud-metadata ranges, the same guard it has
+always had; that guard has nothing to check when Bright Data is the one making
+the request instead, because this server never dials out for that path at all.
+
 ## How often
 
 Never faster than the cadence you set when you started watching the page. A run

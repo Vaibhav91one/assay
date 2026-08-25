@@ -226,7 +226,7 @@ function ToolTable() {
     <div className="flex flex-col gap-[6px]">
       <p className="label-10 text-[var(--text-muted)]">WHAT THE AGENT CAN DO</p>
       <p className="meta-11 text-[var(--text-muted)]">
-        27 tools total (full list in the docs). There is no tool that lets a model decide — the agent&apos;s
+        23 tools total (full list in the docs). There is no tool that lets a model decide — the agent&apos;s
         inbox is the Decisions screen.
       </p>
       <ul className="flex flex-col gap-[3px]">
