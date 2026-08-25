@@ -27,6 +27,9 @@ import { writeFile, readFile, mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
 import { diffGate, type DiffGateResult } from '../src/bd/diffgate.js';
+import {
+  liveCorroborationCheck, agentVerify, type LiveCheckResult, type AgentVerdict,
+} from '../src/bd/verify.js';
 
 const API = 'https://api.brightdata.com/dca/collectors';
 const POLL_MS = 20_000;
@@ -37,19 +40,27 @@ bright data self-healing driver -- capture mode, never auto-approves
 
   node tools/bd-heal.js --collector <id> --prompt "<text>" [--custom-input <json>] [--out <path>]
       start a heal, poll to the approval gate, write the transcript, print the
-      preview, exit. Does not approve. Cannot approve.
+      preview, exit. Does not approve. Cannot approve. Also captures, once: a
+      live re-fetch of the page (src/bd/verify.ts, real Web Unlocker traffic)
+      re-checking the OLD selector on any field the code gate flags as newly
+      derived from another, and an independent model's read of all of it
+      (real Claude Agent SDK call, if a model is configured). Both are saved
+      to the transcript and never re-run by --approve or --verify.
 
   node tools/bd-heal.js --collector <id> --approve [--no-save] [--force]
       approve the pending heal.  {"message": true, "auto_save": true}
       REFUSED if the captured preview fails the code gate (src/bd/diffgate.ts).
-      --force approves over that refusal.
+      --force approves over that refusal. The live re-fetch and model read
+      captured at heal time print alongside it -- advisory only, neither blocks.
 
   node tools/bd-heal.js --collector <id> --reject
       reject the pending heal.   {"message": false}
 
   node tools/bd-heal.js --verify [--out <path>]
-      apply BOTH checks to the preview captured in a transcript: the output
-      acceptance rules, and the code gate over the proposed diff.
+      apply every check to the preview captured in a transcript, offline: the
+      output acceptance rules, the code gate over the proposed diff, and the
+      live re-fetch / model read captured when the heal ran -- no new network
+      calls, this replays what was already saved.
 
   --out <path>   transcript file. default: results/bd-heal-transcript.json
   --poll-ms N    override poll interval (default ${POLL_MS})
@@ -233,6 +244,47 @@ function reportDiff(g: DiffGateResult, indent: string) {
   return g;
 }
 
+/**
+ * Print the live re-fetch. Distinct from `reportDiff()` on purpose: that reads
+ * the vendor's code, this reads the page as it exists right now, through the
+ * same Bright Data Web Unlocker path ordinary monitoring uses. See
+ * `src/bd/verify.ts`.
+ */
+function reportLive(live: LiveCheckResult | null, indent: string) {
+  if (!live) {
+    console.log(`${indent}N/A   not captured -- this transcript predates the live-fetch check`);
+    return;
+  }
+  if (live.fetchError) {
+    console.log(`${indent}FAIL  live re-fetch of ${live.url}: ${live.fetchError}`);
+    return;
+  }
+  if (!live.url) {
+    console.log(`${indent}N/A   template_a carries no url to re-fetch`);
+    return;
+  }
+  if (!live.fields.length) {
+    console.log(`${indent}N/A   no corroboration_collapse findings to re-check live`);
+    return;
+  }
+  console.log(`${indent}live re-fetch of ${live.url} (via ${live.fetchedVia}):`);
+  for (const f of live.fields) {
+    const mark = !f.verifiable ? 'N/A ' : f.stillResolves ? 'PASS' : 'FAIL';
+    console.log(`${indent}  ${mark}  ${f.field}`);
+    console.log(`${indent}        ${f.detail}`);
+  }
+}
+
+/** Print the independent model's read. Never printed as a decision -- see the type's own header. */
+function reportAgent(v: AgentVerdict | null, indent: string) {
+  if (!v) {
+    console.log(`${indent}N/A   no model configured, or the call failed -- no second opinion`);
+    return;
+  }
+  console.log(`${indent}${v.recommendation}  (agrees with code gate: ${v.agrees_with_diff_gate ?? 'unstated'})`);
+  for (const c of v.concerns) console.log(`${indent}  - ${c}`);
+}
+
 /** The saved transcript, or null. Both `--verify` and `--approve` need it, and
  *  approving without one means approving something nobody captured. */
 async function loadTranscript() {
@@ -278,6 +330,13 @@ async function cmdHeal() {
     gate: { reached: false, at: null },
     preview: null,
     outcome: null,
+    // Both captured ONCE, here, when the gate is first reached -- never
+    // re-run by --approve or --verify. Each is a real fetch and a real model
+    // call; replaying them on every later invocation would mean --verify is
+    // no longer an offline replay of committed evidence, and would silently
+    // judge a DIFFERENT, later state of the page than the one this run saw.
+    live_check: null,
+    agent_verdict: null,
   };
 
   console.log(`\nbd-heal  collector ${COLLECTOR}`);
@@ -348,7 +407,26 @@ async function cmdHeal() {
     if (!row) console.log('    no data row with a recall_title key found in the preview');
     else report(row, '    ');
     console.log(`\n  code gate:`);
-    reportDiff(diffGate(transcript.preview, { prompt }), '    ');
+    const g = diffGate(transcript.preview, { prompt });
+    reportDiff(g, '    ');
+
+    console.log(`\n  live re-fetch (independent of the vendor's code):`);
+    const live = await liveCorroborationCheck(transcript.preview, g.findings);
+    transcript.live_check = live;
+    reportLive(live, '    ');
+
+    console.log(`\n  independent model read:`);
+    const verdict = await agentVerify({
+      diffFindings: g.findings,
+      live,
+      templateBCode: safeJson(transcript.preview?.diff?.template_b ?? null),
+      prompt,
+    });
+    transcript.agent_verdict = verdict;
+    reportAgent(verdict, '    ');
+
+    await save(transcript);
+
     console.log(
       `\n  NOT approved. Nothing was changed on the collector.\n` +
         `  To approve:  node tools/bd-heal.js --collector ${COLLECTOR} --approve\n` +
@@ -380,6 +458,15 @@ async function resume(message: any) {
       const g = diffGate(t.preview, { prompt: t.prompt || '' });
       console.log(`\ncode gate on ${OUT}:`);
       reportDiff(g, '  ');
+      // Read from the transcript, never re-fetched: both were captured once,
+      // at heal-capture time, against the page as it existed then. Advisory
+      // only -- neither blocks approval, and only --force overrides the code
+      // gate above, which is the one check this file has ever treated as a
+      // refusal rather than evidence for the human reading this.
+      console.log(`\nlive re-fetch captured at heal time:`);
+      reportLive(t.live_check ?? null, '  ');
+      console.log(`\nindependent model read captured at heal time:`);
+      reportAgent(t.agent_verdict ?? null, '  ');
       if (g.decision === 'reject' && !flag('force')) {
         console.error(
           `\n  REFUSED. Not approving: the proposal fails the code gate above.\n` +
@@ -425,6 +512,15 @@ async function cmdVerify() {
   // one is about a value, the other about the code that produced it.
   console.log(`\n  code gate:`);
   const g = reportDiff(diffGate(transcript.preview ?? transcript, { prompt: transcript.prompt || '' }), '  ');
+
+  // Both read from the transcript -- --verify replays committed evidence
+  // offline, same as every other check in this command. Advisory only, same
+  // as in --approve: only the code gate above and the output rules block ACCEPT.
+  console.log(`\n  live re-fetch captured at heal time:`);
+  reportLive(transcript.live_check ?? null, '    ');
+  console.log(`\n  independent model read captured at heal time:`);
+  reportAgent(transcript.agent_verdict ?? null, '    ');
+
   const blocked = failed > 0 || g.decision === 'reject';
   console.log(`\n  ${blocked ? 'DO NOT ACCEPT' : 'ACCEPT'}  (output: ${tally}; code: ${g.decision})`);
   if (na) console.log(`  ${na} rule(s) were not evaluable here, so this output verdict rests on ${4 - na}.`);
